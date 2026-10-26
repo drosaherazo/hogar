@@ -101,6 +101,7 @@ The full rationale for each decision lives in Storybook, under Foundations (`pac
 ## Git
 
 - Small commits with Conventional Commits in English: `feat(api): add expense split endpoint`.
+- No AI attribution: commits have no `Co-Authored-By` trailer and PR descriptions have no "Generated with" footer.
 - One branch per feature and a PR to `main`; CI (`.github/workflows/ci.yml`: format, lint, typecheck, tests with Postgres, builds, Cypress) must pass before merging.
 
 ## Scope
