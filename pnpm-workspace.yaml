@@ -3,6 +3,7 @@ packages:
   - packages/*
 allowBuilds:
   '@prisma/engines': true
+  cypress: true
   esbuild: true
   prisma: true
   workerd: false

@@ -1,0 +1,21 @@
+// Stand-in for https://accounts.google.com/gsi/client: Google's popup can't be automated,
+// so this renders a button that returns a fake ID token, like a successful sign-in would.
+window.google = {
+  accounts: {
+    id: {
+      initialize: function (config) {
+        window.__gsiCallback = config.callback;
+      },
+      renderButton: function (parent) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.textContent = "Continue with Google";
+        button.addEventListener("click", function () {
+          window.__gsiCallback({ credential: "fake-google-id-token" });
+        });
+        parent.appendChild(button);
+      },
+      disableAutoSelect: function () {},
+    },
+  },
+};
