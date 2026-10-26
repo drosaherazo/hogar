@@ -51,7 +51,7 @@ Allowed dependencies: `web → ui, shared` and `api → shared`. `ui` never impo
 - **Code, identifiers, comments, documentation, test names and commit messages: English.**
 - **All user-facing text goes through i18n.** No hardcoded copy anywhere in the UI. Supported locales: `en` and `es`.
 - Documentation that cannot be internationalized (README, `docs/`, this file) is written in English.
-- **Storybook is fully bilingual** and follows its **Locale** toolbar: MDX prose wrapped in `<Lang locale="en">` / `<Lang locale="es">`, docs blocks take `{ en, es }` values, stories get copy per locale. Only sidebar titles stay in English. See *Foundations › Documenting a component*.
+- **Storybook is fully bilingual** and follows its **Locale** toolbar: MDX prose wrapped in `<Lang locale="en">` / `<Lang locale="es">`, docs blocks take `{ en, es }` values, stories get copy per locale. Only sidebar titles stay in English. See _Foundations › Documenting a component_.
 
 ## i18n
 
@@ -78,6 +78,7 @@ Allowed dependencies: `web → ui, shared` and `api → shared`. `ui` never impo
 **Before any task that touches the interface** (components, screens, styles or copy), read `docs/design.md` and run its checklist before calling the task done. If a request conflicts with the guide, say so and propose an alternative instead of ignoring it.
 
 Non-negotiables:
+
 - Goal: **warmth and comfort**; the interface lowers tension around money and chores.
 - Only semantic tokens (`--color-*`, `--space-*`…), never primitives or raw values.
 - Everything works and is reviewed in light and dark themes, with AA contrast (checked in `packages/ui/src/tokens/tokens.test.ts`).

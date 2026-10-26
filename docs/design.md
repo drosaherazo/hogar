@@ -10,38 +10,39 @@ If something new doesn't fit these rules, there are no silent exceptions: justif
 
 ## Principles
 
-| Principle | Concrete rule |
-| --- | --- |
+| Principle              | Concrete rule                                                                                                           |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Warmth over neutrality | Only the warm palette (sand, terracotta, sage, brick, amber). No cold greys, corporate blues or pure white backgrounds. |
-| Calm: nothing shouts | Moderate saturation. No neon, no bright red, no ALL CAPS for emphasis, no flashy animations. |
-| Friendly shapes | Rounded corners, soft warm shadows, generous white space. |
-| Closeness in language | Copy sounds like someone who lives in the house, in natural sentences ("Ana owes you €12.50"). |
-| Inclusive by default | AA contrast in both themes, visible focus, full keyboard use, color never alone, `prefers-reduced-motion` respected. |
-| Visual fairness | No member stands out more than another: all member colors share the same luminance. |
+| Calm: nothing shouts   | Moderate saturation. No neon, no bright red, no ALL CAPS for emphasis, no flashy animations.                            |
+| Friendly shapes        | Rounded corners, soft warm shadows, generous white space.                                                               |
+| Closeness in language  | Copy sounds like someone who lives in the house, in natural sentences ("Ana owes you €12.50").                          |
+| Inclusive by default   | AA contrast in both themes, visible focus, full keyboard use, color never alone, `prefers-reduced-motion` respected.    |
+| Visual fairness        | No member stands out more than another: all member colors share the same luminance.                                     |
 
 ## Color
 
 Components use **only semantic tokens** (`--color-*`), never primitives (`--terracotta-600`, `--sand-50`…) or raw values.
 
-| I need… | Token |
-| --- | --- |
-| App background | `--color-bg` |
-| Card or panel | `--color-surface` |
-| Sunken area (inputs, secondary sections) | `--color-surface-sunken` |
-| Layer under dialogs | `--color-overlay` |
-| Text | `--color-text` / `--color-text-muted` |
-| Dividers | `--color-border` |
-| Form field border | `--color-border-strong` |
-| Primary action (background / text on top / hover) | `--color-accent` / `--color-accent-contrast` / `--color-accent-hover` |
-| Links and accent text | `--color-accent-text` |
-| Focus ring | `--color-focus` |
-| Text selection (already applied globally in `base.css`) | `--color-selection-bg` / `--color-selection-text` |
-| "Owes you", done, confirmation | `--color-positive` (+ `--color-positive-bg`) |
-| "You owe", error, destructive action | `--color-negative` (+ `--color-negative-bg`) |
-| Reminder, due soon | `--color-warning` (+ `--color-warning-bg`) |
-| A member's identity | `--color-member-1…8` with `--color-member-text` on top |
+| I need…                                                 | Token                                                                 |
+| ------------------------------------------------------- | --------------------------------------------------------------------- |
+| App background                                          | `--color-bg`                                                          |
+| Card or panel                                           | `--color-surface`                                                     |
+| Sunken area (inputs, secondary sections)                | `--color-surface-sunken`                                              |
+| Layer under dialogs                                     | `--color-overlay`                                                     |
+| Text                                                    | `--color-text` / `--color-text-muted`                                 |
+| Dividers                                                | `--color-border`                                                      |
+| Form field border                                       | `--color-border-strong`                                               |
+| Primary action (background / text on top / hover)       | `--color-accent` / `--color-accent-contrast` / `--color-accent-hover` |
+| Links and accent text                                   | `--color-accent-text`                                                 |
+| Focus ring                                              | `--color-focus`                                                       |
+| Text selection (already applied globally in `base.css`) | `--color-selection-bg` / `--color-selection-text`                     |
+| "Owes you", done, confirmation                          | `--color-positive` (+ `--color-positive-bg`)                          |
+| "You owe", error, destructive action                    | `--color-negative` (+ `--color-negative-bg`)                          |
+| Reminder, due soon                                      | `--color-warning` (+ `--color-warning-bg`)                            |
+| A member's identity                                     | `--color-member-1…8` with `--color-member-text` on top                |
 
 Rules:
+
 - **Color never goes alone:** every state comes with text, an icon or a sign.
 - **Terracotta is for the primary action.** One primary action per screen or block.
 - **Brick, not red:** errors and debts inform without alarming or blaming.
@@ -81,13 +82,13 @@ Rules:
 
 ## Copy tone
 
-| ✓ Yes | ✗ No |
-| --- | --- |
-| en: "Ana owes you €12.50" · es: "Ana te debe 12,50 €" | "Outstanding balance: +12.50" · "Saldo pendiente: +12,50 €" |
-| en: "All square! Nobody owes anything" · es: "¡Todo al día! Nadie debe nada" | "0 debts" · "0 deudas" |
-| en: "The list is empty. What's missing at home?" · es: "La lista está vacía. ¿Qué falta en casa?" | "Empty list" · "Lista vacía" |
-| en: "We couldn't save the expense. Please try again." · es: "No hemos podido guardar el gasto. Inténtalo de nuevo." | "Error 500" |
-| en: "Delete expense" · es: "Borrar gasto" | "OK" · "Aceptar" |
+| ✓ Yes                                                                                                               | ✗ No                                                        |
+| ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| en: "Ana owes you €12.50" · es: "Ana te debe 12,50 €"                                                               | "Outstanding balance: +12.50" · "Saldo pendiente: +12,50 €" |
+| en: "All square! Nobody owes anything" · es: "¡Todo al día! Nadie debe nada"                                        | "0 debts" · "0 deudas"                                      |
+| en: "The list is empty. What's missing at home?" · es: "La lista está vacía. ¿Qué falta en casa?"                   | "Empty list" · "Lista vacía"                                |
+| en: "We couldn't save the expense. Please try again." · es: "No hemos podido guardar el gasto. Inténtalo de nuevo." | "Error 500"                                                 |
+| en: "Delete expense" · es: "Borrar gasto"                                                                           | "OK" · "Aceptar"                                            |
 
 - Second person, short sentences.
 - Errors explain what happened and what to do next, without blaming the person ("We couldn't…", never "You entered an invalid…").
@@ -98,13 +99,13 @@ Rules:
 - **Saving:** a short, visible confirmation ("Expense added").
 - **Real time:** changes by other people show their name and member color ("Marta added milk").
 - **Deleting:** a confirmation that names exactly what will be deleted, with a destructive button using a verb; initial focus on "Cancel". Or an undo option.
-- **Money:** first *with whom*, then *how much*.
+- **Money:** first _with whom_, then _how much_.
 
 ## Adding something new
 
 - **New color:** primitive in `primitives.css` → semantic token in `theme-light.css` **and** `theme-dark.css` → if it's used with text or as a UI border, add the pair to `contrastPairs.ts`. The test fails if it's missing from a theme or doesn't meet AA. If Storybook's chrome should use it, add it to `palette` in `.storybook/themes.ts`.
 - **Changed a palette value:** update the same hex in `.storybook/themes.ts` (the test will remind you).
-- **New component:** a folder with `Component.tsx`, `.module.css`, `.test.tsx` (with axe) and `.stories.tsx`, documented with the five-section template from *Foundations › Documenting a component*: what it is and when to use it · why it's designed this way · how it helps the person · accessibility · variants. Docs and story copy are written in `en` and `es` and follow the Storybook **Locale** toolbar.
+- **New component:** a folder with `Component.tsx`, `.module.css`, `.test.tsx` (with axe) and `.stories.tsx`, documented with the five-section template from _Foundations › Documenting a component_: what it is and when to use it · why it's designed this way · how it helps the person · accessibility · variants. Docs and story copy are written in `en` and `es` and follow the Storybook **Locale** toolbar.
 - **New Storybook docs page:** each language's prose inside `<Lang locale="en">` / `<Lang locale="es">`; any text in docs blocks as `{ en, es }`. Anything that previews a specific theme goes inside `ThemeSplit` (or Storybook's `<Unstyled>` with its own `data-theme`): the docs page's typography otherwise forces its own text colors and breaks contrast.
 - **New copy:** key in `en` and `es` in the feature namespace.
 

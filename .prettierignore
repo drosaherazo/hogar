@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+**/storybook-static
+**/dist
+**/coverage
+# MDX docs mix Markdown and JSX blocks (<Lang>) whose blank lines matter.
+**/*.mdx
