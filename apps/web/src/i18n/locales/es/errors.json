@@ -1,0 +1,25 @@
+{
+  "auth": {
+    "google": {
+      "invalid_token": "No hemos podido verificar tu inicio de sesión con Google. Inténtalo de nuevo.",
+      "email_not_verified": "El email de tu cuenta de Google aún no está verificado. Verifícalo con Google y vuelve a intentarlo."
+    },
+    "session": {
+      "missing": "Tu sesión ha terminado. Vuelve a iniciar sesión para continuar.",
+      "expired": "Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.",
+      "reused": "Por tu seguridad hemos cerrado tu sesión. Vuelve a iniciar sesión para continuar."
+    },
+    "token": {
+      "invalid": "Tu sesión ha terminado. Vuelve a iniciar sesión para continuar."
+    }
+  },
+  "request": {
+    "invalid": "Algo en esa petición no estaba bien. Inténtalo de nuevo.",
+    "forbidden_origin": "Esa petición no venía de Hogar, así que la hemos bloqueado.",
+    "rate_limited": "Demasiados intentos en poco tiempo. Espera unos minutos y vuelve a intentarlo."
+  },
+  "server": {
+    "unexpected": "Algo ha fallado por nuestra parte. Inténtalo de nuevo en un momento."
+  },
+  "network": "No hemos podido conectar con Hogar. Revisa tu conexión y vuelve a intentarlo."
+}
