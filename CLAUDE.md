@@ -4,7 +4,7 @@ Web app to manage a shared home (couple, family or flatmates): expenses with spl
 
 This is a **portfolio project for landing a fullstack job**. Code quality, tests, commit history and the README matter as much as features. Always prefer something small, polished and deployed over something big and half-done.
 
-The full product document (user stories and acceptance criteria per phase) lives in `docs/product.md`.
+The full product document (user stories and acceptance criteria per phase) will live in `docs/product.md` (not written yet).
 
 ## Stack
 
@@ -101,7 +101,7 @@ The full rationale for each decision lives in Storybook, under Foundations (`pac
 ## Git
 
 - Small commits with Conventional Commits in English: `feat(api): add expense split endpoint`.
-- One branch per feature and a PR to `main`; CI must pass before merging.
+- One branch per feature and a PR to `main`; CI (`.github/workflows/ci.yml`: format, lint, typecheck, tests with Postgres, builds, Cypress) must pass before merging.
 
 ## Scope
 
