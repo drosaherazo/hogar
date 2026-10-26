@@ -1,0 +1,134 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "./blocks/locale";
+
+<Meta title="Foundations/Documenting a component" />
+
+<Lang locale="en">
+
+# Documenting a component
+
+Every `packages/ui` component explains not only **how** to use it, but **why** it's that way and **how it helps the person** using it. A component isn't done without this documentation, its test (including axe) and its stories in both themes and both locales.
+
+## Template
+
+The documentation lives in the component's own `Component.stories.tsx`, written in **both locales** and picked with the **Locale** toolbar (see "Docs in two languages" below). It has these five sections:
+
+```md
+## What it is and when to use it
+One sentence about its job. When to use it and, above all, when not to.
+
+## Why it's designed this way
+Decisions on shape, color, size, copy and behavior, each with its reason.
+
+## How it helps the person
+The effect we're after: calm, trust, a sense of control, closeness…
+Tell apart what's backed by evidence (contrast, legibility, touch size)
+from what is design intent.
+
+## Accessibility
+Keyboard, ARIA roles, contrast, screen readers, and which strings
+must be passed in already translated.
+
+## Variants
+Which variants exist and what each one is for (shown as stories).
+```
+
+## Docs in two languages
+
+Every Storybook page follows the **Locale** toolbar, so nothing is English-only:
+
+- **MDX pages:** wrap each language's prose in `<Lang locale="en">…</Lang>` and `<Lang locale="es">…</Lang>` (from `src/docs/blocks/locale.tsx`). Leave a blank line after the opening tag and before the closing one so the Markdown inside is parsed.
+- **Docs blocks** (swatches, tables, samples): take text as a `Localized` value (`{ en, es }`) and read it with `useLocalized()` or `useDocsLocale()`.
+- **Stories:** the global decorator wraps every story in `LocaleProvider`, so formatting components follow the toolbar. Story copy comes in as args from a `{ en, es }` object picked with `context.globals.locale`.
+- Sidebar titles stay in English: Storybook's navigation can't change language at runtime.
+
+## Copy and i18n in components
+
+`packages/ui` contains **no copy**. Every visible or accessible text (labels, `aria-label`, empty-state messages) arrives through props already translated by the app. Accessible labels the component can't work without are **required** props, so forgetting a translation is a type error, not a silent English fallback.
+
+Formatting components (money, dates) read the locale from `LocaleProvider` via `useLocale()`.
+
+## Example: `BalanceRow`
+
+> **What it is and when to use it.** A row showing how much one person owes another. Used on the balance screen; not used to list individual expenses.
+>
+> **Why it's designed this way.** Avatar and name first, then the amount: what matters is *with whom*, not the number. The copy is a natural sentence ("Ana owes you €12.50") and the amount uses soft sage or brick, always with the verb so it never relies on color. Figures use `tabular-nums` so they line up. The sentence comes in as a prop, so each language can order name and amount its own way.
+>
+> **How it helps the person.** Talking about money with someone you live with can be awkward. A friendly sentence and calm colors make the balance read like a conversation rather than a bank statement, which lowers tension and makes settling up easier.
+>
+> **Accessibility.** A list item; the screen reader reads the whole sentence. AA contrast in both themes.
+>
+> **Variants.** "Owes you", "You owe" and "All square".
+
+## Example: delete confirmation `Dialog`
+
+> **Why it's designed this way.** A title that says exactly what will be deleted ("Delete the expense “Supermarket”?"), a destructive brick button with a verb ("Delete expense", never "OK") and Cancel as the initial focus.
+>
+> **How it helps the person.** It removes the fear of making a mistake: nothing important disappears from an accidental tap, and the person knows what will happen before deciding.
+
+</Lang>
+
+<Lang locale="es">
+
+# Cómo documentar un componente
+
+Cada componente de `packages/ui` explica no solo **cómo** se usa, sino **por qué** es así y **cómo ayuda a la persona** que lo usa. Un componente no se da por terminado sin esta documentación, su test (incluido axe) y sus historias en ambos temas y ambos idiomas.
+
+## Plantilla
+
+La documentación vive en el propio `Component.stories.tsx`, escrita en **los dos idiomas** y elegida con la barra **Locale** (ver "Documentación en dos idiomas" más abajo). Tiene estas cinco secciones:
+
+```md
+## Qué es y cuándo usarlo
+Una frase sobre su función. Cuándo usarlo y, sobre todo, cuándo no.
+
+## Por qué está diseñado así
+Decisiones de forma, color, tamaño, texto y comportamiento, cada una con su motivo.
+
+## Cómo ayuda a la persona
+El efecto que buscamos: calma, confianza, sensación de control, cercanía…
+Distingue lo que está respaldado (contraste, legibilidad, tamaño táctil)
+de lo que es intención de diseño.
+
+## Accesibilidad
+Teclado, roles ARIA, contraste, lectores de pantalla y qué textos
+deben llegar ya traducidos.
+
+## Variantes
+Qué variantes existen y para qué sirve cada una (se muestran como historias).
+```
+
+## Documentación en dos idiomas
+
+Todas las páginas de Storybook siguen la barra **Locale**, así que nada queda solo en inglés:
+
+- **Páginas MDX:** envuelve el texto de cada idioma en `<Lang locale="en">…</Lang>` y `<Lang locale="es">…</Lang>` (de `src/docs/blocks/locale.tsx`). Deja una línea en blanco tras la etiqueta de apertura y antes de la de cierre para que el Markdown de dentro se interprete.
+- **Bloques de documentación** (muestras, tablas, ejemplos): reciben el texto como valor `Localized` (`{ en, es }`) y lo leen con `useLocalized()` o `useDocsLocale()`.
+- **Historias:** el decorador global envuelve cada historia en `LocaleProvider`, así que los componentes de formato siguen la barra. Los textos de la historia llegan como args desde un objeto `{ en, es }` elegido con `context.globals.locale`.
+- Los títulos de la barra lateral quedan en inglés: la navegación de Storybook no puede cambiar de idioma en tiempo de ejecución.
+
+## Textos e i18n en los componentes
+
+`packages/ui` **no contiene textos**. Todo texto visible o accesible (etiquetas, `aria-label`, mensajes de estados vacíos) llega por props ya traducido por la app. Las etiquetas accesibles sin las que el componente no funciona son props **obligatorias**, así que olvidar una traducción es un error de tipos, no un respaldo silencioso en inglés.
+
+Los componentes de formato (dinero, fechas) leen el idioma de `LocaleProvider` con `useLocale()`.
+
+## Ejemplo: `BalanceRow`
+
+> **Qué es y cuándo usarlo.** Una fila que muestra cuánto debe una persona a otra. Se usa en la pantalla de balance; no se usa para listar gastos individuales.
+>
+> **Por qué está diseñado así.** Primero el avatar y el nombre, después el importe: lo importante es *con quién*, no el número. El texto es una frase natural ("Ana te debe 12,50 €") y el importe usa salvia o ladrillo suaves, siempre acompañados del verbo para no depender del color. Cifras con `tabular-nums` para que se alineen. La frase llega como prop, así cada idioma ordena el nombre y el importe a su manera.
+>
+> **Cómo ayuda a la persona.** Hablar de dinero con quien vives puede ser incómodo. Una frase cercana y colores tranquilos hacen que el balance se lea como una conversación y no como un extracto bancario, lo que reduce la tensión y facilita saldar cuentas.
+>
+> **Accesibilidad.** Elemento de lista; el lector de pantalla lee la frase completa. Contraste AA en ambos temas.
+>
+> **Variantes.** "Te deben", "Debes" y "Al día".
+
+## Ejemplo: `Dialog` de confirmación al borrar
+
+> **Por qué está diseñado así.** Título que dice exactamente qué se va a borrar ("¿Borrar el gasto «Mercadona»?"), botón destructivo en ladrillo con el verbo ("Borrar gasto", nunca "Aceptar") y el botón de cancelar como foco inicial.
+>
+> **Cómo ayuda a la persona.** Quita el miedo a equivocarse: nada importante desaparece por un toque accidental, y la persona sabe qué va a pasar antes de decidir.
+
+</Lang>

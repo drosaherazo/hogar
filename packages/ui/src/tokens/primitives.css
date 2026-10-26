@@ -1,0 +1,117 @@
+/*
+ * Layer 1 · Primitives.
+ * The brand's raw values. Components NEVER use them directly:
+ * only the themes (theme-light.css, theme-dark.css) reference them.
+ */
+:root {
+  /* Sand: warm neutrals (backgrounds, borders, text) */
+  --sand-50: #fbf7f2;
+  --sand-0: #fffdf9;
+  --sand-100: #f3ebdf;
+  --sand-200: #e8dccb;
+  --sand-400: #97846f;
+  --sand-600: #6b5a4c;
+  --sand-900: #2e241d;
+
+  /* Earth: dark warm neutrals (dark mode) */
+  --earth-950: #1c1714;
+  --earth-900: #28211c;
+  --earth-800: #332a24;
+  --earth-700: #463a30;
+  --earth-500: #8a7765;
+  --earth-300: #bfae9c;
+  --earth-100: #f3eae0;
+
+  /* Terracotta: primary accent */
+  --terracotta-100: #f6dccf;
+  --terracotta-200: #eeab8b;
+  --terracotta-300: #e5906a;
+  --terracotta-500: #c4643f;
+  --terracotta-600: #a9502f;
+  --terracotta-700: #8c4126;
+
+  /* Sage: secondary, positive */
+  --sage-100: #e3ece1;
+  --sage-300: #a9c7a8;
+  --sage-700: #4a634c;
+  --sage-900: #2f3f30;
+
+  /* Brick: negative, error */
+  --brick-100: #f6dfda;
+  --brick-300: #ee9a8b;
+  --brick-700: #9b3a2f;
+  --brick-900: #4a2620;
+
+  /* Amber: warning */
+  --amber-100: #f8ead0;
+  --amber-300: #e8be73;
+  --amber-700: #7a5212;
+  --amber-900: #43300f;
+
+  /* Members (light): same luminance, dark text on top */
+  --member-light-1: #f2c4ae;
+  --member-light-2: #c5d8c1;
+  --member-light-3: #f1d49a;
+  --member-light-4: #ddc3d6;
+  --member-light-5: #c3d3e0;
+  --member-light-6: #f0c1c4;
+  --member-light-7: #d9d6a8;
+  --member-light-8: #e3cdb5;
+
+  /* Members (dark): same luminance, light text on top */
+  --member-dark-1: #8c4a33;
+  --member-dark-2: #4f6a52;
+  --member-dark-3: #7e5e22;
+  --member-dark-4: #6e4c66;
+  --member-dark-5: #4a6278;
+  --member-dark-6: #8a4b52;
+  --member-dark-7: #626136;
+  --member-dark-8: #76604a;
+
+  /* Spacing: 4 px base */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Radii: generous, friendly shapes */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-family-base: "Figtree Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-family-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.375rem;
+  --font-size-2xl: 1.75rem;
+  --font-size-3xl: 2.25rem;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.25;
+  --line-height-base: 1.55;
+
+  /* Borders */
+  --border-width: 1px;
+  --focus-ring-width: 3px;
+
+  /* Motion: short and soft */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --easing-gentle: cubic-bezier(0.33, 1, 0.68, 1);
+}

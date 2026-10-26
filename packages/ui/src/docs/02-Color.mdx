@@ -1,0 +1,212 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { ColorSwatches } from "./blocks/ColorSwatches";
+import { ContrastTable } from "./blocks/ContrastTable";
+import { Lang } from "./blocks/locale";
+
+<Meta title="Foundations/Color" />
+
+export const surfaces = [
+  { token: "--color-bg", name: { en: "Background", es: "Fondo" } },
+  { token: "--color-surface", name: { en: "Surface (cards)", es: "Superficie (tarjetas)" } },
+  { token: "--color-surface-sunken", name: { en: "Sunken surface", es: "Superficie hundida" } },
+  { token: "--color-border", name: { en: "Soft border", es: "Borde suave" } },
+  { token: "--color-border-strong", name: { en: "Field border", es: "Borde de campos" } },
+];
+
+export const text = [
+  { token: "--color-text", name: { en: "Main text", es: "Texto principal" } },
+  { token: "--color-text-muted", name: { en: "Secondary text", es: "Texto secundario" } },
+];
+
+export const accent = [
+  { token: "--color-accent", name: { en: "Accent", es: "Acento" } },
+  { token: "--color-accent-hover", name: { en: "Accent on hover", es: "Acento al pasar el ratón" } },
+  { token: "--color-accent-text", name: { en: "Accent text", es: "Texto de acento" } },
+  { token: "--color-focus", name: { en: "Focus ring", es: "Anillo de foco" } },
+];
+
+export const states = [
+  { token: "--color-positive", name: { en: "Positive", es: "Positivo" } },
+  { token: "--color-positive-bg", name: { en: "Positive background", es: "Fondo positivo" } },
+  { token: "--color-negative", name: { en: "Negative", es: "Negativo" } },
+  { token: "--color-negative-bg", name: { en: "Negative background", es: "Fondo negativo" } },
+  { token: "--color-warning", name: { en: "Warning", es: "Aviso" } },
+  { token: "--color-warning-bg", name: { en: "Warning background", es: "Fondo de aviso" } },
+];
+
+export const members = Array.from({ length: 8 }, (_, i) => ({
+  token: `--color-member-${i + 1}`,
+  name: { en: `Member ${i + 1}`, es: `Miembro ${i + 1}` },
+}));
+
+<Lang locale="en">
+
+# Color
+
+The palette is built on three warm families: **sand** (neutrals), **terracotta** (accent) and **sage** (secondary), plus two softened state colors: **brick** and **amber**.
+
+## Surfaces: sand and cream
+
+<ColorSwatches items={surfaces} />
+
+**What it does:** the app background, cards and dividers.
+
+**Why:** pure white (#FFFFFF) across the whole screen is glaring, especially on mobile and at night, and it's associated with clinical or office settings. A very soft cream reduces perceived brightness without losing cleanliness, and evokes paper, linen or light wood: home materials.
+
+**How it helps the person:** less visual fatigue in daily, repeated use (checking the list at the supermarket, logging an expense from the sofa) and a first impression of a welcoming space, not a form.
+
+## Text: toasted brown, not black
+
+<ColorSwatches items={text} />
+
+**Why:** pure black on a warm background creates a harsh contrast and a "printed" look. A very dark brown keeps contrast very high (above 14:1, far above the AA minimum of 4.5:1) and blends with the palette.
+
+**How it helps the person:** comfortable reading for longer, without the feel of an official document.
+
+## Accent: terracotta
+
+<ColorSwatches items={accent} />
+
+**What it does:** primary buttons, the active navigation item, links and the focus ring.
+
+**Why:** terracotta is the color of fired clay, roof tiles and pottery; in Mediterranean culture it's strongly tied to the idea of home. It's a warm color that draws enough attention to guide the primary action, without the urgency of pure red or the coldness of corporate blue.
+
+**How it helps the person:** they always know what the main action is ("Add expense") without feeling pushed to press it.
+
+## States: sage, brick and amber
+
+<ColorSwatches items={states} />
+
+### Sage (positive)
+**Use:** "owes you", completed chores, confirmations.
+**Why:** a muted green, associated with plants and nature, that conveys calm and order. Being desaturated, it doesn't compete with terracotta.
+**How it helps:** finishing a chore or settling a debt feels like a small relief, not just another notification.
+
+### Brick (negative)
+**Use:** "you owe", form errors, destructive actions.
+**Why:** it clearly signals that something needs attention, but without the intense red that triggers alarm or guilt. Owing money to someone you live with is normal and temporary.
+**How it helps:** the person gets the information without feeling singled out, which makes it easier to settle the debt instead of avoiding the app.
+
+### Amber (warning)
+**Use:** chores due soon, reminders.
+**Why:** a tone like the warm light of a lamp, instead of traffic-sign yellow.
+**How it helps:** it reminds without overwhelming.
+
+### Rule: color never goes alone
+Each state always comes with text, an icon or a sign ("owes you", "+", "✓"). That way the information reaches people with color blindness, low-brightness screens or grayscale equally.
+
+## Member colors
+
+<ColorSwatches items={members} />
+
+**What it does:** avatar backgrounds and "who" indicators in expenses, chores and the shopping list.
+
+**Why:** eight tones from the same warm family with **the same luminance** (a test checks it). They're assigned deterministically by the order in which each person joined the household, so your color never changes from one screen to another.
+
+**How it helps the person:** they recognize who did what at a glance, feel "present" in the household with a color of their own, and nobody stands out more than anyone else by accident of design.
+
+## Warm dark mode
+
+In dark mode, backgrounds are a very dark brown, not bluish grey or pure black, and accents are lightened to keep contrast. So when checking the shopping list in bed, the app still feels like a dim lamp rather than an office screen.
+
+## Verified contrast
+
+This table is computed live from the tokens. The same pairs are checked in `tokens.test.ts`, so if someone changes a color and breaks contrast, CI fails.
+
+<ContrastTable />
+
+## Storybook uses the brand too
+
+The palette isn't only for the app: Storybook's own interface (sidebar, toolbar, panels, these docs pages, the selection highlight and the favicon) uses the same sand, terracotta and earth tones, and the **Theme** toolbar switches the chrome, the docs and the canvas together.
+
+**Why:** a design system that documents warmth inside a cold, generic tool sends mixed signals. Seeing the brand everywhere lets anyone reviewing the project judge the palette in a real interface, in both themes, and keeps reading long docs comfortable at night.
+
+**How it stays in sync:** Storybook can't read CSS variables, so `.storybook/themes.ts` mirrors the palette as hex values. `storybookThemes.test.ts` checks that every one of them matches `primitives.css` exactly and that the chrome's text meets AA. Change the palette and the test tells you to update Storybook too.
+
+</Lang>
+
+<Lang locale="es">
+
+# Color
+
+La paleta se construye sobre tres familias cálidas: **arena** (neutros), **terracota** (acento) y **salvia** (secundario), más dos colores de estado suavizados: **ladrillo** y **ámbar**.
+
+## Superficies: arena y crema
+
+<ColorSwatches items={surfaces} />
+
+**Qué hace:** fondo general de la app, tarjetas y separadores.
+
+**Por qué así:** el blanco puro (#FFFFFF) a pantalla completa deslumbra, sobre todo en móvil y de noche, y se asocia a entornos clínicos o de oficina. Un crema muy suave reduce el brillo percibido sin perder limpieza, y evoca papel, lino o madera clara: materiales del hogar.
+
+**Cómo ayuda a la persona:** menos cansancio visual en un uso diario y repetido (mirar la lista en el súper, apuntar un gasto en el sofá) y una primera impresión de espacio acogedor, no de formulario.
+
+## Texto: marrón tostado, no negro
+
+<ColorSwatches items={text} />
+
+**Por qué así:** el negro puro sobre un fondo cálido crea un contraste duro y un aspecto "impreso". Un marrón muy oscuro mantiene un contraste muy alto (más de 14:1, muy por encima del mínimo AA de 4,5:1) y se integra con la paleta.
+
+**Cómo ayuda a la persona:** lectura cómoda durante más tiempo, sin la sensación de documento oficial.
+
+## Acento: terracota
+
+<ColorSwatches items={accent} />
+
+**Qué hace:** botones principales, elemento activo de la navegación, enlaces y anillo de foco.
+
+**Por qué así:** la terracota es el color del barro cocido, de las tejas y de la cerámica; en la cultura mediterránea está muy ligada a la idea de casa. Es un color cálido que llama la atención lo suficiente para guiar la acción principal, pero sin la urgencia del rojo puro ni la frialdad del azul corporativo.
+
+**Cómo ayuda a la persona:** sabe en todo momento cuál es la acción principal ("Añadir gasto") sin sentirse empujada a pulsarla.
+
+## Estados: salvia, ladrillo y ámbar
+
+<ColorSwatches items={states} />
+
+### Salvia (positivo)
+**Uso:** "te deben", tareas completadas, confirmaciones.
+**Por qué:** un verde apagado, asociado a plantas y naturaleza, que transmite calma y orden. Al estar desaturado no compite con la terracota.
+**Cómo ayuda:** completar una tarea o saldar una deuda se siente como un pequeño alivio, no como una notificación más.
+
+### Ladrillo (negativo)
+**Uso:** "debes", errores de formulario, acciones destructivas.
+**Por qué:** comunica claramente que algo requiere atención, pero sin el rojo intenso que dispara sensación de alarma o de culpa. Deber dinero a quien vive contigo es normal y temporal.
+**Cómo ayuda:** la persona recibe la información sin sentirse señalada, lo que facilita resolver la deuda en vez de evitar mirar la app.
+
+### Ámbar (aviso)
+**Uso:** tareas que vencen pronto, recordatorios.
+**Por qué:** un tono como la luz cálida de una lámpara, en vez del amarillo de señal de tráfico.
+**Cómo ayuda:** recuerda sin agobiar.
+
+### Regla: el color nunca va solo
+Cada estado va siempre acompañado de texto, icono o signo ("te debe", "+", "✓"). Así la información llega igual a personas con daltonismo, en pantallas de bajo brillo o en escala de grises.
+
+## Colores de miembro
+
+<ColorSwatches items={members} />
+
+**Qué hace:** fondo de avatares e indicadores de "quién" en gastos, tareas y lista.
+
+**Por qué así:** ocho tonos de la misma familia cálida con **la misma luminosidad** (un test lo verifica). Se asignan de forma determinista según el orden en que cada persona se unió al hogar, así que tu color no cambia de una pantalla a otra.
+
+**Cómo ayuda a la persona:** reconoce de un vistazo quién hizo qué, se siente "presente" en el hogar con un color propio, y nadie destaca más que otro por azar del diseño.
+
+## Modo oscuro cálido
+
+En modo oscuro los fondos son marrón muy oscuro, no gris azulado ni negro puro, y los acentos se aclaran para mantener el contraste. Así, al revisar la lista de la compra en la cama, la app sigue sintiéndose como una lámpara tenue y no como una pantalla de oficina.
+
+## Contraste comprobado
+
+Esta tabla se calcula en vivo a partir de los tokens. Las mismas combinaciones se verifican en `tokens.test.ts`, así que si alguien cambia un color y rompe el contraste, el CI falla.
+
+<ContrastTable />
+
+## Storybook también usa la marca
+
+La paleta no es solo para la app: la propia interfaz de Storybook (barra lateral, barra de herramientas, paneles, estas páginas de documentación, el color de selección y el favicon) usa los mismos tonos arena, terracota y tierra, y la barra **Theme** cambia a la vez la interfaz, la documentación y el lienzo.
+
+**Por qué:** un sistema de diseño que documenta calidez dentro de una herramienta fría y genérica manda señales contradictorias. Ver la marca en todas partes permite a quien revise el proyecto juzgar la paleta en una interfaz real, en los dos temas, y hace que leer documentación larga de noche sea cómodo.
+
+**Cómo se mantiene sincronizada:** Storybook no puede leer variables CSS, así que `.storybook/themes.ts` replica la paleta en hexadecimal. `storybookThemes.test.ts` comprueba que cada valor coincide exactamente con `primitives.css` y que el texto de la interfaz cumple AA. Si cambias la paleta, el test te avisa de que también hay que actualizar Storybook.
+
+</Lang>

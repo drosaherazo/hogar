@@ -1,0 +1,126 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "./blocks/locale";
+
+<Meta title="Foundations/Introduction" />
+
+<Lang locale="en">
+
+# Hogar's visual system
+
+Hogar helps people organize life together: who paid for the groceries, whose turn it is to take out the trash, what's missing in the fridge. These are small topics, but emotionally loaded ones. A €12 debt between flatmates or a forgotten chore between partners can create more tension than they deserve.
+
+That's why the goal of the visual system isn't only for the app to be pretty or usable, but for **opening it to feel like walking into your home, not like opening your bank**. Every decision in this system aims to convey **warmth and comfort**, and to lower tension instead of raising it.
+
+> The condensed version of these rules, with the checklist applied to every interface task, lives in `docs/design.md` at the repository root. If you change something here, update it there too. These pages follow the **Locale** toolbar: switch it to read them in Spanish.
+
+## Principles
+
+### 1. Warmth over neutrality
+We use earth tones (sand, terracotta, sage) instead of the cold greys and blues typical of finance and productivity apps. Backgrounds aren't pure white but a very soft cream.
+
+**Why:** warm tones are associated with home materials (wood, clay, fabric, plants) and with indoor afternoon light. Cold blues and greys are associated with offices, banks and hospitals: places of work or paperwork. We want the person to feel they're in a space of their own.
+
+### 2. Calm: nothing shouts
+Moderate saturation, no neon or bright reds. Even errors and debts use a muted brick red.
+
+**Why:** highly saturated colors and intense red trigger an alert response. That makes sense for a serious failure, but not for "you owe €8 for the groceries". A calm interface helps sensitive topics be handled naturally and without guilt.
+
+### 3. Friendly shapes
+Rounded corners, soft shadows and plenty of white space.
+
+**Why:** curved shapes are generally perceived as friendlier and safer than sharp ones, and white space reduces the feeling of clutter. An uncluttered screen says "this is under control".
+
+### 4. Closeness in language
+Copy talks like someone who lives in the house: "All square!" instead of "0 outstanding debts", "Ana owes you €12.50" instead of "Balance: +12.50". The same tone is written, not just translated, in every supported language.
+
+**Why:** natural language shortens the distance between the person and the tool, and turns abstract numbers into situations that are understood at a glance.
+
+### 5. Inclusive by default
+AA contrast checked automatically in both themes, focus always visible, color never carries information on its own, `prefers-reduced-motion` respected, and every text available in the person's language.
+
+**Why:** different people share a home: older people, people with color blindness or low vision, people who use the keyboard, people who speak different languages. Comfort has to be for all of them. Accessibility done well is also comfort for everyone: text readable in sunlight, buttons easy to tap with one hand.
+
+### 6. Visual fairness
+Each household member has their own color, but all colors share the same luminance.
+
+**Why:** in a shared space nobody should "stand out" more than anyone else by accident of design. If one person's color is louder than another's, it implies, even unintentionally, a hierarchy.
+
+## A note on "color psychology"
+
+The explanations in this system combine two kinds of arguments, and it's worth telling them apart:
+
+- **Backed by evidence or standards:** contrast and legibility (WCAG), visual fatigue, accessibility for color blindness, the effect of motion on people with vestibular disorders.
+- **Design intent based on cultural associations:** that terracotta evokes home or that sage green conveys calm. These associations are real and common in our context (Spain and the Mediterranean), but they depend on culture and on each person; they aren't universal laws.
+
+Being honest about this difference is part of the design: we make reasoned decisions, not magical ones.
+
+## Three-layer architecture
+
+1. **Primitives** (`primitives.css`): the brand's raw palette (`--terracotta-600`, `--space-4`…). No component uses them directly.
+2. **Semantic** (`theme-light.css`, `theme-dark.css`): they describe purpose (`--color-accent`, `--color-negative`…). They're the only thing components use.
+3. **Component**: only when a component needs its own variable, always built from semantic tokens.
+
+Thanks to this separation, dark mode is just a redefinition of layer 2, and a test checks that both themes define exactly the same tokens and that every color pair meets AA.
+
+</Lang>
+
+<Lang locale="es">
+
+# Sistema visual de Hogar
+
+Hogar sirve para organizar la vida en común: quién pagó la compra, a quién le toca sacar la basura, qué falta en la nevera. Son temas pequeños, pero cargados de emoción. Una deuda de 12 € entre compañeros de piso o una tarea olvidada en pareja pueden generar más tensión de la que merecen.
+
+Por eso el objetivo del sistema visual no es solo que la app sea bonita o usable, sino que **abrirla se sienta como entrar en casa, no como abrir el banco**. Cada decisión de este sistema busca transmitir **calidez y comodidad**, y bajar la tensión en lugar de subirla.
+
+> La versión resumida de estas reglas, con el checklist que se aplica en cada tarea de interfaz, está en `docs/design.md` en la raíz del repositorio. Si cambias algo aquí, actualízalo también allí. Estas páginas siguen la barra **Locale**: cámbiala para leerlas en inglés.
+
+## Principios
+
+### 1. Calidez antes que neutralidad
+Usamos colores tierra (arena, terracota, salvia) en vez de los grises fríos y azules típicos de las aplicaciones financieras y de productividad. Los fondos no son blanco puro, sino un crema muy suave.
+
+**Por qué:** los tonos cálidos se asocian a materiales del hogar (madera, barro, tela, plantas) y a la luz de interior por la tarde. Los azules y grises fríos se asocian a oficinas, bancos y hospitales: entornos de trabajo o de trámite. Queremos que la persona sienta que está en un espacio suyo.
+
+### 2. Calma: nada grita
+Saturación moderada, nada de neón ni rojos chillones. Incluso los errores y las deudas usan un rojo ladrillo apagado.
+
+**Por qué:** los colores muy saturados y el rojo intenso activan una respuesta de alerta. Eso tiene sentido para un fallo grave, pero no para "debes 8 € de la compra". Una interfaz tranquila ayuda a que temas delicados se traten con naturalidad y sin culpa.
+
+### 3. Formas amables
+Esquinas redondeadas, sombras suaves y mucho espacio en blanco.
+
+**Por qué:** las formas curvas se perciben de manera general como más amables y seguras que las angulosas, y el espacio en blanco reduce la sensación de saturación. Una pantalla despejada transmite "esto está bajo control".
+
+### 4. Cercanía en el lenguaje
+Los textos hablan como una persona de la casa: "¡Todo al día!" en vez de "0 deudas pendientes", "Ana te debe 12,50 €" en vez de "Saldo: +12,50". El mismo tono se escribe, no solo se traduce, en cada idioma.
+
+**Por qué:** el lenguaje natural reduce la distancia entre la persona y la herramienta, y convierte números abstractos en situaciones comprensibles al instante.
+
+### 5. Inclusivo por defecto
+Contraste AA comprobado automáticamente en ambos temas, foco siempre visible, el color nunca transmite información por sí solo, se respeta `prefers-reduced-motion` y todo el texto está disponible en el idioma de la persona.
+
+**Por qué:** en un hogar convive gente distinta: personas mayores, con daltonismo o baja visión, que usan el teclado o que hablan idiomas distintos. La comodidad tiene que ser para todas. Además, la accesibilidad bien hecha es comodidad para todo el mundo: textos legibles con luz solar, botones fáciles de pulsar con una mano.
+
+### 6. Equidad visual
+Cada miembro del hogar tiene un color propio, pero todos los colores tienen la misma luminosidad.
+
+**Por qué:** en un espacio compartido nadie debería "destacar" más que otro por azar del diseño. Que el color de una persona sea más llamativo que el de otra transmite, aunque sea sin querer, una jerarquía.
+
+## Una nota sobre la "psicología del color"
+
+Las explicaciones de este sistema combinan dos tipos de argumentos, y conviene distinguirlos:
+
+- **Respaldados por evidencia o normas:** contraste y legibilidad (WCAG), fatiga visual, accesibilidad para daltonismo, efecto del movimiento en personas con trastornos vestibulares.
+- **Intención de diseño basada en asociaciones culturales:** que la terracota evoque hogar o que el verde salvia transmita calma. Estas asociaciones son reales y comunes en nuestro contexto (España y el Mediterráneo), pero dependen de la cultura y de cada persona; no son leyes universales.
+
+Ser honestos con esta diferencia es parte del diseño: tomamos decisiones razonadas, no mágicas.
+
+## Arquitectura en tres capas
+
+1. **Primitivos** (`primitives.css`): la paleta cruda de la marca (`--terracotta-600`, `--space-4`…). Ningún componente los usa directamente.
+2. **Semánticos** (`theme-light.css`, `theme-dark.css`): describen el propósito (`--color-accent`, `--color-negative`…). Son lo único que usan los componentes.
+3. **Componente**: solo si un componente necesita una variable propia, siempre construida a partir de los semánticos.
+
+Gracias a esta separación, el modo oscuro consiste únicamente en redefinir la capa 2, y un test comprueba que ambos temas definen exactamente los mismos tokens y que cada combinación de colores cumple AA.
+
+</Lang>

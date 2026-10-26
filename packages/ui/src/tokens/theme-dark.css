@@ -1,0 +1,48 @@
+/*
+ * Layer 2 · Dark theme.
+ * Very dark brown backgrounds instead of bluish grey, so it still feels
+ * cozy at night. Enabled with data-theme="dark" on <html>.
+ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: var(--earth-950);
+  --color-surface: var(--earth-900);
+  --color-surface-sunken: var(--earth-800);
+  --color-overlay: rgb(0 0 0 / 0.55);
+
+  --color-text: var(--earth-100);
+  --color-text-muted: var(--earth-300);
+
+  --color-border: var(--earth-700);
+  --color-border-strong: var(--earth-500);
+
+  --color-accent: var(--terracotta-300);
+  --color-accent-hover: var(--terracotta-200);
+  --color-accent-contrast: var(--earth-950);
+  --color-accent-text: var(--terracotta-300);
+  --color-focus: var(--terracotta-300);
+  --color-selection-bg: var(--terracotta-700);
+  --color-selection-text: var(--earth-100);
+
+  --color-positive: var(--sage-300);
+  --color-positive-bg: var(--sage-900);
+  --color-negative: var(--brick-300);
+  --color-negative-bg: var(--brick-900);
+  --color-warning: var(--amber-300);
+  --color-warning-bg: var(--amber-900);
+
+  --color-member-text: var(--earth-100);
+  --color-member-1: var(--member-dark-1);
+  --color-member-2: var(--member-dark-2);
+  --color-member-3: var(--member-dark-3);
+  --color-member-4: var(--member-dark-4);
+  --color-member-5: var(--member-dark-5);
+  --color-member-6: var(--member-dark-6);
+  --color-member-7: var(--member-dark-7);
+  --color-member-8: var(--member-dark-8);
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.45);
+}

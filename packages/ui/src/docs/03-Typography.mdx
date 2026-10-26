@@ -1,0 +1,89 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "./blocks/locale";
+import { TypeScale } from "./blocks/Scales";
+
+<Meta title="Foundations/Typography" />
+
+<Lang locale="en">
+
+# Typography
+
+We use a single family: **Figtree**, self-hosted with `@fontsource` (no dependency on external services, no slow loading).
+
+<TypeScale />
+
+## Why Figtree
+
+- **Open, rounded forms:** letters like "a", "e" or "g" have wide curves and soft terminals. It conveys closeness without looking childish, unlike colder geometric typefaces or stiffer corporate ones.
+- **Very legible on small screens:** good x-height and generous spacing, designed for interfaces. The app will mostly be used on mobile, often standing up and in a hurry (at the supermarket, on the way out).
+- **Full Latin character set:** accents, ñ, ¿ and ¡ are designed with the same care, so Spanish reads as naturally as English.
+- **A single variable family:** every weight in one file. Smaller download and a consistent hierarchy based on size and weight, not on mixing styles.
+
+## Usage decisions
+
+| Decision | Why | How it helps the person |
+| --- | --- | --- |
+| 16 px base size | It's the recommended minimum for comfortable mobile reading, and it prevents iOS from zooming when focusing inputs | Reads without straining or zooming |
+| Generous line height (1.55) | Text breathes and lines don't blur together | Relaxed reading, less "fine print" feel |
+| Amounts with `tabular-nums` | All digits have the same width, so figures line up in columns | Compares amounts at a glance with no mental effort |
+| Headings in semibold, not extra bold | Clear hierarchy without harshness | The screen guides without "shouting" |
+| Moderate scale (12 to 36 px) | Few sizes, clearly distinct | Understands what matters without thinking |
+| No ALL CAPS for emphasis | Uppercase text reads as shouting and is slower to read | The tone stays friendly |
+| Room for longer translations | Spanish is often ~30 % longer than English; text containers grow and wrap | Nothing gets cut off, whatever the language |
+
+## Copy tone
+
+Interface copy talks like someone who lives in the house:
+
+| ✓ Yes | ✗ No |
+| --- | --- |
+| "Ana owes you €12.50" | "Outstanding balance: +12.50" |
+| "All square! Nobody owes anything" | "0 debts" |
+| "The list is empty. What's missing at home?" | "Empty list" |
+| "We couldn't save the expense. Please try again." | "Error 500" |
+
+Each language is written for its readers, not translated word for word: what matters is that the warmth survives. Switch the **Locale** toolbar to see the Spanish examples.
+
+</Lang>
+
+<Lang locale="es">
+
+# Tipografía
+
+Usamos una sola familia: **Figtree**, autoalojada con `@fontsource` (no depende de servicios externos ni carga lenta).
+
+<TypeScale />
+
+## Por qué Figtree
+
+- **Formas abiertas y redondeadas:** letras como la "a", la "e" o la "g" tienen curvas amplias y terminaciones suaves. Transmite cercanía sin parecer infantil, a diferencia de las tipografías geométricas más frías o las corporativas más rígidas.
+- **Muy legible en pantalla pequeña:** buena altura de las minúsculas y espaciado generoso, pensada para interfaces. La app se usará sobre todo en el móvil, muchas veces de pie y con prisa (en el súper, al salir de casa).
+- **Juego de caracteres latino completo:** tildes, ñ, ¿ y ¡ están diseñadas con el mismo cuidado, así que el español se lee tan natural como el inglés.
+- **Una sola familia variable:** todos los pesos en un archivo. Menos peso de descarga y una jerarquía coherente basada en tamaño y grosor, no en mezclar estilos.
+
+## Decisiones de uso
+
+| Decisión | Por qué | Cómo ayuda a la persona |
+| --- | --- | --- |
+| Tamaño base de 16 px | Es el mínimo recomendado para lectura cómoda en móvil y evita que iOS haga zoom al enfocar campos | Lee sin forzar la vista ni hacer zoom |
+| Interlineado amplio (1,55) | El texto respira y las líneas no se mezclan | Lectura relajada, menos sensación de "letra pequeña" |
+| Importes con `tabular-nums` | Todos los dígitos ocupan el mismo ancho, así las cifras se alinean en columna | Compara importes de un vistazo sin esfuerzo mental |
+| Títulos en semibold, no en negrita extrema | Jerarquía clara sin dureza | La pantalla guía sin "gritar" |
+| Escala moderada (de 12 a 36 px) | Pocos tamaños, bien diferenciados | Entiende la importancia de cada cosa sin pensar |
+| Sin MAYÚSCULAS para énfasis | El texto en mayúsculas se percibe como gritar y es más lento de leer | El tono sigue siendo amable |
+| Espacio para traducciones más largas | El español suele ser un 30 % más largo que el inglés; los contenedores crecen y saltan de línea | Nada se corta, sea cual sea el idioma |
+
+## Tono de los textos
+
+Los textos de la interfaz hablan como alguien de la casa:
+
+| ✓ Sí | ✗ No |
+| --- | --- |
+| "Ana te debe 12,50 €" | "Saldo pendiente: +12,50 €" |
+| "¡Todo al día! Nadie debe nada" | "0 deudas" |
+| "La lista está vacía. ¿Qué falta en casa?" | "Lista vacía" |
+| "No hemos podido guardar el gasto. Inténtalo de nuevo." | "Error 500" |
+
+Cada idioma se escribe para quien lo lee, no se traduce palabra por palabra: lo importante es que la calidez sobreviva. Cambia la barra **Locale** para ver los ejemplos en inglés.
+
+</Lang>

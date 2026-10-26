@@ -1,0 +1,85 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "./blocks/locale";
+import { RadiusScale, ShadowScale, SpacingScale } from "./blocks/Scales";
+
+<Meta title="Foundations/Spacing and shape" />
+
+<Lang locale="en">
+
+# Spacing and shape
+
+## Spacing
+
+A 4 px base scale. Every margin, padding or gap uses a `--space-*` token.
+
+<SpacingScale />
+
+**Why:** a fixed scale creates visual rhythm: related elements sit close together and distinct groups are separated consistently. We use generous spacing inside cards and between sections.
+
+**How it helps the person:** white space reduces the feeling of clutter. A screen that breathes is perceived as more orderly and conveys that "everything is under control", which matters when the topic is money and pending chores. On mobile, touch targets are also at least 44 px tall so they're comfortable to tap with one hand.
+
+## Radii
+
+<RadiusScale />
+
+| Token | Use |
+| --- | --- |
+| `sm` (8 px) | Tags, small inputs |
+| `md` (12 px) | Buttons, form fields |
+| `lg` (16 px) | Cards |
+| `xl` (24 px) | Dialogs and bottom sheets |
+| `full` | Avatars, badges, switches |
+
+**Why:** rounded shapes are generally perceived as friendlier and safer than sharp corners, which are associated with technical or formal tools. Radii grow with the element's size so the curve looks proportional.
+
+**How it helps the person:** the interface feels soft and approachable, more like everyday objects at home than a control panel.
+
+## Shadows
+
+<ShadowScale />
+
+**Why:** soft, diffuse shadows with a warm brown tint, never black. In dark mode shadows are stronger and elevation also relies on slightly lighter surfaces.
+
+**How it helps the person:** cards look like they're resting on a table, with a subtle depth that signals what can be touched, without the harsh look of grey shadows.
+
+</Lang>
+
+<Lang locale="es">
+
+# Espaciado y forma
+
+## Espaciado
+
+Escala con base de 4 px. Todo margen, relleno o separación usa un token `--space-*`.
+
+<SpacingScale />
+
+**Por qué así:** una escala fija produce ritmo visual: los elementos relacionados están cerca y los grupos distintos, separados de forma consistente. Usamos espacios generosos dentro de tarjetas y entre secciones.
+
+**Cómo ayuda a la persona:** el espacio en blanco reduce la sensación de saturación. Una pantalla que respira se percibe como más ordenada y transmite que "todo está bajo control", algo importante cuando hablamos de dinero y tareas pendientes. En móvil, además, los elementos táctiles tienen al menos 44 px de alto para pulsarlos con comodidad con una mano.
+
+## Radios
+
+<RadiusScale />
+
+| Token | Uso |
+| --- | --- |
+| `sm` (8 px) | Etiquetas, campos pequeños |
+| `md` (12 px) | Botones, campos de formulario |
+| `lg` (16 px) | Tarjetas |
+| `xl` (24 px) | Diálogos y paneles inferiores |
+| `full` | Avatares, insignias, interruptores |
+
+**Por qué así:** las formas redondeadas se perciben, en general, como más amables y seguras que las esquinas afiladas, que se asocian a herramientas técnicas o formales. Los radios crecen con el tamaño del elemento para que la curva se vea proporcionada.
+
+**Cómo ayuda a la persona:** la interfaz se siente blanda y cercana, como objetos cotidianos de casa más que como un panel de control.
+
+## Sombras
+
+<ShadowScale />
+
+**Por qué así:** sombras suaves y difusas con un tinte marrón cálido, nunca negro. En modo oscuro las sombras se refuerzan y la elevación se apoya también en superficies algo más claras.
+
+**Cómo ayuda a la persona:** las tarjetas parecen apoyadas sobre una mesa, con una profundidad sutil que indica qué se puede tocar, sin el aspecto duro de las sombras grises.
+
+</Lang>

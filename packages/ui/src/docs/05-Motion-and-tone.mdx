@@ -1,0 +1,97 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "./blocks/locale";
+import { MotionScale } from "./blocks/Scales";
+
+<Meta title="Foundations/Motion and tone" />
+
+<Lang locale="en">
+
+# Motion and tone
+
+## Motion
+
+Hover or focus each track with the keyboard to see the transition:
+
+<MotionScale />
+
+| Token | Duration | Use |
+| --- | --- | --- |
+| `--duration-fast` | 120 ms | Hover, button press, checkboxes |
+| `--duration-base` | 200 ms | Menus appearing, theme change, toasts |
+| `--duration-slow` | 320 ms | Dialogs and sheets sliding up |
+
+The `--easing-standard` and `--easing-gentle` curves start fast and slow down softly, like an object settling into place.
+
+**Why:** short, soft motion explains what happened (where a panel comes from, that something was saved) without making anyone wait. Nothing bounces or blinks.
+
+**How it helps the person:**
+- **Sense of response:** every tap gets an immediate reaction, so the person trusts the app "heard" them.
+- **Calm:** slow or flashy motion distracts and tires; short motion goes almost unnoticed.
+- **Respect:** if the system has "reduce motion" enabled, animations are turned off. Some people feel dizzy or unwell with animations, and their comfort comes first.
+
+## Reassuring feedback
+
+Hogar is real-time: what one person adds appears instantly on everyone else's phone. To make that feel like companionship rather than chaos:
+
+- **Visible confirmation on save:** a short toast ("Expense added") instead of silence. The person isn't left wondering whether it was saved.
+- **Other people's changes, with a name:** "Marta added milk" with her member color. Knowing who did what builds trust and a sense of team.
+- **Errors that explain and suggest:** what happened and what to do, without blame ("We couldn't…", never "You entered an invalid…").
+- **Destructive actions with a safety net:** deleting asks for a clear confirmation or offers undo. Removing the fear of making a mistake makes the app calmer to use.
+
+## Empty states
+
+An empty screen is the first impression of every section. Instead of a blank space, we show a friendly message and the next action:
+
+- Expenses: "No expenses yet. When someone pays for something for the home, log it here."
+- Balance: "All square! Nobody owes anything."
+- Shopping list: "The list is empty. What's missing at home?"
+
+**How it helps the person:** it guides without overwhelming, and turns "there's nothing here" into an invitation rather than an error.
+
+</Lang>
+
+<Lang locale="es">
+
+# Movimiento y tono
+
+## Movimiento
+
+Pasa el ratón o enfoca con el teclado cada pista para ver la transición:
+
+<MotionScale />
+
+| Token | Duración | Uso |
+| --- | --- | --- |
+| `--duration-fast` | 120 ms | Hover, pulsación de botones, casillas |
+| `--duration-base` | 200 ms | Aparición de menús, cambio de tema, avisos |
+| `--duration-slow` | 320 ms | Diálogos y paneles que entran desde abajo |
+
+Las curvas `--easing-standard` y `--easing-gentle` arrancan rápido y frenan con suavidad, como un objeto que se posa.
+
+**Por qué así:** el movimiento corto y suave explica qué ha pasado (de dónde viene un panel, que algo se ha guardado) sin hacer esperar. Nada rebota ni parpadea.
+
+**Cómo ayuda a la persona:**
+- **Sensación de respuesta:** cada toque tiene una reacción inmediata, así que la persona confía en que la app la ha "oído".
+- **Calma:** los movimientos lentos o llamativos distraen y cansan; los cortos pasan casi desapercibidos.
+- **Respeto:** si el sistema tiene activado "reducir movimiento", las animaciones se desactivan. Algunas personas sienten mareo o malestar con las animaciones, y su comodidad va primero.
+
+## Feedback que tranquiliza
+
+Hogar es en tiempo real: lo que añade una persona aparece al momento en el móvil de las demás. Para que eso se sienta acompañamiento y no caos:
+
+- **Confirmación visible al guardar:** un aviso breve ("Gasto añadido") en vez de silencio. La persona no se queda dudando de si se guardó.
+- **Cambios de otras personas, con nombre:** "Marta ha añadido leche" con su color de miembro. Saber quién hizo qué genera confianza y sensación de equipo.
+- **Errores que explican y proponen:** qué ha pasado y qué hacer, sin culpar ("No hemos podido…", nunca "Has introducido mal…").
+- **Acciones destructivas con red:** borrar pide confirmación clara o permite deshacer. Quitar el miedo a equivocarse hace que la app se use con más tranquilidad.
+
+## Estados vacíos
+
+Una pantalla vacía es la primera impresión de cada sección. En vez de un hueco, mostramos un mensaje amable y la siguiente acción:
+
+- Gastos: "Aún no hay gastos. Cuando alguien pague algo para casa, apúntalo aquí."
+- Balance: "¡Todo al día! Nadie debe nada."
+- Lista de la compra: "La lista está vacía. ¿Qué falta en casa?"
+
+**Cómo ayuda a la persona:** orienta sin agobiar y convierte el "no hay nada" en una invitación, no en un error.
+
+</Lang>
