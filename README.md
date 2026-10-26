@@ -70,3 +70,7 @@ packages/
   shared/   Zod schemas, types, error codes
 docs/       design guide, decisions, setup guides
 ```
+
+## License
+
+[MIT](LICENSE) © 2026 Daniel Rosa Herazo
