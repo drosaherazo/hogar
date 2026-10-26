@@ -2,7 +2,7 @@ packages:
   - apps/*
   - packages/*
 allowBuilds:
-  '@prisma/engines': true
+  "@prisma/engines": true
   cypress: true
   esbuild: true
   prisma: true

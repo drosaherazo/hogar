@@ -105,7 +105,7 @@ Rules:
 
 - **New color:** primitive in `primitives.css` → semantic token in `theme-light.css` **and** `theme-dark.css` → if it's used with text or as a UI border, add the pair to `contrastPairs.ts`. The test fails if it's missing from a theme or doesn't meet AA. If Storybook's chrome should use it, add it to `palette` in `.storybook/themes.ts`.
 - **Changed a palette value:** update the same hex in `.storybook/themes.ts` (the test will remind you).
-- **New component:** a folder with `Component.tsx`, `.module.css`, `.test.tsx` (with axe) and `.stories.tsx`, documented with the five-section template from _Foundations › Documenting a component_: what it is and when to use it · why it's designed this way · how it helps the person · accessibility · variants. Docs and story copy are written in `en` and `es` and follow the Storybook **Locale** toolbar.
+- **New component:** a folder with `Component.tsx`, `.module.css`, `.test.tsx` (with axe), `.stories.tsx` and a bilingual `.mdx` docs page, documented with the five-section template from _Foundations › Documenting a component_: what it is and when to use it · why it's designed this way · how it helps the person · accessibility · variants. Docs and story copy are written in `en` and `es` and follow the Storybook **Locale** toolbar.
 - **New Storybook docs page:** each language's prose inside `<Lang locale="en">` / `<Lang locale="es">`; any text in docs blocks as `{ en, es }`. Anything that previews a specific theme goes inside `ThemeSplit` (or Storybook's `<Unstyled>` with its own `data-theme`): the docs page's typography otherwise forces its own text colors and breaks contrast.
 - **New copy:** key in `en` and `es` in the feature namespace.
 
