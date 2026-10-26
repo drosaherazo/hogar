@@ -1,0 +1,65 @@
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as CardStories from "./Card.stories";
+
+<Meta of={CardStories} />
+
+<Lang locale="en">
+
+# Card
+
+<Canvas of={CardStories.Default} />
+<Controls of={CardStories.Default} />
+
+## What it is and when to use it
+A surface that groups related content: an expense, the login box, a section of the home page. Use it to separate one thing from another. Don't nest cards inside cards; use spacing instead.
+
+## Why it's designed this way
+- **Cream surface on the sand background** with a soft border and a warm, barely-there shadow.
+- **Generous inner spacing** (`--space-5`, or `--space-8` for large cards) and **16 px corners** (`--radius-lg`).
+- **Elevated** variant with a slightly deeper shadow for content that floats above the page, like the login box.
+- Can render as `section` or `article` when it's a self-contained part of the page.
+
+## How it helps the person
+- **Order:** clear boundaries make a screen easy to scan; each card is one idea.
+- **Comfort:** it looks like a sheet of paper resting on a table, a familiar, calm image rather than a hard panel.
+- **Evidence-backed:** grouping related items (Gestalt proximity and common region) reduces the effort of reading a screen. The paper metaphor is design intent.
+
+## Accessibility
+- Neutral by default (`div`); use `as="section"` with `aria-labelledby` pointing to its heading when it's a meaningful region.
+- Text on the card surface meets AA in both themes.
+
+## Variants
+<Canvas of={CardStories.Elevated} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Tarjeta
+
+<Canvas of={CardStories.Default} />
+<Controls of={CardStories.Default} />
+
+## Qué es y cuándo usarlo
+Una superficie que agrupa contenido relacionado: un gasto, la caja de inicio de sesión, una sección de la página de inicio. Úsala para separar una cosa de otra. No metas tarjetas dentro de tarjetas; usa espacio.
+
+## Por qué está diseñado así
+- **Superficie crema sobre el fondo arena** con un borde suave y una sombra cálida, casi imperceptible.
+- **Relleno generoso** (`--space-5`, o `--space-8` en tarjetas grandes) y **esquinas de 16 px** (`--radius-lg`).
+- Variante **elevada** con una sombra algo más profunda para contenido que flota sobre la página, como la caja de inicio de sesión.
+- Puede ser `section` o `article` cuando es una parte autónoma de la página.
+
+## Cómo ayuda a la persona
+- **Orden:** los límites claros hacen la pantalla fácil de recorrer; cada tarjeta es una idea.
+- **Comodidad:** parece una hoja de papel apoyada en la mesa, una imagen familiar y tranquila en vez de un panel duro.
+- **Respaldado:** agrupar elementos relacionados (proximidad y región común de la Gestalt) reduce el esfuerzo de leer una pantalla. La metáfora del papel es intención de diseño.
+
+## Accesibilidad
+- Neutra por defecto (`div`); usa `as="section"` con `aria-labelledby` apuntando a su título cuando es una región con sentido propio.
+- El texto sobre la tarjeta cumple AA en ambos temas.
+
+## Variantes
+<Canvas of={CardStories.Elevated} />
+
+</Lang>

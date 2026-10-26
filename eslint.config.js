@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["**/dist/**", "**/storybook-static/**", "**/coverage/**", "**/node_modules/**", "**/prisma/generated/**"],
+    ignores: ["**/dist/**", "**/storybook-static/**", "**/coverage/**", "**/node_modules/**", "**/src/generated/**"],
   },
   js.configs.recommended,
   ...tseslint.configs.strict,

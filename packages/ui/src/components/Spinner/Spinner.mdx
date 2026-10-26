@@ -1,0 +1,63 @@
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as SpinnerStories from "./Spinner.stories";
+
+<Meta of={SpinnerStories} />
+
+<Lang locale="en">
+
+# Spinner
+
+<Canvas of={SpinnerStories.Default} />
+<Controls of={SpinnerStories.Default} />
+
+## What it is and when to use it
+Shows that something is on its way: restoring the session, saving. Use it for waits longer than a moment; for whole sections that load, prefer showing the layout with placeholder content once it exists. Don't use it as decoration.
+
+## Why it's designed this way
+- **A thin ring in the current text color:** it blends with whatever surrounds it (a button, a page) instead of drawing attention.
+- **Slow, steady rotation** (about one second per turn): conveys "working on it" without urgency.
+- **With reduced motion it stops spinning** and stays as a soft, still ring.
+
+## How it helps the person
+- **Reassurance:** the person knows the app heard them and is working, so they don't tap again or leave.
+- **Calm:** a quiet indicator keeps waiting from feeling stressful.
+- **Evidence-backed:** visible feedback for system status is a core usability heuristic; respecting `prefers-reduced-motion` avoids discomfort for people with vestibular disorders.
+
+## Accessibility
+- `role="status"` with a **required, translated `label`**, so screen readers announce what is loading.
+- No motion when the system asks for reduced motion.
+
+## Variants
+<Canvas of={SpinnerStories.Large} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Spinner
+
+<Canvas of={SpinnerStories.Default} />
+<Controls of={SpinnerStories.Default} />
+
+## Qué es y cuándo usarlo
+Indica que algo está en camino: recuperando la sesión, guardando. Úsalo para esperas de más de un instante; para secciones enteras que cargan, cuando exista, es mejor mostrar el esqueleto de la página. No lo uses como decoración.
+
+## Por qué está diseñado así
+- **Un aro fino del color del texto:** se integra con lo que lo rodea (un botón, una página) en vez de llamar la atención.
+- **Giro lento y constante** (un segundo por vuelta aprox.): transmite "estoy en ello" sin urgencia.
+- **Con movimiento reducido deja de girar** y queda como un aro suave y quieto.
+
+## Cómo ayuda a la persona
+- **Tranquilidad:** la persona sabe que la app la ha oído y está trabajando, así no vuelve a pulsar ni se va.
+- **Calma:** un indicador discreto hace que la espera no estrese.
+- **Respaldado:** mostrar el estado del sistema es una heurística básica de usabilidad; respetar `prefers-reduced-motion` evita malestar a personas con trastornos vestibulares.
+
+## Accesibilidad
+- `role="status"` con un **`label` obligatorio y traducido**, para que los lectores de pantalla anuncien qué se está cargando.
+- Sin movimiento cuando el sistema pide reducirlo.
+
+## Variantes
+<Canvas of={SpinnerStories.Large} />
+
+</Lang>

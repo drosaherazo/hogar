@@ -1,0 +1,71 @@
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as AvatarStories from "./Avatar.stories";
+
+<Meta of={AvatarStories} />
+
+<Lang locale="en">
+
+# Avatar
+
+<Canvas of={AvatarStories.Initials} />
+<Controls of={AvatarStories.Initials} />
+
+## What it is and when to use it
+A person's face in the app: their Google photo, or their initials on their member color. Use it wherever "who" matters: the account menu, who paid, whose chore it is. Don't use it for things that aren't people.
+
+## Why it's designed this way
+- **Round and soft**, like a profile picture on a fridge.
+- **Initials on the member color** when there's no photo, or when it fails to load: the person is never a grey blank.
+- **Eight member colors with the same luminance** (verified by a test), assigned by join order, so a person keeps their color everywhere and nobody stands out more than anyone else.
+- **Initials use the first and last word** of the name ("María José López Ruiz" → "MR") and respect accents.
+
+## How it helps the person
+- **Recognition at a glance:** faces and colors are faster to read than names, especially in lists.
+- **Belonging:** having your own color makes the shared home feel like yours too.
+- **Fairness:** equal luminance avoids a visual hierarchy between members. This is design intent, backed by a measurable rule.
+
+## Accessibility
+- Exposed as an image named after the person (`role="img"`, `aria-label`).
+- Set `decorative` when the name is already visible next to it, so screen readers don't repeat it.
+- Initials on every member color meet AA in both themes.
+
+## Variants
+<Canvas of={AvatarStories.WithPhoto} />
+<Canvas of={AvatarStories.BrokenPhotoFallsBackToInitials} />
+<Canvas of={AvatarStories.MemberColors} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Avatar
+
+<Canvas of={AvatarStories.Initials} />
+<Controls of={AvatarStories.Initials} />
+
+## Qué es y cuándo usarlo
+La cara de una persona en la app: su foto de Google o sus iniciales sobre su color de miembro. Úsalo donde importe el "quién": el menú de cuenta, quién pagó, a quién le toca una tarea. No lo uses para cosas que no son personas.
+
+## Por qué está diseñado así
+- **Redondo y suave**, como una foto en la nevera.
+- **Iniciales sobre el color de miembro** cuando no hay foto o no carga: la persona nunca es un hueco gris.
+- **Ocho colores de miembro con la misma luminosidad** (verificado por un test), asignados por orden de llegada, así cada persona conserva su color en todas partes y nadie destaca más que otro.
+- **Las iniciales usan la primera y la última palabra** del nombre ("María José López Ruiz" → "MR") y respetan las tildes.
+
+## Cómo ayuda a la persona
+- **Reconocimiento de un vistazo:** caras y colores se leen más rápido que los nombres, sobre todo en listas.
+- **Pertenencia:** tener tu propio color hace que el hogar compartido también se sienta tuyo.
+- **Equidad:** la misma luminosidad evita una jerarquía visual entre miembros. Es intención de diseño, respaldada por una regla medible.
+
+## Accesibilidad
+- Se expone como imagen con el nombre de la persona (`role="img"`, `aria-label`).
+- Usa `decorative` cuando el nombre ya está visible al lado, para que el lector de pantalla no lo repita.
+- Las iniciales sobre cada color de miembro cumplen AA en ambos temas.
+
+## Variantes
+<Canvas of={AvatarStories.WithPhoto} />
+<Canvas of={AvatarStories.BrokenPhotoFallsBackToInitials} />
+<Canvas of={AvatarStories.MemberColors} />
+
+</Lang>

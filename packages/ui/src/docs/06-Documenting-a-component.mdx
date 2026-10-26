@@ -11,7 +11,7 @@ Every `packages/ui` component explains not only **how** to use it, but **why** i
 
 ## Template
 
-The documentation lives in the component's own `Component.stories.tsx`, written in **both locales** and picked with the **Locale** toolbar (see "Docs in two languages" below). It has these five sections:
+The documentation lives next to the component in `Component.mdx`, attached to its stories with `<Meta of={Stories} />`, written in **both locales** inside `<Lang>` and picked with the **Locale** toolbar (see "Docs in two languages" below). `Button.mdx` is the reference. It has these five sections:
 
 ```md
 ## What it is and when to use it
@@ -39,7 +39,7 @@ Every Storybook page follows the **Locale** toolbar, so nothing is English-only:
 
 - **MDX pages:** wrap each language's prose in `<Lang locale="en">…</Lang>` and `<Lang locale="es">…</Lang>` (from `src/docs/blocks/locale.tsx`). Leave a blank line after the opening tag and before the closing one so the Markdown inside is parsed.
 - **Docs blocks** (swatches, tables, samples): take text as a `Localized` value (`{ en, es }`) and read it with `useLocalized()` or `useDocsLocale()`.
-- **Stories:** the global decorator wraps every story in `LocaleProvider`, so formatting components follow the toolbar. Story copy comes in as args from a `{ en, es }` object picked with `context.globals.locale`.
+- **Stories:** the global decorator wraps every story in `LocaleProvider`, so formatting components follow the toolbar. Story copy is passed already translated with `storyText(globals, { en, es })` (from `src/docs/blocks/storyLocale.ts`), just like the app passes i18n strings.
 - Sidebar titles stay in English: Storybook's navigation can't change language at runtime.
 
 ## Copy and i18n in components
@@ -76,7 +76,7 @@ Cada componente de `packages/ui` explica no solo **cómo** se usa, sino **por qu
 
 ## Plantilla
 
-La documentación vive en el propio `Component.stories.tsx`, escrita en **los dos idiomas** y elegida con la barra **Locale** (ver "Documentación en dos idiomas" más abajo). Tiene estas cinco secciones:
+La documentación vive junto al componente en `Component.mdx`, enlazada a sus historias con `<Meta of={Stories} />`, escrita en **los dos idiomas** dentro de `<Lang>` y elegida con la barra **Locale** (ver "Documentación en dos idiomas" más abajo). `Button.mdx` es la referencia. Tiene estas cinco secciones:
 
 ```md
 ## Qué es y cuándo usarlo
@@ -104,7 +104,7 @@ Todas las páginas de Storybook siguen la barra **Locale**, así que nada queda 
 
 - **Páginas MDX:** envuelve el texto de cada idioma en `<Lang locale="en">…</Lang>` y `<Lang locale="es">…</Lang>` (de `src/docs/blocks/locale.tsx`). Deja una línea en blanco tras la etiqueta de apertura y antes de la de cierre para que el Markdown de dentro se interprete.
 - **Bloques de documentación** (muestras, tablas, ejemplos): reciben el texto como valor `Localized` (`{ en, es }`) y lo leen con `useLocalized()` o `useDocsLocale()`.
-- **Historias:** el decorador global envuelve cada historia en `LocaleProvider`, así que los componentes de formato siguen la barra. Los textos de la historia llegan como args desde un objeto `{ en, es }` elegido con `context.globals.locale`.
+- **Historias:** el decorador global envuelve cada historia en `LocaleProvider`, así que los componentes de formato siguen la barra. Los textos de la historia se pasan ya traducidos con `storyText(globals, { en, es })` (de `src/docs/blocks/storyLocale.ts`), igual que la app pasa los textos de i18n.
 - Los títulos de la barra lateral quedan en inglés: la navegación de Storybook no puede cambiar de idioma en tiempo de ejecución.
 
 ## Textos e i18n en los componentes

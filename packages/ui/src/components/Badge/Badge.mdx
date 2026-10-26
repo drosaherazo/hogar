@@ -1,0 +1,63 @@
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as BadgeStories from "./Badge.stories";
+
+<Meta of={BadgeStories} />
+
+<Lang locale="en">
+
+# Badge
+
+<Canvas of={BadgeStories.Neutral} />
+<Controls of={BadgeStories.Neutral} />
+
+## What it is and when to use it
+A short status label next to something: "Coming soon", "Done", "Due tomorrow". Use it for states, not for actions (that's a button) or long text.
+
+## Why it's designed this way
+- **Pill shape** (`--radius-full`) and small semibold text: reads as a tag, not as something to press.
+- **Soft tinted backgrounds** from the state palette (sage, brick, amber), never saturated fills.
+- **The text always carries the meaning;** the tone only reinforces it.
+
+## How it helps the person
+- **Quick orientation:** the state of something is visible without opening it.
+- **Calm:** even "You owe" is shown in muted brick, informing without alarm or blame.
+- **Evidence-backed:** text plus color works for people with color blindness; every tone meets AA in both themes.
+
+## Accessibility
+- Plain text in a `span`; screen readers read it as part of its context.
+- Never rely on the tone alone: the label must say the state.
+
+## Variants
+<Canvas of={BadgeStories.Tones} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Insignia
+
+<Canvas of={BadgeStories.Neutral} />
+<Controls of={BadgeStories.Neutral} />
+
+## Qué es y cuándo usarlo
+Una etiqueta corta de estado junto a algo: "Próximamente", "Hecho", "Vence mañana". Úsala para estados, no para acciones (eso es un botón) ni para textos largos.
+
+## Por qué está diseñado así
+- **Forma de píldora** (`--radius-full`) y texto pequeño en semibold: se lee como etiqueta, no como algo que pulsar.
+- **Fondos suaves teñidos** de la paleta de estados (salvia, ladrillo, ámbar), nunca rellenos saturados.
+- **El texto siempre lleva el significado;** el tono solo lo refuerza.
+
+## Cómo ayuda a la persona
+- **Orientación rápida:** el estado de algo se ve sin abrirlo.
+- **Calma:** incluso "Debes" se muestra en ladrillo apagado, informando sin alarmar ni culpar.
+- **Respaldado:** texto más color funciona para personas con daltonismo; cada tono cumple AA en ambos temas.
+
+## Accesibilidad
+- Texto simple en un `span`; los lectores de pantalla lo leen como parte de su contexto.
+- Nunca dependas solo del tono: la etiqueta debe decir el estado.
+
+## Variantes
+<Canvas of={BadgeStories.Tones} />
+
+</Lang>

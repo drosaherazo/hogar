@@ -4,3 +4,4 @@ pnpm-lock.yaml
 **/coverage
 # MDX docs mix Markdown and JSX blocks (<Lang>) whose blank lines matter.
 **/*.mdx
+**/src/generated

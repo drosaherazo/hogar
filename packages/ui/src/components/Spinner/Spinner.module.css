@@ -1,0 +1,30 @@
+.spinner {
+  display: inline-block;
+  flex: none;
+  inline-size: var(--size-icon-md);
+  block-size: var(--size-icon-md);
+  border: var(--focus-ring-width) solid currentcolor;
+  border-block-start-color: transparent;
+  border-radius: var(--radius-full);
+  animation: spin calc(var(--duration-slow) * 3) linear infinite;
+  opacity: 0.85;
+}
+
+.lg {
+  inline-size: var(--size-icon-lg);
+  block-size: var(--size-icon-lg);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* With reduced motion the global rule stops the rotation; a gentle pulse still shows activity. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    border-block-start-color: currentcolor;
+    opacity: 0.6;
+  }
+}

@@ -1,0 +1,59 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as MenuStories from "./Menu.stories";
+
+<Meta of={MenuStories} />
+
+<Lang locale="en">
+
+# Menu
+
+<Canvas of={MenuStories.AccountMenu} />
+
+## What it is and when to use it
+A short list of actions or options that opens from a button, like the account menu (theme, language, sign out). Use it to keep secondary actions out of the way. Don't hide the main action of a screen inside a menu.
+
+## Why it's designed this way
+- **Built on Radix DropdownMenu:** keyboard navigation, focus management and roles come from a well-tested library; we only add the Hogar look.
+- **A cream panel with large corners and a soft shadow** that grows gently from its trigger (`--duration-base`).
+- **Rows at least 44 px tall**, with a sunken highlight instead of a strong color, and a small terracotta dot for the selected option.
+- **Groups with a muted label** ("Theme", "Language") and separators, so options are scannable.
+
+## How it helps the person
+- **A tidy screen:** less-used settings stay one tap away without cluttering the page.
+- **Control:** options show which one is active, so the person always knows the current state.
+- **Evidence-backed:** consistent keyboard support (arrows, Enter, Escape returning focus to the trigger) follows the WAI-ARIA menu pattern.
+
+## Accessibility
+- The trigger must be a focusable control with an accessible name (for an avatar button, a translated `aria-label`).
+- `menu`, `menuitem` and `menuitemradio` roles with `aria-checked`; Escape closes and returns focus.
+- Group labels and option labels come in already translated.
+
+</Lang>
+
+<Lang locale="es">
+
+# Menú
+
+<Canvas of={MenuStories.AccountMenu} />
+
+## Qué es y cuándo usarlo
+Una lista corta de acciones u opciones que se abre desde un botón, como el menú de cuenta (tema, idioma, cerrar sesión). Úsalo para apartar las acciones secundarias. No escondas en un menú la acción principal de una pantalla.
+
+## Por qué está diseñado así
+- **Basado en Radix DropdownMenu:** la navegación con teclado, el manejo del foco y los roles vienen de una librería probada; nosotros solo ponemos el aspecto de Hogar.
+- **Un panel crema con esquinas amplias y sombra suave** que crece con suavidad desde su botón (`--duration-base`).
+- **Filas de al menos 44 px**, con un resaltado hundido en vez de un color fuerte, y un pequeño punto terracota en la opción elegida.
+- **Grupos con una etiqueta tenue** ("Tema", "Idioma") y separadores, para que las opciones se recorran fácilmente.
+
+## Cómo ayuda a la persona
+- **Una pantalla ordenada:** los ajustes menos usados quedan a un toque sin saturar la página.
+- **Control:** las opciones muestran cuál está activa, así la persona siempre conoce el estado actual.
+- **Respaldado:** el soporte de teclado coherente (flechas, Enter, Escape devolviendo el foco al botón) sigue el patrón de menú de WAI-ARIA.
+
+## Accesibilidad
+- El botón que lo abre debe ser enfocable y tener nombre accesible (en un botón con avatar, un `aria-label` traducido).
+- Roles `menu`, `menuitem` y `menuitemradio` con `aria-checked`; Escape cierra y devuelve el foco.
+- Las etiquetas de grupo y de opción llegan ya traducidas.
+
+</Lang>

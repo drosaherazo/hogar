@@ -1,0 +1,77 @@
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as ButtonStories from "./Button.stories";
+
+<Meta of={ButtonStories} />
+
+<Lang locale="en">
+
+# Button
+
+<Canvas of={ButtonStories.Primary} />
+<Controls of={ButtonStories.Primary} />
+
+## What it is and when to use it
+The main way to trigger an action: save, add, sign out. Use **one primary button per screen or block** for the action that matters most; secondary and ghost buttons for the rest. Don't use a button to navigate to another page (use a link).
+
+## Why it's designed this way
+- **Terracotta primary** with the warm contrast color on top: it stands out enough to guide, without the urgency of red.
+- **Rounded corners (`--radius-md`) and semibold text:** friendly and clearly tappable, never harsh.
+- **At least 44 px tall** in every size, and a short press animation (`translateY(var(--border-width))`) so the tap feels physical.
+- **Labels are verbs** that say exactly what happens ("Add expense", never "OK").
+- **Loading keeps the label** and adds a spinner instead of replacing the text, so the person still knows what they pressed.
+
+## How it helps the person
+- **Confidence:** a single, clearly highlighted action removes the doubt of "what do I do here?".
+- **Calm:** the button reacts instantly to the tap and shows progress while it works, so nobody taps twice wondering if it worked.
+- **Evidence-backed:** 44 px touch targets (WCAG 2.5.5 / platform guidelines) and AA contrast in both themes. The warmth of the color is design intent.
+
+## Accessibility
+- Native `<button>`, `type="button"` by default so it never submits a form by accident.
+- Visible focus ring in terracotta. Disabled buttons use the native `disabled` attribute.
+- While loading, `aria-busy` is set and `loadingLabel` (required, already translated) is announced as a status.
+- Icons are decorative and hidden from screen readers; the text is the accessible name.
+
+## Variants
+<Canvas of={ButtonStories.Secondary} />
+<Canvas of={ButtonStories.Ghost} />
+<Canvas of={ButtonStories.Loading} />
+<Canvas of={ButtonStories.Disabled} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Botón
+
+<Canvas of={ButtonStories.Primary} />
+<Controls of={ButtonStories.Primary} />
+
+## Qué es y cuándo usarlo
+La forma principal de lanzar una acción: guardar, añadir, cerrar sesión. Usa **un solo botón principal por pantalla o bloque** para la acción más importante; secundarios y fantasma para el resto. No uses un botón para ir a otra página (usa un enlace).
+
+## Por qué está diseñado así
+- **Principal en terracota** con el color de contraste cálido encima: destaca lo suficiente para guiar, sin la urgencia del rojo.
+- **Esquinas redondeadas (`--radius-md`) y texto semibold:** amable y claramente pulsable, nunca duro.
+- **Al menos 44 px de alto** en todos los tamaños, y una animación corta al pulsar (`translateY(var(--border-width))`) para que el toque se sienta físico.
+- **Los textos son verbos** que dicen exactamente qué pasa ("Añadir gasto", nunca "Aceptar").
+- **Al cargar se mantiene el texto** y se añade un spinner en vez de sustituirlo, así la persona sigue sabiendo qué ha pulsado.
+
+## Cómo ayuda a la persona
+- **Confianza:** una sola acción bien destacada elimina la duda de "¿qué hago aquí?".
+- **Calma:** el botón reacciona al instante y muestra el progreso mientras trabaja, así nadie pulsa dos veces dudando de si funcionó.
+- **Respaldado:** objetivos táctiles de 44 px (WCAG 2.5.5 y guías de plataforma) y contraste AA en ambos temas. La calidez del color es intención de diseño.
+
+## Accesibilidad
+- `<button>` nativo, con `type="button"` por defecto para no enviar un formulario por accidente.
+- Anillo de foco visible en terracota. Los botones deshabilitados usan el atributo nativo `disabled`.
+- Mientras carga se marca `aria-busy` y se anuncia `loadingLabel` (obligatorio, ya traducido) como estado.
+- Los iconos son decorativos y se ocultan a los lectores de pantalla; el texto es el nombre accesible.
+
+## Variantes
+<Canvas of={ButtonStories.Secondary} />
+<Canvas of={ButtonStories.Ghost} />
+<Canvas of={ButtonStories.Loading} />
+<Canvas of={ButtonStories.Disabled} />
+
+</Lang>
