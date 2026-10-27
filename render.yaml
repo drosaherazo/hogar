@@ -9,8 +9,8 @@ services:
     branch: main
     # Deploy only once CI has passed on the commit.
     autoDeployTrigger: checksPass
+    # Render ships pnpm, which switches itself to the version in package.json (packageManager).
     buildCommand: >-
-      corepack enable &&
       pnpm install --frozen-lockfile --filter "@hogar/api..." &&
       pnpm --filter @hogar/api build &&
       pnpm --filter @hogar/api db:deploy
