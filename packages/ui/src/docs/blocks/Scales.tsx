@@ -88,12 +88,7 @@ export function MotionScale() {
       {DURATIONS.map(({ duration, easing }) => (
         <div key={duration} className={styles.scaleRow}>
           <code className={styles.scaleLabel}>--duration-{duration}</code>
-          <div
-            className={styles.motionTrack}
-            tabIndex={0}
-            role="img"
-            aria-label={motionLabel(duration)}
-          >
+          <div className={styles.motionTrack} tabIndex={0} role="img" aria-label={motionLabel(duration)}>
             <span
               className={styles.motionDot}
               style={{

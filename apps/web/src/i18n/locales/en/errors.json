@@ -1,0 +1,25 @@
+{
+  "auth": {
+    "google": {
+      "invalid_token": "We couldn't verify your Google sign-in. Please try again.",
+      "email_not_verified": "Your Google account's email isn't verified yet. Verify it with Google and try again."
+    },
+    "session": {
+      "missing": "Your session has ended. Sign in again to continue.",
+      "expired": "Your session has expired. Sign in again to continue.",
+      "reused": "For your security we closed your session. Sign in again to continue."
+    },
+    "token": {
+      "invalid": "Your session has ended. Sign in again to continue."
+    }
+  },
+  "request": {
+    "invalid": "Something in that request wasn't right. Please try again.",
+    "forbidden_origin": "That request didn't come from Hogar, so we blocked it.",
+    "rate_limited": "Too many attempts in a short time. Wait a few minutes and try again."
+  },
+  "server": {
+    "unexpected": "Something went wrong on our side. Please try again in a moment."
+  },
+  "network": "We couldn't reach Hogar. Check your connection and try again."
+}

@@ -1,0 +1,9 @@
+.md {
+  inline-size: var(--size-avatar-sm);
+  block-size: var(--size-avatar-sm);
+}
+
+.lg {
+  inline-size: var(--size-avatar-lg);
+  block-size: var(--size-avatar-lg);
+}

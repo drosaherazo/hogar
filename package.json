@@ -1,14 +1,33 @@
 {
   "name": "hogar",
   "private": true,
+  "license": "MIT",
   "packageManager": "pnpm@11.21.0",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
+    "dev": "concurrently -n api,web -c auto \"pnpm --filter @hogar/api dev\" \"pnpm --filter @hogar/web dev\"",
+    "db:up": "docker compose up -d --wait db",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter @hogar/api db:migrate",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "lint": "pnpm -r lint",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "storybook": "pnpm --filter @hogar/ui storybook"
-  }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^10.0.6",
+    "eslint": "^10.13.0",
+    "eslint-plugin-i18next": "^6.1.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.0"
+  },
+  "type": "module"
 }

@@ -7,3 +7,6 @@ coverage/
 !.env.example
 *.log
 .DS_Store
+!apps/web/.env.e2e
+**/cypress/screenshots/
+**/cypress/videos/

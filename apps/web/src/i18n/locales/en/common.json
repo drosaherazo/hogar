@@ -1,0 +1,19 @@
+{
+  "appName": "Hogar",
+  "loading": "Loading your home…",
+  "skipToContent": "Skip to content",
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "switchToDark": "Switch to dark theme",
+    "switchToLight": "Switch to light theme"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "account": {
+    "menu": "Account menu for {{name}}",
+    "signOut": "Sign out"
+  }
+}

@@ -1,0 +1,63 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as EmptyStateStories from "./EmptyState.stories";
+
+<Meta of={EmptyStateStories} />
+
+<Lang locale="en">
+
+# Empty state
+
+<Canvas of={EmptyStateStories.NoHousehold} />
+
+## What it is and when to use it
+What a section shows when it has nothing yet: no household, no expenses, an empty shopping list. Use it every time a list or area can be empty. Don't use it for errors (explain the error and how to fix it instead).
+
+## Why it's designed this way
+- **A round, soft icon** in terracotta on a sunken circle sets the topic at a glance.
+- **A friendly headline and one or two sentences** in natural language: what this space is for and what to do next.
+- **One clear next step** (a primary button), optionally a secondary one.
+- **Centered and narrow** (`--size-content-sm`), so it reads like a short note, not a wall of text.
+
+## How it helps the person
+- **Orientation without pressure:** the first time someone opens a section, they learn what it's for and how to start.
+- **Warmth:** "What's missing at home?" turns an empty screen into an invitation instead of a dead end.
+- **Evidence-backed:** a clear next action reduces drop-off on empty screens (a well-known onboarding pattern). The friendly tone is design intent.
+
+## Accessibility
+- A `section` named by its heading; choose `headingLevel` so it fits the page outline.
+- The icon is decorative and hidden from screen readers. All copy comes in already translated.
+
+## Variants
+<Canvas of={EmptyStateStories.ShoppingList} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Estado vacío
+
+<Canvas of={EmptyStateStories.NoHousehold} />
+
+## Qué es y cuándo usarlo
+Lo que muestra una sección cuando aún no tiene nada: sin hogar, sin gastos, lista de la compra vacía. Úsalo cada vez que una lista o zona pueda estar vacía. No lo uses para errores (en ese caso explica el error y cómo solucionarlo).
+
+## Por qué está diseñado así
+- **Un icono redondo y suave** en terracota sobre un círculo hundido marca el tema de un vistazo.
+- **Un título amable y una o dos frases** en lenguaje natural: para qué es este espacio y qué hacer a continuación.
+- **Un siguiente paso claro** (un botón principal) y, si hace falta, uno secundario.
+- **Centrado y estrecho** (`--size-content-sm`), para que se lea como una nota breve, no como un muro de texto.
+
+## Cómo ayuda a la persona
+- **Orientación sin presión:** la primera vez que alguien abre una sección, entiende para qué sirve y cómo empezar.
+- **Calidez:** "¿Qué falta en casa?" convierte una pantalla vacía en una invitación en vez de un callejón sin salida.
+- **Respaldado:** una acción clara reduce el abandono en pantallas vacías (un patrón de onboarding conocido). El tono amable es intención de diseño.
+
+## Accesibilidad
+- Una `section` nombrada por su título; elige `headingLevel` para que encaje en el esquema de la página.
+- El icono es decorativo y se oculta a los lectores de pantalla. Todo el texto llega ya traducido.
+
+## Variantes
+<Canvas of={EmptyStateStories.ShoppingList} />
+
+</Lang>

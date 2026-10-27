@@ -1,0 +1,19 @@
+{
+  "appName": "Hogar",
+  "loading": "Cargando tu hogar…",
+  "skipToContent": "Saltar al contenido",
+  "theme": {
+    "label": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "switchToDark": "Cambiar al tema oscuro",
+    "switchToLight": "Cambiar al tema claro"
+  },
+  "language": {
+    "label": "Idioma"
+  },
+  "account": {
+    "menu": "Menú de la cuenta de {{name}}",
+    "signOut": "Cerrar sesión"
+  }
+}

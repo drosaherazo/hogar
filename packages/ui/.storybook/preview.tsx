@@ -2,7 +2,7 @@ import { DocsContainer, type DocsContainerProps } from "@storybook/addon-docs/bl
 import type { Decorator, Preview } from "@storybook/react-vite";
 import { useEffect, type PropsWithChildren } from "react";
 import { useDocsGlobal } from "../src/docs/blocks/globals";
-import { DEFAULT_LOCALE, isLocale, LocaleProvider } from "../src/locale/LocaleProvider";
+import { DEFAULT_LOCALE, isLocale, LocaleProvider, type Locale } from "../src/locale/LocaleProvider";
 import "../src/tokens/index.css";
 import { resolveThemeName, storybookThemes, type ThemeName } from "./themes";
 
@@ -12,22 +12,30 @@ function useThemeAttribute(theme: ThemeName) {
   }, [theme]);
 }
 
-const withTheme: Decorator = (Story, context) => {
-  const theme = resolveThemeName(context.globals["theme"]);
+function ThemeScope({ theme, children }: PropsWithChildren<{ theme: ThemeName }>) {
   useThemeAttribute(theme);
-  return <Story />;
-};
+  return children;
+}
 
-const withLocale: Decorator = (Story, context) => {
-  const requested: unknown = context.globals["locale"];
-  const locale = isLocale(requested) ? requested : DEFAULT_LOCALE;
+function LocaleScope({ locale, children }: PropsWithChildren<{ locale: Locale }>) {
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
+  return <LocaleProvider locale={locale}>{children}</LocaleProvider>;
+}
+
+const withTheme: Decorator = (Story, context) => (
+  <ThemeScope theme={resolveThemeName(context.globals["theme"])}>
+    <Story />
+  </ThemeScope>
+);
+
+const withLocale: Decorator = (Story, context) => {
+  const requested: unknown = context.globals["locale"];
   return (
-    <LocaleProvider locale={locale}>
+    <LocaleScope locale={isLocale(requested) ? requested : DEFAULT_LOCALE}>
       <Story />
-    </LocaleProvider>
+    </LocaleScope>
   );
 };
 

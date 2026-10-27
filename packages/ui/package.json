@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@fontsource-variable/figtree": "^5.3.0",
+    "@radix-ui/react-dropdown-menu": "^2.2.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.61.0"
   },
@@ -34,7 +35,7 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "storybook": "10.6.3",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "vite": "^8.3.5",
     "vitest": "^5.0.5",
     "vitest-axe": "^0.1.0"
