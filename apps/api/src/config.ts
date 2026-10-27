@@ -7,6 +7,7 @@ const envSchema = z.object({
   WEB_ORIGIN: z.url(),
   PORT: z.coerce.number().int().positive().default(3000),
   COOKIE_SECURE: z.stringbool().default(false),
+  TRUST_PROXY_HOPS: z.coerce.number().int().nonnegative().default(0),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce
     .number()
     .int()
@@ -22,6 +23,8 @@ export interface Config {
   webOrigin: string;
   port: number;
   cookieSecure: boolean;
+  /** Reverse proxies in front of the API; Express reads the client IP (for rate limiting) past them. */
+  trustProxyHops: number;
   accessTokenTtlSeconds: number;
   refreshTokenTtlDays: number;
 }
@@ -41,6 +44,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     webOrigin: new URL(values.WEB_ORIGIN).origin,
     port: values.PORT,
     cookieSecure: values.COOKIE_SECURE,
+    trustProxyHops: values.TRUST_PROXY_HOPS,
     accessTokenTtlSeconds: values.ACCESS_TOKEN_TTL_SECONDS,
     refreshTokenTtlDays: values.REFRESH_TOKEN_TTL_DAYS,
   };

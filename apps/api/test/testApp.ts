@@ -19,6 +19,7 @@ export const config: Config = {
   webOrigin: WEB_ORIGIN,
   port: 0,
   cookieSecure: true,
+  trustProxyHops: 0,
   accessTokenTtlSeconds: 900,
   refreshTokenTtlDays: 30,
 };
@@ -52,11 +53,14 @@ export class TestClock {
   }
 }
 
-export function createTestApp() {
+export function createTestApp({
+  authRateLimit = 1000,
+  ...overrides
+}: { authRateLimit?: number } & Partial<Config> = {}) {
   const google = new FakeGoogleVerifier();
   google.identities.set("valid-ana-token", ana);
   const clock = new TestClock();
-  const app = createApp({ config, db, google, authRateLimit: 1000, now: clock.now });
+  const app = createApp({ config: { ...config, ...overrides }, db, google, authRateLimit, now: clock.now });
   return { app, google, clock };
 }
 
