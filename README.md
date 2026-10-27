@@ -52,6 +52,8 @@ pnpm dev         # web on http://localhost:5173, API on http://localhost:3000
 | `pnpm db:up` / `pnpm db:down` / `pnpm db:migrate` | Database lifecycle                                                      |
 | `pnpm format`                                     | Prettier                                                                |
 
+Deploying (Vercel, Render and Neon): see [docs/deploy.md](docs/deploy.md).
+
 ## How it's built
 
 - **Warm by design.** Every color, shape and piece of copy aims to lower the tension of talking about money and chores. The reasoning, in English and Spanish, lives in Storybook (_Foundations_ and each component's docs page); the rules and review checklist are in [docs/design.md](docs/design.md).
