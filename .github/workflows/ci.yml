@@ -51,7 +51,7 @@ jobs:
       - run: pnpm test
 
   build:
-    name: Build web and Storybook
+    name: Build web, API and Storybook
     runs-on: ubuntu-latest
     env:
       CYPRESS_INSTALL_BINARY: 0
@@ -64,6 +64,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @hogar/web build
+      - run: pnpm --filter @hogar/api build
       - run: pnpm --filter @hogar/ui build-storybook
 
   e2e:
