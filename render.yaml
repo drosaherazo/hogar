@@ -1,0 +1,36 @@
+# Render Blueprint for the API. The database lives on Neon; the web app and Storybook on Vercel.
+# Step-by-step setup: docs/deploy.md.
+services:
+  - type: web
+    name: hogar-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    # Deploy only once CI has passed on the commit.
+    autoDeployTrigger: checksPass
+    buildCommand: >-
+      corepack enable &&
+      pnpm install --frozen-lockfile --filter "@hogar/api..." &&
+      pnpm --filter @hogar/api build &&
+      pnpm --filter @hogar/api db:deploy
+    startCommand: pnpm --filter @hogar/api start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      # Neon connection string (direct, not pooled), with sslmode=require.
+      - key: DATABASE_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      # Public URL of the web app on Vercel, e.g. https://hogar.vercel.app
+      - key: WEB_ORIGIN
+        sync: false
+      - key: COOKIE_SECURE
+        value: "true"
+      # Browser → Vercel rewrite → Render's proxy → API. See docs/deploy.md › Client IP.
+      - key: TRUST_PROXY_HOPS
+        value: "2"

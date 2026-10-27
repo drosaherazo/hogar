@@ -19,7 +19,7 @@ The full product document (user stories and acceptance criteria per phase) will 
 - **Shared validation and types (`packages/shared`):** Zod schemas and types used by web and api.
 - **Auth:** Google Identity Services ID token verified by the API → 15-minute JWT (kept in memory on the web) + rotating, hashed refresh token in an httpOnly cookie scoped to `/api/auth`. See `docs/decisions/0002-authentication.md`.
 - **Testing:** Vitest + Testing Library (unit), Supertest (API), Cypress (E2E).
-- **Infra:** Docker Compose locally, GitHub Actions, Vercel (web and Storybook), Render or Fly.io (API and database).
+- **Infra:** Docker Compose locally, GitHub Actions, Vercel (web and Storybook; it rewrites `/api/*` to the API so the browser sees one origin), Render (API, bundled with esbuild) and Neon (Postgres). See `docs/deploy.md`.
 
 ## Structure
 
@@ -121,3 +121,4 @@ Open decision: for couple/family households, proportional split (already support
 - E2E: `pnpm --filter @hogar/web e2e` (own Vite on :5174, API and Google stubbed). If Cypress says "bad option: --smoke-test", unset `ELECTRON_RUN_AS_NODE`.
 - Storybook: `pnpm storybook`
 - Env files: copy `apps/api/.env.example` and `apps/web/.env.example` to `.env`; Google setup in `docs/setup-google-oauth.md`.
+- Deploy: `docs/deploy.md` (`render.yaml`, `apps/web/vercel.json`, `packages/ui/vercel.json`). API production build: `pnpm --filter @hogar/api build`.

@@ -63,8 +63,8 @@ Restart `pnpm dev` after editing `.env` files.
 | Google says "access blocked" / app not verified      | Your account isn't a test user                                    | Add it under **Audience › Test users**                                                   |
 | "We couldn't verify your Google sign-in"             | The web and API use different Client IDs                          | Use the same ID in both `.env` files                                                     |
 
-## Going to production (later)
+## Going to production
 
 - Add the production web origin (for example `https://hogar.vercel.app`) to **Authorized JavaScript origins**.
-- In the API set `WEB_ORIGIN` to that origin and `COOKIE_SECURE=true`.
+- The rest of the production setup (`WEB_ORIGIN`, `COOKIE_SECURE`) is in [deploy.md](deploy.md).
 - Publish the app in **Audience** so anyone with a Google account can sign in (basic scopes don't require Google's verification review).
