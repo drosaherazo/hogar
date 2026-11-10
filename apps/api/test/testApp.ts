@@ -57,12 +57,20 @@ export class TestClock {
 
 export function createTestApp({
   authRateLimit = 1000,
+  invitationRateLimit = 1000,
   ...overrides
-}: { authRateLimit?: number } & Partial<Config> = {}) {
+}: { authRateLimit?: number; invitationRateLimit?: number } & Partial<Config> = {}) {
   const google = new FakeGoogleVerifier();
   for (const identity of PEOPLE) google.identities.set(credentialFor(identity), identity);
   const clock = new TestClock();
-  const app = createApp({ config: { ...config, ...overrides }, db, google, authRateLimit, now: clock.now });
+  const app = createApp({
+    config: { ...config, ...overrides },
+    db,
+    google,
+    authRateLimit,
+    invitationRateLimit,
+    now: clock.now,
+  });
   return { app, google, clock };
 }
 
