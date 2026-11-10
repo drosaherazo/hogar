@@ -144,22 +144,22 @@
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T043 [P] [US3] Supertest suite `apps/api/test/members.test.ts`:
+- [x] T043 [P] [US3] Supertest suite `apps/api/test/members.test.ts`:
   - `PATCH /members/:id` role changes as ADMIN (to ADMIN/MEMBER/GUEST; weight unchanged); demoting the last admin → 409 `household.last_admin`; MEMBER/GUEST → 403; an id from another household → 404 `household.member_not_found`.
   - `DELETE /members/:id` removes (sets `removedFromHousehold` on that user, bumps `membersChangedAt`); removing another admin when two exist → 200; removing self → 400 `request.invalid`.
   - `POST /leave`: as a MEMBER → 204; as the sole admin with others → 409 `household.last_admin`; as the only member → 204 and the household plus its invitations are deleted.
   - `DELETE /api/me/removal-notice` clears the note, and `GET /api/household` returns `removedFrom` until then.
   - Two admins demoting each other concurrently → one ends as admin.
-- [ ] T044 [P] [US3] Members section tests in `apps/web/src/pages/HouseholdSettingsPage/MembersSection.test.tsx`: lists members with avatar, name and role badge; admins get a role menu and Remove with confirmation; disabled actions explain why using `checkAdminInvariant` ("You're the only admin"); non-admins see the list read-only plus Leave; leaving as the last member warns that the household will be deleted
-- [ ] T045 [P] [US3] HomePage removal note test in `apps/web/src/pages/HomePage/HomePage.test.tsx`: `removedFrom: "Casa Ana"` shows a gentle `Alert` naming it and calls `DELETE /api/me/removal-notice` once
+- [x] T044 [P] [US3] Members section tests in `apps/web/src/pages/HouseholdSettingsPage/MembersSection.test.tsx`: lists members with avatar, name and role badge; admins get a role menu and Remove with confirmation; disabled actions explain why using `checkAdminInvariant` ("You're the only admin"); non-admins see the list read-only plus Leave; leaving as the last member warns that the household will be deleted
+- [x] T045 [P] [US3] HomePage removal note test in `apps/web/src/pages/HomePage/HomePage.test.tsx`: `removedFrom: "Casa Ana"` shows a gentle `Alert` naming it and calls `DELETE /api/me/removal-notice` once
 
 ### Implementation for User Story 3
 
-- [ ] T046 [US3] Implement `changeRole`, `removeMember` and `leave` in `apps/api/src/household/householdService.ts`. Each runs in a transaction that re-reads members and applies `checkAdminInvariant` (409 `household.last_admin`). Remove sets `User.removedFromHousehold` to the household name. Remove and leave bump `membersChangedAt`. "Deletes household" deletes the household (cascade). Member ids are scoped to the caller's household (404 `household.member_not_found`)
-- [ ] T047 [US3] Add `PATCH /members/:membershipId`, `DELETE /members/:membershipId` (ADMIN) and `POST /leave` (any member) to `apps/api/src/household/householdRouter.ts`, and `DELETE /removal-notice` to `apps/api/src/me/meRouter.ts`
-- [ ] T048 [US3] Add `changeRole`, `removeMember`, `leaveHousehold` and `dismissRemovalNotice` to `apps/web/src/api/client.ts`, with mutations in `apps/web/src/household/useHousehold.ts` (leave and remove invalidate `["household"]`)
-- [ ] T049 [US3] Build `apps/web/src/pages/HouseholdSettingsPage/MembersSection.tsx` (Avatar, name, role Badge, admin `Menu` with `MenuRadioGroup` for the role and Remove with a `Dialog` confirmation, Leave with a confirmation that warns when it deletes the household, explanations for disabled actions) and render it in the settings page; copy in `household.json` en/es
-- [ ] T050 [US3] Show the removal note in `apps/web/src/pages/HomePage/HomePage.tsx` with `Alert` (info tone, gentle copy naming the household) and dismiss it once through `dismissRemovalNotice`; wire "Leave my household" in `InvitePage` to the leave mutation
+- [x] T046 [US3] Implement `changeRole`, `removeMember` and `leave` in `apps/api/src/household/householdService.ts`. Each runs in a transaction that re-reads members and applies `checkAdminInvariant` (409 `household.last_admin`). Remove sets `User.removedFromHousehold` to the household name. Remove and leave bump `membersChangedAt`. "Deletes household" deletes the household (cascade). Member ids are scoped to the caller's household (404 `household.member_not_found`)
+- [x] T047 [US3] Add `PATCH /members/:membershipId`, `DELETE /members/:membershipId` (ADMIN) and `POST /leave` (any member) to `apps/api/src/household/householdRouter.ts`, and `DELETE /removal-notice` to `apps/api/src/me/meRouter.ts`
+- [x] T048 [US3] Add `changeRole`, `removeMember`, `leaveHousehold` and `dismissRemovalNotice` to `apps/web/src/api/client.ts`, with mutations in `apps/web/src/household/useHousehold.ts` (leave and remove invalidate `["household"]`)
+- [x] T049 [US3] Build `apps/web/src/pages/HouseholdSettingsPage/MembersSection.tsx` (Avatar, name, role Badge, admin `Menu` with `MenuRadioGroup` for the role and Remove with a `Dialog` confirmation, Leave with a confirmation that warns when it deletes the household, explanations for disabled actions) and render it in the settings page; copy in `household.json` en/es
+- [x] T050 [US3] Show the removal note in `apps/web/src/pages/HomePage/HomePage.tsx` with `Alert` (info tone, gentle copy naming the household) and dismiss it once through `dismissRemovalNotice`; wire "Leave my household" in `InvitePage` to the leave mutation
 
 **Checkpoint**: US1–US3 work: households can be formed and corrected safely.
 
