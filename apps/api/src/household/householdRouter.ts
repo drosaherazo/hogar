@@ -3,6 +3,7 @@ import {
   createHouseholdRequestSchema,
   errorCodeFrom,
   renameHouseholdRequestSchema,
+  updateSplitRequestSchema,
   type CurrentHousehold,
   type HouseholdResponse,
 } from "@hogar/shared";
@@ -46,6 +47,12 @@ export function createHouseholdRouter(db: Database, households: HouseholdService
     const body: HouseholdResponse = {
       household: await households.rename(membershipOf(req).householdId, userIdOf(req), name),
     };
+    res.json(body);
+  });
+
+  router.put("/split", member, requireAdmin, async (req, res) => {
+    const { weights } = parseBody(updateSplitRequestSchema, req.body);
+    const body: HouseholdResponse = { household: await households.updateSplit(membershipOf(req), weights) };
     res.json(body);
   });
 

@@ -136,6 +136,33 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
       });
     },
 
+    /**
+     * Saves every member's weight at once. The list must match the current members exactly,
+     * so an admin never saves a split based on an outdated member list.
+     */
+    async updateSplit(actor: Membership, weights: { membershipId: string; weight: number }[]): Promise<HouseholdView> {
+      await db.$transaction(async (tx) => {
+        await lockHousehold(tx, actor.householdId);
+        const members = await tx.membership.findMany({
+          where: { householdId: actor.householdId },
+          select: { id: true, role: true },
+        });
+        if (members.find((member) => member.id === actor.id)?.role !== "ADMIN") throw forbidden("household.forbidden");
+
+        const current = new Set(members.map((member) => member.id));
+        const sent = new Set(weights.map((entry) => entry.membershipId));
+        if (current.size !== sent.size || [...sent].some((id) => !current.has(id))) {
+          throw conflict("split.members_changed");
+        }
+
+        for (const { membershipId, weight } of weights) {
+          await tx.membership.update({ where: { id: membershipId }, data: { weight } });
+        }
+        await tx.household.update({ where: { id: actor.householdId }, data: { splitSavedAt: now() } });
+      });
+      return view(actor.householdId, actor.userId);
+    },
+
     async dismissRemovalNotice(userId: string): Promise<void> {
       await db.user.update({ where: { id: userId }, data: { removedFromHousehold: null } });
     },
