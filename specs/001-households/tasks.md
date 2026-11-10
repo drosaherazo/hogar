@@ -173,15 +173,15 @@
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T051 [P] [US4] Supertest suite `apps/api/test/split.test.ts`: `PUT /api/household/split` as ADMIN with every member exactly once → 200, weights saved, `shareBps` `[7500, 2500]`, `splitSavedAt` set and `splitNeedsReview` false; weight 101 / -1 / 1.5 → 400 `split.weight.invalid`; all zeros → 400 `split.all_zero`; a missing or extra or foreign membershipId → 409 `split.members_changed`; MEMBER/GUEST → 403; a join after saving makes `splitNeedsReview` true again; the DB `CHECK` rejects an out-of-range weight written directly
-- [ ] T052 [P] [US4] Split section tests in `apps/web/src/pages/HouseholdSettingsPage/SplitSection.test.tsx`: shows weights and whole-number percentages via `Intl.NumberFormat` (en and es formats); admins edit with live percentage updates and Save disabled while invalid or all zero; the warning `Alert` banner shows when `splitNeedsReview` and disappears after a successful save; non-admins see read-only values; axe passes
+- [x] T051 [P] [US4] Supertest suite `apps/api/test/split.test.ts`: `PUT /api/household/split` as ADMIN with every member exactly once → 200, weights saved, `shareBps` `[7500, 2500]`, `splitSavedAt` set and `splitNeedsReview` false; weight 101 / -1 / 1.5 → 400 `split.weight.invalid`; all zeros → 400 `split.all_zero`; a missing or extra or foreign membershipId → 409 `split.members_changed`; MEMBER/GUEST → 403; a join after saving makes `splitNeedsReview` true again; the DB `CHECK` rejects an out-of-range weight written directly
+- [x] T052 [P] [US4] Split section tests in `apps/web/src/pages/HouseholdSettingsPage/SplitSection.test.tsx`: shows weights and whole-number percentages via `Intl.NumberFormat` (en and es formats); admins edit with live percentage updates and Save disabled while invalid or all zero; the warning `Alert` banner shows when `splitNeedsReview` and disappears after a successful save; non-admins see read-only values; axe passes
 
 ### Implementation for User Story 4
 
-- [ ] T053 [US4] Implement `updateSplit(membership, weights)` in `apps/api/src/household/householdService.ts`: in a transaction, verify the set of membershipIds equals the current members (else 409 `split.members_changed`), update weights, set `splitSavedAt = now`, and return the view
-- [ ] T054 [US4] Add `PUT /split` (ADMIN) to `apps/api/src/household/householdRouter.ts`, validated with `updateSplitRequestSchema`
-- [ ] T055 [US4] Add `updateSplit` to `apps/web/src/api/client.ts` and a mutation in `apps/web/src/household/useHousehold.ts`
-- [ ] T056 [US4] Build `apps/web/src/pages/HouseholdSettingsPage/SplitSection.tsx` (one `TextField type="number"` 0–100 per member in member order, live percentage from `weightsToBasisPoints` formatted with `Intl.NumberFormat`, Save, the warning `Alert` banner when `splitNeedsReview`, read-only for non-admins) and render it in the settings page; copy in `household.json` en/es
+- [x] T053 [US4] Implement `updateSplit(membership, weights)` in `apps/api/src/household/householdService.ts`: in a transaction, verify the set of membershipIds equals the current members (else 409 `split.members_changed`), update weights, set `splitSavedAt = now`, and return the view
+- [x] T054 [US4] Add `PUT /split` (ADMIN) to `apps/api/src/household/householdRouter.ts`, validated with `updateSplitRequestSchema`
+- [x] T055 [US4] Add `updateSplit` to `apps/web/src/api/client.ts` and a mutation in `apps/web/src/household/useHousehold.ts`
+- [x] T056 [US4] Build `apps/web/src/pages/HouseholdSettingsPage/SplitSection.tsx` (one `TextField type="number"` 0–100 per member in member order, live percentage from `weightsToBasisPoints` formatted with `Intl.NumberFormat`, Save, the warning `Alert` banner when `splitNeedsReview`, read-only for non-admins) and render it in the settings page; copy in `household.json` en/es
 
 **Checkpoint**: all four stories work independently and together.
 
