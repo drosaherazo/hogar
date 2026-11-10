@@ -5,3 +5,9 @@ pnpm-lock.yaml
 # MDX docs mix Markdown and JSX blocks (<Lang>) whose blank lines matter.
 **/*.mdx
 **/src/generated
+# Spec Kit scaffolding is vendored and tracked by hashed manifests; only the
+# constitution (and specs/) are ours to format.
+.specify/*
+!.specify/memory/
+.specify/memory/.constitution-template.json
+.claude/skills/speckit-*

@@ -56,6 +56,7 @@ Deploying (Vercel, Render and Neon): see [docs/deploy.md](docs/deploy.md).
 
 ## How it's built
 
+- **Spec-driven.** Features go through [GitHub Spec Kit](https://github.com/github/spec-kit): a spec with user stories and acceptance criteria, a technical plan checked against the [project constitution](.specify/memory/constitution.md), a task list, and then the code. Specs live in `specs/` next to the code they produced.
 - **Warm by design.** Every color, shape and piece of copy aims to lower the tension of talking about money and chores. The reasoning, in English and Spanish, lives in Storybook (_Foundations_ and each component's docs page); the rules and review checklist are in [docs/design.md](docs/design.md).
 - **Accessible by default.** AA contrast is enforced by tests in both themes, every component is tested with axe, and color never carries meaning on its own.
 - **Fully internationalized.** No hardcoded copy (ESLint enforces it); the API returns error codes the web translates; a test keeps both languages in sync.
@@ -71,6 +72,8 @@ packages/
   ui/       design system + Storybook
   shared/   Zod schemas, types, error codes
 docs/       design guide, decisions, setup guides
+specs/      feature specs, plans and tasks (Spec Kit)
+.specify/   constitution, templates and scripts (Spec Kit)
 ```
 
 ## License
