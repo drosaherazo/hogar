@@ -5,7 +5,7 @@ How to prove the feature works end to end. Contracts: [contracts/api.md](contrac
 ## Prerequisites
 
 - `pnpm install`, then `.env` files copied from the examples (see `docs/setup-google-oauth.md`).
-- Postgres with the `hogar` and `hogar_test` databases: `pnpm db:up`, or on a machine without WSL the embedded-Postgres workaround from the project notes.
+- Docker running (WSL 2 on Windows), then `pnpm db:up` for Postgres 17 with the `hogar` and `hogar_test` databases.
 - `pnpm db:migrate` applies the new `households` migration.
 
 ## Automated checks (all must pass)
