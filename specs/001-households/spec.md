@@ -37,7 +37,7 @@ Ana wants Bruno to join. In settings she creates an invitation for the role MEMB
 
 **Acceptance Scenarios**:
 
-1. **Given** an ADMIN, **When** they create an invitation choosing MEMBER or GUEST, **Then** they get a link they can copy, valid for 12 hours, listed under pending invitations with its role and time remaining.
+1. **Given** an ADMIN, **When** they create an invitation choosing MEMBER or GUEST, **Then** they are shown a link to copy right away (it is shown only at that moment), valid for 12 hours, and the invitation appears under pending invitations with its role and time remaining.
 2. **Given** a MEMBER or GUEST, **When** they try to create an invitation (from any client), **Then** the request is rejected.
 3. **Given** a valid link and a signed-out visitor, **When** they open it, **Then** they are asked to sign in and, after signing in, return to the same invitation page.
 4. **Given** a valid link and a signed-in user without a household, **When** they open it, **Then** they see the household name, who invited them and the role, and nothing happens until they choose "Join".
@@ -46,7 +46,7 @@ Ana wants Bruno to join. In settings she creates an invitation for the role MEMB
 7. **Given** a link that has been used, has expired or was revoked, **When** anyone opens it, **Then** they see a kind explanation of what happened and a suggestion to ask the person who invited them for a new link.
 8. **Given** two people with the same valid link, **When** both choose "Join", **Then** only the first joins and the second sees that the link was already used.
 9. **Given** a pending invitation, **When** an ADMIN revokes it, **Then** the link stops working immediately.
-10. **Given** an expired invitation in the list, **When** an ADMIN chooses "New link", **Then** a fresh invitation with the same role is created in one step and its link is ready to copy.
+10. **Given** a pending or expired invitation in the list (for example, because the link was lost), **When** an ADMIN chooses "New link", **Then** the old link stops working and a fresh invitation with the same role and a new 12-hour window is created in one step, with its link ready to copy.
 11. **Given** a household with 10 pending invitations, **When** an ADMIN tries to create another, **Then** it is refused with an explanation, until one is used, revoked or expires.
 
 ---
@@ -119,7 +119,7 @@ Ana earns more than Bruno, so they agree she covers three quarters of shared cos
 - **FR-006**: Only ADMINs MUST be able to create invitations, each granting either MEMBER or GUEST.
 - **FR-007**: Each invitation MUST be a shareable link that works once, expires 12 hours after creation, and can be revoked by any ADMIN of the household.
 - **FR-008**: Invitation secrets MUST never be stored in readable form; a link MUST be impossible to guess.
-- **FR-009**: ADMINs MUST see the household's pending invitations with role, creator and time remaining, and be able to copy a pending link, revoke it, or create a new link with the same role from an expired one in a single action.
+- **FR-009**: ADMINs MUST see the household's pending and expired invitations with role, creator and time remaining. They MUST be able to revoke any of them, or replace one with a new link (same role, new 12-hour window, old link stops working) in a single action. A link MUST be shown for copying only when it is created or replaced, because it cannot be recovered afterwards.
 - **FR-010**: A household MUST NOT have more than 10 pending (unused, unrevoked, unexpired) invitations at once.
 - **FR-011**: Opening an invitation while signed out MUST lead through sign-in and back to the same invitation.
 - **FR-012**: The invitation page MUST show the household name, the inviter's name and the role, and MUST require an explicit "Join" action.
