@@ -11,6 +11,7 @@ import styles from "./HouseholdSettingsPage.module.css";
 import { InvitationsSection } from "./InvitationsSection";
 import { MembersSection } from "./MembersSection";
 import { NameSection } from "./NameSection";
+import { SplitSection } from "./SplitSection";
 
 /** Household settings: name, members (and invitations) and the split. */
 export function HouseholdSettingsPage() {
@@ -45,6 +46,7 @@ function Sections({ household }: { household: HouseholdView }) {
       <NameSection household={household} />
       <MembersSection household={household} />
       {isAdmin && <InvitationsSection />}
+      <SplitSection household={household} />
     </div>
   );
 }

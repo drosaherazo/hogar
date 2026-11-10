@@ -38,6 +38,16 @@
       "saved": "Name saved.",
       "readOnly": "Only admins can change the name."
     },
+    "split": {
+      "title": "Split",
+      "description": "How shared costs are divided by default: the higher someone's weight, the bigger their share. Each expense can still be split differently.",
+      "share": "{{percent}} of shared costs",
+      "weight": "Weight {{weight}}",
+      "save": "Save split",
+      "saving": "Saving the split",
+      "saved": "Split saved.",
+      "readOnly": "Only admins can change the split."
+    },
     "members": {
       "title": "People",
       "you": "{{name}} (you)",

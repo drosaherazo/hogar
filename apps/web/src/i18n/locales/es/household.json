@@ -38,6 +38,16 @@
       "saved": "Nombre guardado.",
       "readOnly": "Solo los administradores pueden cambiar el nombre."
     },
+    "split": {
+      "title": "Reparto",
+      "description": "Cómo se dividen los gastos compartidos por defecto: cuanto mayor es el peso de alguien, mayor es su parte. Cada gasto se puede repartir de otra forma.",
+      "share": "{{percent}} de los gastos compartidos",
+      "weight": "Peso {{weight}}",
+      "save": "Guardar reparto",
+      "saving": "Guardando el reparto",
+      "saved": "Reparto guardado.",
+      "readOnly": "Solo los administradores pueden cambiar el reparto."
+    },
     "members": {
       "title": "Personas",
       "you": "{{name}} (tú)",
