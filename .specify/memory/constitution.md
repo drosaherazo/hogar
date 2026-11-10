@@ -28,7 +28,10 @@ not the length of a feature list.
   deterministically to the first members.
 - **Balances are never stored:** they are computed from `ExpenseShare` and `Settlement`.
 - **A user belongs to a single household**, enforced by a unique `Membership.userId`.
-- **Household type** (`COUPLE_FAMILY` / `SHARED_FLAT`) only changes defaults, never logic.
+- **Default split by weight:** each `Membership` has an integer `weight` (0–100) and a household's
+  default split is proportional to those weights, converted to exact cents with the rule above.
+  There is no household type: one model covers couples, families and flatmates (see
+  `docs/decisions/0003-proportional-split-by-weight.md`).
 - Split, balance and debt-simplification logic lives in `packages/shared` so web and API compute
   the same results.
 
@@ -72,8 +75,9 @@ engineering quality in a portfolio.
 - There is no hardcoded user-facing copy: every string goes through i18n, with semantic,
   dot-separated keys per feature namespace. `en` is the source of truth and keys are typed, so a
   missing key is a type error.
-- Zod schemas and the API return **error codes**, never sentences; the web translates them. Only
-  server-rendered text (invitation emails) is localized on the server.
+- Zod schemas and the API return **error codes**, never sentences; the web translates them. The
+  server renders no user-facing text; if it ever does (e.g. invitation emails), it is localized
+  with `User.locale`, falling back to `Accept-Language`.
 - `packages/ui` contains no copy: every visible or accessible string comes in through props.
 - Money, dates and numbers are always formatted with `Intl` and the active locale.
 - Every spec that adds UI MUST list its new keys in both locales; the parity test keeps `en` and
@@ -120,15 +124,13 @@ product's main differentiator.
 
 ## Scope
 
-- **Current phase, MVP (v1):** auth and roles, household with invitations, expenses with splits and
-  balances, chores with an assignee, shopping list, and real time.
-- **Out of the MVP:** recurring expenses and recurring chores (v1.1), budgets and charts (v1.2).
-- **Out of scope:** multiple households per user, real payments, multiple currencies, native
-  mobile app, and gamification. They are not implemented unless explicitly requested and the
-  constitution is amended.
-- **Open decision:** for couple/family households, proportional split (already supported with
-  `Membership.defaultShareBps`) or a shared pot. Any spec that depends on it MUST resolve it via
-  `/speckit-clarify` and record it in `docs/decisions/`.
+- **Current phase, MVP (v1):** auth and roles, household with shareable-link invitations, expenses
+  with splits and balances, chores with an assignee, shopping list, and real time.
+- **Out of the MVP:** invitation emails, recurring expenses and recurring chores (v1.1), budgets
+  and charts (v1.2).
+- **Out of scope:** multiple households per user, a shared pot, real payments, multiple
+  currencies, native mobile app, and gamification. They are not implemented unless explicitly
+  requested and the constitution is amended.
 
 ## Development Workflow
 
@@ -153,4 +155,4 @@ product's main differentiator.
   bump: MAJOR for removed or redefined principles, MINOR for new principles or sections, PATCH for
   clarifications.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-10
+**Version**: 2.0.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-10
