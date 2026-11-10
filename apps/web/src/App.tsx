@@ -4,11 +4,13 @@ import type { i18n as I18n } from "i18next";
 import { useState } from "react";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import { createBrowserRouter, RouterProvider, type RouteObject } from "react-router";
+import { ApiClientProvider } from "./api/ApiClientContext";
 import { ApiClient } from "./api/client";
 import { AuthProvider } from "./auth/AuthProvider";
 import { RedirectIfAuthenticated, RequireAuth } from "./auth/guards";
 import { currentLocale } from "./i18n";
 import { HomePage } from "./pages/HomePage/HomePage";
+import { HouseholdSettingsPage } from "./pages/HouseholdSettingsPage/HouseholdSettingsPage";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
 
 export interface AppConfig {
@@ -23,7 +25,10 @@ export function createRoutes({ googleClientId }: AppConfig): RouteObject[] {
     },
     {
       element: <RequireAuth />,
-      children: [{ path: "/", element: <HomePage /> }],
+      children: [
+        { path: "/", element: <HomePage /> },
+        { path: "/household/settings", element: <HouseholdSettingsPage /> },
+      ],
     },
     { path: "*", element: <RedirectIfAuthenticated /> },
   ];
@@ -49,7 +54,9 @@ export function AppProviders({ i18n, client, children }: AppProvidersProps) {
     <I18nextProvider i18n={i18n}>
       <UiLocale>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider client={client}>{children}</AuthProvider>
+          <ApiClientProvider client={client}>
+            <AuthProvider client={client}>{children}</AuthProvider>
+          </ApiClientProvider>
         </QueryClientProvider>
       </UiLocale>
     </I18nextProvider>

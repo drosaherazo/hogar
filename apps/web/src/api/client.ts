@@ -2,9 +2,22 @@ import {
   apiErrorSchema,
   authResponseSchema,
   authUserSchema,
+  createdInvitationSchema,
+  currentHouseholdSchema,
+  householdResponseSchema,
+  invitationListSchema,
+  invitationPreviewSchema,
   type AuthResponse,
   type AuthUser,
+  type CreatedInvitation,
+  type CurrentHousehold,
   type ErrorCode,
+  type HouseholdView,
+  type InvitableRole,
+  type InvitationPreview,
+  type InvitationView,
+  type Role,
+  type UpdateSplitRequest,
 } from "@hogar/shared";
 import type { z } from "zod";
 
@@ -20,7 +33,7 @@ export class ApiRequestError extends Error {
 }
 
 interface RequestOptions<T> {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   schema?: z.ZodType<T>;
   /** Send the access token and, on 401, refresh it once and retry. */
@@ -96,6 +109,76 @@ export class ApiClient {
 
   me(): Promise<AuthUser> {
     return this.request("/me", { schema: authUserSchema });
+  }
+
+  // --- Household -----------------------------------------------------------
+
+  getHousehold(): Promise<CurrentHousehold> {
+    return this.request("/household", { schema: currentHouseholdSchema });
+  }
+
+  async createHousehold(name: string): Promise<HouseholdView> {
+    return (await this.request("/household", { method: "POST", body: { name }, schema: householdResponseSchema }))
+      .household;
+  }
+
+  async renameHousehold(name: string): Promise<HouseholdView> {
+    return (await this.request("/household", { method: "PATCH", body: { name }, schema: householdResponseSchema }))
+      .household;
+  }
+
+  leaveHousehold(): Promise<void> {
+    return this.request("/household/leave", { method: "POST" });
+  }
+
+  async changeRole(membershipId: string, role: Role): Promise<HouseholdView> {
+    const path = `/household/members/${encodeURIComponent(membershipId)}`;
+    return (await this.request(path, { method: "PATCH", body: { role }, schema: householdResponseSchema })).household;
+  }
+
+  async removeMember(membershipId: string): Promise<HouseholdView> {
+    const path = `/household/members/${encodeURIComponent(membershipId)}`;
+    return (await this.request(path, { method: "DELETE", schema: householdResponseSchema })).household;
+  }
+
+  async updateSplit(weights: UpdateSplitRequest["weights"]): Promise<HouseholdView> {
+    return (
+      await this.request("/household/split", { method: "PUT", body: { weights }, schema: householdResponseSchema })
+    ).household;
+  }
+
+  dismissRemovalNotice(): Promise<void> {
+    return this.request("/me/removal-notice", { method: "DELETE" });
+  }
+
+  // --- Invitations ---------------------------------------------------------
+
+  async listInvitations(): Promise<InvitationView[]> {
+    return (await this.request("/household/invitations", { schema: invitationListSchema })).invitations;
+  }
+
+  createInvitation(role: InvitableRole): Promise<CreatedInvitation> {
+    return this.request("/household/invitations", { method: "POST", body: { role }, schema: createdInvitationSchema });
+  }
+
+  renewInvitation(id: string): Promise<CreatedInvitation> {
+    const path = `/household/invitations/${encodeURIComponent(id)}/renew`;
+    return this.request(path, { method: "POST", schema: createdInvitationSchema });
+  }
+
+  revokeInvitation(id: string): Promise<void> {
+    return this.request(`/household/invitations/${encodeURIComponent(id)}`, { method: "DELETE" });
+  }
+
+  /** The token travels in the body, never in the URL, so it stays out of logs. */
+  lookupInvitation(token: string): Promise<InvitationPreview> {
+    return this.request("/invitations/lookup", { method: "POST", body: { token }, schema: invitationPreviewSchema });
+  }
+
+  async acceptInvitation(token: string): Promise<HouseholdView> {
+    return (
+      await this.request("/invitations/accept", { method: "POST", body: { token }, schema: householdResponseSchema })
+    ).household;
   }
 
   async request<T = void>(path: string, options: RequestOptions<T> = {}, isRetry = false): Promise<T> {

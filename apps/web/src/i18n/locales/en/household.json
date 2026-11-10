@@ -1,0 +1,42 @@
+{
+  "close": "Close",
+  "cancel": "Cancel",
+  "retry": "Try again",
+  "loadError": "We couldn't load your household.",
+  "roles": {
+    "ADMIN": "Admin",
+    "MEMBER": "Member",
+    "GUEST": "Guest"
+  },
+  "home": {
+    "people_one": "{{count}} person lives here",
+    "people_other": "{{count}} people live here",
+    "settingsLink": "Household settings",
+    "removed": "You're no longer part of {{name}}. You can create a new household or join one with an invitation.",
+    "reviewSplit": {
+      "title": "Review the split",
+      "description": "Someone joined or left since the split was last saved. Check that it still feels fair for everyone.",
+      "action": "Review split"
+    }
+  },
+  "create": {
+    "title": "Create your household",
+    "description": "Give it a name everyone at home will recognise. You can change it later.",
+    "nameLabel": "Household name",
+    "nameHint": "Up to 50 characters.",
+    "submit": "Create household",
+    "submitting": "Creating your household"
+  },
+  "settings": {
+    "title": "Household settings",
+    "back": "Back to home",
+    "name": {
+      "title": "Name",
+      "label": "Household name",
+      "save": "Save name",
+      "saving": "Saving the name",
+      "saved": "Name saved.",
+      "readOnly": "Only admins can change the name."
+    }
+  }
+}

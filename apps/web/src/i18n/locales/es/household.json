@@ -1,0 +1,42 @@
+{
+  "close": "Cerrar",
+  "cancel": "Cancelar",
+  "retry": "Reintentar",
+  "loadError": "No hemos podido cargar tu hogar.",
+  "roles": {
+    "ADMIN": "Admin",
+    "MEMBER": "Miembro",
+    "GUEST": "Invitado"
+  },
+  "home": {
+    "people_one": "Aquí vive {{count}} persona",
+    "people_other": "Aquí viven {{count}} personas",
+    "settingsLink": "Ajustes del hogar",
+    "removed": "Ya no formas parte de {{name}}. Puedes crear un hogar nuevo o unirte a uno con una invitación.",
+    "reviewSplit": {
+      "title": "Revisad el reparto",
+      "description": "Alguien ha entrado o salido desde que se guardó el reparto. Comprobad que sigue siendo justo para todos.",
+      "action": "Revisar reparto"
+    }
+  },
+  "create": {
+    "title": "Crea tu hogar",
+    "description": "Ponle un nombre que todos en casa reconozcan. Puedes cambiarlo más adelante.",
+    "nameLabel": "Nombre del hogar",
+    "nameHint": "Hasta 50 caracteres.",
+    "submit": "Crear hogar",
+    "submitting": "Creando tu hogar"
+  },
+  "settings": {
+    "title": "Ajustes del hogar",
+    "back": "Volver al inicio",
+    "name": {
+      "title": "Nombre",
+      "label": "Nombre del hogar",
+      "save": "Guardar nombre",
+      "saving": "Guardando el nombre",
+      "saved": "Nombre guardado.",
+      "readOnly": "Solo los administradores pueden cambiar el nombre."
+    }
+  }
+}

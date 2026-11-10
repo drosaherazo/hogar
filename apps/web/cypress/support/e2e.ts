@@ -21,6 +21,8 @@ beforeEach(() => {
     "refresh",
   );
   cy.intercept("POST", "/api/auth/logout", { statusCode: 204 }).as("logout");
+  // Signed-in people start without a household unless a flow says otherwise.
+  cy.intercept("GET", "/api/household", { body: { household: null, removedFrom: null } }).as("household");
 });
 
 declare global {
