@@ -1,0 +1,110 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background-color: var(--color-overlay);
+  animation: fade var(--duration-slow) var(--easing-gentle);
+}
+
+.content {
+  position: fixed;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  inline-size: min(calc(100vw - var(--space-8)), var(--size-content-sm));
+  max-block-size: calc(100dvh - var(--space-8));
+  overflow-y: auto;
+  padding: var(--space-6);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-family-base);
+  transform: translate(-50%, -50%);
+  animation: rise var(--duration-slow) var(--easing-gentle);
+}
+
+.content:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--border-width);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  overflow-wrap: anywhere;
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--size-touch);
+  block-size: var(--size-touch);
+  margin-block-start: calc(var(--space-2) * -1);
+  margin-inline-end: calc(var(--space-2) * -1);
+  padding: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+.close svg {
+  inline-size: var(--size-icon-md);
+  block-size: var(--size-icon-md);
+}
+
+.close:hover {
+  background-color: var(--color-surface-sunken);
+}
+
+.close:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+}
+
+.description {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: var(--line-height-base);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%);
+  }
+}

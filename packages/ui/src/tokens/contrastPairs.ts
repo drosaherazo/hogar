@@ -45,6 +45,18 @@ export const contrastPairs: ContrastPair[] = [
   pair("--color-warning", "--color-surface", AA_TEXT, "Warning text", "Texto de aviso"),
   pair("--color-warning", "--color-warning-bg", AA_TEXT, "Warning box", "Caja de aviso"),
   pair("--color-border-strong", "--color-surface", AA_UI, "Form field border", "Borde de campos de formulario"),
+  pair("--color-text", "--color-surface-sunken", AA_TEXT, "Text in form fields", "Texto en campos de formulario"),
+  pair(
+    "--color-border-strong",
+    "--color-surface-sunken",
+    AA_UI,
+    "Form field border on its fill",
+    "Borde del campo sobre su fondo",
+  ),
+  pair("--color-negative", "--color-surface-sunken", AA_UI, "Invalid field border", "Borde de campo con error"),
+  pair("--color-accent-text", "--color-surface-sunken", AA_TEXT, "Info notice title", "Título de aviso informativo"),
+  pair("--color-text", "--color-warning-bg", AA_TEXT, "Text in a warning notice", "Texto en un aviso"),
+  pair("--color-text", "--color-negative-bg", AA_TEXT, "Text in an error notice", "Texto en un aviso de error"),
   pair("--color-focus", "--color-bg", AA_UI, "Focus ring", "Anillo de foco"),
   pair("--color-selection-text", "--color-selection-bg", AA_TEXT, "Selected text", "Texto seleccionado"),
   ...Array.from({ length: 8 }, (_, index) =>
