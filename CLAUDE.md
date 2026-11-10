@@ -16,7 +16,7 @@ Features are built with [GitHub Spec Kit](https://github.com/github/spec-kit) (v
 
 1. Create the feature branch first (`git switch -c feat/<name>` from `main`); Spec Kit does not create branches.
 2. `/speckit-specify <what and why>` → writes `specs/NNN-<name>/spec.md` (user stories and acceptance criteria; no tech details).
-3. `/speckit-clarify` when anything is ambiguous (always for the open split/shared-pot decision).
+3. `/speckit-clarify` when anything is ambiguous.
 4. `/speckit-plan` → `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`, gated by the Constitution Check.
 5. `/speckit-tasks` → `tasks.md`; optionally `/speckit-analyze` to cross-check spec, plan and tasks.
 6. `/speckit-implement`, then `/speckit-converge` until it reports converged.
