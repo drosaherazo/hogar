@@ -10,6 +10,8 @@ import { requireAuth } from "./auth/requireAuth";
 import { createAccessTokenSigner } from "./auth/tokens";
 import type { Config } from "./config";
 import type { Database } from "./db";
+import { createHouseholdRouter } from "./household/householdRouter";
+import { createHouseholdService } from "./household/householdService";
 import { createMeRouter } from "./me/meRouter";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { requireSameOrigin } from "./middleware/requireSameOrigin";
@@ -55,6 +57,9 @@ export function createApp({ config, db, google, authRateLimit = 100, now }: AppD
     createAuthRouter(auth, { cookieSecure: config.cookieSecure }),
   );
   app.use("/api/me", requireAuth(signer), createMeRouter(auth));
+
+  const households = createHouseholdService({ db, now });
+  app.use("/api/household", requireAuth(signer), createHouseholdRouter(db, households));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
