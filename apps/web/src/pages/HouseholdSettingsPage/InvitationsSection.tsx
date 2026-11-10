@@ -1,7 +1,7 @@
 import type { InvitableRole, InvitationView } from "@hogar/shared";
 import { Alert, Badge, Button, Card, Dialog, Spinner } from "@hogar/ui";
 import { RefreshCw, Trash2, UserPlus } from "lucide-react";
-import { useId, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { errorKey } from "../../api/client";
 import { formatTimeLeft } from "../../household/timeLeft";
@@ -72,7 +72,12 @@ export function InvitationsSection() {
         title={t("settings.invitations.linkTitle")}
         description={t("settings.invitations.linkDescription")}
         closeLabel={t("close")}
-        actions={<Button onClick={() => setShownToken(null)}>{t("settings.invitations.done")}</Button>}
+        // "Copy link" is this dialog's one primary action; closing it is secondary.
+        actions={
+          <Button variant="secondary" onClick={() => setShownToken(null)}>
+            {t("settings.invitations.done")}
+          </Button>
+        }
       >
         {shownToken && <InvitationLink token={shownToken} />}
       </Dialog>
@@ -146,6 +151,7 @@ function CreateInvitationDialog({
 }) {
   const { t } = useTranslation(["household", "errors"]);
   const formId = useId();
+  const checkedRadio = useRef<HTMLInputElement>(null);
   const create = useCreateInvitation();
   const [role, setRole] = useState<InvitableRole>("MEMBER");
 
@@ -169,6 +175,7 @@ function CreateInvitationDialog({
       title={t("settings.invitations.createTitle")}
       description={t("settings.invitations.description")}
       closeLabel={t("close")}
+      initialFocus={checkedRadio}
       actions={
         <>
           <Button variant="secondary" onClick={() => changeOpen(false)}>
@@ -191,6 +198,7 @@ function CreateInvitationDialog({
           {INVITABLE_ROLES.map((option) => (
             <label key={option} className={styles.choice}>
               <input
+                ref={role === option ? checkedRadio : undefined}
                 type="radio"
                 name="role"
                 value={option}

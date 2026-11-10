@@ -1,6 +1,6 @@
 import { errorCodeFrom, householdNameSchema } from "@hogar/shared";
 import { Button, Dialog, TextField } from "@hogar/ui";
-import { useId, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { errorKey } from "../api/client";
 import { useCreateHousehold } from "./useHousehold";
@@ -14,6 +14,7 @@ export interface CreateHouseholdDialogProps {
 export function CreateHouseholdDialog({ open, onOpenChange }: CreateHouseholdDialogProps) {
   const { t } = useTranslation(["household", "errors"]);
   const formId = useId();
+  const field = useRef<HTMLInputElement>(null);
   const create = useCreateHousehold();
   const [name, setName] = useState("");
   const [fieldError, setFieldError] = useState<string>();
@@ -33,10 +34,15 @@ export function CreateHouseholdDialog({ open, onOpenChange }: CreateHouseholdDia
     const parsed = householdNameSchema.safeParse(name);
     if (!parsed.success) {
       setFieldError(t(`errors:${errorCodeFrom(parsed.error)}`));
+      // Back to the field, so screen readers announce the error right where it can be fixed.
+      field.current?.focus();
       return;
     }
     setFieldError(undefined);
-    create.mutate(parsed.data, { onSuccess: () => onOpenChange(false) });
+    create.mutate(parsed.data, {
+      onSuccess: () => onOpenChange(false),
+      onError: () => field.current?.focus(),
+    });
   }
 
   return (
@@ -46,6 +52,7 @@ export function CreateHouseholdDialog({ open, onOpenChange }: CreateHouseholdDia
       title={t("create.title")}
       description={t("create.description")}
       closeLabel={t("close")}
+      initialFocus={field}
       actions={
         <>
           <Button variant="secondary" onClick={() => changeOpen(false)}>
@@ -59,6 +66,7 @@ export function CreateHouseholdDialog({ open, onOpenChange }: CreateHouseholdDia
     >
       <form id={formId} onSubmit={submit} noValidate>
         <TextField
+          ref={field}
           label={t("create.nameLabel")}
           hint={t("create.nameHint")}
           error={fieldError ?? (create.isError ? t(errorKey(create.error)) : undefined)}

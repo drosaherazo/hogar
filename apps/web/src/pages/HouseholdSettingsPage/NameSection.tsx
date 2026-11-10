@@ -1,7 +1,7 @@
 import { errorCodeFrom, householdNameSchema, type HouseholdView } from "@hogar/shared";
 import { Button, Card, TextField } from "@hogar/ui";
 import { Check } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { errorKey } from "../../api/client";
 import { useRenameHousehold } from "../../household/useHousehold";
@@ -13,6 +13,7 @@ export function NameSection({ household }: { household: HouseholdView }) {
   const rename = useRenameHousehold();
   const [name, setName] = useState(household.name);
   const [fieldError, setFieldError] = useState<string>();
+  const field = useRef<HTMLInputElement>(null);
   const isAdmin = household.myRole === "ADMIN";
 
   function submit(event: FormEvent) {
@@ -20,10 +21,14 @@ export function NameSection({ household }: { household: HouseholdView }) {
     const parsed = householdNameSchema.safeParse(name);
     if (!parsed.success) {
       setFieldError(t(`errors:${errorCodeFrom(parsed.error)}`));
+      field.current?.focus();
       return;
     }
     setFieldError(undefined);
-    rename.mutate(parsed.data, { onSuccess: (updated) => setName(updated.name) });
+    rename.mutate(parsed.data, {
+      onSuccess: (updated) => setName(updated.name),
+      onError: () => field.current?.focus(),
+    });
   }
 
   return (
@@ -34,6 +39,7 @@ export function NameSection({ household }: { household: HouseholdView }) {
       {isAdmin ? (
         <form className={styles.form} onSubmit={submit} noValidate>
           <TextField
+            ref={field}
             label={t("settings.name.label")}
             value={name}
             onChange={(event) => {

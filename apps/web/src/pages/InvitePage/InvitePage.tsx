@@ -33,18 +33,21 @@ export function InvitePage() {
 
   return (
     <AppShell>
-      <Card as="section" padding="lg" aria-labelledby="invite-title" className={styles.card}>
-        <h1 id="invite-title" className={styles.title}>
-          {preview.isError ? t("invite.problemTitle") : t("invite.title")}
-        </h1>
-        {preview.isPending ? (
-          <Spinner label={t("common:loading")} />
-        ) : preview.isError ? (
-          <Problem error={preview.error} />
-        ) : (
-          <Invitation token={token} preview={preview.data} onLeft={() => void preview.refetch()} />
-        )}
-      </Card>
+      {preview.isPending ? (
+        // No title yet: it would read "You've been invited" and then flip if the link turns out unusable.
+        <Spinner label={t("common:loading")} />
+      ) : (
+        <Card as="section" padding="lg" aria-labelledby="invite-title" className={styles.card}>
+          <h1 id="invite-title" className={styles.title}>
+            {preview.isError ? t("invite.problemTitle") : t("invite.title")}
+          </h1>
+          {preview.isError ? (
+            <Problem error={preview.error} />
+          ) : (
+            <Invitation token={token} preview={preview.data} onLeft={() => void preview.refetch()} />
+          )}
+        </Card>
+      )}
     </AppShell>
   );
 }

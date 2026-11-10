@@ -82,11 +82,15 @@ describe("HomePage", () => {
 
       await userEvent.click(await screen.findByRole("button", { name: "Create a household" }));
       const dialog = await screen.findByRole("dialog");
+      const field = within(dialog).getByRole("textbox", { name: "Household name" });
+      // The form opens ready to type.
+      expect(field).toHaveFocus();
       await userEvent.click(within(dialog).getByRole("button", { name: "Create household" }));
 
-      const field = within(dialog).getByRole("textbox", { name: "Household name" });
       expect(field).toHaveAttribute("aria-invalid", "true");
       expect(field).toHaveAccessibleDescription(expect.stringContaining("Give your household a name."));
+      // Focus goes back to the field, so the error is announced where it can be fixed.
+      expect(field).toHaveFocus();
       expect(called).toBe(false);
     });
 
