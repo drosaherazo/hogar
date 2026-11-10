@@ -260,3 +260,10 @@ T024 TextField   |   T025 Dialog
 - Commit after each task group with Conventional Commits in English, with no AI attribution.
 - Stop at any checkpoint if format, lint, typecheck or tests are red.
 - Mark tasks `[X]` in this file as they are completed.
+
+## Phase 8: Convergence
+
+- [ ] T062 CRITICAL: Add Supertest role-permission cases for `POST /api/household/invitations/:id/renew` and `DELETE /api/household/invitations/:id` as MEMBER and GUEST (403 `household.forbidden`, invitation untouched) in `apps/api/test/invitations.test.ts`, plus `POST /api/household/leave` as GUEST (204) and `GET /api/household` as GUEST (read-only view) in `apps/api/test/members.test.ts` and `apps/api/test/household.test.ts` per Constitution IV (missing)
+- [ ] T063 CRITICAL: List every new UI copy key for `en` and `es` (the `household` namespace, `home.noHousehold.joinHint` and the 15 new `errors.*` codes) in a "New i18n keys" section of `specs/001-households/contracts/ui.md` per Constitution V (missing)
+- [ ] T064 Clear `User.removedFromHousehold` when the user creates a household (`householdService.create`) or joins one (`invitationService.accept`), and add a Supertest case where a removed person joins another household through a link and later leaves it, then sees no stale note, per FR-021 (partial)
+- [ ] T065 Review `TextField`, `Dialog` and `Alert` in Storybook in light and dark themes and with the Locale toolbar in `en` and `es` (canvas, docs page and chrome), fixing anything found, per Constitution VI / `docs/design.md` checklist (partial)
