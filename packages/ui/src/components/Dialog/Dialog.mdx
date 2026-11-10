@@ -26,7 +26,7 @@ A window over the page for a decision that needs full attention: confirming some
 
 ## Accessibility
 - Built on Radix Dialog: `role="dialog"`, `aria-modal`, named by the title and described by the description.
-- Focus moves inside on open, is trapped while open, and returns to the button that opened it on close.
+- On open, focus goes to the first action (the safe choice, such as "Cancel"), or to `initialFocus` when given (a form's first field). It stays trapped while open and returns to the button that opened it on close.
 - Escape and a labelled close button (`closeLabel`, required) close it.
 
 ## Variants
@@ -56,7 +56,7 @@ Una ventana sobre la página para una decisión que necesita toda la atención: 
 
 ## Accesibilidad
 - Basado en Radix Dialog: `role="dialog"`, `aria-modal`, nombrado por el título y descrito por la descripción.
-- El foco entra al abrir, queda atrapado mientras está abierto y vuelve al botón que lo abrió al cerrar.
+- Al abrir, el foco va a la primera acción (la opción segura, como "Cancelar"), o a `initialFocus` si se indica (el primer campo de un formulario). Queda atrapado mientras está abierto y vuelve al botón que lo abrió al cerrar.
 - Se cierra con Escape y con un botón de cierre etiquetado (`closeLabel`, obligatorio).
 
 ## Variantes

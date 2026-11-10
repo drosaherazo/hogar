@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { expectNoA11yViolations } from "../../test/axe";
 import { Dialog } from "./Dialog";
@@ -42,14 +42,30 @@ describe("Dialog", () => {
     expect(screen.getByText("Body text")).toBeInTheDocument();
   });
 
-  it("moves focus inside and returns it to the trigger when closed", async () => {
+  it("focuses the first action, the safe choice, and returns focus to the trigger when closed", async () => {
     render(<Example />);
     const trigger = screen.getByRole("button", { name: "Leave household" });
     await userEvent.click(trigger);
-    expect(screen.getByRole("dialog")).toContainElement(document.activeElement as HTMLElement);
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     await waitFor(() => expect(trigger).toHaveFocus());
+  });
+
+  it("focuses the requested element instead, like a form's first field", async () => {
+    function FormExample() {
+      const field = useRef<HTMLInputElement>(null);
+      return (
+        <Dialog open onOpenChange={() => {}} title="Create your household" closeLabel="Close" initialFocus={field}>
+          <label>
+            Household name
+            <input ref={field} />
+          </label>
+        </Dialog>
+      );
+    }
+    render(<FormExample />);
+    expect(await screen.findByRole("textbox", { name: "Household name" })).toHaveFocus();
   });
 
   it("closes with Escape and with the labelled close button", async () => {
