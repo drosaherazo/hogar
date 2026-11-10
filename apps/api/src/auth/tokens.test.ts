@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SignJWT } from "jose";
-import { createAccessTokenSigner, generateRefreshToken, hashRefreshToken } from "./tokens";
+import { createAccessTokenSigner, generateSecretToken, hashSecretToken } from "./tokens";
 
 const secret = "test-secret-that-is-long-enough-for-hs256-signing";
 const claims = {
@@ -54,16 +54,16 @@ describe("access tokens", () => {
 
 describe("refresh tokens", () => {
   it("are random and URL-safe", () => {
-    const a = generateRefreshToken();
-    const b = generateRefreshToken();
+    const a = generateSecretToken();
+    const b = generateSecretToken();
     expect(a).not.toBe(b);
     expect(a).toMatch(/^[A-Za-z0-9_-]{43}$/);
   });
 
   it("are stored as a stable SHA-256 hash, never in plain text", () => {
-    const token = generateRefreshToken();
-    expect(hashRefreshToken(token)).toBe(hashRefreshToken(token));
-    expect(hashRefreshToken(token)).toMatch(/^[a-f0-9]{64}$/);
-    expect(hashRefreshToken(token)).not.toContain(token);
+    const token = generateSecretToken();
+    expect(hashSecretToken(token)).toBe(hashSecretToken(token));
+    expect(hashSecretToken(token)).toMatch(/^[a-f0-9]{64}$/);
+    expect(hashSecretToken(token)).not.toContain(token);
   });
 });

@@ -14,3 +14,7 @@ export class HttpError extends Error {
 export const badRequest = (code: ErrorCode = "request.invalid") => new HttpError(400, code);
 export const unauthorized = (code: ErrorCode) => new HttpError(401, code);
 export const forbidden = (code: ErrorCode) => new HttpError(403, code);
+export const notFound = (code: ErrorCode) => new HttpError(404, code);
+export const conflict = (code: ErrorCode) => new HttpError(409, code);
+/** The resource existed but can't be used any more (an expired, used or revoked invitation). */
+export const gone = (code: ErrorCode) => new HttpError(410, code);
