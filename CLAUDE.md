@@ -23,6 +23,10 @@ Features are built with [GitHub Spec Kit](https://github.com/github/spec-kit) (v
 
 Specs replace the old idea of a single `docs/product.md`. Do not edit the vendored files in `.specify/templates`, `.specify/scripts` or `.claude/skills/speckit-*` by hand (they are excluded from Prettier and get replaced on upgrade); customize through presets or the constitution instead. Upgrading: `uv tool install --force --python 3.13 specify-cli --from git+https://github.com/github/spec-kit.git@<tag>`, then `specify init --here --force --non-interactive --integration claude --script ps` and review the diff.
 
+## React performance
+
+The vendored `vercel-react-best-practices` skill (from `vercel-labs/agent-skills`, MIT; refresh by re-copying its `skills/react-best-practices` folder) applies to React code in `apps/web` and `packages/ui`, with three adjustments: both are client-only Vite code, so skip the Next.js/SSR rules (`server-*`, `async-api-routes`, `rendering-hydration-*`); use `React.lazy` instead of `next/dynamic`; and data fetching uses TanStack Query, not SWR. The constitution and `docs/design.md` win on any conflict.
+
 ## Deploy
 
 Vercel rewrites `/api/*` to the API on Render (bundled with esbuild) so the browser sees one origin; Postgres on Neon. See `docs/deploy.md`.
