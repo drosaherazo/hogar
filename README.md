@@ -6,12 +6,12 @@
 
 ## Status
 
-| Area                                                                | State                                                           |
-| ------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Design system (`packages/ui`)                                       | ✅ Tokens, light/dark themes, 7 components, bilingual Storybook |
-| Sign in with Google                                                 | ✅ API + web, rotating refresh tokens                           |
-| Home page                                                           | ✅ Welcome + "no household yet"                                 |
-| Households, invitations, expenses, chores, shopping list, real time | 🔜 Next (MVP)                                                   |
+| Area                                       | State                                                                                                                                                             |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Design system (`packages/ui`)              | ✅ Tokens, light/dark themes, 10 components, bilingual Storybook                                                                                                  |
+| Sign in with Google                        | ✅ API + web, rotating refresh tokens                                                                                                                             |
+| Households                                 | ✅ Create and rename, single-use invitation links, roles (admin, member, guest), leave and remove, default split by weight ([spec](specs/001-households/spec.md)) |
+| Expenses, chores, shopping list, real time | 🔜 Next (MVP)                                                                                                                                                     |
 
 ## Stack
 

@@ -189,10 +189,10 @@
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T057 [P] Cypress flows in `apps/web/cypress/e2e/household.cy.ts` with stubbed API (`cy.intercept`, following `apps/web/cypress/e2e/auth.cy.ts`): create a household from the empty home; invite → copy view → a second user's accept simulated by switching the stubbed `GET /api/household` response → the new member appears after refetch; invitation page states (valid, used, has another household); edit the split weights and see the banner disappear on save
-- [ ] T058 [P] Run the `docs/design.md` checklist on Home, Settings (three sections) and Invite in light and dark themes and in en and es, fixing anything found (tokens only, visible focus, color never alone, warm copy)
-- [ ] T059 [P] Update the status table in `README.md`: households, invitations, members and split become ✅, and expenses, chores, shopping list and real time stay 🔜
-- [ ] T060 Run the full gate: `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test` (API against Docker `hogar_test`) and `env -u ELECTRON_RUN_AS_NODE pnpm --filter @hogar/web e2e`
+- [x] T057 [P] Cypress flows in `apps/web/cypress/e2e/household.cy.ts` with stubbed API (`cy.intercept`, following `apps/web/cypress/e2e/auth.cy.ts`): create a household from the empty home; invite → copy view → a second user's accept simulated by switching the stubbed `GET /api/household` response → the new member appears after refetch; invitation page states (valid, used, has another household); edit the split weights and see the banner disappear on save
+- [x] T058 [P] Run the `docs/design.md` checklist on Home, Settings (three sections) and Invite in light and dark themes and in en and es, fixing anything found (tokens only, visible focus, color never alone, warm copy)
+- [x] T059 [P] Update the status table in `README.md`: households, invitations, members and split become ✅, and expenses, chores, shopping list and real time stay 🔜
+- [x] T060 Run the full gate: `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test` (API against Docker `hogar_test`) and `env -u ELECTRON_RUN_AS_NODE pnpm --filter @hogar/web e2e`
 - [ ] T061 Walk through the 10 manual scenarios in `specs/001-households/quickstart.md` with two browsers on `pnpm dev`, and fix any gap against the spec
 
 ---
