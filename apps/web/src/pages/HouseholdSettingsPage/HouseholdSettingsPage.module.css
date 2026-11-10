@@ -85,6 +85,17 @@
   border-block-start: none;
 }
 
+.person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.alignStart {
+  justify-self: start;
+}
+
 .itemText {
   display: grid;
   gap: var(--space-1);

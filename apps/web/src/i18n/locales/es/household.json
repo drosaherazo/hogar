@@ -38,6 +38,25 @@
       "saved": "Nombre guardado.",
       "readOnly": "Solo los administradores pueden cambiar el nombre."
     },
+    "members": {
+      "title": "Personas",
+      "you": "{{name}} (tú)",
+      "options": "Opciones para {{name}}",
+      "roleLabel": "Rol",
+      "remove": "Quitar del hogar",
+      "removeTitle": "¿Quitar a {{name}}?",
+      "removeDescription": "{{name}} dejará de ver este hogar. Puede volver con una invitación nueva.",
+      "removeConfirm": "Quitar a {{name}}",
+      "removing": "Quitando",
+      "onlyAdmin": "Eres la única persona administradora. Haz administrador a alguien más antes de dejar el rol o salir.",
+      "leave": "Salir del hogar",
+      "leaveTitle": "¿Salir de {{household}}?",
+      "leaveDescription": "Dejarás de ver sus gastos, tareas y lista de la compra. Puedes volver con una invitación nueva.",
+      "leaveLastDescription": "Eres la única persona aquí, así que {{household}} se borrará cuando salgas.",
+      "leaveConfirm": "Salir del hogar",
+      "leaveDeleteConfirm": "Salir y borrar el hogar",
+      "leaving": "Saliendo del hogar"
+    },
     "invitations": {
       "title": "Invitaciones",
       "description": "Cada enlace funciona una vez y durante 12 horas. Envíalo como prefieras.",

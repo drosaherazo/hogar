@@ -38,6 +38,25 @@
       "saved": "Name saved.",
       "readOnly": "Only admins can change the name."
     },
+    "members": {
+      "title": "People",
+      "you": "{{name}} (you)",
+      "options": "Options for {{name}}",
+      "roleLabel": "Role",
+      "remove": "Remove from household",
+      "removeTitle": "Remove {{name}}?",
+      "removeDescription": "{{name}} will stop seeing this household. They can come back with a new invitation.",
+      "removeConfirm": "Remove {{name}}",
+      "removing": "Removing",
+      "onlyAdmin": "You're the only admin. Make someone else an admin before stepping down or leaving.",
+      "leave": "Leave household",
+      "leaveTitle": "Leave {{household}}?",
+      "leaveDescription": "You'll stop seeing its expenses, chores and shopping list. You can come back with a new invitation.",
+      "leaveLastDescription": "You're the only person here, so {{household}} will be deleted when you leave.",
+      "leaveConfirm": "Leave household",
+      "leaveDeleteConfirm": "Leave and delete household",
+      "leaving": "Leaving the household"
+    },
     "invitations": {
       "title": "Invitations",
       "description": "Each link works once and for 12 hours. Send it however you like.",

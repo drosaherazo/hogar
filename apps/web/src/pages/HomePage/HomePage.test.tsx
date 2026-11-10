@@ -28,6 +28,25 @@ describe("HomePage", () => {
       expect(screen.getByText(/Got an invitation link/)).toBeInTheDocument();
     });
 
+    it("gently tells a removed person, once, and tells the server it was seen", async () => {
+      let dismissals = 0;
+      server.use(
+        handlers.signedIn(),
+        handlers.noHousehold("Piso Lavapiés"),
+        http.delete("*/api/me/removal-notice", () => {
+          dismissals += 1;
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+      renderApp({ path: "/" });
+
+      const note = await screen.findByText(/You're no longer part of Piso Lavapiés/);
+      expect(note.closest("[role=status]")).not.toBeNull();
+      await waitFor(() => expect(dismissals).toBe(1));
+      // Still on screen for this visit, even after the server forgot it.
+      expect(screen.getByText(/You're no longer part of Piso Lavapiés/)).toBeInTheDocument();
+    });
+
     it("creates a household with a valid name and shows it", async () => {
       server.use(
         handlers.signedIn(),
