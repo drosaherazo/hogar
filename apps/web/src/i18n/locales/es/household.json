@@ -37,6 +37,58 @@
       "saving": "Guardando el nombre",
       "saved": "Nombre guardado.",
       "readOnly": "Solo los administradores pueden cambiar el nombre."
+    },
+    "invitations": {
+      "title": "Invitaciones",
+      "description": "Cada enlace funciona una vez y durante 12 horas. Envíalo como prefieras.",
+      "create": "Invitar a alguien",
+      "empty": "Ahora mismo no hay invitaciones abiertas.",
+      "createdBy": "Creada por {{name}}",
+      "expiresIn": "Caduca {{time}}",
+      "expired": "Caducada",
+      "renew": "Nuevo enlace",
+      "renewing": "Creando un enlace nuevo",
+      "revoke": "Revocar",
+      "revokeTitle": "¿Revocar esta invitación?",
+      "revokeDescription": "El enlace dejará de funcionar al momento. Siempre puedes crear uno nuevo.",
+      "revokeConfirm": "Revocar invitación",
+      "revoking": "Revocando la invitación",
+      "roleLegend": "Entrará como",
+      "roleHint": {
+        "MEMBER": "Puede añadir y editar gastos, tareas y la lista de la compra.",
+        "GUEST": "Puede verlo todo pero no cambiar nada. Por defecto no paga."
+      },
+      "createTitle": "Invitar a alguien",
+      "createSubmit": "Crear enlace",
+      "creating": "Creando el enlace",
+      "linkTitle": "Tu enlace de invitación",
+      "linkDescription": "Funciona una vez y caduca en 12 horas. No podrás volver a verlo, pero siempre puedes crear uno nuevo.",
+      "linkLabel": "Enlace de invitación",
+      "copy": "Copiar enlace",
+      "copied": "Enlace copiado.",
+      "copyFailed": "No hemos podido copiarlo automáticamente. Selecciona el enlace y cópialo.",
+      "done": "Listo"
     }
+  },
+  "invite": {
+    "title": "Te han invitado",
+    "description": "{{inviter}} te invita a unirte a {{household}} como {{role}}.",
+    "descriptionNoInviter": "Te han invitado a unirte a {{household}} como {{role}}.",
+    "role": {
+      "MEMBER": "miembro",
+      "GUEST": "invitado"
+    },
+    "join": "Unirme a {{household}}",
+    "joining": "Uniéndote al hogar",
+    "alreadyMember": "Ya formas parte de {{household}}.",
+    "goHome": "Ir a mi hogar",
+    "backHome": "Volver al inicio",
+    "otherHousehold": "Ya perteneces a otro hogar. Para unirte a {{household}}, sal primero del tuyo. Esta invitación seguirá funcionando hasta que caduque.",
+    "leave": "Salir de mi hogar",
+    "leaveTitle": "¿Salir de tu hogar?",
+    "leaveDescription": "Dejarás de ver sus gastos, tareas y lista de la compra. Puedes volver con una invitación nueva.",
+    "leaveConfirm": "Salir del hogar",
+    "leaving": "Saliendo del hogar",
+    "problemTitle": "Esta invitación no se puede usar"
   }
 }

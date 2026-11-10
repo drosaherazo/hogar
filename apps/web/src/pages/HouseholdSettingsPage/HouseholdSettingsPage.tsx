@@ -8,6 +8,7 @@ import { useHousehold } from "../../household/useHousehold";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell } from "../../layout/AppShell";
 import styles from "./HouseholdSettingsPage.module.css";
+import { InvitationsSection } from "./InvitationsSection";
 import { NameSection } from "./NameSection";
 
 /** Household settings: name, members (and invitations) and the split. */
@@ -37,9 +38,11 @@ export function HouseholdSettingsPage() {
 }
 
 function Sections({ household }: { household: HouseholdView }) {
+  const isAdmin = household.myRole === "ADMIN";
   return (
     <div className={styles.sections}>
       <NameSection household={household} />
+      {isAdmin && <InvitationsSection />}
     </div>
   );
 }

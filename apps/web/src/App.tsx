@@ -11,6 +11,7 @@ import { RedirectIfAuthenticated, RequireAuth } from "./auth/guards";
 import { currentLocale } from "./i18n";
 import { HomePage } from "./pages/HomePage/HomePage";
 import { HouseholdSettingsPage } from "./pages/HouseholdSettingsPage/HouseholdSettingsPage";
+import { InvitePage } from "./pages/InvitePage/InvitePage";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
 
 export interface AppConfig {
@@ -28,6 +29,7 @@ export function createRoutes({ googleClientId }: AppConfig): RouteObject[] {
       children: [
         { path: "/", element: <HomePage /> },
         { path: "/household/settings", element: <HouseholdSettingsPage /> },
+        { path: "/invite", element: <InvitePage /> },
       ],
     },
     { path: "*", element: <RedirectIfAuthenticated /> },

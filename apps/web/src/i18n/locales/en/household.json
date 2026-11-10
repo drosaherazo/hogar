@@ -37,6 +37,58 @@
       "saving": "Saving the name",
       "saved": "Name saved.",
       "readOnly": "Only admins can change the name."
+    },
+    "invitations": {
+      "title": "Invitations",
+      "description": "Each link works once and for 12 hours. Send it however you like.",
+      "create": "Invite someone",
+      "empty": "No open invitations right now.",
+      "createdBy": "Created by {{name}}",
+      "expiresIn": "Expires {{time}}",
+      "expired": "Expired",
+      "renew": "New link",
+      "renewing": "Creating a new link",
+      "revoke": "Revoke",
+      "revokeTitle": "Revoke this invitation?",
+      "revokeDescription": "The link will stop working right away. You can always create a new one.",
+      "revokeConfirm": "Revoke invitation",
+      "revoking": "Revoking the invitation",
+      "roleLegend": "They'll join as",
+      "roleHint": {
+        "MEMBER": "Can add and edit expenses, chores and the shopping list.",
+        "GUEST": "Can see everything but not change anything. Doesn't pay by default."
+      },
+      "createTitle": "Invite someone",
+      "createSubmit": "Create link",
+      "creating": "Creating the link",
+      "linkTitle": "Your invitation link",
+      "linkDescription": "It works once and expires in 12 hours. You won't be able to see it again, but you can always create a new one.",
+      "linkLabel": "Invitation link",
+      "copy": "Copy link",
+      "copied": "Link copied.",
+      "copyFailed": "We couldn't copy it automatically. Select the link and copy it.",
+      "done": "Done"
     }
+  },
+  "invite": {
+    "title": "You've been invited",
+    "description": "{{inviter}} invites you to join {{household}} as {{role}}.",
+    "descriptionNoInviter": "You've been invited to join {{household}} as {{role}}.",
+    "role": {
+      "MEMBER": "a member",
+      "GUEST": "a guest"
+    },
+    "join": "Join {{household}}",
+    "joining": "Joining the household",
+    "alreadyMember": "You're already part of {{household}}.",
+    "goHome": "Go to my household",
+    "backHome": "Back to home",
+    "otherHousehold": "You already belong to another household. To join {{household}}, leave yours first. This invitation will keep working until it expires.",
+    "leave": "Leave my household",
+    "leaveTitle": "Leave your household?",
+    "leaveDescription": "You'll stop seeing its expenses, chores and shopping list. You can come back with a new invitation.",
+    "leaveConfirm": "Leave household",
+    "leaving": "Leaving the household",
+    "problemTitle": "This invitation can't be used"
   }
 }
