@@ -64,9 +64,9 @@ export function createApp({ config, db, google, authRateLimit = 100, invitationR
     requireSameOrigin(config.webOrigin),
     createAuthRouter(auth, { cookieSecure: config.cookieSecure }),
   );
-  app.use("/api/me", requireAuth(signer), createMeRouter(auth));
 
   const households = createHouseholdService({ db, now });
+  app.use("/api/me", requireAuth(signer), createMeRouter(auth, households));
   const invitations = createInvitationService({ db, households, now });
   app.use("/api/household/invitations", requireAuth(signer), createHouseholdInvitationsRouter(db, invitations));
   app.use("/api/household", requireAuth(signer), createHouseholdRouter(db, households));

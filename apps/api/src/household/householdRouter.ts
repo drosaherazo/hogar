@@ -1,4 +1,5 @@
 import {
+  changeRoleRequestSchema,
   createHouseholdRequestSchema,
   errorCodeFrom,
   renameHouseholdRequestSchema,
@@ -44,6 +45,26 @@ export function createHouseholdRouter(db: Database, households: HouseholdService
     const { name } = parseBody(renameHouseholdRequestSchema, req.body);
     const body: HouseholdResponse = {
       household: await households.rename(membershipOf(req).householdId, userIdOf(req), name),
+    };
+    res.json(body);
+  });
+
+  router.post("/leave", member, async (req, res) => {
+    await households.leave(membershipOf(req));
+    res.status(204).end();
+  });
+
+  router.patch("/members/:membershipId", member, requireAdmin, async (req, res) => {
+    const { role } = parseBody(changeRoleRequestSchema, req.body);
+    const body: HouseholdResponse = {
+      household: await households.changeRole(membershipOf(req), String(req.params["membershipId"]), role),
+    };
+    res.json(body);
+  });
+
+  router.delete("/members/:membershipId", member, requireAdmin, async (req, res) => {
+    const body: HouseholdResponse = {
+      household: await households.removeMember(membershipOf(req), String(req.params["membershipId"])),
     };
     res.json(body);
   });
