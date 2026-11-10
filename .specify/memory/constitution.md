@@ -136,7 +136,9 @@ product's main differentiator.
   `/speckit-tasks` → (`/speckit-analyze`) → `/speckit-implement`. Specs live in
   `specs/NNN-feature/` and are committed with the feature.
 - **Branches:** one branch per feature and a PR to `main`. CI (format, lint, typecheck, tests with
-  Postgres, builds, Cypress) MUST pass before merging.
+  Postgres, builds, Cypress) MUST pass before merging. Once a branch is merged into `main`, it MUST
+  be deleted both on GitHub (`git push origin --delete <branch>`) and locally
+  (`git branch -d <branch>`, then `git fetch --prune`).
 - **Commits:** small, Conventional Commits in English (`feat(api): add expense split endpoint`).
   No AI attribution: no `Co-Authored-By` trailers and no "Generated with" footers.
 - **Decisions:** significant architectural choices are recorded as ADRs in `docs/decisions/`.
@@ -151,4 +153,4 @@ product's main differentiator.
   bump: MAJOR for removed or redefined principles, MINOR for new principles or sections, PATCH for
   clarifications.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-10
+**Version**: 1.1.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-10
