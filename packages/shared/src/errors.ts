@@ -11,6 +11,21 @@ export const ERROR_CODES = [
   "auth.session.expired",
   "auth.session.reused",
   "auth.token.invalid",
+  "household.name.required",
+  "household.name.too_long",
+  "household.already_member",
+  "household.not_member",
+  "household.forbidden",
+  "household.last_admin",
+  "household.member_not_found",
+  "invitation.not_found",
+  "invitation.expired",
+  "invitation.used",
+  "invitation.revoked",
+  "invitation.limit_reached",
+  "split.weight.invalid",
+  "split.all_zero",
+  "split.members_changed",
   "request.invalid",
   "request.forbidden_origin",
   "request.rate_limited",
@@ -30,4 +45,13 @@ export type ApiError = z.infer<typeof apiErrorSchema>;
 
 export function isErrorCode(value: unknown): value is ErrorCode {
   return typeof value === "string" && (ERROR_CODES as readonly string[]).includes(value);
+}
+
+/**
+ * The error code of the first failed check in a Zod result. Shared schemas put codes in their
+ * messages; anything else (wrong type, missing field) is a plain `request.invalid`.
+ */
+export function errorCodeFrom(error: { issues: readonly { message: string }[] } | undefined): ErrorCode {
+  const message = error?.issues[0]?.message;
+  return isErrorCode(message) ? message : "request.invalid";
 }

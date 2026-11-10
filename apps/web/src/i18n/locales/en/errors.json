@@ -13,6 +13,31 @@
       "invalid": "Your session has ended. Sign in again to continue."
     }
   },
+  "household": {
+    "name": {
+      "required": "Give your household a name.",
+      "too_long": "That name is a bit long. Keep it to 50 characters or fewer."
+    },
+    "already_member": "You're already part of a household. Leave it first if you want to join another one.",
+    "not_member": "You're not part of a household right now.",
+    "forbidden": "Only the household's admins can do that.",
+    "last_admin": "Make someone else an admin first, so the household is never left without one.",
+    "member_not_found": "That person is no longer part of the household."
+  },
+  "invitation": {
+    "not_found": "This invitation link doesn't work. Ask the person who invited you for a new one.",
+    "expired": "This invitation has expired. Ask the person who invited you for a new link.",
+    "used": "This invitation has already been used. Ask the person who invited you for a new link.",
+    "revoked": "This invitation was cancelled. Ask the person who invited you for a new link.",
+    "limit_reached": "You already have 10 open invitations. Cancel one or wait for it to be used before creating another."
+  },
+  "split": {
+    "weight": {
+      "invalid": "Each weight must be a whole number from 0 to 100."
+    },
+    "all_zero": "At least one person needs a weight above 0, otherwise nobody would pay.",
+    "members_changed": "The household's members changed while you were editing. Review the split again."
+  },
   "request": {
     "invalid": "Something in that request wasn't right. Please try again.",
     "forbidden_origin": "That request didn't come from Hogar, so we blocked it.",
