@@ -424,10 +424,10 @@ Within each story, test tasks come first and must fail before implementation.
   6. Deleting, which leaves a muted line.
 - [ ] T078 [P] Run the `docs/design.md` checklist on Expenses, the expense form, details, Balances, the payment dialog, the home card and the settings dialogs. Check light and dark, en and es, and 375 px; fix anything found (tokens only, visible focus, color never alone, warm copy, nothing clipped in Spanish).
 - [x] T079 [P] Review `packages/ui/src/components/Amount/`, `ChoiceGroup/`, `Select/` and the `Avatar/` muted variant in Storybook in light and dark and with the Locale toolbar in en and es (canvas, docs page and chrome), and fix anything found (the lesson from households T065)
-- [x] T080 [P] Regenerate the "New i18n keys" section of `specs/002-expenses/contracts/ui.md` from the JSON files, in en and es: the whole `expenses` namespace, the changed `household` keys, the `common:nav.*` keys and the 15 `errors.*` codes. Make it match the code exactly (the lesson from households T063).
+- [x] T080 [P] Regenerate the "New i18n keys" section of `specs/002-expenses/contracts/ui.md` from the JSON files, in en and es: the whole `expenses` namespace, the changed `household` keys, the `common:nav.*` keys and the 16 `errors.*` codes. Make it match the code exactly (the lesson from households T063).
 - [x] T081 [P] Check every cell of the permission matrix in `specs/002-expenses/contracts/api.md` against the Supertest suites (ADMIN, MEMBER, GUEST, former member, other household, no household × each endpoint) and add any missing case (the lesson from households T062)
 - [x] T082 [P] Update the status table in `README.md`: expenses with splits, balances and settling up becomes ✅; chores, shopping list and real time stay 🔜
-- [ ] T083 Run the full gate: `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test` (API against Docker `hogar_test`) and `env -u ELECTRON_RUN_AS_NODE pnpm --filter @hogar/web e2e`
+- [x] T083 Run the full gate: `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test` (API against Docker `hogar_test`) and `env -u ELECTRON_RUN_AS_NODE pnpm --filter @hogar/web e2e`
 - [ ] T084 Walk through the 13 manual scenarios in `specs/002-expenses/quickstart.md` with two browsers on `pnpm dev`, and fix any gap against the spec
 
 ---
