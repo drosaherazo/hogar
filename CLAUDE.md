@@ -27,6 +27,10 @@ Specs replace the old idea of a single `docs/product.md`. Do not edit the vendor
 
 The vendored `vercel-react-best-practices` skill (from `vercel-labs/agent-skills`, MIT; refresh by re-copying its `skills/react-best-practices` folder) applies to React code in `apps/web` and `packages/ui`, with three adjustments: both are client-only Vite code, so skip the Next.js/SSR rules (`server-*`, `async-api-routes`, `rendering-hydration-*`); use `React.lazy` instead of `next/dynamic`; and data fetching uses TanStack Query, not SWR. The constitution and `docs/design.md` win on any conflict.
 
+## Design review
+
+The vendored `web-design-guidelines` skill (from `vercel-labs/agent-skills`, MIT; refresh by re-copying its `skills/web-design-guidelines` folder) audits UI code in `apps/web` and `packages/ui` against Vercel's Web Interface Guidelines. It fetches those rules live from `vercel-labs/web-interface-guidelines` on every run, so they can change upstream without a repo change. Its findings add to the `docs/design.md` checklist and never replace it; the constitution and `docs/design.md` (semantic tokens only, no hardcoded copy, warmth) win on any conflict.
+
 ## Deploy
 
 Vercel rewrites `/api/*` to the API on Render (bundled with esbuild) so the browser sees one origin; Postgres on Neon. See `docs/deploy.md`.
