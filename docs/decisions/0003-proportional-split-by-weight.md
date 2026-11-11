@@ -1,6 +1,6 @@
 # 0003 · Default split: proportional by member weight, no household type, no shared pot
 
-- **Status:** accepted
+- **Status:** accepted; extended by [0005](0005-category-split-weights.md)
 - **Date:** 2026-11-10
 
 ## Context

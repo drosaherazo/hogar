@@ -32,6 +32,14 @@ not the length of a feature list.
   default split is proportional to those weights, converted to exact cents with the rule above.
   There is no household type: one model covers couples, families and flatmates (see
   `docs/decisions/0003-proportional-split-by-weight.md`).
+- **Category splits extend the default:** an expense category MAY opt in to its own integer weight
+  (0–100) per member, which replaces the household's weights as the default split for expenses in
+  that category. Expenses without a category, or in a category that follows the household, use
+  the household's weights. Only `ADMIN` manages categories and their weights (see
+  `docs/decisions/0005-category-split-weights.md`).
+- **Shares are fixed when saved:** changing weights (household or category), categories or members
+  never changes an existing expense; its shares change only when someone edits that expense and
+  sees the new shares before saving.
 - Split, balance and debt-simplification logic lives in `packages/shared` so web and API compute
   the same results.
 
@@ -126,9 +134,10 @@ interface makes them feel lighter and is the product's main differentiator.
 ## Scope
 
 - **Current phase, MVP (v1):** auth and roles, household with shareable-link invitations, expenses
-  with splits and balances, chores with an assignee, shopping list, and real time.
+  with splits and balances, expense categories (with an optional own split and a list filter),
+  chores with an assignee, shopping list, and real time.
 - **Out of the MVP:** invitation emails, recurring expenses and recurring chores (v1.1), budgets
-  and charts (v1.2).
+  and charts, including totals and charts per category (v1.2).
 - **Out of scope:** multiple households per user, a shared pot, real payments, multiple
   currencies, native mobile app, and gamification. They are not implemented unless explicitly
   requested and the constitution is amended.
@@ -156,4 +165,4 @@ interface makes them feel lighter and is the product's main differentiator.
   bump: MAJOR for removed or redefined principles, MINOR for new principles or sections, PATCH for
   clarifications.
 
-**Version**: 3.0.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-11
+**Version**: 3.1.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-11
