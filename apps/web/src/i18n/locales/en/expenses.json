@@ -76,6 +76,12 @@
     "split": {
       "legend": "How should it be split?",
       "weights": "The household's split",
+      "equal": "Equally between…",
+      "exact": "Exact amounts",
+      "who": "Who shares it?",
+      "amounts": "How much each person pays",
+      "left": "{{amount}} left to assign",
+      "over": "{{amount}} over the total",
       "noDefault": "Nobody pays in the household's split yet. Choose people, or review the split.",
       "reviewSplit": "Review the split",
       "preview": "Each person's share"

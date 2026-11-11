@@ -145,3 +145,102 @@ describe("ExpenseFormPage (adding)", () => {
     await expectNoA11yViolations(container);
   });
 });
+
+describe("ExpenseFormPage › other ways to split", () => {
+  const bruno = "user_m_bruno";
+
+  /** Fills description and amount, and captures what would be sent. */
+  async function startExpense(amount: string) {
+    let body: unknown;
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      http.post("*/api/household/expenses", async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ expense: expenseView() }, { status: 201 });
+      }),
+      handlers.expense(),
+    );
+    renderApp({ path: PATH });
+    await userEvent.type(await screen.findByRole("textbox", { name: "What was it?" }), "Dinner");
+    await userEvent.type(screen.getByRole("textbox", { name: "Amount (€)" }), amount);
+    return () => body;
+  }
+
+  it("splits equally among the people chosen, showing each share", async () => {
+    const sent = await startExpense("10.00");
+    await userEvent.click(screen.getByRole("radio", { name: "Equally between…" }));
+
+    const who = screen.getByRole("group", { name: "Who shares it?" });
+    const anaBox = within(who).getByRole("checkbox", { name: "Ana García" });
+    const brunoBox = within(who).getByRole("checkbox", { name: "Bruno Díaz" });
+    expect(anaBox).toBeChecked();
+    expect(brunoBox).toBeChecked();
+    expect(within(who).getAllByText("€5.00")).toHaveLength(2);
+
+    await userEvent.click(brunoBox);
+    expect(within(who).getByText("€10.00")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Save expense" }));
+    await screen.findByRole("status");
+    expect(sent()).toEqual(expect.objectContaining({ split: { method: "EQUAL", userIds: [ana.id] } }));
+  });
+
+  it("asks for at least one person to share it", async () => {
+    await startExpense("10.00");
+    await userEvent.click(screen.getByRole("radio", { name: "Equally between…" }));
+    const who = screen.getByRole("group", { name: "Who shares it?" });
+    await userEvent.click(within(who).getByRole("checkbox", { name: "Ana García" }));
+    await userEvent.click(within(who).getByRole("checkbox", { name: "Bruno Díaz" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save expense" }));
+    expect(screen.getByText("Choose at least one person to share it.")).toBeInTheDocument();
+  });
+
+  it("takes exact amounts and says what's left to assign until they add up", async () => {
+    const sent = await startExpense("50");
+    await userEvent.click(screen.getByRole("radio", { name: "Exact amounts" }));
+
+    const amounts = screen.getByRole("group", { name: "How much each person pays" });
+    await userEvent.type(within(amounts).getByRole("textbox", { name: "Bruno Díaz" }), "30");
+    await userEvent.type(within(amounts).getByRole("textbox", { name: "Ana García" }), "15");
+    expect(screen.getByText("€5.00 left to assign")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save expense" })).toBeDisabled();
+
+    await userEvent.clear(within(amounts).getByRole("textbox", { name: "Ana García" }));
+    await userEvent.type(within(amounts).getByRole("textbox", { name: "Ana García" }), "25");
+    expect(screen.getByText("€5.00 over the total")).toBeInTheDocument();
+
+    await userEvent.clear(within(amounts).getByRole("textbox", { name: "Ana García" }));
+    await userEvent.type(within(amounts).getByRole("textbox", { name: "Ana García" }), "20");
+    expect(screen.queryByText(/left to assign|over the total/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Save expense" }));
+    await screen.findByRole("status");
+    expect(sent()).toEqual(
+      expect.objectContaining({
+        amountCents: 5000,
+        split: {
+          method: "EXACT",
+          shares: [
+            { userId: ana.id, amountCents: 2000 },
+            { userId: bruno, amountCents: 3000 },
+          ],
+        },
+      }),
+    );
+  });
+
+  it("starts with an equal split when nobody pays in the household's split", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(
+        homeView({
+          members: [
+            member({ id: "m_ana", userId: ana.id, name: ana.name, role: "ADMIN", weight: 0, shareBps: 0 }),
+            member({ id: "m_bruno", name: "Bruno Díaz", weight: 0, shareBps: 0 }),
+          ],
+        }),
+      ),
+    );
+    renderApp({ path: PATH });
+    expect(await screen.findByRole("radio", { name: "Equally between…" })).toBeChecked();
+  });
+});

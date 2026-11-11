@@ -76,6 +76,12 @@
     "split": {
       "legend": "¿Cómo se reparte?",
       "weights": "El reparto del hogar",
+      "equal": "A partes iguales entre…",
+      "exact": "Importes exactos",
+      "who": "¿Entre quién se reparte?",
+      "amounts": "Cuánto paga cada persona",
+      "left": "Faltan {{amount}} por asignar",
+      "over": "Te pasas {{amount}} del total",
       "noDefault": "Todavía nadie paga en el reparto del hogar. Elige personas o revisa el reparto.",
       "reviewSplit": "Revisar el reparto",
       "preview": "La parte de cada persona"

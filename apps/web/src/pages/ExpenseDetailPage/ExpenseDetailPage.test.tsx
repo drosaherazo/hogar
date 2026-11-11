@@ -24,6 +24,20 @@ describe("ExpenseDetailPage", () => {
     expect(screen.getByText(/Added by Ana García on/)).toBeInTheDocument();
   });
 
+  it.each([
+    ["EQUAL", "Equally between 2 people"],
+    ["EXACT", "Exact amounts"],
+  ] as const)("names how a %s expense was split", async (method, label) => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      handlers.expense(expenseView({ split: { ...expenseView().split, method } })),
+    );
+    renderApp({ path: PATH });
+    await screen.findByRole("heading", { name: "Groceries" });
+    expect(screen.getByText("How it's split").nextElementSibling).toHaveTextContent(label);
+  });
+
   it("explains kindly when the expense isn't there any more", async () => {
     server.use(
       handlers.signedIn(),
