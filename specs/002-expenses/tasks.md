@@ -93,7 +93,7 @@ Within each story, test tasks come first and must fail before implementation.
 
 ### Data model
 
-- [ ] T013 Add to `apps/api/prisma/schema.prisma` per `data-model.md`, with snake_case `@map`/`@@map` everywhere:
+- [x] T013 Add to `apps/api/prisma/schema.prisma` per `data-model.md`, with snake_case `@map`/`@@map` everywhere:
   - **`enum SplitMethod { WEIGHTS EQUAL EXACT }`.**
   - **`Expense` (`@@map("expenses")`):**
     - `householdId` FK `onDelete: Cascade`; `description String`.
@@ -106,49 +106,49 @@ Within each story, test tasks come first and must fail before implementation.
   - **`ExpenseShare` (`@@map("expense_shares")`):** `expenseId` FK `onDelete: Cascade`, `userId` FK `onDelete: Restrict`, `amountCents Int` ("≥ 0"), `@@id([expenseId, userId])`, `@@index([userId])`.
   - **`Settlement` (`@@map("settlements")`):** `householdId` FK cascade, `fromUserId` and `toUserId` FKs `onDelete: Restrict`, `amountCents`, `date @db.Date`, then the same created, edited, version and deleted columns as `Expense`. Indexes `(householdId, date desc, createdAt desc, id desc)`, `(householdId, fromUserId)` and `(householdId, toUserId)`.
   - **Back-relations:** on `Household` (`expenses`, `settlements`) and named relations on `User` for every FK.
-- [ ] T014 Generate the migration with `pnpm --filter @hogar/api exec prisma migrate dev --name expenses`. Append the four `CHECK` constraints from `data-model.md` › Constraints verbatim to the generated `apps/api/prisma/migrations/<timestamp>_expenses/migration.sql`: `expenses_amount_range`, `expense_shares_amount_nonnegative`, `settlements_amount_range`, `settlements_different_people`. Run `prisma migrate reset --force` locally to verify it applies cleanly.
-- [ ] T015 Update `apps/api/test/testApp.ts` to add `"expense_shares", "expenses", "settlements"` to the `TRUNCATE … CASCADE` statement. Create `apps/api/test/expenseHelpers.ts` with:
+- [x] T014 Generate the migration with `pnpm --filter @hogar/api exec prisma migrate dev --name expenses`. Append the four `CHECK` constraints from `data-model.md` › Constraints verbatim to the generated `apps/api/prisma/migrations/<timestamp>_expenses/migration.sql`: `expenses_amount_range`, `expense_shares_amount_nonnegative`, `settlements_amount_range`, `settlements_different_people`. Run `prisma migrate reset --force` locally to verify it applies cleanly.
+- [x] T015 Update `apps/api/test/testApp.ts` to add `"expense_shares", "expenses", "settlements"` to the `TRUNCATE … CASCADE` statement. Create `apps/api/test/expenseHelpers.ts` with:
   - `homeWith(app, { weights? })`: Ana ADMIN plus Bruno MEMBER (and optionally Carla GUEST) through `addMember`, with weights set directly.
   - `addExpense(app, who, input)` and `addSettlement(app, who, input)`, which assert 201 and parse with the shared schemas.
   - `balancesOf(app, who)`.
 
 ### Request plumbing
 
-- [ ] T016 Add a `requireEditor` middleware to `apps/api/src/household/loadMembership.ts` that throws 403 `household.forbidden` unless `canEditContent(req.membership.role)`
-- [ ] T017 Implement `apps/api/src/expenses/people.ts` (research R1, R11):
+- [x] T016 Add a `requireEditor` middleware to `apps/api/src/household/loadMembership.ts` that throws 403 `household.forbidden` unless `canEditContent(req.membership.role)`
+- [x] T017 Implement `apps/api/src/expenses/people.ts` (research R1, R11):
   - `currentMembers(tx, householdId)`: ordered by `joinedAt`, then `id`, with user id, name, avatar and weight.
-  - `historyUserIds(tx, householdId)`: payers, share users and settlement parties of **live** records only.
+  - `isInHistory(tx, householdId, userId)`: whether the person is a payer, share user or settlement party of a **live** record (three indexed counts instead of loading the whole set).
   - `personRefs(tx, householdId, userIds)`: `Map<userId, PersonRef>` with `former = !currentMember`.
   - `orderPeople(refs, members)`: current members in member order, then former members by name, then id.
 
 ### UI building blocks (tests first)
 
-- [ ] T018 [P] `Amount` tests in `packages/ui/src/components/Amount/Amount.test.tsx`:
+- [x] T018 [P] `Amount` tests in `packages/ui/src/components/Amount/Amount.test.tsx`:
   - Renders 4280 as the `Intl` EUR format for `en` ("€42.80") and `es` ("42,80 €"), via `LocaleProvider`.
   - `formatAmount(cents, locale)` returns the same strings.
   - Uses tabular numbers; axe has no violations.
-- [ ] T019 [P] `ChoiceGroup` tests in `packages/ui/src/components/ChoiceGroup/ChoiceGroup.test.tsx`:
+- [x] T019 [P] `ChoiceGroup` tests in `packages/ui/src/components/ChoiceGroup/ChoiceGroup.test.tsx`:
   - **Single choice:** native radios in a `fieldset` named by its `legend`; `onChange(value)`.
   - **Multiple:** checkboxes; `onChange(values)`.
   - **Option hints:** linked with `aria-describedby`.
   - **Disabled options:** stay readable, with their hint.
   - axe has no violations.
-- [ ] T020 [P] `Select` tests in `packages/ui/src/components/Select/Select.test.tsx`: label linked to the native select; hint and error linked with `aria-describedby`; `aria-invalid` with an error; options and `onChange`; axe has no violations
-- [ ] T021 [P] Add `Avatar` `muted` tests to `packages/ui/src/components/Avatar/Avatar.test.tsx`: the muted variant uses the neutral style, keeps its accessible name, and passes axe
-- [ ] T022 [P] Build `packages/ui/src/components/Amount/` (Amount.tsx with a `cents` prop reading the locale from `useLocale()`, module.css with `font-variant-numeric: tabular-nums`, stories, bilingual Amount.mdx) and export `Amount` and `formatAmount` from `packages/ui/src/index.ts`
-- [ ] T023 [P] Build `packages/ui/src/components/ChoiceGroup/` (props `legend`, `options: { value, label, hint?, disabled? }[]`, `value`/`onChange`, `multiple?`; styles moved from `.fieldset`, `.legend`, `.choice`, `.radio` and `.choiceText` in `apps/web/src/pages/HouseholdSettingsPage/HouseholdSettingsPage.module.css`; tokens only; stories; bilingual mdx) and export it from `packages/ui/src/index.ts`
-- [ ] T024 [P] Build `packages/ui/src/components/Select/` (mirrors `TextField`: `label` required, `hint`, `error`, `options`, 44 px tall via `--size-touch`, tokens only, stories, bilingual mdx) and export it from `packages/ui/src/index.ts`
-- [ ] T025 [P] Add the `muted` variant to `packages/ui/src/components/Avatar/Avatar.tsx` and `Avatar.module.css` (neutral sand fill from semantic tokens), with a story and a bilingual note in `Avatar.mdx` ("people who are no longer members")
-- [ ] T026 Move the invitation role picker in `apps/web/src/pages/HouseholdSettingsPage/InvitationsSection.tsx` to `ChoiceGroup`, delete the now-unused classes from `HouseholdSettingsPage.module.css`, and keep `InvitationsSection.test.tsx` passing
+- [x] T020 [P] `Select` tests in `packages/ui/src/components/Select/Select.test.tsx`: label linked to the native select; hint and error linked with `aria-describedby`; `aria-invalid` with an error; options and `onChange`; axe has no violations
+- [x] T021 [P] Add `Avatar` `muted` tests to `packages/ui/src/components/Avatar/Avatar.test.tsx`: the muted variant uses the neutral style, keeps its accessible name, and passes axe
+- [x] T022 [P] Build `packages/ui/src/components/Amount/` (Amount.tsx with a `cents` prop reading the locale from `useLocale()`, module.css with `font-variant-numeric: tabular-nums`, stories, bilingual Amount.mdx) and export `Amount` and `formatAmount` from `packages/ui/src/index.ts`
+- [x] T023 [P] Build `packages/ui/src/components/ChoiceGroup/` (props `legend`, `options: { value, label, hint?, disabled? }[]`, `value`/`onChange`, `multiple?`; styles moved from `.fieldset`, `.legend`, `.choice`, `.radio` and `.choiceText` in `apps/web/src/pages/HouseholdSettingsPage/HouseholdSettingsPage.module.css`; tokens only; stories; bilingual mdx) and export it from `packages/ui/src/index.ts`
+- [x] T024 [P] Build `packages/ui/src/components/Select/` (mirrors `TextField`: `label` required, `hint`, `error`, `options`, 44 px tall via `--size-touch`, tokens only, stories, bilingual mdx) and export it from `packages/ui/src/index.ts`
+- [x] T025 [P] Add the `muted` variant to `packages/ui/src/components/Avatar/Avatar.tsx` and `Avatar.module.css` (neutral sand fill from semantic tokens), with a story and a bilingual note in `Avatar.mdx` ("people who are no longer members")
+- [x] T026 Move the invitation role picker in `apps/web/src/pages/HouseholdSettingsPage/InvitationsSection.tsx` to `ChoiceGroup`, delete the now-unused classes from `HouseholdSettingsPage.module.css`, and keep `InvitationsSection.test.tsx` passing
 
 ### Web plumbing
 
-- [ ] T027 [P] Write `parseAmount` tests in `apps/web/src/expenses/money.test.ts`:
+- [x] T027 [P] Write `parseAmount` tests in `apps/web/src/expenses/money.test.ts`:
   - Accepted: `"42.80"` and `"42,80"` → 4280; `"42"` → 4200; `"0,5"` → 50; `" 12,50 "` → 1250; `"100000"` → 10000000.
   - Refused (`null`): `"1.200"`, `"1,234.56"`, `"12.345"`, `""`, `"-3"` and `"abc"`.
   - No floating point is involved: `"0.29"` → 29.
-- [ ] T028 [P] Implement `parseAmount(text: string): number | null` in `apps/web/src/expenses/money.ts`. It accepts digits with an optional `,` or `.` followed by one or two digits, refuses thousands separators, and builds cents from the digit strings (research R8).
-- [ ] T029 [P] Implement `apps/web/src/expenses/people.ts`: `avatarPropsFor(person: PersonRef, members: MemberView[])` returns `colorIndex` from `memberColor` (member order) for current members, or `muted` for former members
+- [x] T028 [P] Implement `parseAmount(text: string): number | null` in `apps/web/src/expenses/money.ts`. It accepts digits with an optional `,` or `.` followed by one or two digits, refuses thousands separators, and builds cents from the digit strings (research R8).
+- [x] T029 [P] Implement `apps/web/src/expenses/people.ts`: `avatarPropsFor(person: PersonRef, members: MemberView[])` returns `colorIndex` from `memberColor` (member order) for current members, or `muted` for former members
 
 **Checkpoint**: shared tests green (including generated cases), migration applied, ui components tested, typecheck green. Stories can start.
 
@@ -284,7 +284,7 @@ Within each story, test tasks come first and must fail before implementation.
 
 ### Implementation for User Story 3
 
-- [ ] T052 [US3] Implement `get` and `create` in `apps/api/src/expenses/settlementService.ts`: both parties must be in current members ∪ `historyUserIds` (`settlement.person.not_found`), the future-date rule applies, `PersonRef`s are built, and reads are scoped to the household and `deletedAt: null`
+- [ ] T052 [US3] Implement `get` and `create` in `apps/api/src/expenses/settlementService.ts`: both parties must be current members or pass `isInHistory` (`settlement.person.not_found`), the future-date rule applies, `PersonRef`s are built, and reads are scoped to the household and `deletedAt: null`
 - [ ] T053 [US3] Implement `apps/api/src/expenses/settlementsRouter.ts` (`GET /:id` any member, `POST /` `requireEditor`) and mount it at `/api/household/settlements` in `apps/api/src/app.ts`
 - [ ] T054 [US3] Add `getSettlement(id)` and `createSettlement(input)` to `apps/web/src/api/client.ts`, and `useSettlement` and `useCreateSettlement` (invalidating activity and balances) to `apps/web/src/expenses/useExpenses.ts`
 - [ ] T055 [US3] Build `apps/web/src/expenses/PaymentDialog.tsx` (record and view modes) on `Dialog`:
