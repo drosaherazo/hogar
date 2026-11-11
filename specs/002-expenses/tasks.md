@@ -385,7 +385,7 @@ Within each story, test tasks come first and must fail before implementation.
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T071 [P] [US6] Supertest suite `apps/api/test/formerMembers.test.ts`:
+- [x] T071 [P] [US6] Supertest suite `apps/api/test/formerMembers.test.ts`:
   - **Leaving:** after someone leaves with an open balance, `balances` lists them with `former: true` and their balance.
   - **Payments:** a settlement with them is allowed and brings them to 0, after which they drop out of the balances.
   - **New expenses:** a former member as payer or sharer → 400 `expense.person.not_member`.
@@ -393,21 +393,21 @@ Within each story, test tasks come first and must fail before implementation.
   - **Rejoining:** through a new invitation they come back with `former: false` and get their history and balance back.
   - **Names:** `activity` `PersonRef`s carry the `former` flags.
   - **Deleted records:** a user who appears only in deleted records isn't "in the history" (settlement → 400 `settlement.person.not_found`).
-- [ ] T072 [P] [US6] Add to `apps/api/test/members.test.ts`: leaving and removal with an open balance still succeed (204 / 200); the last member leaving a household with expenses and settlements deletes them all (`expense`, `expenseShare` and `settlement` counts are 0)
-- [ ] T073 [P] [US6] Web tests in `apps/web/src/pages/HouseholdSettingsPage/MembersSection.test.tsx`, `apps/web/src/pages/BalancesPage/BalancesPage.test.tsx` and `apps/web/src/expenses/PaymentDialog.test.tsx`:
+- [x] T072 [P] [US6] Add to `apps/api/test/members.test.ts`: leaving and removal with an open balance still succeed (204 / 200); the last member leaving a household with expenses and settlements deletes them all (`expense`, `expenseShare` and `settlement` counts are 0)
+- [x] T073 [P] [US6] Web tests in `apps/web/src/pages/HouseholdSettingsPage/MembersSection.test.tsx`, `apps/web/src/pages/BalancesPage/BalancesPage.test.tsx` and `apps/web/src/expenses/PaymentDialog.test.tsx`:
   - **`MembersSection.test.tsx`:** the leave dialog shows "You still owe {{amount}} in total…" or the owed variant when the balance isn't 0, and nothing when it is; the remove dialog shows the person's balance; the last-member copy mentions expenses and payments.
   - **`BalancesPage.test.tsx`:** the former member `Badge` and a muted avatar.
   - **`PaymentDialog.test.tsx`:** offers former members with an open balance.
 
 ### Implementation for User Story 6
 
-- [ ] T074 [US6] Check the former-member rules end to end in `apps/api/src/expenses/` (`people.ts` flags, settlement eligibility over live history, keeping existing people on expense edit) and fix any gap found by T071
-- [ ] T075 [US6] Make `apps/web/src/pages/HouseholdSettingsPage/MembersSection.tsx` balance-aware with `useBalances`:
+- [x] T074 [US6] Check the former-member rules end to end in `apps/api/src/expenses/` (`people.ts` flags, settlement eligibility over live history, keeping existing people on expense edit) and fix any gap found by T071
+- [x] T075 [US6] Make `apps/web/src/pages/HouseholdSettingsPage/MembersSection.tsx` balance-aware with `useBalances`:
   - Add `household:settings.members.leaveOwes` / `leaveOwed` / `removeOwes` / `removeOwed` to the dialogs when the balance isn't 0.
   - Update the value of `household:settings.members.leaveLastDescription` to mention expenses and payments.
   - Make the leave and remove mutations in `apps/web/src/household/useHousehold.ts` also invalidate `["household", "balances"]`.
   - Copy in `household.json` en/es (from `contracts/ui.md`).
-- [ ] T076 [US6] Show former members with a muted `Avatar` and a "Former member" `Badge` (`expenses:balances.former`) in `apps/web/src/pages/BalancesPage/BalancesPage.tsx`, `apps/web/src/expenses/ActivityList.tsx`, `apps/web/src/pages/ExpenseDetailPage/ExpenseDetailPage.tsx` and the edit form in `apps/web/src/pages/ExpenseFormPage/ExpenseFormPage.tsx`, and offer former members with an open balance in `apps/web/src/expenses/PaymentDialog.tsx`
+- [x] T076 [US6] Show former members with a muted `Avatar` and a "Former member" `Badge` (`expenses:balances.former`) in `apps/web/src/pages/BalancesPage/BalancesPage.tsx`, `apps/web/src/expenses/ActivityList.tsx`, `apps/web/src/pages/ExpenseDetailPage/ExpenseDetailPage.tsx` and the edit form in `apps/web/src/pages/ExpenseFormPage/ExpenseFormPage.tsx`, and offer former members with an open balance in `apps/web/src/expenses/PaymentDialog.tsx`
 
 **Checkpoint**: all six stories work independently and together.
 
