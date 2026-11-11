@@ -16,7 +16,7 @@
 - Q: Which pink? → A: A vivid fuchsia, closer to Barbie than to the Pink Panther. It is used as is wherever no text sits on it. Text-bearing surfaces get a deeper shade of the same hue so that text stays readable.
 - Q: How loud is it? → A: Used deliberately: the primary action, focus, brand moments and one highlighted surface. Everything else stays neutral and calm.
 - Q: Where does the vivid tone itself appear? → A: Logo and favicon, focus ring, illustrations and empty states, and the primary buttons in the dark theme (with dark text on top).
-- Q: Large fuchsia surfaces? → A: Only the money summary card on the home page.
+- Q: Large fuchsia surfaces? → A: Only the money card on the home page.
 - Q: How does the money card show "you're owed" vs "you owe" on fuchsia? → A: The sentence in white, with a decorative direction icon (incoming/outgoing) next to it; the words carry the meaning. The primary action on the card is inverted (white with fuchsia text) and secondary actions are outlined in white.
 - Q: State colors? → A: Redesigned to match: positive ("owes you", done) in a fresh teal/mint, negative ("you owe", error) in orange-coral so it can never be mistaken for the brand pink, and a cleaner amber for warnings.
 - Q: Member colors? → A: Eight colors recalculated with equal luminance and no pink or magenta hue, so no member looks like the brand or like a debt.
@@ -127,7 +127,7 @@ Anyone who meets Hogar outside its screens sees the same identity: the browser t
 **Hierarchy**
 
 - **FR-006**: Only primary actions use the brand color; secondary actions MUST be neutral. There is at most one primary action per screen or block, as today.
-- **FR-007**: The home page money summary card MUST be the only large brand-colored surface. On it, the balance sentence MUST be white and accompanied by a decorative direction icon (incoming when owed, outgoing when owing, none when all square). The primary action MUST be inverted (white with brand text) and secondary actions outlined in white. Its loading and error states MUST stay readable on the brand surface.
+- **FR-007**: The home page money card MUST be the only large brand-colored surface. On it, the balance sentence MUST be white and accompanied by a decorative direction icon (incoming when owed, outgoing when owing, none when all square). The primary action MUST be inverted (white with brand text) and secondary actions outlined in white. Its loading and error states MUST stay readable on the brand surface.
 
 **States and members**
 
@@ -142,14 +142,14 @@ Anyone who meets Hogar outside its screens sees the same identity: the browser t
 
 **Scope guards**
 
-- **FR-013**: Typeface, type scale, radii, spacing, layout and motion MUST NOT change.
+- **FR-013**: Typeface, type scale, radii, spacing, layout and motion MUST NOT change, except the direction icon beside the money card's balance sentence (FR-007).
 - **FR-014**: No user-facing copy in the app changes. The direction icon is decorative and adds no text. Only the documentation prose that describes the palette changes, in both English and Spanish.
 
 **Brand assets and documentation**
 
 - **FR-015**: The logo and favicon MUST keep their shape and use the vivid fuchsia wherever they appear: the app, the browser tab and the design system documentation. The mobile browser bar color MUST match the new palette in each theme.
 - **FR-016**: The design system documentation (chrome, docs pages, component previews) MUST use the new palette in both themes. The color foundations page, the introduction and every component page that describes the old palette or "warmth" MUST be rewritten in both languages to explain the new palette and how it helps the person.
-- **FR-017**: The design guide MUST be updated: emotional goal ("joyful and approachable"), principles table ("one joyful color, used deliberately" replacing "nothing shouts" and "warmth over neutrality"), color rules (fuchsia for the primary action, coral rather than red for debts, the money card as the single brand surface), and the style-check guard with the new palette's names. The project's day-to-day guidance MUST drop its reference to "warmth" so it does not contradict the constitution.
+- **FR-017**: The design guide MUST be updated: emotional goal ("joyful and approachable"), principles table ("one joyful color, used deliberately" replacing "nothing shouts" and "warmth over neutrality"), color rules (fuchsia for the primary action, coral rather than red for debts, the money card as the single brand surface), and the style-check guard with the new palette's names. The project's day-to-day guidance and its README MUST drop their references to "warmth" so it does not contradict the constitution.
 - **FR-018**: A new decision record MUST explain the move from the warm palette to the vibrant one (context: resemblance to Anthropic/Claude, new constitutional goal), MUST supersede the palette part of the original visual system record, and MUST link before/after screenshots of the key screens (home, balances, expense form, login) in both themes. The original record MUST point to the new one.
 
 ## Success Criteria _(mandatory)_
@@ -167,7 +167,7 @@ Anyone who meets Hogar outside its screens sees the same identity: the browser t
 ## Assumptions
 
 - Constitution 3.0.0 (Principle VI, "Joyful and Accessible Design") is in force; no further amendment is needed.
-- Reference values from the interview, refined during planning until SC-001 holds: brand fuchsia ≈ #E6197F; text-bearing brand shade ≈ #C2126A; soft brand tint ≈ #FCE4F0; light page ≈ #FBF8FA with white cards; dark background ≈ #141016; positive ≈ #0F766E; negative ≈ #C2410C (light) / #FB923C (dark).
+- Reference values, AA-verified during planning: brand fuchsia #EB2386 (moved from the interview's #E6197F so dark-theme buttons with dark text meet AA); text-bearing brand shade #C2126A; soft brand tint #FDE8F2; light page #FBF8FA with white cards; dark background #141016; positive #0F6F68 / #5FD6C2; negative #B8400F / #FF9E6B (light / dark). The full palette is in research.md R3.
 - "N26 style" means clean neutrals with one confident brand color. N26's actual colors, logo and assets are not copied.
 - The existing contrast checks, the theme parity checks and the documentation's theme sync check stay the safety net for the new values.
 - No new screens, features or user-selectable themes; the existing light/dark switching is unchanged.
