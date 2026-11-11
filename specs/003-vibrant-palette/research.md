@@ -56,16 +56,16 @@ Members (one luminance per theme; no hue between 290° and 350°, so nothing is 
 
 | #            | Light (L ≈ 0.56, `ink-900` text ≥ 9.8:1) | Dark (L ≈ 0.086, `plum-50` text ≥ 6.9:1) |
 | ------------ | ---------------------------------------- | ---------------------------------------- |
-| 1 teal       | `#5bd8c8`                                | `#235c54`                                |
-| 2 sky        | `#a0cbe9`                                | `#2c5775`                                |
-| 3 periwinkle | `#bcc3ef`                                | `#3d4ba1`                                |
-| 4 lavender   | `#cfbdf0`                                | `#613da1`                                |
-| 5 green      | `#68db8e`                                | `#235d37`                                |
-| 6 lime       | `#a9d447`                                | `#485922`                                |
-| 7 yellow     | `#ddc470`                                | `#5f5124`                                |
-| 8 apricot    | `#e7bd99`                                | `#6f4b2a`                                |
+| 1 teal       | `#94d1c8`                                | `#1e5b53`                                |
+| 2 sky        | `#a7cae4`                                | `#325670`                                |
+| 3 periwinkle | `#bac2f8`                                | `#464f84`                                |
+| 4 lavender   | `#d2bbf8`                                | `#5d4784`                                |
+| 5 green      | `#96d4aa`                                | `#205e35`                                |
+| 6 lime       | `#bacc8f`                                | `#46581b`                                |
+| 7 yellow     | `#d3c596`                                | `#605222`                                |
+| 8 apricot    | `#e0c0a3`                                | `#6d4b2f`                                |
 
-Implementation may fine-tune saturation for evenness. Any change is re-checked by
+During implementation (T012) the members were refitted to equal chroma as well as equal luminance (HSL chroma 0.24), because a saturated teal stood out next to a soft lavender. Any change is re-checked by
 `tokens.test.ts`, which already enforces AA and a luminance spread below 0.1.
 
 ## R4. Semantic mapping and verified ratios

@@ -87,18 +87,18 @@
   --amber-950: #33270a;
   --amber-100: #f8ead0;
   --amber-300: #e8be73;
-  --amber-700: #7a5212;
+  --amber-700: #8a5a06;
   --amber-900: #43300f;
 
-  /* Members (light): same luminance, dark text on top */
-  --member-light-1: #f2c4ae;
-  --member-light-2: #c5d8c1;
-  --member-light-3: #f1d49a;
-  --member-light-4: #ddc3d6;
-  --member-light-5: #c3d3e0;
-  --member-light-6: #f0c1c4;
-  --member-light-7: #d9d6a8;
-  --member-light-8: #e3cdb5;
+  /* Members (light): same luminance, dark text, no pink or magenta so no one looks like the brand or a debt */
+  --member-light-1: #94d1c8;
+  --member-light-2: #a7cae4;
+  --member-light-3: #bac2f8;
+  --member-light-4: #d2bbf8;
+  --member-light-5: #96d4aa;
+  --member-light-6: #bacc8f;
+  --member-light-7: #d3c596;
+  --member-light-8: #e0c0a3;
 
   /* Members (dark): same luminance, light text on top */
   --member-dark-1: #8c4a33;

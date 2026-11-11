@@ -29,7 +29,7 @@ export const palette = {
   "--sage-300": "#a9c7a8",
   "--sage-700": "#4a634c",
   "--amber-300": "#e8be73",
-  "--amber-700": "#7a5212",
+  "--amber-700": "#8a5a06",
 } as const;
 
 const FONT_BASE = '"Figtree Variable", system-ui, -apple-system, "Segoe UI", sans-serif';

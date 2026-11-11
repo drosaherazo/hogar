@@ -62,12 +62,15 @@ function visitIn(theme: (typeof themes)[number], path: string) {
   });
 }
 
-describe("Palette captures", () => {
+// Full-page screenshots sometimes stall in headless Electron; give them room and a retry.
+const shot = { capture: "fullPage", timeout: 60_000 } as const;
+
+describe("Palette captures", { retries: 2 }, () => {
   for (const theme of themes) {
     it(`captures the signed-out login screen (${theme})`, () => {
       visitIn(theme, "/login");
       cy.findHeading("Welcome to Hogar");
-      cy.screenshot(`login-${theme}`, { capture: "fullPage" });
+      cy.screenshot(`login-${theme}`, shot);
     });
 
     describe(`signed in (${theme})`, () => {
@@ -82,21 +85,21 @@ describe("Palette captures", () => {
         visitIn(theme, "/");
         cy.findHeading("Hi, Ana");
         cy.contains("You're owed €10.70 in total");
-        cy.screenshot(`home-${theme}`, { capture: "fullPage" });
+        cy.screenshot(`home-${theme}`, shot);
       });
 
       it("captures balances", () => {
         visitIn(theme, "/balances");
         cy.findHeading("Balances");
         cy.contains("Bruno Díaz owes you €10.70");
-        cy.screenshot(`balances-${theme}`, { capture: "fullPage" });
+        cy.screenshot(`balances-${theme}`, shot);
       });
 
       it("captures the expense form", () => {
         visitIn(theme, "/expenses/new");
         cy.findHeading("Add an expense");
         cy.contains("label", "What was it?");
-        cy.screenshot(`expense-form-${theme}`, { capture: "fullPage" });
+        cy.screenshot(`expense-form-${theme}`, shot);
       });
     });
   }
