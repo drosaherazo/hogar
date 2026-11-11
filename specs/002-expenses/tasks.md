@@ -307,21 +307,21 @@ Within each story, test tasks come first and must fail before implementation.
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T057 [P] [US4] Add a "other splits" describe to `apps/api/test/expenses.test.ts`:
+- [x] T057 [P] [US4] Add a "other splits" describe to `apps/api/test/expenses.test.ts`:
   - **EQUAL:** 1000 among three → 334/333/333 in member order; 2 among three stores 1/1/0, the zero included; a GUEST and a weight-0 member can be chosen.
   - **EXACT:** must sum to the amount (`expense.split.mismatch`); amounts of 0 are not stored.
   - **Payer:** a payer who doesn't share is allowed, and the whole amount is owed to them.
   - **Errors:** duplicate people → `expense.split.invalid`; someone who isn't a current member → `expense.person.not_member`.
-- [ ] T058 [P] [US4] Extend `apps/web/src/pages/ExpenseFormPage/ExpenseFormPage.test.tsx`:
+- [x] T058 [P] [US4] Extend `apps/web/src/pages/ExpenseFormPage/ExpenseFormPage.test.tsx`:
   - **Equally:** a people `ChoiceGroup multiple` with all current members preselected and a live share per chosen person; at least one required.
   - **Exact amounts:** inline fields with "€2.50 left to assign" / "€1.00 over the total"; **Save** disabled until the amounts add up.
   - Guests and weight-0 members are selectable.
 
 ### Implementation for User Story 4
 
-- [ ] T059 [US4] Add the `EQUAL` (`splitAmount` with weight 1 per chosen person, in member order, storing every chosen person) and `EXACT` (stored as entered, amounts > 0 only) branches to `create` in `apps/api/src/expenses/expenseService.ts`, with every person a current member
-- [ ] T060 [US4] Add "Equally between…" and "Exact amounts" to `ExpenseFormPage`: a `ChoiceGroup multiple` of people with live shares, and inline `TextField`s per person with left or over messages via `formatAmount`. Copy in `expenses.json` en/es.
-- [ ] T061 [US4] Show the method on `ExpenseDetailPage` ("The household's split", "Equally between {{count}} people", "Exact amounts", with `_one`/`_other` plurals); copy in en/es
+- [x] T059 [US4] Add the `EQUAL` (`splitAmount` with weight 1 per chosen person, in member order, storing every chosen person) and `EXACT` (stored as entered, amounts > 0 only) branches to `create` in `apps/api/src/expenses/expenseService.ts`, with every person a current member
+- [x] T060 [US4] Add "Equally between…" and "Exact amounts" to `ExpenseFormPage`: a `ChoiceGroup multiple` of people with live shares, and inline `TextField`s per person with left or over messages via `formatAmount`. Copy in `expenses.json` en/es.
+- [x] T061 [US4] Show the method on `ExpenseDetailPage` ("The household's split", "Equally between {{count}} people", "Exact amounts", with `_one`/`_other` plurals); copy in en/es
 
 **Checkpoint**: every way of splitting works and balances follow.
 
