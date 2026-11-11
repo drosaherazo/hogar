@@ -135,7 +135,7 @@ Carla moves out while she still owes Ana €15.00. Her expenses stay in the hist
 - An amount smaller than the number of people sharing it (€0.02 among three) gives some people a share of €0.00; the shares still add up to the total.
 - With exact amounts, a person given €0.00 does not share the expense.
 - An expense paid by someone for themselves only does not change any balance; it stays in the history.
-- Editing an expense recorded with the default split keeps its saved shares unless the amount or the way of splitting changes; then the shares are recalculated with the current weights and shown before saving.
+- Editing an expense recorded with the default split keeps its saved shares. If its amount changes, the shares are recalculated in the same proportions among the same people, so later weight changes still don't affect it; choosing the default split for an expense that used another method uses the current weights. The new shares are shown before saving.
 - A member whose role changes between MEMBER and GUEST keeps their place in past expenses and balances, and can still be chosen to share or pay new expenses.
 - People who joined after an expense's date can still be included in it; dates are informational and do not limit who can share.
 - Amounts are typed with the decimal separator of the person's language ("12.50" in English, "12,50" in Spanish).
