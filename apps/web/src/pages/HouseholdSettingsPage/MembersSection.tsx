@@ -4,8 +4,10 @@ import { LogOut, MoreHorizontal, UserMinus } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { errorKey } from "../../api/client";
+import { useBalances } from "../../expenses/useExpenses";
 import { memberColor } from "../../household/members";
 import { useChangeRole, useLeaveHousehold, useRemoveMember } from "../../household/useHousehold";
+import { useMoney } from "../../i18n/format";
 import styles from "./HouseholdSettingsPage.module.css";
 
 /** Who lives here and with which role. Admins manage roles and people; everyone can leave. */
@@ -13,9 +15,16 @@ export function MembersSection({ household }: { household: HouseholdView }) {
   const { t } = useTranslation(["household", "errors"]);
   const changeRole = useChangeRole();
   const remove = useRemoveMember();
+  const balances = useBalances();
+  const money = useMoney();
   const [removing, setRemoving] = useState<MemberView | null>(null);
   const isAdmin = household.myRole === "ADMIN";
   const error = changeRole.error ?? remove.error;
+
+  // Removing someone with an open balance is allowed; the dialog says it stays in the balances.
+  const removingBalance = removing
+    ? (balances.data?.balances.find((entry) => entry.person.userId === removing.userId)?.balanceCents ?? 0)
+    : 0;
 
   // The same rule the server enforces, used here only to explain what isn't possible.
   const meLeaving = checkAdminInvariant(household.members, { type: "leave", membershipId: household.myMembershipId });
@@ -102,7 +111,15 @@ export function MembersSection({ household }: { household: HouseholdView }) {
             </Button>
           </>
         }
-      />
+      >
+        {removing && removingBalance !== 0 && (
+          <p className={styles.moneyNote}>
+            {removingBalance < 0
+              ? t("settings.members.removeOwes", { name: removing.name, amount: money(-removingBalance) })
+              : t("settings.members.removeOwed", { name: removing.name, amount: money(removingBalance) })}
+          </p>
+        )}
+      </Dialog>
     </Card>
   );
 }
@@ -118,8 +135,13 @@ function LeaveButton({
 }) {
   const { t } = useTranslation(["household", "errors"]);
   const leave = useLeaveHousehold();
+  const balances = useBalances();
+  const money = useMoney();
   const [confirming, setConfirming] = useState(false);
   const name = household.name;
+  // Leaving with an open balance is allowed; it stays in the balances under the person's name.
+  // When the last member leaves, everything is deleted, so there's no balance to mention.
+  const myBalance = deletes ? 0 : (balances.data?.myBalanceCents ?? 0);
 
   return (
     <>
@@ -160,6 +182,13 @@ function LeaveButton({
           </>
         }
       >
+        {myBalance !== 0 && (
+          <p className={styles.moneyNote}>
+            {myBalance < 0
+              ? t("settings.members.leaveOwes", { amount: money(-myBalance) })
+              : t("settings.members.leaveOwed", { amount: money(myBalance) })}
+          </p>
+        )}
         {leave.isError && <Alert tone="danger">{t(errorKey(leave.error))}</Alert>}
       </Dialog>
     </>

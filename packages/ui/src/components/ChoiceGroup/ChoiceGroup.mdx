@@ -1,0 +1,77 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as ChoiceGroupStories from "./ChoiceGroup.stories";
+
+<Meta of={ChoiceGroupStories} />
+
+<Lang locale="en">
+
+# ChoiceGroup
+
+<Canvas of={ChoiceGroupStories.SingleChoice} />
+
+<ArgTypes of={ChoiceGroupStories} />
+
+## What it is and when to use it
+A question with a few visible answers, shown as cards: how to split an expense, which role an invitation grants, who shares a cost. Use it for one choice among two to five options, or with `multiple` to pick several. For long lists, use a select instead.
+
+## Why it's designed this way
+- **Every option is visible at once,** with a short hint under the label, so people compare them without opening anything.
+- **The whole card is the target,** at least 44 px tall, not just the small circle or box.
+- **Selected cards get the accent border and a sunken fill** together with the native check mark, so color is never the only sign.
+- **Trailing content** (such as each person's share) sits at the end of the row and updates as people choose.
+- **Disabled options stay readable** with a hint saying why, instead of disappearing.
+
+## How it helps the person
+- **Decisions without surprises:** seeing every option and what it means, side by side, makes the choice explicit, especially around money.
+- **Easy to tap:** large cards are forgiving on a phone.
+- **Evidence-backed:** a `fieldset` named by its `legend` with native radios or checkboxes is the WAI-ARIA pattern screen readers announce best ("How should it be split? group, The household's split, radio, 1 of 3"). The card styling is design intent.
+
+## Accessibility
+- Native `radio` or `checkbox` inputs inside a `fieldset` whose `legend` names the group.
+- Each hint is linked with `aria-describedby`; disabled options keep their hint.
+- Keyboard: Tab into the group; arrow keys move between radios; Space toggles a checkbox. The focused card shows the focus ring.
+- `initialFocusRef` lets a dialog start on the selected option.
+- Every string comes in already translated through props.
+
+## Variants
+<Canvas of={ChoiceGroupStories.Multiple} />
+<Canvas of={ChoiceGroupStories.WithDisabledOption} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Grupo de opciones
+
+<Canvas of={ChoiceGroupStories.SingleChoice} />
+
+<ArgTypes of={ChoiceGroupStories} />
+
+## Qué es y cuándo usarlo
+Una pregunta con pocas respuestas visibles, en forma de tarjetas: cómo repartir un gasto, qué rol da una invitación, entre quién se reparte algo. Úsalo para elegir una opción entre dos y cinco, o con `multiple` para elegir varias. Para listas largas, usa un desplegable.
+
+## Por qué está diseñado así
+- **Todas las opciones se ven a la vez,** con una ayuda corta bajo la etiqueta, así se comparan sin abrir nada.
+- **Toda la tarjeta es el objetivo,** de al menos 44 px de alto, no solo el circulito o la casilla.
+- **Las tarjetas elegidas llevan el borde de acento y un fondo hundido** junto a la marca nativa, así el color nunca es la única señal.
+- **El contenido final** (como la parte de cada persona) va al final de la fila y se actualiza al elegir.
+- **Las opciones desactivadas siguen legibles** con una ayuda que explica por qué, en vez de desaparecer.
+
+## Cómo ayuda a la persona
+- **Decisiones sin sorpresas:** ver todas las opciones y lo que significan, una junto a otra, hace explícita la elección, sobre todo con dinero.
+- **Fácil de tocar:** las tarjetas grandes perdonan en el móvil.
+- **Respaldado:** un `fieldset` nombrado por su `legend` con botones de opción o casillas nativas es el patrón WAI-ARIA que mejor anuncian los lectores de pantalla ("¿Cómo se reparte?, grupo, El reparto del hogar, botón de opción, 1 de 3"). El estilo de tarjeta es intención de diseño.
+
+## Accesibilidad
+- Campos nativos `radio` o `checkbox` dentro de un `fieldset` cuyo `legend` nombra el grupo.
+- Cada ayuda va vinculada con `aria-describedby`; las opciones desactivadas mantienen su ayuda.
+- Teclado: Tab entra en el grupo; las flechas cambian de opción; Espacio marca una casilla. La tarjeta con foco muestra el anillo de foco.
+- `initialFocusRef` permite que un diálogo empiece en la opción elegida.
+- Todos los textos llegan ya traducidos por props.
+
+## Variantes
+<Canvas of={ChoiceGroupStories.Multiple} />
+<Canvas of={ChoiceGroupStories.WithDisabledOption} />
+
+</Lang>

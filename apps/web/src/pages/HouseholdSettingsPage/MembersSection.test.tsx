@@ -5,7 +5,7 @@ import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { expectNoA11yViolations } from "../../test/axe";
 import { renderApp } from "../../test/renderApp";
-import { ana, apiError, handlers, householdView, member, server } from "../../test/server";
+import { ana, apiError, balancesView, handlers, householdView, member, personRef, server } from "../../test/server";
 
 const PATH = "/household/settings";
 
@@ -131,7 +131,9 @@ describe("MembersSection", () => {
     renderApp({ path: PATH });
     await userEvent.click(within(await section()).getByRole("button", { name: "Leave household" }));
     const dialog = await screen.findByRole("dialog", { name: "Leave Casa Ana?" });
-    expect(dialog).toHaveAccessibleDescription(/Casa Ana will be deleted when you leave/);
+    expect(dialog).toHaveAccessibleDescription(
+      /Casa Ana and all its expenses and payments will be deleted when you leave/,
+    );
     expect(within(dialog).getByRole("button", { name: "Leave and delete household" })).toBeInTheDocument();
   });
 
@@ -148,5 +150,63 @@ describe("MembersSection", () => {
     const { container } = renderApp({ path: PATH });
     await section();
     await expectNoA11yViolations(container);
+  });
+});
+
+describe("MembersSection › money still owed", () => {
+  const asBruno = threeOfUs({ myRole: "MEMBER", myMembershipId: "m_bruno" });
+  const brunoRef = personRef({ userId: brunoMember.userId, name: "Bruno Díaz" });
+  const carlaRef = personRef({ userId: carlaGuest.userId, name: "Carla Ruiz" });
+
+  async function openLeaveDialog() {
+    await userEvent.click(within(await section()).getByRole("button", { name: "Leave household" }));
+    return screen.findByRole("dialog", { name: "Leave Casa Ana?" });
+  }
+
+  it("tells someone leaving what they still owe, and that it stays in the balances", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(asBruno),
+      handlers.balances(balancesView({ balances: [{ person: brunoRef, balanceCents: -500 }], myBalanceCents: -500 })),
+    );
+    renderApp({ path: PATH });
+    const dialog = await openLeaveDialog();
+    expect(
+      await within(dialog).findByText(
+        "You still owe €5.00 in total. It will stay in the balances under your name until someone records that it's paid.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("tells someone leaving what they're still owed", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(asBruno),
+      handlers.balances(balancesView({ balances: [{ person: brunoRef, balanceCents: 500 }], myBalanceCents: 500 })),
+    );
+    renderApp({ path: PATH });
+    const dialog = await openLeaveDialog();
+    expect(await within(dialog).findByText(/You're still owed €5.00 in total/)).toBeInTheDocument();
+  });
+
+  it("says nothing about money when the person is square", async () => {
+    server.use(handlers.signedIn(), handlers.household(asBruno));
+    renderApp({ path: PATH });
+    const dialog = await openLeaveDialog();
+    expect(within(dialog).queryByText(/still owe/)).not.toBeInTheDocument();
+  });
+
+  it("tells an admin what the person they remove still owes", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(threeOfUs()),
+      handlers.balances(balancesView({ balances: [{ person: carlaRef, balanceCents: -770 }] })),
+    );
+    renderApp({ path: PATH });
+    const region = await section();
+    await userEvent.click(within(region).getByRole("button", { name: "Options for Carla Ruiz" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Remove from household" }));
+    const dialog = await screen.findByRole("dialog", { name: "Remove Carla Ruiz?" });
+    expect(await within(dialog).findByText(/Carla Ruiz still owes €7.70 in total/)).toBeInTheDocument();
   });
 });

@@ -1,0 +1,139 @@
+{
+  "title": "Expenses",
+  "add": "Add expense",
+  "loadError": "We couldn't load the expenses.",
+  "empty": {
+    "title": "No expenses yet",
+    "description": "When someone pays for something everyone shares, add it here."
+  },
+  "history": {
+    "label": "History",
+    "showMore": "Show more",
+    "loadingMore": "Loading more",
+    "paid": "{{name}} paid",
+    "youPaid": "You paid",
+    "payment": "{{from}} paid {{to}}",
+    "deletedExpense": "{{name}} deleted \"{{description}}\" ({{amount}})",
+    "deletedPayment": "{{name}} deleted the payment from {{from}} to {{to}} ({{amount}})"
+  },
+  "part": {
+    "owes": "You owe {{amount}}",
+    "lent": "You lent {{amount}}",
+    "none": "Not involved"
+  },
+  "home": {
+    "title": "Expenses",
+    "seeExpenses": "See expenses"
+  },
+  "balances": {
+    "title": "Balances",
+    "link": "See balances",
+    "back": "Back to expenses",
+    "loadError": "We couldn't load the balances.",
+    "youOwe": "You owe {{amount}} in total",
+    "youAreOwed": "You're owed {{amount}} in total",
+    "youAreSquare": "You're all square",
+    "personOwes": "{{name}} owes {{amount}}",
+    "personIsOwed": "{{name}} is owed {{amount}}",
+    "personIsSquare": "{{name}} is all square",
+    "allSquare": "All square! Nobody owes anything.",
+    "allSquareDescription": "When someone pays for something everyone shares, you'll see here who owes whom.",
+    "everyone": "Everyone's balance",
+    "suggestions": "Payments that would settle everyone",
+    "former": "Former member",
+    "formerName": "{{name}} (former member)"
+  },
+  "suggest": {
+    "youPay": "You owe {{name}} {{amount}}",
+    "paysYou": "{{name}} owes you {{amount}}",
+    "others": "{{from}} owes {{to}} {{amount}}",
+    "record": "Record this payment"
+  },
+  "payment": {
+    "record": "Record a payment",
+    "recordTitle": "Record a payment",
+    "description": "Write down money that changed hands outside the app, so the balances stay right.",
+    "from": "Who paid?",
+    "to": "Who received it?",
+    "amount": "Amount (€)",
+    "date": "Date",
+    "owedNow": "Right now, {{from}} owes {{to}} {{amount}}.",
+    "reverses": "That's more than what's owed, so afterwards {{to}} will owe {{from}} {{amount}}.",
+    "save": "Record payment",
+    "saving": "Recording the payment",
+    "saved": "Payment recorded.",
+    "detailsTitle": "Payment",
+    "paid": "{{from}} paid {{to}}",
+    "recordedBy": "Added by {{name}} on {{date}}",
+    "close": "Close",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "remove": "Delete",
+    "editTitle": "Edit payment",
+    "editedBy": "Changed by {{name}} on {{date}}",
+    "update": "Save changes",
+    "updating": "Saving the changes",
+    "delete": {
+      "title": "Delete the payment from {{from}} to {{to}} ({{amount}})?",
+      "description": "It will stop counting in the balances. The history will keep a note that you deleted it.",
+      "confirm": "Delete payment",
+      "deleting": "Deleting the payment"
+    }
+  },
+  "form": {
+    "newTitle": "Add an expense",
+    "back": "Back to expenses",
+    "description": "What was it?",
+    "descriptionHint": "Up to 100 characters, so everyone recognises it.",
+    "amount": "Amount (€)",
+    "amountHint": "For example 42.80.",
+    "paidBy": "Who paid?",
+    "date": "Date",
+    "split": {
+      "legend": "How should it be split?",
+      "weights": "The household's split",
+      "equal": "Equally between…",
+      "exact": "Exact amounts",
+      "who": "Who shares it?",
+      "amounts": "How much each person pays",
+      "left": "{{amount}} left to assign",
+      "over": "{{amount}} over the total",
+      "noDefault": "Nobody pays in the household's split yet. Choose people, or review the split.",
+      "reviewSplit": "Review the split",
+      "preview": "Each person's share",
+      "weightsSaved": "The household's split when it was added ({{shares}})"
+    },
+    "save": "Save expense",
+    "saving": "Saving the expense",
+    "cancel": "Cancel",
+    "editTitle": "Edit expense",
+    "backToExpense": "Back to the expense"
+  },
+  "details": {
+    "back": "Back to expenses",
+    "paidBy": "Paid by",
+    "date": "Date",
+    "split": "How it's split",
+    "shares": "Each person's share",
+    "recordedBy": "Added by {{name}} on {{date}}",
+    "saved": "Expense saved.",
+    "method": {
+      "WEIGHTS": "The household's split",
+      "EQUAL_one": "Equally between {{count}} person",
+      "EQUAL_other": "Equally between {{count}} people",
+      "EXACT": "Exact amounts"
+    },
+    "edit": "Edit",
+    "remove": "Delete",
+    "editedBy": "Changed by {{name}} on {{date}}"
+  },
+  "delete": {
+    "title": "Delete \"{{description}}\" ({{amount}})?",
+    "description": "It will stop counting in the balances. The history will keep a note that you deleted it.",
+    "confirm": "Delete expense",
+    "deleting": "Deleting the expense",
+    "cancel": "Cancel",
+    "done": "Expense deleted.",
+    "close": "Close"
+  }
+}

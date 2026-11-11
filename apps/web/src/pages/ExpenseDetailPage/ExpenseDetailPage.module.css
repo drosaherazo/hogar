@@ -1,0 +1,116 @@
+.back {
+  justify-self: start;
+  margin-inline-start: calc(var(--space-2) * -1);
+}
+
+.saved {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-positive);
+  font-weight: var(--font-weight-semibold);
+}
+
+.savedIcon {
+  inline-size: var(--size-icon-md);
+  block-size: var(--size-icon-md);
+}
+
+.card {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.header {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  overflow-wrap: anywhere;
+}
+
+/* Key figure: bold is allowed here. */
+.total {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.facts {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.fact {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.fact dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.fact dd {
+  margin: 0;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sharesSection {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.sharesTitle {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.shares {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.share {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.shareName {
+  flex: 1;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.auditGroup {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.audit {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}

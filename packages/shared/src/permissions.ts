@@ -31,3 +31,11 @@ export function checkAdminInvariant(
 export function canManageHousehold(role: Role): boolean {
   return role === "ADMIN";
 }
+
+/**
+ * Creating and editing content (expenses, payments, and later chores and the shopping list) is
+ * open to admins and members; guests only read.
+ */
+export function canEditContent(role: Role): boolean {
+  return role === "ADMIN" || role === "MEMBER";
+}

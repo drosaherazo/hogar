@@ -4,7 +4,8 @@ import { Link, type LinkProps } from "react-router";
 import styles from "./ActionLink.module.css";
 
 export interface ActionLinkProps extends LinkProps {
-  variant?: "secondary" | "ghost";
+  /** `primary` for a screen's main action (one per screen), like a primary button. */
+  variant?: "primary" | "secondary" | "ghost";
   icon?: ReactNode;
 }
 

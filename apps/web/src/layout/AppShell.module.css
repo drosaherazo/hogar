@@ -20,6 +20,42 @@
   transform: none;
 }
 
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  inline-size: 100%;
+  max-inline-size: var(--size-content-md);
+  margin-inline: auto;
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--size-touch);
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  transition: background-color var(--duration-fast) var(--easing-standard);
+}
+
+.navLink:hover {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-text);
+}
+
+/* The current page: filled, darker text and underlined, so it never relies on color alone. */
+.current {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-text);
+  text-decoration: underline;
+  text-decoration-thickness: var(--border-width);
+  text-underline-offset: var(--space-1);
+}
+
 .main {
   display: grid;
   align-content: start;

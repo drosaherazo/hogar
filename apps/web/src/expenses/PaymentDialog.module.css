@@ -1,0 +1,47 @@
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.note {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-sunken);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+.details {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.people {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Key figure: bold is allowed here. */
+.amount {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+}
+
+.meta {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}

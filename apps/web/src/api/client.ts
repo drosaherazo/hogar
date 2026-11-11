@@ -1,22 +1,34 @@
 import {
+  activityPageSchema,
   apiErrorSchema,
   authResponseSchema,
   authUserSchema,
+  balancesViewSchema,
   createdInvitationSchema,
   currentHouseholdSchema,
+  expenseResponseSchema,
   householdResponseSchema,
   invitationListSchema,
   invitationPreviewSchema,
+  settlementResponseSchema,
+  type ActivityPage,
   type AuthResponse,
   type AuthUser,
+  type BalancesView,
   type CreatedInvitation,
   type CurrentHousehold,
   type ErrorCode,
+  type ExpenseInput,
+  type ExpenseView,
   type HouseholdView,
   type InvitableRole,
   type InvitationPreview,
   type InvitationView,
   type Role,
+  type SettlementInput,
+  type SettlementView,
+  type UpdateExpenseInput,
+  type UpdateSettlementInput,
   type UpdateSplitRequest,
 } from "@hogar/shared";
 import type { z } from "zod";
@@ -179,6 +191,60 @@ export class ApiClient {
     return (
       await this.request("/invitations/accept", { method: "POST", body: { token }, schema: householdResponseSchema })
     ).household;
+  }
+
+  // --- Expenses and history ---------------------------------------------------
+
+  /** One page of expenses and payments, newest first; pass the previous page's `nextCursor` for the next. */
+  getActivity(cursor?: string): Promise<ActivityPage> {
+    const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
+    return this.request(`/household/activity${query}`, { schema: activityPageSchema });
+  }
+
+  /** Everyone's balance and the payments that would settle them, computed by the API from the history. */
+  getBalances(): Promise<BalancesView> {
+    return this.request("/household/balances", { schema: balancesViewSchema });
+  }
+
+  async getExpense(id: string): Promise<ExpenseView> {
+    const path = `/household/expenses/${encodeURIComponent(id)}`;
+    return (await this.request(path, { schema: expenseResponseSchema })).expense;
+  }
+
+  async createExpense(input: ExpenseInput): Promise<ExpenseView> {
+    return (await this.request("/household/expenses", { method: "POST", body: input, schema: expenseResponseSchema }))
+      .expense;
+  }
+
+  /** Saves a change made from `input.version`; a newer version on the server answers 409 `expense.changed`. */
+  async updateExpense(id: string, input: UpdateExpenseInput): Promise<ExpenseView> {
+    const path = `/household/expenses/${encodeURIComponent(id)}`;
+    return (await this.request(path, { method: "PUT", body: input, schema: expenseResponseSchema })).expense;
+  }
+
+  /** Deletes the version the person saw; it stays in the history as "deleted by". */
+  deleteExpense(id: string, version: number): Promise<void> {
+    return this.request(`/household/expenses/${encodeURIComponent(id)}?version=${version}`, { method: "DELETE" });
+  }
+
+  async updateSettlement(id: string, input: UpdateSettlementInput): Promise<SettlementView> {
+    const path = `/household/settlements/${encodeURIComponent(id)}`;
+    return (await this.request(path, { method: "PUT", body: input, schema: settlementResponseSchema })).settlement;
+  }
+
+  deleteSettlement(id: string, version: number): Promise<void> {
+    return this.request(`/household/settlements/${encodeURIComponent(id)}?version=${version}`, { method: "DELETE" });
+  }
+
+  async getSettlement(id: string): Promise<SettlementView> {
+    const path = `/household/settlements/${encodeURIComponent(id)}`;
+    return (await this.request(path, { schema: settlementResponseSchema })).settlement;
+  }
+
+  async createSettlement(input: SettlementInput): Promise<SettlementView> {
+    return (
+      await this.request("/household/settlements", { method: "POST", body: input, schema: settlementResponseSchema })
+    ).settlement;
   }
 
   async request<T = void>(path: string, options: RequestOptions<T> = {}, isRetry = false): Promise<T> {

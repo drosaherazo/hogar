@@ -10,6 +10,12 @@ import { requireAuth } from "./auth/requireAuth";
 import { createAccessTokenSigner } from "./auth/tokens";
 import type { Config } from "./config";
 import type { Database } from "./db";
+import { createExpenseService } from "./expenses/expenseService";
+import { createExpensesRouter } from "./expenses/expensesRouter";
+import { createLedgerRouter } from "./expenses/ledgerRouter";
+import { createLedgerService } from "./expenses/ledgerService";
+import { createSettlementService } from "./expenses/settlementService";
+import { createSettlementsRouter } from "./expenses/settlementsRouter";
 import { createHouseholdRouter } from "./household/householdRouter";
 import { createHouseholdService } from "./household/householdService";
 import { createHouseholdInvitationsRouter, createInvitationsRouter } from "./household/invitationRouter";
@@ -69,6 +75,11 @@ export function createApp({ config, db, google, authRateLimit = 100, invitationR
   app.use("/api/me", requireAuth(signer), createMeRouter(auth, households));
   const invitations = createInvitationService({ db, households, now });
   app.use("/api/household/invitations", requireAuth(signer), createHouseholdInvitationsRouter(db, invitations));
+  const expenses = createExpenseService({ db, now });
+  app.use("/api/household/expenses", requireAuth(signer), createExpensesRouter(db, expenses));
+  const settlements = createSettlementService({ db, now });
+  app.use("/api/household/settlements", requireAuth(signer), createSettlementsRouter(db, settlements));
+  app.use("/api/household", requireAuth(signer), createLedgerRouter(db, createLedgerService({ db })));
   app.use("/api/household", requireAuth(signer), createHouseholdRouter(db, households));
   app.use(
     "/api/invitations",

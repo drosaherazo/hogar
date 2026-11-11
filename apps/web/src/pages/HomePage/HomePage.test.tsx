@@ -4,7 +4,7 @@ import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { expectNoA11yViolations } from "../../test/axe";
 import { installFakeGoogle, renderApp } from "../../test/renderApp";
-import { ana, apiError, handlers, householdView, member, server } from "../../test/server";
+import { ana, anaIsOwed, apiError, handlers, householdView, member, server } from "../../test/server";
 import { firstName } from "./HomePage";
 
 describe("firstName", () => {
@@ -144,6 +144,31 @@ describe("HomePage", () => {
         "href",
         "/household/settings",
       );
+    });
+
+    it("tells each person where they stand, with ways to the expenses and balances", async () => {
+      server.use(handlers.signedIn(), handlers.household(shared), handlers.balances(anaIsOwed()));
+      renderApp({ path: "/" });
+      const money = await screen.findByRole("region", { name: "Expenses" });
+      expect(await within(money).findByText("You're owed €7.70 in total")).toBeInTheDocument();
+      expect(within(money).getByRole("link", { name: "See expenses" })).toHaveAttribute("href", "/expenses");
+      expect(within(money).getByRole("link", { name: "See balances" })).toHaveAttribute("href", "/balances");
+      expect(within(money).getByRole("link", { name: "Add expense" })).toHaveAttribute("href", "/expenses/new");
+    });
+
+    it("says so when the person is all square", async () => {
+      server.use(handlers.signedIn(), handlers.household(shared));
+      renderApp({ path: "/" });
+      const money = await screen.findByRole("region", { name: "Expenses" });
+      expect(await within(money).findByText("You're all square")).toBeInTheDocument();
+    });
+
+    it("doesn't offer guests to add expenses", async () => {
+      server.use(handlers.signedIn(), handlers.household({ ...shared, myRole: "GUEST" }));
+      renderApp({ path: "/" });
+      const money = await screen.findByRole("region", { name: "Expenses" });
+      await within(money).findByText("You're all square");
+      expect(within(money).queryByRole("link", { name: "Add expense" })).not.toBeInTheDocument();
     });
 
     it("asks admins to review the split when members changed", async () => {

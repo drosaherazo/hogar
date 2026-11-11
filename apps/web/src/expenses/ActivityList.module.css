@@ -1,0 +1,142 @@
+.history {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.month {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.monthTitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Month names are lowercase in Spanish ("octubre de 2026"); as a heading, start with a capital. */
+.monthTitle::first-letter {
+  text-transform: uppercase;
+}
+
+.items {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--size-touch);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.link {
+  text-decoration: none;
+  transition: background-color var(--duration-fast) var(--easing-standard);
+}
+
+.link:hover {
+  background-color: var(--color-surface-sunken);
+}
+
+/* A payment row is a button (it opens a dialog) that looks like the other rows. */
+.button {
+  inline-size: 100%;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* Deleted: dashed and quiet, with the trash icon and the words saying what happened. */
+.deleted {
+  border-style: dashed;
+  background-color: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.deleted .icon {
+  color: var(--color-text-muted);
+}
+
+.icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--size-avatar-md);
+  block-size: var(--size-avatar-md);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-sunken);
+  color: var(--color-accent-text);
+}
+
+.icon svg {
+  inline-size: var(--size-icon-md);
+  block-size: var(--size-icon-md);
+}
+
+.main {
+  display: grid;
+  flex: 1;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.title {
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* A separator between "who paid" and the date, drawn by CSS so it isn't copy. */
+.meta > .date:not(:first-child)::before {
+  margin-inline-end: var(--space-2);
+  content: "·";
+}
+
+.side {
+  display: grid;
+  flex: none;
+  justify-items: end;
+  gap: var(--space-1);
+  text-align: end;
+}
+
+.amount {
+  font-weight: var(--font-weight-semibold);
+}
+
+.part {
+  font-size: var(--font-size-sm);
+}
+
+/* The words carry the meaning; the color only echoes it. */
+.owes {
+  color: var(--color-negative);
+}
+
+.lent {
+  color: var(--color-positive);
+}
+
+.none {
+  color: var(--color-text-muted);
+}

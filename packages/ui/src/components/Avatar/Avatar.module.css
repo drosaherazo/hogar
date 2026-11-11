@@ -33,6 +33,17 @@
   object-fit: cover;
 }
 
+/* Someone who is no longer a member: sand instead of a member color, photo in grey. */
+.muted {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+  border: var(--border-width) solid var(--color-border-strong);
+}
+
+.muted .image {
+  filter: grayscale(1);
+}
+
 .member1 {
   background-color: var(--color-member-1);
 }

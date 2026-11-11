@@ -21,8 +21,42 @@
     "already_member": "You're already part of a household. Leave it first if you want to join another one.",
     "not_member": "You're not part of a household right now.",
     "forbidden": "Only the household's admins can do that.",
+    "read_only": "Guests can see everything here, but only members and admins can make changes.",
     "last_admin": "Make someone else an admin first, so the household is never left without one.",
     "member_not_found": "That person is no longer part of the household."
+  },
+  "money": {
+    "amount": {
+      "invalid": "Enter an amount from €0.01 to €100,000.00."
+    },
+    "date": {
+      "invalid": "That date doesn't look right. Pick it from the calendar.",
+      "future": "That date hasn't happened yet. Choose today or an earlier day."
+    }
+  },
+  "expense": {
+    "description": {
+      "required": "Say what it was, so everyone recognises it.",
+      "too_long": "That description is a bit long. Keep it to 100 characters or fewer."
+    },
+    "split": {
+      "invalid": "Choose at least one person to share it.",
+      "mismatch": "The amounts don't add up to the total yet.",
+      "no_default": "Nobody pays in the household's split yet. Choose people, or review the split first."
+    },
+    "person": {
+      "not_member": "Someone in this expense is no longer part of the household. Review who paid and who shares it."
+    },
+    "not_found": "That expense isn't here any more. Someone may have deleted it.",
+    "changed": "Someone changed this expense while you were editing it. Here's the latest version."
+  },
+  "settlement": {
+    "same_person": "Choose two different people.",
+    "person": {
+      "not_found": "That person isn't part of this household's history."
+    },
+    "not_found": "That payment isn't here any more. Someone may have deleted it.",
+    "changed": "Someone changed this payment while you were editing it. Here's the latest version."
   },
   "invitation": {
     "not_found": "This invitation link doesn't work. Ask the person who invited you for a new one.",

@@ -1,4 +1,4 @@
-import { canManageHousehold } from "@hogar/shared";
+import { canEditContent, canManageHousehold } from "@hogar/shared";
 import type { RequestHandler } from "express";
 import type { Database } from "../db";
 import type { Membership } from "../generated/prisma/client";
@@ -32,6 +32,15 @@ export function loadMembership(db: Database): RequestHandler {
 /** Only admins get through. Must run after `loadMembership`. */
 export const requireAdmin: RequestHandler = (req, _res, next) => {
   if (!req.membership || !canManageHousehold(req.membership.role)) throw forbidden("household.forbidden");
+  next();
+};
+
+/**
+ * Admins and members get through; guests only read, so they get a message written for them
+ * rather than the admin-only one. Must run after `loadMembership`.
+ */
+export const requireEditor: RequestHandler = (req, _res, next) => {
+  if (!req.membership || !canEditContent(req.membership.role)) throw forbidden("household.read_only");
   next();
 };
 

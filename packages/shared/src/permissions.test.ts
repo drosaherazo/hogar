@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Role } from "./household";
-import { canManageHousehold, checkAdminInvariant } from "./permissions";
+import { canEditContent, canManageHousehold, checkAdminInvariant } from "./permissions";
 
 const members = (...roles: Role[]) => roles.map((role, index) => ({ id: `m${index + 1}`, role }));
 
@@ -48,5 +48,13 @@ describe("canManageHousehold", () => {
     expect(canManageHousehold("ADMIN")).toBe(true);
     expect(canManageHousehold("MEMBER")).toBe(false);
     expect(canManageHousehold("GUEST")).toBe(false);
+  });
+});
+
+describe("canEditContent", () => {
+  it("lets admins and members create and edit content, but not guests", () => {
+    expect(canEditContent("ADMIN")).toBe(true);
+    expect(canEditContent("MEMBER")).toBe(true);
+    expect(canEditContent("GUEST")).toBe(false);
   });
 });
