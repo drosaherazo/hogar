@@ -1,5 +1,5 @@
 import type { InvitableRole, InvitationView } from "@hogar/shared";
-import { Alert, Badge, Button, Card, Dialog, Spinner } from "@hogar/ui";
+import { Alert, Badge, Button, Card, ChoiceGroup, Dialog, Spinner } from "@hogar/ui";
 import { RefreshCw, Trash2, UserPlus } from "lucide-react";
 import { useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -193,26 +193,18 @@ function CreateInvitationDialog({
       }
     >
       <form id={formId} onSubmit={submit}>
-        <fieldset className={styles.fieldset}>
-          <legend className={styles.legend}>{t("settings.invitations.roleLegend")}</legend>
-          {INVITABLE_ROLES.map((option) => (
-            <label key={option} className={styles.choice}>
-              <input
-                ref={role === option ? checkedRadio : undefined}
-                type="radio"
-                name="role"
-                value={option}
-                checked={role === option}
-                onChange={() => setRole(option)}
-                className={styles.radio}
-              />
-              <span className={styles.choiceText}>
-                <span className={styles.itemTitle}>{t(`roles.${option}`)}</span>
-                <span className={styles.itemMeta}>{t(`settings.invitations.roleHint.${option}`)}</span>
-              </span>
-            </label>
-          ))}
-        </fieldset>
+        <ChoiceGroup
+          legend={t("settings.invitations.roleLegend")}
+          name="role"
+          value={role}
+          onChange={(value) => setRole(INVITABLE_ROLES.find((option) => option === value) ?? "MEMBER")}
+          options={INVITABLE_ROLES.map((option) => ({
+            value: option,
+            label: t(`roles.${option}`),
+            hint: t(`settings.invitations.roleHint.${option}`),
+          }))}
+          initialFocusRef={checkedRadio}
+        />
       </form>
       {create.isError && <Alert tone="danger">{t(errorKey(create.error))}</Alert>}
     </Dialog>

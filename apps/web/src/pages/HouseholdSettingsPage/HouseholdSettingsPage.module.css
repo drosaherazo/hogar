@@ -133,50 +133,6 @@
   gap: var(--space-2);
 }
 
-.fieldset {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  border: none;
-}
-
-.legend {
-  margin-block-end: var(--space-2);
-  padding: 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-}
-
-.choice {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  min-block-size: var(--size-touch);
-  padding: var(--space-3);
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-}
-
-.choice:has(.radio:checked) {
-  border-color: var(--color-accent);
-  background-color: var(--color-surface-sunken);
-}
-
-.radio {
-  flex: none;
-  inline-size: var(--size-icon-md);
-  block-size: var(--size-icon-md);
-  margin: 0;
-  accent-color: var(--color-accent);
-}
-
-.choiceText {
-  display: grid;
-  gap: var(--space-1);
-}
-
 .saved {
   margin: 0;
   color: var(--color-positive);
