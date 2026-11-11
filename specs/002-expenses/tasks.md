@@ -428,7 +428,7 @@ Within each story, test tasks come first and must fail before implementation.
 - [x] T081 [P] Check every cell of the permission matrix in `specs/002-expenses/contracts/api.md` against the Supertest suites (ADMIN, MEMBER, GUEST, former member, other household, no household × each endpoint) and add any missing case (the lesson from households T062)
 - [x] T082 [P] Update the status table in `README.md`: expenses with splits, balances and settling up becomes ✅; chores, shopping list and real time stay 🔜
 - [x] T083 Run the full gate: `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test` (API against Docker `hogar_test`) and `env -u ELECTRON_RUN_AS_NODE pnpm --filter @hogar/web e2e`
-- [ ] T084 Walk through the 13 manual scenarios in `specs/002-expenses/quickstart.md` with two browsers on `pnpm dev`, and fix any gap against the spec
+- [x] T084 Walk through the 13 manual scenarios in `specs/002-expenses/quickstart.md` with two browsers on `pnpm dev`, and fix any gap against the spec
 
 ---
 
