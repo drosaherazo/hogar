@@ -3,6 +3,7 @@ import type {
   ActivityPage,
   AuthResponse,
   AuthUser,
+  BalancesView,
   ErrorCode,
   ExpenseView,
   HouseholdView,
@@ -26,10 +27,14 @@ export function session(user: AuthUser = ana, accessToken = "access-1"): AuthRes
 
 export const apiError = (status: number, code: ErrorCode) => HttpResponse.json({ error: { code } }, { status });
 
-/** By default nobody is signed in: refresh answers 401 and logout succeeds. */
+/**
+ * By default nobody is signed in: refresh answers 401 and logout succeeds. Balances default to
+ * "all square", so pages that show a balance sentence work without setting them up.
+ */
 export const server = setupServer(
   http.post("*/api/auth/refresh", () => apiError(401, "auth.session.missing")),
   http.post("*/api/auth/logout", () => new HttpResponse(null, { status: 204 })),
+  http.get("*/api/household/balances", () => HttpResponse.json(balancesView())),
 );
 
 export function member(overrides: Partial<MemberView> & Pick<MemberView, "id" | "name">): MemberView {
@@ -99,6 +104,23 @@ export function expenseView(overrides: Partial<ExpenseView> = {}): ExpenseView {
   };
 }
 
+/** Everyone square unless overridden. */
+export function balancesView(overrides: Partial<BalancesView> = {}): BalancesView {
+  return { balances: [], suggestions: [], myBalanceCents: 0, ...overrides };
+}
+
+/** Ana is owed €7.70 by Bruno. */
+export function anaIsOwed(): BalancesView {
+  return balancesView({
+    balances: [
+      { person: anaRef, balanceCents: 770 },
+      { person: brunoRef, balanceCents: -770 },
+    ],
+    suggestions: [{ from: brunoRef, to: anaRef, amountCents: 770 }],
+    myBalanceCents: 770,
+  });
+}
+
 type ExpenseItem = Extract<ActivityItem, { kind: "expense" }>;
 
 export function expenseItem(overrides: Partial<ExpenseItem> = {}): ExpenseItem {
@@ -126,6 +148,7 @@ export const handlers = {
     }),
   expense: (expense: ExpenseView = expenseView()) =>
     http.get("*/api/household/expenses/:id", () => HttpResponse.json({ expense })),
+  balances: (view: BalancesView = anaIsOwed()) => http.get("*/api/household/balances", () => HttpResponse.json(view)),
   noHousehold: (removedFrom: string | null = null) =>
     http.get("*/api/household", () => HttpResponse.json({ household: null, removedFrom })),
   household: (household: HouseholdView = householdView()) =>

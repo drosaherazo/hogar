@@ -1,9 +1,11 @@
-import type { HouseholdView } from "@hogar/shared";
+import { canEditContent, type HouseholdView } from "@hogar/shared";
 import { Alert, Avatar, Button, Card, EmptyState, Spinner } from "@hogar/ui";
 import { House, Plus, Settings } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "../../auth/guards";
+import { BalanceSentence } from "../../expenses/BalanceSentence";
+import { useBalances } from "../../expenses/useExpenses";
 import { CreateHouseholdDialog } from "../../household/CreateHouseholdDialog";
 import { LoadError } from "../../household/LoadError";
 import { memberColor } from "../../household/members";
@@ -112,6 +114,38 @@ function HouseholdSummary({ household }: { household: HouseholdView }) {
           {t("home.settingsLink")}
         </ActionLink>
       </Card>
+      <MoneyCard canEdit={canEditContent(household.myRole)} />
     </>
+  );
+}
+
+/** Where the person stands with money, and the ways into expenses and balances. */
+function MoneyCard({ canEdit }: { canEdit: boolean }) {
+  const { t } = useTranslation(["expenses", "common"]);
+  const balances = useBalances();
+  const titleId = useId();
+
+  return (
+    <Card as="section" padding="lg" aria-labelledby={titleId} className={styles.money}>
+      <h2 id={titleId} className={styles.moneyTitle}>
+        {t("home.title")}
+      </h2>
+      {balances.isPending ? (
+        <Spinner label={t("common:loading")} />
+      ) : balances.isError ? (
+        <p className={styles.people}>{t("balances.loadError")}</p>
+      ) : (
+        <BalanceSentence cents={balances.data.myBalanceCents} className={styles.balance} />
+      )}
+      <div className={styles.moneyActions}>
+        {canEdit && (
+          <ActionLink to="/expenses/new" variant="primary" icon={<Plus />}>
+            {t("add")}
+          </ActionLink>
+        )}
+        <ActionLink to="/expenses">{t("home.seeExpenses")}</ActionLink>
+        <ActionLink to="/balances">{t("balances.link")}</ActionLink>
+      </div>
+    </Card>
   );
 }

@@ -3,6 +3,7 @@ import {
   apiErrorSchema,
   authResponseSchema,
   authUserSchema,
+  balancesViewSchema,
   createdInvitationSchema,
   currentHouseholdSchema,
   expenseResponseSchema,
@@ -12,6 +13,7 @@ import {
   type ActivityPage,
   type AuthResponse,
   type AuthUser,
+  type BalancesView,
   type CreatedInvitation,
   type CurrentHousehold,
   type ErrorCode,
@@ -192,6 +194,11 @@ export class ApiClient {
   getActivity(cursor?: string): Promise<ActivityPage> {
     const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
     return this.request(`/household/activity${query}`, { schema: activityPageSchema });
+  }
+
+  /** Everyone's balance and the payments that would settle them, computed by the API from the history. */
+  getBalances(): Promise<BalancesView> {
+    return this.request("/household/balances", { schema: balancesViewSchema });
   }
 
   async getExpense(id: string): Promise<ExpenseView> {

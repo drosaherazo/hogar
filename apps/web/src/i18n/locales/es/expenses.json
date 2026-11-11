@@ -19,6 +19,31 @@
     "lent": "Prestaste {{amount}}",
     "none": "No participas"
   },
+  "home": {
+    "title": "Gastos",
+    "seeExpenses": "Ver gastos"
+  },
+  "balances": {
+    "title": "Saldos",
+    "link": "Ver saldos",
+    "back": "Volver a gastos",
+    "loadError": "No hemos podido cargar los saldos.",
+    "youOwe": "Debes {{amount}} en total",
+    "youAreOwed": "Te deben {{amount}} en total",
+    "youAreSquare": "Estás al día",
+    "personOwes": "{{name}} debe {{amount}}",
+    "personIsOwed": "A {{name}} le deben {{amount}}",
+    "personIsSquare": "{{name}} está al día",
+    "allSquare": "¡Todo al día! Nadie debe nada.",
+    "allSquareDescription": "Cuando alguien pague algo que compartís, aquí verás quién debe a quién.",
+    "everyone": "El saldo de cada persona",
+    "suggestions": "Pagos para quedar todos al día"
+  },
+  "suggest": {
+    "youPay": "Le debes {{amount}} a {{name}}",
+    "paysYou": "{{name}} te debe {{amount}}",
+    "others": "{{from}} le debe {{amount}} a {{to}}"
+  },
   "form": {
     "newTitle": "Añadir un gasto",
     "back": "Volver a gastos",

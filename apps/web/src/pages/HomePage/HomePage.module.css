@@ -66,3 +66,26 @@
 .settingsLink {
   justify-self: start;
 }
+
+.money {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.moneyTitle {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+.balance {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+.moneyActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}

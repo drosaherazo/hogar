@@ -19,6 +19,31 @@
     "lent": "You lent {{amount}}",
     "none": "Not involved"
   },
+  "home": {
+    "title": "Expenses",
+    "seeExpenses": "See expenses"
+  },
+  "balances": {
+    "title": "Balances",
+    "link": "See balances",
+    "back": "Back to expenses",
+    "loadError": "We couldn't load the balances.",
+    "youOwe": "You owe {{amount}} in total",
+    "youAreOwed": "You're owed {{amount}} in total",
+    "youAreSquare": "You're all square",
+    "personOwes": "{{name}} owes {{amount}}",
+    "personIsOwed": "{{name}} is owed {{amount}}",
+    "personIsSquare": "{{name}} is all square",
+    "allSquare": "All square! Nobody owes anything.",
+    "allSquareDescription": "When someone pays for something everyone shares, you'll see here who owes whom.",
+    "everyone": "Everyone's balance",
+    "suggestions": "Payments that would settle everyone"
+  },
+  "suggest": {
+    "youPay": "You owe {{name}} {{amount}}",
+    "paysYou": "{{name}} owes you {{amount}}",
+    "others": "{{from}} owes {{to}} {{amount}}"
+  },
   "form": {
     "newTitle": "Add an expense",
     "back": "Back to expenses",

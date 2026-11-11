@@ -1,11 +1,12 @@
 import { canEditContent } from "@hogar/shared";
 import { Card, EmptyState, Spinner } from "@hogar/ui";
-import { Plus, ReceiptText } from "lucide-react";
+import { Plus, ReceiptText, Scale } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { useCurrentUser } from "../../auth/guards";
 import { ActivityList } from "../../expenses/ActivityList";
-import { useActivity } from "../../expenses/useExpenses";
+import { BalanceSentence } from "../../expenses/BalanceSentence";
+import { useActivity, useBalances } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
 import { useHousehold } from "../../household/useHousehold";
 import { ActionLink } from "../../layout/ActionLink";
@@ -35,9 +36,28 @@ export function ExpensesPage() {
       ) : household.isError ? (
         <LoadError error={household.error} onRetry={() => void household.refetch()} />
       ) : (
-        current && <History />
+        current && (
+          <>
+            <Summary />
+            <History />
+          </>
+        )
       )}
     </AppShell>
+  );
+}
+
+/** The viewer's balance in one sentence, and the way to everyone's. */
+function Summary() {
+  const { t } = useTranslation("expenses");
+  const balances = useBalances();
+  return (
+    <div className={styles.summary}>
+      {balances.isSuccess && <BalanceSentence cents={balances.data.myBalanceCents} className={styles.balance} />}
+      <ActionLink to="/balances" variant="ghost" icon={<Scale />}>
+        {t("balances.link")}
+      </ActionLink>
+    </div>
   );
 }
 

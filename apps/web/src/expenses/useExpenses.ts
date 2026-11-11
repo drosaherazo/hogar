@@ -29,6 +29,16 @@ export function useActivity() {
   });
 }
 
+/** Everyone's balance, refetched when people come back to the tab. */
+export function useBalances() {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: expenseKeys.balances,
+    queryFn: () => client.getBalances(),
+    refetchOnWindowFocus: true,
+  });
+}
+
 export function useExpense(id: string) {
   const client = useApiClient();
   return useQuery({
