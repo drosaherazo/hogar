@@ -15,10 +15,11 @@ import * as CardStories from "./Card.stories";
 A surface that groups related content: an expense, the login box, a section of the home page. Use it to separate one thing from another. Don't nest cards inside cards; use spacing instead.
 
 ## Why it's designed this way
-- **Cream surface on the sand background** with a soft border and a warm, barely-there shadow.
+- **White surface on the off-white background** (dark plum in the dark theme) with a soft border and a barely-there shadow.
 - **Generous inner spacing** (`--space-5`, or `--space-8` for large cards) and **16 px corners** (`--radius-lg`).
 - **Elevated** variant with a slightly deeper shadow for content that floats above the page, like the login box.
 - Can render as `section` or `article` when it's a self-contained part of the page.
+- **Brand** tone (`tone="brand"`) for the one highlighted surface on a screen: see below.
 
 ## How it helps the person
 - **Order:** clear boundaries make a screen easy to scan; each card is one idea.
@@ -31,6 +32,19 @@ A surface that groups related content: an expense, the login box, a section of t
 
 ## Variants
 <Canvas of={CardStories.Elevated} />
+
+### Brand tone
+<Canvas of={CardStories.Brand} />
+
+**What it is and when to use it:** the card painted in the brand fuchsia. It's for **the one highlighted surface on a screen**; in the app, that's the money card on the home page. Never more than one per screen, and never for warnings or errors.
+
+**Why it's designed this way:** the card redefines the color tokens for everything inside it, so its content adapts with no extra variants: text turns white, the primary action turns white with fuchsia text, secondary actions become white outlines, and the focus ring turns white so it stays visible on fuchsia.
+
+**How it helps the person:** the most important number on the screen (where you stand with money) is the first thing you see, and the brand shows up in a moment that matters.
+
+**Accessibility:** white text on the brand fuchsia is 5.85:1 and the inverted action is 5.85:1 (both AA, checked by tests in both themes). Inside the card, meaning is carried by words and icons, never by the positive or negative colors, which wouldn't read on fuchsia.
+
+- **Evidence-backed:** the contrast ratios and the visible white focus ring. The "brand moment" and the joy it brings are design intent.
 
 </Lang>
 
@@ -45,10 +59,11 @@ A surface that groups related content: an expense, the login box, a section of t
 Una superficie que agrupa contenido relacionado: un gasto, la caja de inicio de sesión, una sección de la página de inicio. Úsala para separar una cosa de otra. No metas tarjetas dentro de tarjetas; usa espacio.
 
 ## Por qué está diseñado así
-- **Superficie crema sobre el fondo arena** con un borde suave y una sombra cálida, casi imperceptible.
+- **Superficie blanca sobre el fondo blanco roto** (ciruela oscuro en el tema oscuro) con un borde suave y una sombra casi imperceptible.
 - **Relleno generoso** (`--space-5`, o `--space-8` en tarjetas grandes) y **esquinas de 16 px** (`--radius-lg`).
 - Variante **elevada** con una sombra algo más profunda para contenido que flota sobre la página, como la caja de inicio de sesión.
 - Puede ser `section` o `article` cuando es una parte autónoma de la página.
+- Tono **de marca** (`tone="brand"`) para la única superficie destacada de una pantalla: más abajo.
 
 ## Cómo ayuda a la persona
 - **Orden:** los límites claros hacen la pantalla fácil de recorrer; cada tarjeta es una idea.
@@ -61,5 +76,18 @@ Una superficie que agrupa contenido relacionado: un gasto, la caja de inicio de 
 
 ## Variantes
 <Canvas of={CardStories.Elevated} />
+
+### Tono de marca
+<Canvas of={CardStories.Brand} />
+
+**Qué es y cuándo usarlo:** la tarjeta pintada en el fucsia de la marca. Es para **la única superficie destacada de una pantalla**; en la app, la tarjeta de dinero del inicio. Nunca más de una por pantalla, y nunca para avisos o errores.
+
+**Por qué está diseñado así:** la tarjeta redefine los tokens de color para todo lo que contiene, así que su contenido se adapta sin variantes extra: el texto pasa a blanco, la acción principal a blanco con texto fucsia, las secundarias a contornos blancos, y el anillo de foco a blanco para que se vea sobre el fucsia.
+
+**Cómo ayuda a la persona:** el número más importante de la pantalla (cómo vas con el dinero) es lo primero que ves, y la marca aparece en un momento que importa.
+
+**Accesibilidad:** el texto blanco sobre el fucsia de marca da 5,85:1 y la acción invertida 5,85:1 (ambos AA, comprobados por tests en los dos temas). Dentro de la tarjeta, el significado lo llevan las palabras y los iconos, nunca los colores de positivo o negativo, que no se leerían sobre el fucsia.
+
+- **Respaldado:** las ratios de contraste y el anillo de foco blanco visible. El "momento de marca" y la alegría que transmite son intención de diseño.
 
 </Lang>

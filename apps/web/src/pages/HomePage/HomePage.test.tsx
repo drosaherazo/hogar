@@ -4,7 +4,7 @@ import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { expectNoA11yViolations } from "../../test/axe";
 import { installFakeGoogle, renderApp } from "../../test/renderApp";
-import { ana, anaIsOwed, apiError, handlers, householdView, member, server } from "../../test/server";
+import { ana, anaIsOwed, apiError, balancesView, handlers, householdView, member, server } from "../../test/server";
 import { firstName } from "./HomePage";
 
 describe("firstName", () => {
@@ -154,6 +154,50 @@ describe("HomePage", () => {
       expect(within(money).getByRole("link", { name: "See expenses" })).toHaveAttribute("href", "/expenses");
       expect(within(money).getByRole("link", { name: "See balances" })).toHaveAttribute("href", "/balances");
       expect(within(money).getByRole("link", { name: "Add expense" })).toHaveAttribute("href", "/expenses/new");
+    });
+
+    describe("the money card, the page's brand moment", () => {
+      const direction = (money: HTMLElement) => money.querySelector("[data-direction]");
+
+      it("is painted in the brand color", async () => {
+        server.use(handlers.signedIn(), handlers.household(shared), handlers.balances(anaIsOwed()));
+        renderApp({ path: "/" });
+        const money = await screen.findByRole("region", { name: "Expenses" });
+        expect(money).toHaveClass("brand");
+      });
+
+      it("points inwards when the person is owed, as a hidden echo of the words", async () => {
+        server.use(handlers.signedIn(), handlers.household(shared), handlers.balances(anaIsOwed()));
+        renderApp({ path: "/" });
+        const money = await screen.findByRole("region", { name: "Expenses" });
+        const sentence = await within(money).findByText("You're owed €7.70 in total");
+        const icon = direction(money);
+        expect(icon).toHaveAttribute("data-direction", "in");
+        expect(icon).toHaveAttribute("aria-hidden", "true");
+        expect(sentence).toHaveTextContent(/^You're owed €7.70 in total$/);
+      });
+
+      it("points outwards when the person owes", async () => {
+        const anaOwes = balancesView({
+          balances: [
+            { person: { userId: ana.id, name: ana.name, avatarUrl: null, former: false }, balanceCents: -770 },
+          ],
+          myBalanceCents: -770,
+        });
+        server.use(handlers.signedIn(), handlers.household(shared), handlers.balances(anaOwes));
+        renderApp({ path: "/" });
+        const money = await screen.findByRole("region", { name: "Expenses" });
+        await within(money).findByText("You owe €7.70 in total");
+        expect(direction(money)).toHaveAttribute("data-direction", "out");
+      });
+
+      it("shows no direction when the person is all square", async () => {
+        server.use(handlers.signedIn(), handlers.household(shared));
+        renderApp({ path: "/" });
+        const money = await screen.findByRole("region", { name: "Expenses" });
+        await within(money).findByText("You're all square");
+        expect(direction(money)).toBeNull();
+      });
     });
 
     it("says so when the person is all square", async () => {
