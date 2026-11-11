@@ -13,3 +13,5 @@ pnpm-lock.yaml
 .claude/skills/speckit-*
 # Third-party skill vendored as-is from vercel-labs/agent-skills.
 .claude/skills/vercel-react-best-practices
+# Third-party skill vendored as-is from nextlevelbuilder/ui-ux-pro-max-skill.
+.claude/skills/ui-ux-pro-max
