@@ -48,6 +48,13 @@ export async function homeWith(app: App, options: { weights?: [number, number]; 
   return { household, ana, bruno: brunoMember, carla: carlaGuest };
 }
 
+/** `homeWith` plus Carla, a GUEST with weight 0. */
+export async function homeWithGuest(app: App, options: { weights?: [number, number] } = {}) {
+  const home = await homeWith(app, { ...options, withGuest: true });
+  if (!home.carla) throw new Error("homeWith didn't add the guest");
+  return { ...home, carla: home.carla };
+}
+
 export function postExpense(app: App, who: SignedIn, input: Partial<ExpenseInput>) {
   const body: ExpenseInput = {
     description: "Groceries",
