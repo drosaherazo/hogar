@@ -272,28 +272,28 @@ Within each story, test tasks come first and must fail before implementation.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T050 [P] [US3] Supertest suite `apps/api/test/settlements.test.ts` (create and read):
+- [x] T050 [P] [US3] Supertest suite `apps/api/test/settlements.test.ts` (create and read):
   - **Create:** `POST /api/household/settlements` as ADMIN and as MEMBER → 201.
   - **Validation:** same person → 400 `settlement.same_person`; amount and future-date validation; a user who is neither a current member nor in the household's history → 400 `settlement.person.not_found`.
   - **Permissions:** GUEST → 403; `GET /:id` from another household → 404 `settlement.not_found`.
   - **Effect:** Bruno paying Ana 1320 brings both to 0; an overpayment is allowed and reverses the balance; settlements appear in `activity` in date order.
-- [ ] T051 [P] [US3] Web tests in `apps/web/src/expenses/PaymentDialog.test.tsx`, `apps/web/src/pages/BalancesPage/BalancesPage.test.tsx` and `apps/web/src/expenses/ActivityList.test.tsx` (create it):
+- [x] T051 [P] [US3] Web tests in `apps/web/src/expenses/PaymentDialog.test.tsx`, `apps/web/src/pages/BalancesPage/BalancesPage.test.tsx` and `apps/web/src/expenses/ActivityList.test.tsx` (create it):
   - **`apps/web/src/expenses/PaymentDialog.test.tsx`:** prefilled from a suggestion; the "Right now, {{from}} owes {{to}} {{amount}}." line; the reversal note when the amount exceeds it; validation messages; submitting invalidates activity and balances.
   - **`BalancesPage.test.tsx`:** **Record this payment** and **Record a payment** only for editors.
   - **`ActivityList`:** a payment row reads "{{from}} paid {{to}}" and opens the payment details dialog.
 
 ### Implementation for User Story 3
 
-- [ ] T052 [US3] Implement `get` and `create` in `apps/api/src/expenses/settlementService.ts`: both parties must be current members or pass `isInHistory` (`settlement.person.not_found`), the future-date rule applies, `PersonRef`s are built, and reads are scoped to the household and `deletedAt: null`
-- [ ] T053 [US3] Implement `apps/api/src/expenses/settlementsRouter.ts` (`GET /:id` any member, `POST /` `requireEditor`) and mount it at `/api/household/settlements` in `apps/api/src/app.ts`
-- [ ] T054 [US3] Add `getSettlement(id)` and `createSettlement(input)` to `apps/web/src/api/client.ts`, and `useSettlement` and `useCreateSettlement` (invalidating activity and balances) to `apps/web/src/expenses/useExpenses.ts`
-- [ ] T055 [US3] Build `apps/web/src/expenses/PaymentDialog.tsx` (record and view modes) on `Dialog`:
+- [x] T052 [US3] Implement `get` and `create` in `apps/api/src/expenses/settlementService.ts`: both parties must be current members or pass `isInHistory` (`settlement.person.not_found`), the future-date rule applies, `PersonRef`s are built, and reads are scoped to the household and `deletedAt: null`
+- [x] T053 [US3] Implement `apps/api/src/expenses/settlementsRouter.ts` (`GET /:id` any member, `POST /` `requireEditor`) and mount it at `/api/household/settlements` in `apps/api/src/app.ts`
+- [x] T054 [US3] Add `getSettlement(id)` and `createSettlement(input)` to `apps/web/src/api/client.ts`, and `useSettlement` and `useCreateSettlement` (invalidating activity and balances) to `apps/web/src/expenses/useExpenses.ts`
+- [x] T055 [US3] Build `apps/web/src/expenses/PaymentDialog.tsx` (record and view modes) on `Dialog`:
   - **Fields:** From and To `Select`s (current members plus former members with an open balance), Amount (`parseAmount`) and Date.
   - **What's owed between the two (FR-020):** the suggested payment from → to in the balances view, shown as `expenses:payment.owedNow` when present.
   - **The reversal note:** simulate the balances after the payment (from + amount, to − amount), run `suggestSettlements`, and show `expenses:payment.reverses` with the resulting to → from amount when one appears.
   - **View mode:** who paid whom, the amount, the date and "Added by".
   - Copy in `expenses.json` en/es.
-- [ ] T056 [US3] Wire **Record this payment** (prefilled) and **Record a payment** into `apps/web/src/pages/BalancesPage/BalancesPage.tsx` for editors. Make payment rows in `apps/web/src/expenses/ActivityList.tsx` open `PaymentDialog` in view mode with a payment icon plus "{{from}} paid {{to}}".
+- [x] T056 [US3] Wire **Record this payment** (prefilled) and **Record a payment** into `apps/web/src/pages/BalancesPage/BalancesPage.tsx` for editors. Make payment rows in `apps/web/src/expenses/ActivityList.tsx` open `PaymentDialog` in view mode with a payment icon plus "{{from}} paid {{to}}".
 
 **Checkpoint**: US1–US3: the full money loop (spend, see, settle) works.
 
