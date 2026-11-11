@@ -1,7 +1,7 @@
 import { authResponseSchema } from "@hogar/shared";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
-import { createAccessTokenSigner, hashRefreshToken } from "../src/auth/tokens";
+import { createAccessTokenSigner, hashSecretToken } from "../src/auth/tokens";
 import { ana, config, createTestApp, db, WEB_ORIGIN } from "./testApp";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -61,7 +61,7 @@ describe("POST /api/auth/google", () => {
     const token = cookieValue(cookie);
     const stored = await db.refreshToken.findMany();
     expect(stored).toHaveLength(1);
-    expect(stored[0]?.tokenHash).toBe(hashRefreshToken(token));
+    expect(stored[0]?.tokenHash).toBe(hashSecretToken(token));
     expect(stored[0]?.tokenHash).not.toBe(token);
   });
 
@@ -148,9 +148,9 @@ describe("POST /api/auth/refresh", () => {
     expect(rotated).not.toBe(cookieValue(cookie));
 
     const old = await db.refreshToken.findUniqueOrThrow({
-      where: { tokenHash: hashRefreshToken(cookieValue(cookie)) },
+      where: { tokenHash: hashSecretToken(cookieValue(cookie)) },
     });
-    const next = await db.refreshToken.findUniqueOrThrow({ where: { tokenHash: hashRefreshToken(rotated) } });
+    const next = await db.refreshToken.findUniqueOrThrow({ where: { tokenHash: hashSecretToken(rotated) } });
     expect(old.revokedAt).not.toBeNull();
     expect(old.replacedById).toBe(next.id);
     expect(next.familyId).toBe(old.familyId);

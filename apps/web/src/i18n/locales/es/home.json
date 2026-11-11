@@ -5,7 +5,6 @@
     "title": "Aún no formas parte de un hogar",
     "description": "Crea uno para las personas con las que vives o únete al suyo con una invitación. Ahí vivirán los gastos, las tareas y la lista de la compra.",
     "create": "Crear un hogar",
-    "join": "Unirme con una invitación",
-    "comingSoon": "Próximamente"
+    "joinHint": "¿Alguien te ha mandado un enlace de invitación? Ábrelo y podrás unirte desde ahí."
   }
 }

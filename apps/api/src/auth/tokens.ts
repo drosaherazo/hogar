@@ -41,11 +41,15 @@ export function createAccessTokenSigner(secret: string, ttlSeconds: number): Acc
   };
 }
 
-/** A new opaque refresh token: 32 random bytes, URL-safe. Only its hash is stored. */
-export function generateRefreshToken(): string {
+/**
+ * A new opaque secret (refresh tokens, invitation tokens): 32 random bytes, URL-safe.
+ * Only its hash is ever stored.
+ */
+export function generateSecretToken(): string {
   return randomBytes(32).toString("base64url");
 }
 
-export function hashRefreshToken(token: string): string {
+/** SHA-256 is enough here: 256 bits of entropy can't be brute-forced, unlike a password. */
+export function hashSecretToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }

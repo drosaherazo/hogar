@@ -1,0 +1,123 @@
+{
+  "close": "Close",
+  "cancel": "Cancel",
+  "retry": "Try again",
+  "loadError": "We couldn't load your household.",
+  "roles": {
+    "ADMIN": "Admin",
+    "MEMBER": "Member",
+    "GUEST": "Guest"
+  },
+  "home": {
+    "people_one": "{{count}} person lives here",
+    "people_other": "{{count}} people live here",
+    "settingsLink": "Household settings",
+    "removed": "You're no longer part of {{name}}. You can create a new household or join one with an invitation.",
+    "reviewSplit": {
+      "title": "Review the split",
+      "description": "Someone joined or left since the split was last saved. Check that it still feels fair for everyone.",
+      "action": "Review split"
+    }
+  },
+  "create": {
+    "title": "Create your household",
+    "description": "Give it a name everyone at home will recognise. You can change it later.",
+    "nameLabel": "Household name",
+    "nameHint": "Up to 50 characters.",
+    "submit": "Create household",
+    "submitting": "Creating your household"
+  },
+  "settings": {
+    "title": "Household settings",
+    "back": "Back to home",
+    "name": {
+      "title": "Name",
+      "label": "Household name",
+      "save": "Save name",
+      "saving": "Saving the name",
+      "saved": "Name saved.",
+      "readOnly": "Only admins can change the name."
+    },
+    "split": {
+      "title": "Split",
+      "description": "How shared costs are divided by default: the higher someone's weight, the bigger their share. Each expense can still be split differently.",
+      "share": "{{percent}} of shared costs",
+      "weight": "Weight {{weight}}",
+      "save": "Save split",
+      "saving": "Saving the split",
+      "saved": "Split saved.",
+      "readOnly": "Only admins can change the split."
+    },
+    "members": {
+      "title": "People",
+      "you": "{{name}} (you)",
+      "options": "Options for {{name}}",
+      "roleLabel": "Role",
+      "remove": "Remove from household",
+      "removeTitle": "Remove {{name}}?",
+      "removeDescription": "{{name}} will stop seeing this household. They can come back with a new invitation.",
+      "removeConfirm": "Remove {{name}}",
+      "removing": "Removing",
+      "onlyAdmin": "You're the only admin. Make someone else an admin before stepping down or leaving.",
+      "leave": "Leave household",
+      "leaveTitle": "Leave {{household}}?",
+      "leaveDescription": "You'll stop seeing its expenses, chores and shopping list. You can come back with a new invitation.",
+      "leaveLastDescription": "You're the only person here, so {{household}} will be deleted when you leave.",
+      "leaveConfirm": "Leave household",
+      "leaveDeleteConfirm": "Leave and delete household",
+      "leaving": "Leaving the household"
+    },
+    "invitations": {
+      "title": "Invitations",
+      "description": "Each link works once and for 12 hours. Send it however you like.",
+      "create": "Invite someone",
+      "empty": "No open invitations right now.",
+      "createdBy": "Created by {{name}}",
+      "expiresIn": "Expires {{time}}",
+      "expired": "Expired",
+      "renew": "New link",
+      "renewing": "Creating a new link",
+      "revoke": "Revoke",
+      "revokeTitle": "Revoke this invitation?",
+      "revokeDescription": "The link will stop working right away. You can always create a new one.",
+      "revokeConfirm": "Revoke invitation",
+      "revoking": "Revoking the invitation",
+      "roleLegend": "They'll join as",
+      "roleHint": {
+        "MEMBER": "Can add and edit expenses, chores and the shopping list.",
+        "GUEST": "Can see everything but not change anything. Doesn't pay by default."
+      },
+      "createTitle": "Invite someone",
+      "createSubmit": "Create link",
+      "creating": "Creating the link",
+      "linkTitle": "Your invitation link",
+      "linkDescription": "It works once and expires in 12 hours. You won't be able to see it again, but you can always create a new one.",
+      "linkLabel": "Invitation link",
+      "copy": "Copy link",
+      "copied": "Link copied.",
+      "copyFailed": "We couldn't copy it automatically. Select the link and copy it.",
+      "done": "Done"
+    }
+  },
+  "invite": {
+    "title": "You've been invited",
+    "description": "{{inviter}} invites you to join {{household}} as {{role}}.",
+    "descriptionNoInviter": "You've been invited to join {{household}} as {{role}}.",
+    "role": {
+      "MEMBER": "a member",
+      "GUEST": "a guest"
+    },
+    "join": "Join {{household}}",
+    "joining": "Joining the household",
+    "alreadyMember": "You're already part of {{household}}.",
+    "goHome": "Go to my household",
+    "backHome": "Back to home",
+    "otherHousehold": "You already belong to another household. To join {{household}}, leave yours first. This invitation will keep working until it expires.",
+    "leave": "Leave my household",
+    "leaveTitle": "Leave your household?",
+    "leaveDescription": "You'll stop seeing its expenses, chores and shopping list. You can come back with a new invitation.",
+    "leaveConfirm": "Leave household",
+    "leaving": "Leaving the household",
+    "problemTitle": "This invitation can't be used"
+  }
+}

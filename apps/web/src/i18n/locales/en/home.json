@@ -5,7 +5,6 @@
     "title": "You're not part of a household yet",
     "description": "Create one for the people you live with, or join theirs with an invitation. Expenses, chores and the shopping list will live there.",
     "create": "Create a household",
-    "join": "Join with an invitation",
-    "comingSoon": "Coming soon"
+    "joinHint": "Got an invitation link from someone? Open it and you'll be able to join from there."
   }
 }

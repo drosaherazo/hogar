@@ -1,0 +1,65 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as DialogStories from "./Dialog.stories";
+
+<Meta of={DialogStories} />
+
+<Lang locale="en">
+
+# Dialog
+
+<Canvas of={DialogStories.Confirmation} />
+
+## What it is and when to use it
+A window over the page for a decision that needs full attention: confirming something that can't be undone (leaving a household, removing someone) or a short form (creating a household). Don't use it for information that could sit in the page, or for long flows.
+
+## Why it's designed this way
+- **The title asks the exact question** ("Leave Casa Ana?") and the description states the consequence, so nobody confirms blindly.
+- **The safe choice comes first** ("Cancel"), and destructive buttons use a verb ("Leave household"), never "OK".
+- **Large radius (`--radius-xl`), soft shadow and a warm overlay:** it feels like a friendly card lifted from the page, not an alarm.
+- **A gentle rise animation** with `--duration-slow`, which disappears under reduced motion.
+
+## How it helps the person
+- **Fewer regrets:** naming exactly what will happen before it happens prevents mistakes with shared data.
+- **Focus without pressure:** the rest of the page fades but stays visible behind, so the person keeps their sense of place.
+- **Evidence-backed:** focus trapping, Escape to close and focus returning to where you were are WAI-ARIA dialog practices that keep keyboard and screen reader users oriented. The warmth of the styling is design intent.
+
+## Accessibility
+- Built on Radix Dialog: `role="dialog"`, `aria-modal`, named by the title and described by the description.
+- On open, focus goes to the first action (the safe choice, such as "Cancel"), or to `initialFocus` when given (a form's first field). It stays trapped while open and returns to the button that opened it on close.
+- Escape and a labelled close button (`closeLabel`, required) close it.
+
+## Variants
+<Canvas of={DialogStories.WithForm} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Diálogo
+
+<Canvas of={DialogStories.Confirmation} />
+
+## Qué es y cuándo usarlo
+Una ventana sobre la página para una decisión que necesita toda la atención: confirmar algo que no se puede deshacer (salir de un hogar, quitar a alguien) o un formulario corto (crear un hogar). No lo uses para información que podría estar en la página ni para flujos largos.
+
+## Por qué está diseñado así
+- **El título hace la pregunta exacta** ("¿Salir de Casa Ana?") y la descripción explica la consecuencia, para que nadie confirme a ciegas.
+- **La opción segura va primero** ("Cancelar"), y los botones destructivos usan un verbo ("Salir del hogar"), nunca "Aceptar".
+- **Radio grande (`--radius-xl`), sombra suave y fondo cálido:** se siente como una tarjeta amable que se levanta de la página, no como una alarma.
+- **Una animación suave al aparecer** con `--duration-slow`, que desaparece con movimiento reducido.
+
+## Cómo ayuda a la persona
+- **Menos arrepentimientos:** nombrar exactamente qué va a pasar antes de que pase evita errores con datos compartidos.
+- **Atención sin presión:** el resto de la página se atenúa pero sigue visible detrás, así la persona no pierde el contexto.
+- **Respaldado:** atrapar el foco, cerrar con Escape y devolver el foco a donde estabas son prácticas WAI-ARIA para diálogos que orientan a quien usa teclado o lector de pantalla. La calidez del estilo es intención de diseño.
+
+## Accesibilidad
+- Basado en Radix Dialog: `role="dialog"`, `aria-modal`, nombrado por el título y descrito por la descripción.
+- Al abrir, el foco va a la primera acción (la opción segura, como "Cancelar"), o a `initialFocus` si se indica (el primer campo de un formulario). Queda atrapado mientras está abierto y vuelve al botón que lo abrió al cerrar.
+- Se cierra con Escape y con un botón de cierre etiquetado (`closeLabel`, obligatorio).
+
+## Variantes
+<Canvas of={DialogStories.WithForm} />
+
+</Lang>

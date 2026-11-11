@@ -1,34 +1,3 @@
-.page {
-  min-block-size: 100dvh;
-}
-
-/* Hidden until focused with the keyboard, then it appears above the header. */
-.skipLink {
-  position: absolute;
-  inset-block-start: var(--space-2);
-  inset-inline-start: var(--space-2);
-  z-index: 20;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  background-color: var(--color-accent);
-  color: var(--color-accent-contrast);
-  font-weight: var(--font-weight-semibold);
-  transform: translateY(calc(-100% - var(--space-4)));
-}
-
-.skipLink:focus-visible {
-  transform: none;
-}
-
-.main {
-  display: grid;
-  gap: var(--space-6);
-  inline-size: 100%;
-  max-inline-size: var(--size-content-md);
-  margin-inline: auto;
-  padding: var(--space-8) var(--space-4);
-}
-
 .welcome {
   display: grid;
   gap: var(--space-1);
@@ -45,4 +14,55 @@
   margin: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-lg);
+}
+
+.joinHint {
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.household {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.householdHeader {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.householdName {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  overflow-wrap: anywhere;
+}
+
+.people {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.settingsLink {
+  justify-self: start;
 }

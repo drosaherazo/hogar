@@ -1,0 +1,69 @@
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as TextFieldStories from "./TextField.stories";
+
+<Meta of={TextFieldStories} />
+
+<Lang locale="en">
+
+# TextField
+
+<Canvas of={TextFieldStories.Default} />
+<Controls of={TextFieldStories.Default} />
+
+## What it is and when to use it
+A labelled box to type into: a household name, a weight in the split. Use it for short, free answers. For choosing among a few options, use radio buttons or a menu instead.
+
+## Why it's designed this way
+- **The label is always visible above the field.** Placeholders disappear as soon as you type, so they are never used as labels.
+- **Sunken fill (`--color-surface-sunken`) with a strong border:** it reads as "a place to write", distinct from cards and buttons, in both themes.
+- **Errors in brick with an icon, above the hint:** they say what to do ("Give your household a name.") without blaming, and the icon means color is never the only sign.
+- **The inline variant** puts a compact numeric field next to its label, for lists of values such as the split, with tabular numbers so figures line up.
+
+## How it helps the person
+- **Less guessing:** the label and hint stay in view while typing, so nobody has to remember what the field was for.
+- **Calm corrections:** a gentle message right next to the field turns a mistake into a next step, instead of a scary red form.
+- **Evidence-backed:** persistent labels and inline error messages reduce form errors and are WCAG requirements (3.3.1, 3.3.2); 44 px tall fields meet touch-target guidance. The tone of the messages is design intent.
+
+## Accessibility
+- A real `<label>` linked to the input; error and hint linked with `aria-describedby` (error first).
+- `aria-invalid` when there is an error. Visible focus ring.
+- Every string (label, hint, error) comes in already translated through props.
+
+## Variants
+<Canvas of={TextFieldStories.WithError} />
+<Canvas of={TextFieldStories.InlineNumber} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Campo de texto
+
+<Canvas of={TextFieldStories.Default} />
+<Controls of={TextFieldStories.Default} />
+
+## Qué es y cuándo usarlo
+Una caja con etiqueta para escribir: el nombre del hogar, un peso del reparto. Úsalo para respuestas cortas y libres. Para elegir entre pocas opciones, usa botones de opción o un menú.
+
+## Por qué está diseñado así
+- **La etiqueta siempre está visible encima del campo.** Los textos de ejemplo desaparecen al escribir, así que nunca se usan como etiqueta.
+- **Fondo hundido (`--color-surface-sunken`) con borde marcado:** se lee como "un sitio donde escribir", distinto de tarjetas y botones, en los dos temas.
+- **Errores en ladrillo con icono, encima de la ayuda:** dicen qué hacer ("Ponle un nombre a tu hogar.") sin culpar, y el icono hace que el color nunca sea la única señal.
+- **La variante en línea** coloca un campo numérico compacto junto a su etiqueta, para listas de valores como el reparto, con números tabulares para que las cifras se alineen.
+
+## Cómo ayuda a la persona
+- **Menos dudas:** la etiqueta y la ayuda siguen a la vista mientras escribes, así nadie tiene que recordar para qué era el campo.
+- **Correcciones tranquilas:** un mensaje amable junto al campo convierte un error en el siguiente paso, en vez de un formulario rojo que asusta.
+- **Respaldado:** las etiquetas persistentes y los mensajes de error junto al campo reducen errores y son requisitos WCAG (3.3.1, 3.3.2); los 44 px de alto cumplen las guías de objetivo táctil. El tono de los mensajes es intención de diseño.
+
+## Accesibilidad
+- Un `<label>` real vinculado al campo; error y ayuda vinculados con `aria-describedby` (primero el error).
+- `aria-invalid` cuando hay error. Anillo de foco visible.
+- Todos los textos (etiqueta, ayuda, error) llegan ya traducidos por props.
+
+## Variantes
+<Canvas of={TextFieldStories.WithError} />
+<Canvas of={TextFieldStories.InlineNumber} />
+
+</Lang>

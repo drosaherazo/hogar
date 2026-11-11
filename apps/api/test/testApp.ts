@@ -1,3 +1,5 @@
+import { authResponseSchema, type AuthUser } from "@hogar/shared";
+import request from "supertest";
 import { afterAll, beforeEach } from "vitest";
 import { createApp } from "../src/app";
 import type { GoogleIdentity, GoogleVerifier } from "../src/auth/googleVerifier";
@@ -55,17 +57,62 @@ export class TestClock {
 
 export function createTestApp({
   authRateLimit = 1000,
+  invitationRateLimit = 1000,
   ...overrides
-}: { authRateLimit?: number } & Partial<Config> = {}) {
+}: { authRateLimit?: number; invitationRateLimit?: number } & Partial<Config> = {}) {
   const google = new FakeGoogleVerifier();
-  google.identities.set("valid-ana-token", ana);
+  for (const identity of PEOPLE) google.identities.set(credentialFor(identity), identity);
   const clock = new TestClock();
-  const app = createApp({ config: { ...config, ...overrides }, db, google, authRateLimit, now: clock.now });
+  const app = createApp({
+    config: { ...config, ...overrides },
+    db,
+    google,
+    authRateLimit,
+    invitationRateLimit,
+    now: clock.now,
+  });
   return { app, google, clock };
 }
 
+const person = (key: string, name: string): GoogleIdentity => ({
+  googleId: `google-${key}`,
+  email: `${key}@example.com`,
+  emailVerified: true,
+  name,
+  avatarUrl: null,
+  locale: "es",
+});
+
+/** More people for household tests; Ana stays the default signed-in user. */
+export const bruno = person("bruno", "Bruno Díaz");
+export const carla = person("carla", "Carla Ruiz");
+export const dani = person("dani", "Dani López");
+const PEOPLE = [ana, bruno, carla, dani];
+
+function credentialFor(identity: GoogleIdentity) {
+  return identity === ana ? "valid-ana-token" : `valid-${identity.googleId}-token`;
+}
+
+export interface SignedIn {
+  user: AuthUser;
+  /** Value for the `Authorization` header. */
+  auth: string;
+}
+
+/** Signs `identity` in through the real Google login endpoint and returns a ready Bearer header. */
+export async function signIn(app: ReturnType<typeof createTestApp>["app"], identity: GoogleIdentity = ana) {
+  const res = await request(app)
+    .post("/api/auth/google")
+    .set("Origin", WEB_ORIGIN)
+    .send({ credential: credentialFor(identity) });
+  const session = authResponseSchema.parse(res.body);
+  return { user: session.user, auth: `Bearer ${session.accessToken}` } satisfies SignedIn;
+}
+
 beforeEach(async () => {
-  await db.$executeRawUnsafe('TRUNCATE TABLE "refresh_tokens", "users" CASCADE');
+  await db.$executeRawUnsafe(
+    'TRUNCATE TABLE "invitations", "memberships", "households", "refresh_tokens", "users" CASCADE',
+  );
 });
 
 afterAll(async () => {

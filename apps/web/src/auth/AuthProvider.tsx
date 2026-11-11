@@ -1,4 +1,5 @@
 import type { AuthUser } from "@hogar/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { ApiClient } from "../api/client";
@@ -21,6 +22,13 @@ const ANONYMOUS: AuthState = { status: "anonymous", user: null };
 export function AuthProvider({ client, children }: { client: ApiClient; children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: "loading", user: null });
   const { i18n } = useTranslation();
+  const queryClient = useQueryClient();
+
+  // Whoever signs in next on this browser must never see the previous person's household.
+  const signOutLocally = useCallback(() => {
+    queryClient.clear();
+    setState(ANONYMOUS);
+  }, [queryClient]);
 
   const signIn = useCallback(
     (user: AuthUser) => {
@@ -34,7 +42,7 @@ export function AuthProvider({ client, children }: { client: ApiClient; children
 
   useEffect(() => {
     let active = true;
-    const unsubscribe = client.onSessionExpired(() => setState(ANONYMOUS));
+    const unsubscribe = client.onSessionExpired(signOutLocally);
     client.refresh().then(
       ({ user }) => active && signIn(user),
       () => active && setState(ANONYMOUS),
@@ -43,7 +51,7 @@ export function AuthProvider({ client, children }: { client: ApiClient; children
       active = false;
       unsubscribe();
     };
-  }, [client, signIn]);
+  }, [client, signIn, signOutLocally]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -53,11 +61,11 @@ export function AuthProvider({ client, children }: { client: ApiClient; children
         try {
           await client.logout();
         } finally {
-          setState(ANONYMOUS);
+          signOutLocally();
         }
       },
     }),
-    [client, signIn, state],
+    [client, signIn, signOutLocally, state],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

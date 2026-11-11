@@ -1,0 +1,35 @@
+.page {
+  min-block-size: 100dvh;
+}
+
+/* Hidden until focused with the keyboard, then it appears above the header. */
+.skipLink {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 20;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-weight: var(--font-weight-semibold);
+  transform: translateY(calc(-100% - var(--space-4)));
+}
+
+.skipLink:focus-visible {
+  transform: none;
+}
+
+.main {
+  display: grid;
+  align-content: start;
+  gap: var(--space-6);
+  inline-size: 100%;
+  max-inline-size: var(--size-content-md);
+  margin-inline: auto;
+  padding: var(--space-8) var(--space-4);
+}
+
+.main:focus {
+  outline: none;
+}

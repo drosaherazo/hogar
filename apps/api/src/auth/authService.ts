@@ -4,7 +4,7 @@ import type { Database } from "../db";
 import type { User } from "../generated/prisma/client";
 import { unauthorized } from "../httpError";
 import type { GoogleVerifier } from "./googleVerifier";
-import { generateRefreshToken, hashRefreshToken, type AccessTokenSigner } from "./tokens";
+import { generateSecretToken, hashSecretToken, type AccessTokenSigner } from "./tokens";
 
 /**
  * Two requests can race to rotate the same refresh token (two tabs opening at once).
@@ -44,10 +44,10 @@ export function createAuthService({
   now = () => new Date(),
 }: AuthServiceDeps) {
   async function issueSession(user: User, familyId: string): Promise<Session> {
-    const refreshToken = generateRefreshToken();
+    const refreshToken = generateSecretToken();
     const refreshTokenExpiresAt = new Date(now().getTime() + refreshTokenTtlDays * DAY_MS);
     await db.refreshToken.create({
-      data: { userId: user.id, tokenHash: hashRefreshToken(refreshToken), familyId, expiresAt: refreshTokenExpiresAt },
+      data: { userId: user.id, tokenHash: hashSecretToken(refreshToken), familyId, expiresAt: refreshTokenExpiresAt },
     });
     const authUser = toAuthUser(user);
     return {
@@ -88,7 +88,7 @@ export function createAuthService({
     async refresh(refreshToken: string | undefined): Promise<Session> {
       if (!refreshToken) throw unauthorized("auth.session.missing");
       const stored = await db.refreshToken.findUnique({
-        where: { tokenHash: hashRefreshToken(refreshToken) },
+        where: { tokenHash: hashSecretToken(refreshToken) },
         include: { user: true },
       });
       if (!stored) throw unauthorized("auth.session.missing");
@@ -104,7 +104,7 @@ export function createAuthService({
 
       const session = await issueSession(stored.user, stored.familyId);
       const replacement = await db.refreshToken.findUniqueOrThrow({
-        where: { tokenHash: hashRefreshToken(session.refreshToken) },
+        where: { tokenHash: hashSecretToken(session.refreshToken) },
         select: { id: true },
       });
       const { count } = await db.refreshToken.updateMany({
@@ -122,7 +122,7 @@ export function createAuthService({
     /** Ends the session on every device that shares this refresh token family. */
     async logout(refreshToken: string | undefined): Promise<void> {
       if (!refreshToken) return;
-      const stored = await db.refreshToken.findUnique({ where: { tokenHash: hashRefreshToken(refreshToken) } });
+      const stored = await db.refreshToken.findUnique({ where: { tokenHash: hashSecretToken(refreshToken) } });
       if (stored) await revokeFamily(stored.familyId);
     },
 
