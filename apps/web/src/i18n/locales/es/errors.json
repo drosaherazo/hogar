@@ -21,8 +21,42 @@
     "already_member": "Ya formas parte de un hogar. Sal de él primero si quieres unirte a otro.",
     "not_member": "Ahora mismo no formas parte de ningún hogar.",
     "forbidden": "Solo los administradores del hogar pueden hacer eso.",
+    "read_only": "Las personas invitadas pueden verlo todo, pero solo los miembros y administradores pueden hacer cambios.",
     "last_admin": "Haz administrador a otra persona primero, para que el hogar nunca se quede sin uno.",
     "member_not_found": "Esa persona ya no forma parte del hogar."
+  },
+  "money": {
+    "amount": {
+      "invalid": "Escribe un importe entre 0,01 € y 100.000,00 €."
+    },
+    "date": {
+      "invalid": "Esa fecha no parece correcta. Elígela en el calendario.",
+      "future": "Esa fecha aún no ha llegado. Elige hoy o un día anterior."
+    }
+  },
+  "expense": {
+    "description": {
+      "required": "Di qué fue, para que todo el mundo lo reconozca.",
+      "too_long": "Esa descripción es un poco larga. Que no pase de 100 caracteres."
+    },
+    "split": {
+      "invalid": "Elige al menos a una persona para repartirlo.",
+      "mismatch": "Los importes todavía no suman el total.",
+      "no_default": "Todavía nadie paga en el reparto del hogar. Elige personas o revisa antes el reparto."
+    },
+    "person": {
+      "not_member": "Alguien de este gasto ya no forma parte del hogar. Revisa quién pagó y entre quién se reparte."
+    },
+    "not_found": "Ese gasto ya no está. Puede que alguien lo haya borrado.",
+    "changed": "Alguien cambió este gasto mientras lo editabas. Aquí tienes la versión más reciente."
+  },
+  "settlement": {
+    "same_person": "Elige a dos personas distintas.",
+    "person": {
+      "not_found": "Esa persona no forma parte del historial de este hogar."
+    },
+    "not_found": "Ese pago ya no está. Puede que alguien lo haya borrado.",
+    "changed": "Alguien cambió este pago mientras lo editabas. Aquí tienes la versión más reciente."
   },
   "invitation": {
     "not_found": "Este enlace de invitación no funciona. Pide uno nuevo a quien te invitó.",
