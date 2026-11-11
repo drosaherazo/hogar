@@ -12,7 +12,9 @@
     "loadingMore": "Cargando más",
     "paid": "Pagó {{name}}",
     "youPaid": "Pagaste tú",
-    "payment": "{{from}} le pagó a {{to}}"
+    "payment": "{{from}} le pagó a {{to}}",
+    "deletedExpense": "{{name}} borró «{{description}}» ({{amount}})",
+    "deletedPayment": "{{name}} borró el pago de {{from}} a {{to}} ({{amount}})"
   },
   "part": {
     "owes": "Debes {{amount}}",
@@ -62,7 +64,19 @@
     "paid": "{{from}} le pagó a {{to}}",
     "recordedBy": "Lo anotó {{name}} el {{date}}",
     "close": "Cerrar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "remove": "Borrar",
+    "editTitle": "Editar pago",
+    "editedBy": "Lo cambió {{name}} el {{date}}",
+    "update": "Guardar cambios",
+    "updating": "Guardando los cambios",
+    "delete": {
+      "title": "¿Borrar el pago de {{from}} a {{to}} ({{amount}})?",
+      "description": "Dejará de contar en los saldos. El historial guardará una nota de que lo borraste.",
+      "confirm": "Borrar pago",
+      "deleting": "Borrando el pago"
+    }
   },
   "form": {
     "newTitle": "Añadir un gasto",
@@ -84,11 +98,14 @@
       "over": "Te pasas {{amount}} del total",
       "noDefault": "Todavía nadie paga en el reparto del hogar. Elige personas o revisa el reparto.",
       "reviewSplit": "Revisar el reparto",
-      "preview": "La parte de cada persona"
+      "preview": "La parte de cada persona",
+      "weightsSaved": "El reparto del hogar cuando se anotó ({{shares}})"
     },
     "save": "Guardar gasto",
     "saving": "Guardando el gasto",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "editTitle": "Editar gasto",
+    "backToExpense": "Volver al gasto"
   },
   "details": {
     "back": "Volver a gastos",
@@ -103,6 +120,18 @@
       "EQUAL_one": "A partes iguales entre {{count}} persona",
       "EQUAL_other": "A partes iguales entre {{count}} personas",
       "EXACT": "Importes exactos"
-    }
+    },
+    "edit": "Editar",
+    "remove": "Borrar",
+    "editedBy": "Lo cambió {{name}} el {{date}}"
+  },
+  "delete": {
+    "title": "¿Borrar «{{description}}» ({{amount}})?",
+    "description": "Dejará de contar en los saldos. El historial guardará una nota de que lo borraste.",
+    "confirm": "Borrar gasto",
+    "deleting": "Borrando el gasto",
+    "cancel": "Cancelar",
+    "done": "Gasto borrado.",
+    "close": "Cerrar"
   }
 }

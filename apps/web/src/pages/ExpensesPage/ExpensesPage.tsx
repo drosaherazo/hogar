@@ -1,13 +1,13 @@
-import { canEditContent, type HouseholdView } from "@hogar/shared";
+import { canEditContent, type HouseholdView, type SettlementView } from "@hogar/shared";
 import { Card, EmptyState, Spinner } from "@hogar/ui";
-import { Plus, ReceiptText, Scale } from "lucide-react";
-import { useState } from "react";
+import { Check, Plus, ReceiptText, Scale } from "lucide-react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate } from "react-router";
+import { Navigate, useLocation } from "react-router";
 import { useCurrentUser } from "../../auth/guards";
 import { ActivityList } from "../../expenses/ActivityList";
 import { BalanceSentence } from "../../expenses/BalanceSentence";
-import { PaymentDetailsDialog } from "../../expenses/PaymentDialog";
+import { PaymentDetailsDialog, RecordPaymentDialog } from "../../expenses/PaymentDialog";
 import { useActivity, useBalances } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
 import { useHousehold } from "../../household/useHousehold";
@@ -19,6 +19,8 @@ import styles from "./ExpensesPage.module.css";
 export function ExpensesPage() {
   const { t } = useTranslation(["expenses", "common"]);
   const household = useHousehold();
+  const location = useLocation();
+  const deleted = (location.state as { deleted?: boolean } | null)?.deleted === true;
 
   if (household.isSuccess && !household.data.household) return <Navigate to="/" replace />;
   const current = household.data?.household;
@@ -33,6 +35,12 @@ export function ExpensesPage() {
           </ActionLink>
         )}
       </div>
+      {deleted && (
+        <p role="status" className={styles.done}>
+          <Check aria-hidden="true" className={styles.doneIcon} />
+          {t("delete.done")}
+        </p>
+      )}
       {household.isPending ? (
         <Spinner label={t("common:loading")} />
       ) : household.isError ? (
@@ -67,7 +75,19 @@ function History({ household }: { household: HouseholdView }) {
   const { t } = useTranslation(["expenses", "common"]);
   const user = useCurrentUser();
   const activity = useActivity();
+  const balances = useBalances();
   const [openSettlement, setOpenSettlement] = useState<string | null>(null);
+  // Editing a payment opens the payment form; a new key per edit so it starts from that payment.
+  const nextKey = useRef(0);
+  const [editing, setEditing] = useState<{ key: number; settlement: SettlementView } | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+
+  function editPayment(settlement: SettlementView) {
+    setOpenSettlement(null);
+    nextKey.current += 1;
+    setEditing({ key: nextKey.current, settlement });
+    setEditOpen(true);
+  }
 
   if (activity.isPending) return <Spinner label={t("common:loading")} />;
   if (activity.isError) {
@@ -96,7 +116,19 @@ function History({ household }: { household: HouseholdView }) {
         settlementId={openSettlement}
         onClose={() => setOpenSettlement(null)}
         household={household}
+        onEdit={editPayment}
       />
+      {editing && balances.data && (
+        <RecordPaymentDialog
+          key={editing.key}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          household={household}
+          balances={balances.data}
+          editing={editing.settlement}
+          onRecorded={() => undefined}
+        />
+      )}
     </>
   );
 }

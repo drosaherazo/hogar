@@ -244,3 +244,100 @@ describe("ExpenseFormPage › other ways to split", () => {
     expect(await screen.findByRole("radio", { name: "Equally between…" })).toBeChecked();
   });
 });
+
+describe("ExpenseFormPage (editing)", () => {
+  const EDIT = "/expenses/expense_1/edit";
+  /** The household's weights changed to 1 / 1 after the expense was saved with 3 / 1. */
+  const evenNow = homeView({
+    members: [
+      member({ id: "m_ana", userId: ana.id, name: ana.name, role: "ADMIN", weight: 1, shareBps: 5000 }),
+      member({ id: "m_bruno", name: "Bruno Díaz", weight: 1, shareBps: 5000, joinedAt: "2026-11-10T10:00:01.000Z" }),
+    ],
+  });
+
+  it("starts from the saved expense, describing its split with the proportions it was added with", async () => {
+    server.use(handlers.signedIn(), handlers.household(evenNow), handlers.expense());
+    renderApp({ path: EDIT });
+
+    expect(await screen.findByRole("heading", { name: "Edit expense" })).toBeInTheDocument();
+    expect(await screen.findByRole("textbox", { name: "What was it?" })).toHaveValue("Groceries");
+    expect(screen.getByRole("textbox", { name: "Amount (€)" })).toHaveValue("42.80");
+    expect(
+      screen.getByRole("radio", {
+        name: "The household's split when it was added (Ana García 75% and Bruno Díaz 25%)",
+      }),
+    ).toBeChecked();
+    const rows = within(screen.getByRole("list", { name: "Each person's share" })).getAllByRole("listitem");
+    expect(rows[0]).toHaveTextContent("Ana García€32.10");
+    expect(rows[1]).toHaveTextContent("Bruno Díaz€10.70");
+  });
+
+  it("previews the same proportions when the amount changes", async () => {
+    server.use(handlers.signedIn(), handlers.household(evenNow), handlers.expense());
+    renderApp({ path: EDIT });
+    const amount = await screen.findByRole("textbox", { name: "Amount (€)" });
+    await userEvent.clear(amount);
+    await userEvent.type(amount, "44.00");
+    const rows = within(screen.getByRole("list", { name: "Each person's share" })).getAllByRole("listitem");
+    expect(rows[0]).toHaveTextContent("Ana García€33.00");
+    expect(rows[1]).toHaveTextContent("Bruno Díaz€11.00");
+  });
+
+  it("saves the change with the version it started from", async () => {
+    let body: unknown;
+    server.use(
+      handlers.signedIn(),
+      handlers.household(evenNow),
+      handlers.expense(),
+      http.put("*/api/household/expenses/:id", async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ expense: expenseView({ description: "Big shop", version: 2 }) });
+      }),
+    );
+    const { router } = renderApp({ path: EDIT });
+    const description = await screen.findByRole("textbox", { name: "What was it?" });
+    await userEvent.clear(description);
+    await userEvent.type(description, "Big shop");
+    await userEvent.click(screen.getByRole("button", { name: "Save expense" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Expense saved.");
+    expect(router.state.location.pathname).toBe("/expenses/expense_1");
+    expect(body).toEqual(
+      expect.objectContaining({ description: "Big shop", amountCents: 4280, split: { method: "WEIGHTS" }, version: 1 }),
+    );
+  });
+
+  it("explains when someone else changed it meanwhile, and shows the latest version", async () => {
+    let changed = false;
+    server.use(
+      handlers.signedIn(),
+      handlers.household(evenNow),
+      http.get("*/api/household/expenses/:id", () =>
+        HttpResponse.json({
+          expense: changed ? expenseView({ description: "Bruno's shop", version: 2 }) : expenseView(),
+        }),
+      ),
+      http.put("*/api/household/expenses/:id", () => {
+        changed = true;
+        return apiError(409, "expense.changed");
+      }),
+    );
+    renderApp({ path: EDIT });
+    const description = await screen.findByRole("textbox", { name: "What was it?" });
+    await userEvent.clear(description);
+    await userEvent.type(description, "Ana's shop");
+    await userEvent.click(screen.getByRole("button", { name: "Save expense" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Someone changed this expense while you were editing it. Here's the latest version.",
+    );
+    expect(await screen.findByDisplayValue("Bruno's shop")).toBeInTheDocument();
+  });
+
+  it("sends guests back to the expense", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView({ myRole: "GUEST" })), handlers.expense());
+    const { router } = renderApp({ path: EDIT });
+    await screen.findByRole("heading", { name: "Groceries" });
+    expect(router.state.location.pathname).toBe("/expenses/expense_1");
+  });
+});

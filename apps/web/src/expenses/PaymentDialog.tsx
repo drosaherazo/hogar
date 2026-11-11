@@ -1,13 +1,16 @@
 import {
+  canEditContent,
   settlementInputSchema,
   suggestSettlements,
   type BalancesView,
   type ErrorCode,
   type HouseholdView,
   type PersonRef,
+  type SettlementView,
 } from "@hogar/shared";
 import { Alert, Avatar, Button, Dialog, Select, Spinner, TextField, useLocale } from "@hogar/ui";
-import { useId, useRef, useState, type FormEvent } from "react";
+import { Pencil, Trash2 } from "lucide-react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { errorKey } from "../api/client";
 import { useCurrentUser } from "../auth/guards";
@@ -15,7 +18,7 @@ import { localToday, useDates, useMoney } from "../i18n/format";
 import { amountInputValue, parseAmount } from "./money";
 import styles from "./PaymentDialog.module.css";
 import { avatarPropsFor } from "./people";
-import { useCreateSettlement, useSettlement } from "./useExpenses";
+import { useCreateSettlement, useDeleteSettlement, useSettlement, useUpdateSettlement } from "./useExpenses";
 
 type Field = "from" | "to" | "amount" | "date";
 type FieldErrors = Partial<Record<Field, ErrorCode>>;
@@ -28,20 +31,42 @@ export interface PaymentDraft {
 }
 
 /**
- * People a payment can be between: current members, and former members who still owe or are
- * owed something (so remaining members can settle up with them).
+ * People a payment can be between: current members, former members who still owe or are owed
+ * something (so remaining members can settle up with them) and, when editing, the payment's own
+ * people.
  */
-function paymentPeople(household: HouseholdView, balances: BalancesView): PersonRef[] {
-  const current = household.members.map((member) => ({
+function paymentPeople(household: HouseholdView, balances: BalancesView, editing?: SettlementView): PersonRef[] {
+  const people: PersonRef[] = household.members.map((member) => ({
     userId: member.userId,
     name: member.name,
     avatarUrl: member.avatarUrl,
     former: false,
   }));
-  const former = balances.balances
-    .filter((entry) => entry.person.former && entry.balanceCents !== 0)
-    .map((entry) => entry.person);
-  return [...current, ...former];
+  const extra = [
+    ...balances.balances
+      .filter((entry) => entry.person.former && entry.balanceCents !== 0)
+      .map((entry) => entry.person),
+    ...(editing ? [editing.from, editing.to] : []),
+  ];
+  for (const person of extra) {
+    if (!people.some((known) => known.userId === person.userId)) people.push(person);
+  }
+  return people;
+}
+
+/**
+ * Everyone's balance without the payment being edited, so "what's owed now" and the reversal
+ * note describe the situation the edited payment will land in, not one where it counts twice.
+ */
+function balancesWithout(balances: BalancesView, people: readonly PersonRef[], editing?: SettlementView) {
+  return people.map((person) => {
+    const balanceCents = balances.balances.find((entry) => entry.person.userId === person.userId)?.balanceCents ?? 0;
+    if (!editing) return { userId: person.userId, balanceCents };
+    const undo =
+      (person.userId === editing.from.userId ? -editing.amountCents : 0) +
+      (person.userId === editing.to.userId ? editing.amountCents : 0);
+    return { userId: person.userId, balanceCents: balanceCents + undo };
+  });
 }
 
 export interface RecordPaymentDialogProps {
@@ -51,12 +76,14 @@ export interface RecordPaymentDialogProps {
   balances: BalancesView;
   /** Prefilled values, such as a suggested payment. */
   initial?: PaymentDraft | undefined;
+  /** The payment being edited, if any; it's saved from its own version. */
+  editing?: SettlementView | undefined;
   onRecorded: () => void;
 }
 
 /**
- * Writing down money that changed hands outside the app. It shows what is owed between the two
- * people right now and, when the amount is bigger, that the balance will reverse.
+ * Writing down (or correcting) money that changed hands outside the app. It shows what is owed
+ * between the two people right now and, when the amount is bigger, that the balance will reverse.
  */
 export function RecordPaymentDialog({
   open,
@@ -64,6 +91,7 @@ export function RecordPaymentDialog({
   household,
   balances,
   initial,
+  editing,
   onRecorded,
 }: RecordPaymentDialogProps) {
   const { t } = useTranslation(["expenses", "errors"]);
@@ -71,34 +99,38 @@ export function RecordPaymentDialog({
   const locale = useLocale();
   const money = useMoney();
   const create = useCreateSettlement();
+  const update = useUpdateSettlement();
+  const save = editing ? update : create;
   const formId = useId();
   const firstField = useRef<HTMLSelectElement>(null);
 
-  const people = paymentPeople(household, balances);
+  const people = paymentPeople(household, balances, editing);
   const nameOf = (userId: string) => people.find((person) => person.userId === userId)?.name ?? "";
   const firstOther = people.find((person) => person.userId !== user.id)?.userId ?? "";
+  const start = editing
+    ? { fromUserId: editing.from.userId, toUserId: editing.to.userId, amountCents: editing.amountCents }
+    : initial;
 
-  const [fromUserId, setFromUserId] = useState(initial?.fromUserId ?? user.id);
-  const [toUserId, setToUserId] = useState(initial?.toUserId ?? firstOther);
+  const [fromUserId, setFromUserId] = useState(start?.fromUserId ?? user.id);
+  const [toUserId, setToUserId] = useState(start?.toUserId ?? firstOther);
   const [amountText, setAmountText] = useState(
-    initial?.amountCents === undefined ? "" : amountInputValue(initial.amountCents, locale),
+    start?.amountCents === undefined ? "" : amountInputValue(start.amountCents, locale),
   );
-  const [date, setDate] = useState(localToday);
+  const [date, setDate] = useState(editing?.date ?? localToday());
   const [errors, setErrors] = useState<FieldErrors>({});
 
+  const base = balancesWithout(balances, people, editing);
   const owedNow =
-    balances.suggestions.find((entry) => entry.from.userId === fromUserId && entry.to.userId === toUserId)
+    suggestSettlements(base).find((entry) => entry.fromUserId === fromUserId && entry.toUserId === toUserId)
       ?.amountCents ?? 0;
   const cents = parseAmount(amountText);
   const reversed =
     cents !== null && cents > 0 && fromUserId !== toUserId
       ? suggestSettlements(
-          balances.balances.map((entry) => ({
-            userId: entry.person.userId,
+          base.map((entry) => ({
+            userId: entry.userId,
             balanceCents:
-              entry.balanceCents +
-              (entry.person.userId === fromUserId ? cents : 0) -
-              (entry.person.userId === toUserId ? cents : 0),
+              entry.balanceCents + (entry.userId === fromUserId ? cents : 0) - (entry.userId === toUserId ? cents : 0),
           })),
         ).find((entry) => entry.fromUserId === toUserId && entry.toUserId === fromUserId)
       : undefined;
@@ -129,19 +161,22 @@ export function RecordPaymentDialog({
       return;
     }
     setErrors({});
-    create.mutate(result.data, {
-      onSuccess: () => {
-        onOpenChange(false);
-        onRecorded();
-      },
-    });
+    const done = () => {
+      onOpenChange(false);
+      onRecorded();
+    };
+    if (editing) {
+      update.mutate({ id: editing.id, input: { ...result.data, version: editing.version } }, { onSuccess: done });
+    } else {
+      create.mutate(result.data, { onSuccess: done });
+    }
   }
 
   return (
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title={t("payment.recordTitle")}
+      title={editing ? t("payment.editTitle") : t("payment.recordTitle")}
       description={t("payment.description")}
       closeLabel={t("payment.close")}
       initialFocus={firstField}
@@ -150,14 +185,19 @@ export function RecordPaymentDialog({
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             {t("payment.cancel")}
           </Button>
-          <Button type="submit" form={formId} loading={create.isPending} loadingLabel={t("payment.saving")}>
-            {t("payment.save")}
+          <Button
+            type="submit"
+            form={formId}
+            loading={save.isPending}
+            loadingLabel={editing ? t("payment.updating") : t("payment.saving")}
+          >
+            {editing ? t("payment.update") : t("payment.save")}
           </Button>
         </>
       }
     >
       <form id={formId} className={styles.form} onSubmit={submit} noValidate>
-        {create.isError && <Alert tone="danger">{t(errorKey(create.error))}</Alert>}
+        {save.isError && <Alert tone="danger">{t(errorKey(save.error))}</Alert>}
         <Select
           ref={firstField}
           label={t("payment.from")}
@@ -213,14 +253,38 @@ export interface PaymentDetailsDialogProps {
   settlementId: string | null;
   onClose: () => void;
   household: HouseholdView;
+  /** Opens the payment form on this payment (editors only). */
+  onEdit: (settlement: SettlementView) => void;
 }
 
-/** A payment from the history: who paid whom, how much, when, and who wrote it down. */
-export function PaymentDetailsDialog({ settlementId, onClose, household }: PaymentDetailsDialogProps) {
+/**
+ * A payment from the history: who paid whom, how much, when, and who wrote it down and changed
+ * it. Editors can edit it, or delete it after a confirmation that names it.
+ */
+export function PaymentDetailsDialog({ settlementId, onClose, household, onEdit }: PaymentDetailsDialogProps) {
   const { t } = useTranslation(["expenses", "errors", "common"]);
   const settlement = useSettlement(settlementId);
+  const remove = useDeleteSettlement();
   const money = useMoney();
   const dates = useDates();
+  const canEdit = canEditContent(household.myRole);
+  const [confirming, setConfirming] = useState(false);
+  const cancelButton = useRef<HTMLButtonElement>(null);
+
+  // Opening the dialog again always starts on the details, not on the confirmation.
+  useEffect(() => {
+    if (settlementId === null) setConfirming(false);
+  }, [settlementId]);
+  // The confirmation starts on "Cancel", the safe choice.
+  useEffect(() => {
+    if (confirming) cancelButton.current?.focus();
+  }, [confirming]);
+
+  const data = settlement.data;
+  const title =
+    confirming && data
+      ? t("payment.delete.title", { from: data.from.name, to: data.to.name, amount: money(data.amountCents) })
+      : t("payment.detailsTitle");
 
   return (
     <Dialog
@@ -228,18 +292,36 @@ export function PaymentDetailsDialog({ settlementId, onClose, household }: Payme
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
-      title={t("payment.detailsTitle")}
+      title={title}
+      {...(confirming ? { description: t("payment.delete.description") } : {})}
       closeLabel={t("payment.close")}
       actions={
-        <Button variant="secondary" onClick={onClose}>
-          {t("payment.close")}
-        </Button>
+        confirming && data ? (
+          <>
+            <Button ref={cancelButton} variant="secondary" onClick={() => setConfirming(false)}>
+              {t("payment.cancel")}
+            </Button>
+            <Button
+              loading={remove.isPending}
+              loadingLabel={t("payment.delete.deleting")}
+              onClick={() => remove.mutate({ id: data.id, version: data.version }, { onSuccess: onClose })}
+            >
+              {t("payment.delete.confirm")}
+            </Button>
+          </>
+        ) : (
+          <Button variant="secondary" onClick={onClose}>
+            {t("payment.close")}
+          </Button>
+        )
       }
     >
       {settlement.isPending ? (
         <Spinner label={t("common:loading")} />
       ) : settlement.isError ? (
         <Alert tone="danger">{t(errorKey(settlement.error))}</Alert>
+      ) : confirming ? (
+        remove.isError && <Alert tone="danger">{t(errorKey(remove.error))}</Alert>
       ) : (
         <div className={styles.details}>
           <p className={styles.people}>
@@ -254,6 +336,24 @@ export function PaymentDetailsDialog({ settlementId, onClose, household }: Payme
               date: dates.instant(settlement.data.createdAt),
             })}
           </p>
+          {settlement.data.editedBy && settlement.data.editedAt && (
+            <p className={styles.meta}>
+              {t("payment.editedBy", {
+                name: settlement.data.editedBy.name,
+                date: dates.instant(settlement.data.editedAt),
+              })}
+            </p>
+          )}
+          {canEdit && (
+            <div className={styles.actions}>
+              <Button variant="secondary" size="sm" icon={<Pencil />} onClick={() => onEdit(settlement.data)}>
+                {t("payment.edit")}
+              </Button>
+              <Button variant="secondary" size="sm" icon={<Trash2 />} onClick={() => setConfirming(true)}>
+                {t("payment.remove")}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </Dialog>

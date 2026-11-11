@@ -1,9 +1,19 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { expectNoA11yViolations } from "../../test/axe";
 import { renderApp } from "../../test/renderApp";
-import { brunoRef, expenseItem, handlers, homeView, server, settlementItem, settlementView } from "../../test/server";
+import {
+  anaRef,
+  brunoRef,
+  expenseItem,
+  handlers,
+  homeView,
+  server,
+  settlementItem,
+  settlementView,
+} from "../../test/server";
 
 const PATH = "/expenses";
 
@@ -111,5 +121,100 @@ describe("ExpensesPage", () => {
     const { container } = renderApp({ path: PATH });
     await screen.findByRole("link", { name: /Groceries/ });
     await expectNoA11yViolations(container);
+  });
+});
+
+describe("ExpensesPage › fixing mistakes", () => {
+  const deletion = (by = brunoRef) => ({ by, at: "2026-11-11T09:00:00.000Z" });
+
+  it("keeps deleted records as a muted line that can't be opened", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      handlers.activity({
+        items: [
+          expenseItem({ deleted: deletion(), viewerPart: { kind: "none", amountCents: 0 } }),
+          settlementItem({ id: "s2", deleted: deletion(anaRef) }),
+        ],
+        nextCursor: null,
+      }),
+    );
+    renderApp({ path: PATH });
+
+    expect(await screen.findByText('Bruno Díaz deleted "Groceries" (€42.80)')).toBeInTheDocument();
+    expect(
+      screen.getByText("Ana García deleted the payment from Bruno Díaz to Ana García (€7.70)"),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Groceries/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /paid Ana García/ })).not.toBeInTheDocument();
+  });
+
+  it("lets editors change a payment from its details", async () => {
+    let body: unknown;
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      handlers.activity({ items: [settlementItem()], nextCursor: null }),
+      handlers.settlement(),
+      http.put("*/api/household/settlements/:id", async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ settlement: settlementView({ amountCents: 500, version: 2 }) });
+      }),
+    );
+    renderApp({ path: PATH });
+
+    await userEvent.click(await screen.findByRole("button", { name: /Bruno Díaz paid Ana García/ }));
+    const details = await screen.findByRole("dialog", { name: "Payment" });
+    await userEvent.click(await within(details).findByRole("button", { name: "Edit" }));
+    const form = await screen.findByRole("dialog", { name: "Edit payment" });
+    const amount = within(form).getByRole("textbox", { name: "Amount (€)" });
+    expect(amount).toHaveValue("7.70");
+    await userEvent.clear(amount);
+    await userEvent.type(amount, "5.00");
+    await userEvent.click(within(form).getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Edit payment" })).not.toBeInTheDocument());
+    expect(body).toEqual(expect.objectContaining({ amountCents: 500, version: 1 }));
+  });
+
+  it("lets editors delete a payment after confirming", async () => {
+    let version: string | null = null;
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      handlers.activity({ items: [settlementItem()], nextCursor: null }),
+      handlers.settlement(),
+      http.delete("*/api/household/settlements/:id", ({ request }) => {
+        version = new URL(request.url).searchParams.get("version");
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    renderApp({ path: PATH });
+
+    await userEvent.click(await screen.findByRole("button", { name: /Bruno Díaz paid Ana García/ }));
+    const details = await screen.findByRole("dialog", { name: "Payment" });
+    await userEvent.click(await within(details).findByRole("button", { name: "Delete" }));
+    const confirm = await screen.findByRole("dialog", {
+      name: "Delete the payment from Bruno Díaz to Ana García (€7.70)?",
+    });
+    await userEvent.click(within(confirm).getByRole("button", { name: "Delete payment" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(version).toBe("1");
+  });
+
+  it("only lets guests look at a payment", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView({ myRole: "GUEST" })),
+      handlers.activity({ items: [settlementItem()], nextCursor: null }),
+      handlers.settlement(),
+    );
+    renderApp({ path: PATH });
+    await userEvent.click(await screen.findByRole("button", { name: /Bruno Díaz paid Ana García/ }));
+    const details = await screen.findByRole("dialog", { name: "Payment" });
+    await within(details).findByText(/Added by/);
+    expect(within(details).queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
+    expect(within(details).queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
   });
 });

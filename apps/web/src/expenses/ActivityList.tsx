@@ -1,7 +1,7 @@
 import type { ActivityItem } from "@hogar/shared";
 import { Amount, Button } from "@hogar/ui";
 import clsx from "clsx";
-import { HandCoins, ReceiptText } from "lucide-react";
+import { HandCoins, ReceiptText, Trash2 } from "lucide-react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -56,7 +56,9 @@ export function ActivityList({
             <ul className={styles.items}>
               {group.items.map((item) => (
                 <li key={`${item.kind}-${item.id}`}>
-                  {item.kind === "expense" ? (
+                  {item.deleted ? (
+                    <DeletedRow item={item} deletedBy={item.deleted.by.name} />
+                  ) : item.kind === "expense" ? (
                     <ExpenseRow item={item} viewerId={viewerId} />
                   ) : (
                     <SettlementRow item={item} onOpen={() => onOpenSettlement(item.id)} />
@@ -72,6 +74,35 @@ export function ActivityList({
           {t("history.showMore")}
         </Button>
       )}
+    </div>
+  );
+}
+
+/**
+ * A deleted record stays where it was, as a muted line saying who deleted what. It can't be
+ * opened or edited: deleting is visible, never silent (research R17).
+ */
+function DeletedRow({ item, deletedBy }: { item: ActivityItem; deletedBy: string }) {
+  const { t } = useTranslation("expenses");
+  const dates = useDates();
+  const money = useMoney();
+  const amount = money(item.amountCents);
+  const text =
+    item.kind === "expense"
+      ? t("history.deletedExpense", { name: deletedBy, description: item.description, amount })
+      : t("history.deletedPayment", { name: deletedBy, from: item.from.name, to: item.to.name, amount });
+
+  return (
+    <div className={clsx(styles.row, styles.deleted)}>
+      <span className={styles.icon} aria-hidden="true">
+        <Trash2 />
+      </span>
+      <span className={styles.main}>
+        <span>{text}</span>
+        <span className={styles.meta}>
+          <span className={styles.date}>{dates.short(item.date)}</span>
+        </span>
+      </span>
     </div>
   );
 }

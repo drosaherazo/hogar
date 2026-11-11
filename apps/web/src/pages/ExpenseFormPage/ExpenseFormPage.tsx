@@ -4,22 +4,25 @@ import {
   MAX_AMOUNT_CENTS,
   SPLIT_METHODS,
   splitAmount,
+  weightsToBasisPoints,
   type ErrorCode,
   type ExpenseSplitInput,
+  type ExpenseView,
   type HouseholdView,
+  type PersonRef,
   type SplitMethod,
 } from "@hogar/shared";
-import { Alert, Amount, Avatar, Button, ChoiceGroup, Select, Spinner, TextField } from "@hogar/ui";
+import { Alert, Amount, Avatar, Button, ChoiceGroup, Select, Spinner, TextField, useLocale } from "@hogar/ui";
 import { ArrowLeft, CircleAlert } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, useNavigate } from "react-router";
-import { errorKey } from "../../api/client";
+import { Navigate, useNavigate, useParams } from "react-router";
+import { ApiRequestError, errorKey } from "../../api/client";
 import { useCurrentUser } from "../../auth/guards";
-import { parseAmount } from "../../expenses/money";
-import { useCreateExpense } from "../../expenses/useExpenses";
+import { amountInputValue, parseAmount } from "../../expenses/money";
+import { avatarPropsFor } from "../../expenses/people";
+import { useCreateExpense, useExpense, useUpdateExpense } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
-import { memberColor } from "../../household/members";
 import { useHousehold } from "../../household/useHousehold";
 import { localToday, useList, useMoney, usePercent } from "../../i18n/format";
 import { ActionLink } from "../../layout/ActionLink";
@@ -49,83 +52,167 @@ function fieldErrors(issues: readonly { path: readonly PropertyKey[]; message: s
 const isValidAmount = (cents: number | null): cents is number =>
   cents !== null && cents >= 1 && cents <= MAX_AMOUNT_CENTS;
 
-/** Adding an expense: what, how much, who paid, when, and how it's split. */
+/** Adding an expense (`/expenses/new`) or editing one (`/expenses/:id/edit`). */
 export function ExpenseFormPage() {
   const { t } = useTranslation(["expenses", "common"]);
+  const { id } = useParams();
   const household = useHousehold();
+  const editing = id !== undefined;
 
   if (household.isSuccess && !household.data.household) return <Navigate to="/" replace />;
   const current = household.data?.household;
-  if (current && !canEditContent(current.myRole)) return <Navigate to="/expenses" replace />;
+  if (current && !canEditContent(current.myRole)) {
+    return <Navigate to={editing ? `/expenses/${id}` : "/expenses"} replace />;
+  }
 
   return (
     <AppShell>
       <div className={styles.heading}>
-        <ActionLink to="/expenses" variant="ghost" icon={<ArrowLeft />} className={styles.back}>
-          {t("form.back")}
+        <ActionLink
+          to={editing ? `/expenses/${id}` : "/expenses"}
+          variant="ghost"
+          icon={<ArrowLeft />}
+          className={styles.back}
+        >
+          {editing ? t("form.backToExpense") : t("form.back")}
         </ActionLink>
-        <h1 className={styles.title}>{t("form.newTitle")}</h1>
+        <h1 className={styles.title}>{editing ? t("form.editTitle") : t("form.newTitle")}</h1>
       </div>
       {household.isPending ? (
         <Spinner label={t("common:loading")} />
       ) : household.isError ? (
         <LoadError error={household.error} onRetry={() => void household.refetch()} />
       ) : (
-        current && <ExpenseForm household={current} />
+        current && (editing ? <EditExpense id={id} household={current} /> : <ExpenseForm household={current} />)
       )}
     </AppShell>
   );
 }
 
-function ExpenseForm({ household }: { household: HouseholdView }) {
+/**
+ * Loads the expense and edits it. If someone else saved a newer version meanwhile, the save is
+ * refused: this says so, loads the latest version and starts the form again from it.
+ */
+function EditExpense({ id, household }: { id: string; household: HouseholdView }) {
+  const { t } = useTranslation(["expenses", "errors", "common"]);
+  const expense = useExpense(id);
+  const [conflict, setConflict] = useState(false);
+
+  if (expense.isPending) return <Spinner label={t("common:loading")} />;
+  if (expense.isError) return <Alert tone="danger">{t(errorKey(expense.error))}</Alert>;
+  return (
+    <>
+      {conflict && <Alert tone="danger">{t("errors:expense.changed")}</Alert>}
+      <ExpenseForm
+        key={expense.data.version}
+        household={household}
+        existing={expense.data}
+        onConflict={() => {
+          setConflict(true);
+          void expense.refetch();
+        }}
+      />
+    </>
+  );
+}
+
+interface ExpenseFormProps {
+  household: HouseholdView;
+  /** The expense being edited; omitted when adding one. */
+  existing?: ExpenseView | undefined;
+  onConflict?: (() => void) | undefined;
+}
+
+function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   const { t } = useTranslation(["expenses", "errors"]);
   const user = useCurrentUser();
+  const locale = useLocale();
   const navigate = useNavigate();
   const percent = usePercent();
   const list = useList();
   const money = useMoney();
   const create = useCreateExpense();
+  const update = useUpdateExpense();
+  const save = existing ? update : create;
   const previewId = useId();
-  const splitErrorId = useId();
 
   const { members } = household;
   const sharing = members.filter((member) => member.weight > 0);
   const nobodyPays = sharing.length === 0;
 
-  const [description, setDescription] = useState("");
-  const [amountText, setAmountText] = useState("");
-  const [paidById, setPaidById] = useState(user.id);
-  const [date, setDate] = useState(localToday);
-  const [method, setMethod] = useState<SplitMethod>(nobodyPays ? "EQUAL" : "WEIGHTS");
-  const [chosen, setChosen] = useState<string[]>(() => members.map((member) => member.userId));
-  const [exactTexts, setExactTexts] = useState<Record<string, string>>({});
+  // People who can appear in this expense: current members, plus former members already in it.
+  const memberRefs: PersonRef[] = members.map((member) => ({
+    userId: member.userId,
+    name: member.name,
+    avatarUrl: member.avatarUrl,
+    former: false,
+  }));
+  const formerInExpense = existing
+    ? [existing.paidBy, ...existing.split.shares.map((share) => share.person)].filter(
+        (person, index, all) => person.former && all.findIndex((other) => other.userId === person.userId) === index,
+      )
+    : [];
+  const people = [...memberRefs, ...formerInExpense];
+
+  // An expense saved with the household's split keeps its proportions; shown as such.
+  const savedShares = existing?.split.method === "WEIGHTS" ? existing.split.shares : null;
+
+  const [description, setDescription] = useState(existing?.description ?? "");
+  const [amountText, setAmountText] = useState(existing ? amountInputValue(existing.amountCents, locale) : "");
+  const [paidById, setPaidById] = useState(existing?.paidBy.userId ?? user.id);
+  const [date, setDate] = useState(existing?.date ?? localToday());
+  const [method, setMethod] = useState<SplitMethod>(existing?.split.method ?? (nobodyPays ? "EQUAL" : "WEIGHTS"));
+  const [chosen, setChosen] = useState<string[]>(() =>
+    existing?.split.method === "EQUAL"
+      ? existing.split.shares.map((share) => share.person.userId)
+      : members.map((member) => member.userId),
+  );
+  const [exactTexts, setExactTexts] = useState<Record<string, string>>(() =>
+    existing?.split.method === "EXACT"
+      ? Object.fromEntries(
+          existing.split.shares.map((share) => [share.person.userId, amountInputValue(share.amountCents, locale)]),
+        )
+      : {},
+  );
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const cents = parseAmount(amountText);
   const amount = isValidAmount(cents) ? cents : null;
 
-  // The household's split: a live preview with the same function the API uses.
-  const weightShares =
-    amount !== null && !nobodyPays
-      ? splitAmount(
-          amount,
-          sharing.map((member) => member.weight),
-        )
-      : null;
+  // The household's split: a live preview with the same function the API uses. A saved expense
+  // keeps its proportions (same amount, same shares; new amount, rescaled); otherwise today's weights.
+  function weightPreviewFor(total: number | null): { person: PersonRef; amountCents: number }[] | null {
+    if (total === null) return null;
+    if (savedShares) {
+      const saved = savedShares.map((share) => share.amountCents);
+      const amounts = total === existing?.amountCents ? saved : splitAmount(total, saved);
+      return savedShares.map((share, index) => ({ person: share.person, amountCents: amounts[index] ?? 0 }));
+    }
+    if (nobodyPays) return null;
+    const amounts = splitAmount(
+      total,
+      sharing.map((member) => member.weight),
+    );
+    return sharing.map((member, index) => ({
+      person: { userId: member.userId, name: member.name, avatarUrl: member.avatarUrl, former: false },
+      amountCents: amounts[index] ?? 0,
+    }));
+  }
+  const weightPreview = weightPreviewFor(amount);
 
-  // Equally among the chosen people, in member order.
-  const chosenMembers = members.filter((member) => chosen.includes(member.userId));
+  // Equally among the chosen people, in order.
+  const chosenPeople = people.filter((person) => chosen.includes(person.userId));
   const equalShares =
-    amount !== null && chosenMembers.length > 0
+    amount !== null && chosenPeople.length > 0
       ? splitAmount(
           amount,
-          chosenMembers.map(() => 1),
+          chosenPeople.map(() => 1),
         )
       : null;
 
   // Exact amounts: empty fields count as €0.00; anything unreadable blocks saving.
-  const exactCents = members.map((member) => {
-    const text = exactTexts[member.userId]?.trim() ?? "";
+  const exactCents = people.map((person) => {
+    const text = exactTexts[person.userId]?.trim() ?? "";
     return text === "" ? 0 : parseAmount(text);
   });
   const exactReadable = exactCents.every((value) => value !== null);
@@ -133,14 +220,14 @@ function ExpenseForm({ household }: { household: HouseholdView }) {
     amount !== null && exactReadable ? amount - exactCents.reduce<number>((sum, value) => sum + (value ?? 0), 0) : null;
 
   function splitInput(): ExpenseSplitInput {
-    if (method === "EQUAL") return { method, userIds: chosenMembers.map((member) => member.userId) };
+    if (method === "EQUAL") return { method, userIds: chosenPeople.map((person) => person.userId) };
     if (method === "EXACT") {
       return {
         method,
-        shares: members.flatMap((member, index) =>
-          (exactTexts[member.userId]?.trim() ?? "") === ""
+        shares: people.flatMap((person, index) =>
+          (exactTexts[person.userId]?.trim() ?? "") === ""
             ? []
-            : [{ userId: member.userId, amountCents: exactCents[index] ?? Number.NaN }],
+            : [{ userId: person.userId, amountCents: exactCents[index] ?? Number.NaN }],
         ),
       };
     }
@@ -151,6 +238,7 @@ function ExpenseForm({ household }: { household: HouseholdView }) {
     const code = errors[field];
     return code ? t(`errors:${code}`) : undefined;
   };
+  const isConflict = save.error instanceof ApiRequestError && save.error.code === "expense.changed";
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -166,14 +254,46 @@ function ExpenseForm({ household }: { household: HouseholdView }) {
       return;
     }
     setErrors({});
-    create.mutate(result.data, {
-      onSuccess: (expense) => void navigate(`/expenses/${expense.id}`, { state: { saved: true } }),
-    });
+    const done = (saved: ExpenseView) => void navigate(`/expenses/${saved.id}`, { state: { saved: true } });
+    if (existing) {
+      update.mutate(
+        { id: existing.id, input: { ...result.data, version: existing.version } },
+        {
+          onSuccess: done,
+          onError: (failure) => {
+            if (failure instanceof ApiRequestError && failure.code === "expense.changed") onConflict?.();
+          },
+        },
+      );
+    } else {
+      create.mutate(result.data, { onSuccess: done });
+    }
   }
+
+  const weightsOption = savedShares
+    ? {
+        value: "WEIGHTS",
+        label: t("form.split.weightsSaved", {
+          shares: list(
+            savedShares.map((share, index) => {
+              const bps = weightsToBasisPoints(savedShares.map((entry) => entry.amountCents))[index] ?? 0;
+              return `${share.person.name} ${percent(bps)}`;
+            }),
+          ),
+        }),
+      }
+    : {
+        value: "WEIGHTS",
+        label: t("form.split.weights"),
+        hint: nobodyPays
+          ? t("form.split.noDefault")
+          : list(sharing.map((member) => `${member.name} ${percent(member.shareBps)}`)),
+        disabled: nobodyPays,
+      };
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      {create.isError && <Alert tone="danger">{t(errorKey(create.error))}</Alert>}
+      {save.isError && !isConflict && <Alert tone="danger">{t(errorKey(save.error))}</Alert>}
       <TextField
         label={t("form.description")}
         hint={t("form.descriptionHint")}
@@ -193,7 +313,7 @@ function ExpenseForm({ household }: { household: HouseholdView }) {
       />
       <Select
         label={t("form.paidBy")}
-        options={members.map((member) => ({ value: member.userId, label: member.name }))}
+        options={people.map((person) => ({ value: person.userId, label: person.name }))}
         value={paidById}
         onChange={(event) => setPaidById(event.target.value)}
       />
@@ -213,42 +333,29 @@ function ExpenseForm({ household }: { household: HouseholdView }) {
           value={method}
           onChange={(value) => setMethod(SPLIT_METHODS.find((option) => option === value) ?? "WEIGHTS")}
           options={[
-            {
-              value: "WEIGHTS",
-              label: t("form.split.weights"),
-              hint: nobodyPays
-                ? t("form.split.noDefault")
-                : list(sharing.map((member) => `${member.name} ${percent(member.shareBps)}`)),
-              disabled: nobodyPays,
-            },
+            weightsOption,
             { value: "EQUAL", label: t("form.split.equal") },
             { value: "EXACT", label: t("form.split.exact") },
           ]}
         />
-        {nobodyPays && (
+        {nobodyPays && !savedShares && (
           <ActionLink to="/household/settings#split" variant="ghost" className={styles.reviewSplit}>
             {t("form.split.reviewSplit")}
           </ActionLink>
         )}
       </div>
 
-      {method === "WEIGHTS" && weightShares && (
+      {method === "WEIGHTS" && weightPreview && (
         <section className={styles.preview} aria-labelledby={previewId}>
           <h2 id={previewId} className={styles.previewTitle}>
             {t("form.split.preview")}
           </h2>
           <ul className={styles.shares} aria-labelledby={previewId}>
-            {sharing.map((member, index) => (
-              <li key={member.id} className={styles.share}>
-                <Avatar
-                  size="sm"
-                  decorative
-                  name={member.name}
-                  src={member.avatarUrl}
-                  colorIndex={memberColor(members.indexOf(member))}
-                />
-                <span className={styles.shareName}>{member.name}</span>
-                <Amount cents={weightShares[index] ?? 0} />
+            {weightPreview.map(({ person, amountCents }) => (
+              <li key={person.userId} className={styles.share}>
+                <Avatar size="sm" decorative {...avatarPropsFor(person, members)} />
+                <span className={styles.shareName}>{person.name}</span>
+                <Amount cents={amountCents} />
               </li>
             ))}
           </ul>
@@ -263,58 +370,48 @@ function ExpenseForm({ household }: { household: HouseholdView }) {
             name="equal"
             value={chosen}
             onChange={setChosen}
-            options={members.map((member) => {
-              const index = chosenMembers.indexOf(member);
+            options={people.map((person) => {
+              const index = chosenPeople.indexOf(person);
               return {
-                value: member.userId,
-                label: member.name,
+                value: person.userId,
+                label: person.name,
                 trailing: equalShares && index >= 0 ? <Amount cents={equalShares[index] ?? 0} /> : undefined,
               };
             })}
           />
-          {errors.split && (
-            <p id={splitErrorId} className={styles.splitError}>
-              <CircleAlert aria-hidden="true" className={styles.splitErrorIcon} />
-              {t(`errors:${errors.split}`)}
-            </p>
-          )}
+          {errors.split && <SplitError code={errors.split} />}
         </div>
       )}
 
       {method === "EXACT" && (
         <fieldset className={styles.exact}>
           <legend className={styles.exactLegend}>{t("form.split.amounts")}</legend>
-          {members.map((member) => (
+          {people.map((person) => (
             <TextField
-              key={member.id}
+              key={person.userId}
               inline
-              label={member.name}
+              label={person.name}
               inputMode="decimal"
               autoComplete="off"
-              value={exactTexts[member.userId] ?? ""}
-              onChange={(event) => setExactTexts((texts) => ({ ...texts, [member.userId]: event.target.value }))}
+              value={exactTexts[person.userId] ?? ""}
+              onChange={(event) => setExactTexts((texts) => ({ ...texts, [person.userId]: event.target.value }))}
             />
           ))}
           <p className={styles.remaining} aria-live="polite">
             {remaining !== null && remaining > 0 && t("form.split.left", { amount: money(remaining) })}
             {remaining !== null && remaining < 0 && t("form.split.over", { amount: money(-remaining) })}
           </p>
-          {errors.split && (
-            <p className={styles.splitError}>
-              <CircleAlert aria-hidden="true" className={styles.splitErrorIcon} />
-              {t(`errors:${errors.split}`)}
-            </p>
-          )}
+          {errors.split && <SplitError code={errors.split} />}
         </fieldset>
       )}
 
       <div className={styles.actions}>
-        <ActionLink to="/expenses" variant="ghost">
+        <ActionLink to={existing ? `/expenses/${existing.id}` : "/expenses"} variant="ghost">
           {t("form.cancel")}
         </ActionLink>
         <Button
           type="submit"
-          loading={create.isPending}
+          loading={save.isPending}
           loadingLabel={t("form.saving")}
           disabled={method === "EXACT" && remaining !== 0}
         >
@@ -322,5 +419,15 @@ function ExpenseForm({ household }: { household: HouseholdView }) {
         </Button>
       </div>
     </form>
+  );
+}
+
+function SplitError({ code }: { code: ErrorCode }) {
+  const { t } = useTranslation("errors");
+  return (
+    <p className={styles.splitError}>
+      <CircleAlert aria-hidden="true" className={styles.splitErrorIcon} />
+      {t(code)}
+    </p>
   );
 }

@@ -1,4 +1,4 @@
-import type { ExpenseInput, SettlementInput } from "@hogar/shared";
+import type { ExpenseInput, SettlementInput, UpdateExpenseInput, UpdateSettlementInput } from "@hogar/shared";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "../api/ApiClientContext";
 import { ApiRequestError } from "../api/client";
@@ -83,6 +83,67 @@ export function useCreateExpense() {
       queryClient.setQueryData(expenseKeys.expense(expense.id), expense);
       void queryClient.invalidateQueries({ queryKey: expenseKeys.activity });
       void queryClient.invalidateQueries({ queryKey: expenseKeys.balances });
+    },
+  });
+}
+
+/** After any change to the money history, the history and balances are refetched. */
+function useRefreshMoney() {
+  const queryClient = useQueryClient();
+  return () => {
+    void queryClient.invalidateQueries({ queryKey: expenseKeys.activity });
+    void queryClient.invalidateQueries({ queryKey: expenseKeys.balances });
+  };
+}
+
+export function useUpdateExpense() {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+  const refresh = useRefreshMoney();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: UpdateExpenseInput }) => client.updateExpense(id, input),
+    onSuccess: (expense) => {
+      queryClient.setQueryData(expenseKeys.expense(expense.id), expense);
+      refresh();
+    },
+  });
+}
+
+export function useDeleteExpense() {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+  const refresh = useRefreshMoney();
+  return useMutation({
+    mutationFn: ({ id, version }: { id: string; version: number }) => client.deleteExpense(id, version),
+    onSuccess: (_, { id }) => {
+      queryClient.removeQueries({ queryKey: expenseKeys.expense(id) });
+      refresh();
+    },
+  });
+}
+
+export function useUpdateSettlement() {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+  const refresh = useRefreshMoney();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: UpdateSettlementInput }) => client.updateSettlement(id, input),
+    onSuccess: (settlement) => {
+      queryClient.setQueryData(expenseKeys.settlement(settlement.id), settlement);
+      refresh();
+    },
+  });
+}
+
+export function useDeleteSettlement() {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+  const refresh = useRefreshMoney();
+  return useMutation({
+    mutationFn: ({ id, version }: { id: string; version: number }) => client.deleteSettlement(id, version),
+    onSuccess: (_, { id }) => {
+      queryClient.removeQueries({ queryKey: expenseKeys.settlement(id) });
+      refresh();
     },
   });
 }

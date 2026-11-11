@@ -1,15 +1,15 @@
-import type { ExpenseView, MemberView } from "@hogar/shared";
-import { Alert, Amount, Avatar, Card, Spinner } from "@hogar/ui";
-import { ArrowLeft, Check } from "lucide-react";
-import { useId } from "react";
+import { canEditContent, type ExpenseView, type MemberView } from "@hogar/shared";
+import { Alert, Amount, Avatar, Button, Card, Dialog, Spinner } from "@hogar/ui";
+import { ArrowLeft, Check, Pencil, Trash2 } from "lucide-react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, useLocation, useParams } from "react-router";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router";
 import { errorKey } from "../../api/client";
 import { avatarPropsFor } from "../../expenses/people";
-import { useExpense } from "../../expenses/useExpenses";
+import { useDeleteExpense, useExpense } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
 import { useHousehold } from "../../household/useHousehold";
-import { useDates } from "../../i18n/format";
+import { useDates, useMoney } from "../../i18n/format";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell } from "../../layout/AppShell";
 import styles from "./ExpenseDetailPage.module.css";
@@ -41,26 +41,74 @@ export function ExpenseDetailPage() {
       ) : household.isError ? (
         <LoadError error={household.error} onRetry={() => void household.refetch()} />
       ) : (
-        current && <ExpenseDetails id={id} members={current.members} />
+        current && <ExpenseDetails id={id} members={current.members} canEdit={canEditContent(current.myRole)} />
       )}
     </AppShell>
   );
 }
 
-function ExpenseDetails({ id, members }: { id: string; members: MemberView[] }) {
+function ExpenseDetails({ id, members, canEdit }: { id: string; members: MemberView[]; canEdit: boolean }) {
   const { t } = useTranslation(["expenses", "errors", "common"]);
   const expense = useExpense(id);
 
   if (expense.isPending) return <Spinner label={t("common:loading")} />;
   if (expense.isError) return <Alert tone="danger">{t(errorKey(expense.error))}</Alert>;
-  return <Details expense={expense.data} members={members} />;
+  return <Details expense={expense.data} members={members} canEdit={canEdit} />;
 }
 
-function Details({ expense, members }: { expense: ExpenseView; members: MemberView[] }) {
+/** Deleting asks first, naming exactly what goes, and starts on "Cancel". */
+function DeleteExpenseDialog({
+  expense,
+  open,
+  onOpenChange,
+}: {
+  expense: ExpenseView;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { t } = useTranslation(["expenses", "errors"]);
+  const money = useMoney();
+  const navigate = useNavigate();
+  const remove = useDeleteExpense();
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("delete.title", { description: expense.description, amount: money(expense.amountCents) })}
+      description={t("delete.description")}
+      closeLabel={t("delete.close")}
+      actions={
+        <>
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
+            {t("delete.cancel")}
+          </Button>
+          <Button
+            loading={remove.isPending}
+            loadingLabel={t("delete.deleting")}
+            onClick={() =>
+              remove.mutate(
+                { id: expense.id, version: expense.version },
+                { onSuccess: () => void navigate("/expenses", { state: { deleted: true } }) },
+              )
+            }
+          >
+            {t("delete.confirm")}
+          </Button>
+        </>
+      }
+    >
+      {remove.isError && <Alert tone="danger">{t(errorKey(remove.error))}</Alert>}
+    </Dialog>
+  );
+}
+
+function Details({ expense, members, canEdit }: { expense: ExpenseView; members: MemberView[]; canEdit: boolean }) {
   const { t } = useTranslation("expenses");
   const dates = useDates();
   const titleId = useId();
   const sharesId = useId();
+  const [deleting, setDeleting] = useState(false);
   const { method, shares } = expense.split;
 
   return (
@@ -109,9 +157,28 @@ function Details({ expense, members }: { expense: ExpenseView; members: MemberVi
         </ul>
       </section>
 
-      <p className={styles.audit}>
-        {t("details.recordedBy", { name: expense.createdBy.name, date: dates.instant(expense.createdAt) })}
-      </p>
+      <div className={styles.auditGroup}>
+        <p className={styles.audit}>
+          {t("details.recordedBy", { name: expense.createdBy.name, date: dates.instant(expense.createdAt) })}
+        </p>
+        {expense.editedBy && expense.editedAt && (
+          <p className={styles.audit}>
+            {t("details.editedBy", { name: expense.editedBy.name, date: dates.instant(expense.editedAt) })}
+          </p>
+        )}
+      </div>
+
+      {canEdit && (
+        <div className={styles.actions}>
+          <ActionLink to={`/expenses/${expense.id}/edit`} icon={<Pencil />}>
+            {t("details.edit")}
+          </ActionLink>
+          <Button variant="secondary" icon={<Trash2 />} onClick={() => setDeleting(true)}>
+            {t("details.remove")}
+          </Button>
+        </div>
+      )}
+      <DeleteExpenseDialog expense={expense} open={deleting} onOpenChange={setDeleting} />
     </Card>
   );
 }

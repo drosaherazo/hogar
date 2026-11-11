@@ -57,6 +57,18 @@
   cursor: pointer;
 }
 
+/* Deleted: dashed and quiet, with the trash icon and the words saying what happened. */
+.deleted {
+  border-style: dashed;
+  background-color: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.deleted .icon {
+  color: var(--color-text-muted);
+}
+
 .icon {
   display: inline-flex;
   flex: none;

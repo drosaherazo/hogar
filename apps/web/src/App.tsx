@@ -37,6 +37,7 @@ export function createRoutes({ googleClientId }: AppConfig): RouteObject[] {
         { path: "/expenses", element: <ExpensesPage /> },
         { path: "/expenses/new", element: <ExpenseFormPage /> },
         { path: "/expenses/:id", element: <ExpenseDetailPage /> },
+        { path: "/expenses/:id/edit", element: <ExpenseFormPage /> },
         { path: "/balances", element: <BalancesPage /> },
       ],
     },

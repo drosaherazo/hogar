@@ -12,7 +12,9 @@
     "loadingMore": "Loading more",
     "paid": "{{name}} paid",
     "youPaid": "You paid",
-    "payment": "{{from}} paid {{to}}"
+    "payment": "{{from}} paid {{to}}",
+    "deletedExpense": "{{name}} deleted \"{{description}}\" ({{amount}})",
+    "deletedPayment": "{{name}} deleted the payment from {{from}} to {{to}} ({{amount}})"
   },
   "part": {
     "owes": "You owe {{amount}}",
@@ -62,7 +64,19 @@
     "paid": "{{from}} paid {{to}}",
     "recordedBy": "Added by {{name}} on {{date}}",
     "close": "Close",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "remove": "Delete",
+    "editTitle": "Edit payment",
+    "editedBy": "Changed by {{name}} on {{date}}",
+    "update": "Save changes",
+    "updating": "Saving the changes",
+    "delete": {
+      "title": "Delete the payment from {{from}} to {{to}} ({{amount}})?",
+      "description": "It will stop counting in the balances. The history will keep a note that you deleted it.",
+      "confirm": "Delete payment",
+      "deleting": "Deleting the payment"
+    }
   },
   "form": {
     "newTitle": "Add an expense",
@@ -84,11 +98,14 @@
       "over": "{{amount}} over the total",
       "noDefault": "Nobody pays in the household's split yet. Choose people, or review the split.",
       "reviewSplit": "Review the split",
-      "preview": "Each person's share"
+      "preview": "Each person's share",
+      "weightsSaved": "The household's split when it was added ({{shares}})"
     },
     "save": "Save expense",
     "saving": "Saving the expense",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "editTitle": "Edit expense",
+    "backToExpense": "Back to the expense"
   },
   "details": {
     "back": "Back to expenses",
@@ -103,6 +120,18 @@
       "EQUAL_one": "Equally between {{count}} person",
       "EQUAL_other": "Equally between {{count}} people",
       "EXACT": "Exact amounts"
-    }
+    },
+    "edit": "Edit",
+    "remove": "Delete",
+    "editedBy": "Changed by {{name}} on {{date}}"
+  },
+  "delete": {
+    "title": "Delete \"{{description}}\" ({{amount}})?",
+    "description": "It will stop counting in the balances. The history will keep a note that you deleted it.",
+    "confirm": "Delete expense",
+    "deleting": "Deleting the expense",
+    "cancel": "Cancel",
+    "done": "Expense deleted.",
+    "close": "Close"
   }
 }

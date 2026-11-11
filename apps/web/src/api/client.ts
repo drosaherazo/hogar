@@ -27,6 +27,8 @@ import {
   type Role,
   type SettlementInput,
   type SettlementView,
+  type UpdateExpenseInput,
+  type UpdateSettlementInput,
   type UpdateSplitRequest,
 } from "@hogar/shared";
 import type { z } from "zod";
@@ -212,6 +214,26 @@ export class ApiClient {
   async createExpense(input: ExpenseInput): Promise<ExpenseView> {
     return (await this.request("/household/expenses", { method: "POST", body: input, schema: expenseResponseSchema }))
       .expense;
+  }
+
+  /** Saves a change made from `input.version`; a newer version on the server answers 409 `expense.changed`. */
+  async updateExpense(id: string, input: UpdateExpenseInput): Promise<ExpenseView> {
+    const path = `/household/expenses/${encodeURIComponent(id)}`;
+    return (await this.request(path, { method: "PUT", body: input, schema: expenseResponseSchema })).expense;
+  }
+
+  /** Deletes the version the person saw; it stays in the history as "deleted by". */
+  deleteExpense(id: string, version: number): Promise<void> {
+    return this.request(`/household/expenses/${encodeURIComponent(id)}?version=${version}`, { method: "DELETE" });
+  }
+
+  async updateSettlement(id: string, input: UpdateSettlementInput): Promise<SettlementView> {
+    const path = `/household/settlements/${encodeURIComponent(id)}`;
+    return (await this.request(path, { method: "PUT", body: input, schema: settlementResponseSchema })).settlement;
+  }
+
+  deleteSettlement(id: string, version: number): Promise<void> {
+    return this.request(`/household/settlements/${encodeURIComponent(id)}?version=${version}`, { method: "DELETE" });
   }
 
   async getSettlement(id: string): Promise<SettlementView> {
