@@ -27,6 +27,14 @@
 - Q: Typography and shape? → A: Unchanged. Same typeface, radii, spacing and shadow scale; only the shadow tint moves from brown to neutral/plum.
 - Q: Evidence? → A: Before/after screenshots of the key screens in both themes, attached to the pull request and to the new decision record. No automated visual regression.
 
+### Design review 2026-11-11
+
+- Q: Did the vivid tone stay at the interview's `#E6197F`? → A: No, it moved to `#EB2386`. With dark text on dark-theme buttons the original reached 4.31:1, below AA; the new value reaches 4.59:1 and looks practically the same (FR-002, FR-011).
+- Q: Are the member colors only equal in luminance? → A: Equal in luminance and in saturation. The first set had a saturated teal next to a soft lavender, which broke visual fairness on the home page, so all eight were refitted (FR-009).
+- Q: Did anything outside color have to change? → A: One bug fix. Pure white surfaces crashed the Color docs page in the production build, because built CSS shortens `#ffffff` to `#fff` and the contrast helper only read six digits. Fixed with a test.
+- Q: What was checked, and how? → A: Home, balances, expense form and login in both themes from the capture screenshots; the Card brand story and the Color page in Storybook (both themes, Spanish and English); the design guide checklist; no old-palette references left (SC-002); all automated checks green (SC-001, SC-004, SC-007). SC-006 was judged by eye from the before/after pairs in ADR 0004.
+- Q: What was not checked in a real browser? → A: Forced-colors mode and the mobile browser bar on a physical phone. The card has a forced-colors border rule and the bar color is covered by a unit test, but neither was looked at on a device.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - The app feels new in the light theme (Priority: P1)
