@@ -45,8 +45,8 @@ describe("POST /api/household/settlements", () => {
 
   it("lets anyone who edits record a payment between two other people", async () => {
     const { app } = createTestApp();
-    const { ana, bruno } = await homeWith(app);
-    const res = await postSettlement(app, ana, { fromUserId: bruno.user.id, toUserId: ana.user.id });
+    const { ana, bruno, carla } = await homeWithGuest(app);
+    const res = await postSettlement(app, bruno, { fromUserId: carla.user.id, toUserId: ana.user.id });
     expect(res.status).toBe(201);
   });
 
@@ -114,9 +114,27 @@ describe("GET /api/household/settlements/:id", () => {
     const { app } = createTestApp();
     const { ana, bruno, carla } = await homeWithGuest(app);
     const settlement = await addSettlement(app, ana, { fromUserId: bruno.user.id, toUserId: ana.user.id });
-    const res = await request(app).get(`/api/household/settlements/${settlement.id}`).set("Authorization", carla.auth);
-    expect(res.status).toBe(200);
-    expect(settlementResponseSchema.parse(res.body).settlement).toEqual(settlement);
+    for (const who of [ana, bruno, carla]) {
+      const res = await request(app).get(`/api/household/settlements/${settlement.id}`).set("Authorization", who.auth);
+      expect(res.status).toBe(200);
+      expect(settlementResponseSchema.parse(res.body).settlement).toEqual(settlement);
+    }
+  });
+
+  it("refuses someone without a household to read, change or delete a payment", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const payment = await addSettlement(app, ana, { fromUserId: bruno.user.id, toUserId: ana.user.id });
+    const outsider = await signIn(app, dani);
+    const body = { fromUserId: bruno.user.id, toUserId: ana.user.id, amountCents: 700, date: TODAY, version: 1 };
+    for (const res of [
+      await request(app).get(`/api/household/settlements/${payment.id}`).set("Authorization", outsider.auth),
+      await putSettlement(app, outsider, payment.id, body),
+      await deleteSettlement(app, outsider, payment.id, 1),
+    ]) {
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: { code: "household.not_member" } });
+    }
   });
 
   it("doesn't reveal another household's payments", async () => {

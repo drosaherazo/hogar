@@ -437,11 +437,28 @@ describe("editing and deleting expenses", () => {
 describe("GET /api/household/expenses/:id", () => {
   it("shows an expense to everyone in the household, guests included", async () => {
     const { app } = createTestApp();
-    const { ana, carla } = await homeWithGuest(app);
+    const { ana, bruno, carla } = await homeWithGuest(app);
     const expense = await addExpense(app, ana);
-    const res = await request(app).get(`/api/household/expenses/${expense.id}`).set("Authorization", carla.auth);
-    expect(res.status).toBe(200);
-    expect(expenseResponseSchema.parse(res.body).expense).toEqual(expense);
+    for (const who of [ana, bruno, carla]) {
+      const res = await request(app).get(`/api/household/expenses/${expense.id}`).set("Authorization", who.auth);
+      expect(res.status).toBe(200);
+      expect(expenseResponseSchema.parse(res.body).expense).toEqual(expense);
+    }
+  });
+
+  it("refuses someone without a household to read, change or delete an expense", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const expense = await addExpense(app, ana);
+    const outsider = await signIn(app, dani);
+    for (const res of [
+      await request(app).get(`/api/household/expenses/${expense.id}`).set("Authorization", outsider.auth),
+      await putExpense(app, outsider, expense.id, { ...inputOf(expense), version: 1 }),
+      await deleteExpense(app, outsider, expense.id, 1),
+    ]) {
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: { code: "household.not_member" } });
+    }
   });
 
   it("doesn't reveal another household's expenses", async () => {

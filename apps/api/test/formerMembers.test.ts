@@ -6,9 +6,14 @@ import {
   addSettlement,
   balancesOf,
   deleteExpense,
+  deleteSettlement,
   homeWithGuest,
+  inputOf,
   postExpense,
   postSettlement,
+  putExpense,
+  putSettlement,
+  TODAY,
 } from "./expenseHelpers";
 import { createTestApp, type SignedIn } from "./testApp";
 
@@ -77,11 +82,26 @@ describe("people who left or were removed", () => {
     }
   });
 
-  it("lose access to the household's money", async () => {
+  it("lose access to the household's money, and can't change it", async () => {
     const { app } = createTestApp();
-    const { carla, dinner } = await carlaLeavesOwing(app);
-    for (const path of ["/api/household/activity", "/api/household/balances", `/api/household/expenses/${dinner.id}`]) {
-      const res = await request(app).get(path).set("Authorization", carla.auth);
+    const { ana, bruno, carla, dinner } = await carlaLeavesOwing(app);
+    const payment = await addSettlement(app, ana, { fromUserId: bruno.user.id, toUserId: ana.user.id });
+    const paymentBody = { fromUserId: carla.user.id, toUserId: ana.user.id, amountCents: 500, date: TODAY, version: 1 };
+    const reads = [
+      "/api/household/activity",
+      "/api/household/balances",
+      `/api/household/expenses/${dinner.id}`,
+      `/api/household/settlements/${payment.id}`,
+    ];
+    for (const res of [
+      ...(await Promise.all(reads.map((path) => request(app).get(path).set("Authorization", carla.auth)))),
+      await postExpense(app, carla, { paidById: carla.user.id }),
+      await postSettlement(app, carla, { fromUserId: carla.user.id, toUserId: ana.user.id }),
+      await putExpense(app, carla, dinner.id, { ...inputOf(dinner), version: 1 }),
+      await putSettlement(app, carla, payment.id, paymentBody),
+      await deleteExpense(app, carla, dinner.id, 1),
+      await deleteSettlement(app, carla, payment.id, 1),
+    ]) {
       expect(res.status).toBe(404);
       expect(res.body).toEqual({ error: { code: "household.not_member" } });
     }
