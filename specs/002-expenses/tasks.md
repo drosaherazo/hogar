@@ -162,19 +162,19 @@ Within each story, test tasks come first and must fail before implementation.
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T030 [P] [US1] Supertest suite `apps/api/test/expenses.test.ts` (create and read):
+- [x] T030 [P] [US1] Supertest suite `apps/api/test/expenses.test.ts` (create and read):
   - **Create:** `POST /api/household/expenses` as ADMIN and as MEMBER with `{ method: "WEIGHTS" }` → 201. Weights 3/1 give 4280 → 3210/1070 and 1001 → 751/250; only members with weight > 0 get a stored share; the response is an `ExpenseView` with `createdBy`.
   - **Validation:** a description that is empty, only spaces or 101 characters; an amount of 0, −1, 1.5 or 10000001; date `2026-13-01`; a date after the server's UTC date + 1 day → `money.date.future` (UTC date + 1 is accepted).
   - **People:** `paidById` not a current member → 400 `expense.person.not_member`; every weight 0 → 400 `expense.split.no_default`.
   - **Permissions:** GUEST → 403 `household.forbidden`; no household → 404 `household.not_member`.
   - **Read:** `GET /api/household/expenses/:id` as GUEST → 200; an id from another household → 404 `expense.not_found`.
   - **Frozen shares:** after an admin changes the weights, the saved shares are unchanged.
-- [ ] T031 [P] [US1] Supertest suite `apps/api/test/activity.test.ts`:
+- [x] T031 [P] [US1] Supertest suite `apps/api/test/activity.test.ts`:
   - **Order:** `GET /api/household/activity` sorts by `date desc, createdAt desc, id desc`.
   - **Viewer's part:** `owes`, `lent` or `none` for the caller.
   - **Paging:** with `limit=2` over 5 records, there are no duplicates or gaps, even with a record added between pages; `nextCursor` is null at the end; a garbage cursor → 400 `request.invalid`.
   - **Access:** a GUEST can read; another household's records never appear; no household → 404.
-- [ ] T032 [P] [US1] Web tests with MSW handlers in `apps/web/src/test/server.ts`:
+- [x] T032 [P] [US1] Web tests with MSW handlers in `apps/web/src/test/server.ts`:
   - **`apps/web/src/pages/ExpensesPage/ExpensesPage.test.tsx`:** the empty state; month groups; rows with icon, text, amount and viewer's part; **Show more** loads the next page; **Add expense** hidden for a GUEST; axe.
   - **`apps/web/src/pages/ExpenseFormPage/ExpenseFormPage.test.tsx`** (create):
     - Defaults: payer = me, date = local today with that `max`, the household split with a live share preview.
@@ -186,42 +186,42 @@ Within each story, test tasks come first and must fail before implementation.
 
 ### Implementation for User Story 1
 
-- [ ] T033 [US1] Implement `get` and `create` in `apps/api/src/expenses/expenseService.ts`:
+- [x] T033 [US1] Implement `get` and `create` in `apps/api/src/expenses/expenseService.ts`:
   - **Create** runs in one transaction under `lockHousehold`. It checks that `paidById` is a current member and rejects dates later than the clock's UTC date + 1 day (`money.date.future`).
   - **WEIGHTS** uses `splitAmount` over the current weights in member order (all zero → `expense.split.no_default`) and stores shares > 0.
   - **Responses:** both return an `ExpenseView` built with `personRefs`, shares in `orderPeople` order.
   - **Get** is scoped to the caller's household and `deletedAt: null` (404 `expense.not_found` otherwise).
-- [ ] T034 [US1] Implement `activity(householdId, viewerId, { cursor, limit })` in `apps/api/src/expenses/ledgerService.ts` (research R9):
+- [x] T034 [US1] Implement `activity(householdId, viewerId, { cursor, limit })` in `apps/api/src/expenses/ledgerService.ts` (research R9):
   - Read `limit + 1` rows from expenses and from settlements with the same keyset condition, merge them, and return `limit` items.
   - The cursor is base64 of `date|createdAt|id`; one that can't be decoded → 400 `request.invalid`.
   - Expense items carry `viewerPart`. Deleted records are included with `deleted: { by, at }`; for deleted expenses `viewerPart` is `none`.
-- [ ] T035 [US1] Implement the routers and mount them in `apps/api/src/app.ts` behind `requireAuth`, before the `/api/household` router:
+- [x] T035 [US1] Implement the routers and mount them in `apps/api/src/app.ts` behind `requireAuth`, before the `/api/household` router:
   - `apps/api/src/expenses/expensesRouter.ts`: `GET /:id` (any member), `POST /` (`requireEditor`).
   - `apps/api/src/expenses/ledgerRouter.ts`: `GET /activity`, validating the query with `activityQuerySchema`.
   - Bodies are validated with the shared schemas through `parseBody`.
-- [ ] T036 [US1] Add `getActivity(cursor?)`, `getExpense(id)` and `createExpense(input)` to `apps/web/src/api/client.ts`, parsing responses with the shared schemas
-- [ ] T037 [US1] Create `apps/web/src/expenses/useExpenses.ts` (research R14):
+- [x] T036 [US1] Add `getActivity(cursor?)`, `getExpense(id)` and `createExpense(input)` to `apps/web/src/api/client.ts`, parsing responses with the shared schemas
+- [x] T037 [US1] Create `apps/web/src/expenses/useExpenses.ts` (research R14):
   - `useActivity()`: an infinite query on `["household", "activity"]` with `refetchOnWindowFocus: true`.
   - `useExpense(id)`: `["household", "expense", id]`.
   - `useCreateExpense()`: invalidates activity and `["household", "balances"]`.
-- [ ] T038 [US1] Build `apps/web/src/expenses/ActivityList.tsx` (+ module.css):
+- [x] T038 [US1] Build `apps/web/src/expenses/ActivityList.tsx` (+ module.css):
   - Month headings via `Intl.DateTimeFormat` (month and year, active locale).
   - Rows with a receipt icon plus text: description, "{{name}} paid", `Amount`, date and the viewer's part ("You owe €10.70" / "You lent €32.10" / "Not involved").
   - Expense rows link to `/expenses/:id`; **Show more** loads the next page.
   - Copy in `expenses.json` en/es.
-- [ ] T039 [US1] Build `apps/web/src/pages/ExpensesPage/` (ExpensesPage.tsx + module.css):
+- [x] T039 [US1] Build `apps/web/src/pages/ExpensesPage/` (ExpensesPage.tsx + module.css):
   - Title, **Add expense** (only when `canEditContent(myRole)`), `ActivityList`, and `EmptyState` ("No expenses yet" + description).
   - Redirects to `/` without a household, like `HouseholdSettingsPage`.
   - Copy in `expenses.json` en/es (keys from `contracts/ui.md`).
-- [ ] T040 [US1] Build `apps/web/src/pages/ExpenseFormPage/` (create mode, household split only for now):
+- [x] T040 [US1] Build `apps/web/src/pages/ExpenseFormPage/` (create mode, household split only for now):
   - Fields: description and amount `TextField`s (`inputMode="decimal"`, `parseAmount`), **Who paid?** `Select` of current members (default me), date `TextField type="date"` (default and `max` = local today).
   - A `ChoiceGroup` "How should it be split?" with "The household's split" showing the percentages.
   - A live share preview with `splitAmount` and `Amount`.
   - The all-zero-weights note with a link to `/household/settings#split`.
   - On success, navigate to `/expenses/:id` with "Expense saved."
   - Copy in `expenses.json` en/es.
-- [ ] T041 [US1] Build `apps/web/src/pages/ExpenseDetailPage/`: amount, description, date (`Intl`), who paid, the method, every share with `Avatar` (`avatarPropsFor`) and `Amount`, and "Added by {{name}} on {{date}}"; copy in `expenses.json` en/es
-- [ ] T042 [US1] Register `/expenses`, `/expenses/new` (editors only; others go to `/expenses`) and `/expenses/:id` under `RequireAuth` in `apps/web/src/App.tsx`. Add the primary navigation (Home, Expenses) to `apps/web/src/layout/AppShell.tsx` when the person has a household, with `aria-current="page"` on the current link. Add the `common:nav.*` keys in en/es and test the nav in `apps/web/src/layout/AppShell.test.tsx` (create it if missing).
+- [x] T041 [US1] Build `apps/web/src/pages/ExpenseDetailPage/`: amount, description, date (`Intl`), who paid, the method, every share with `Avatar` (`avatarPropsFor`) and `Amount`, and "Added by {{name}} on {{date}}"; copy in `expenses.json` en/es
+- [x] T042 [US1] Register `/expenses`, `/expenses/new` (editors only; others go to `/expenses`) and `/expenses/:id` under `RequireAuth` in `apps/web/src/App.tsx`. Add the primary navigation (Home, Expenses) to `apps/web/src/layout/AppShell.tsx` when the person has a household, with `aria-current="page"` on the current link. Add the `common:nav.*` keys in en/es and test the nav in `apps/web/src/layout/AppShell.test.tsx` (create it if missing).
 
 **Checkpoint**: US1 is demoable: record an expense with the household split and see it in the history and its details.
 
