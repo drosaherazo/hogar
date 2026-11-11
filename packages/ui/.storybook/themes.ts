@@ -28,7 +28,7 @@ export const palette = {
   "--terracotta-700": "#8c4126",
   "--sage-300": "#a9c7a8",
   "--sage-700": "#4a634c",
-  "--amber-300": "#e8be73",
+  "--amber-300": "#f5c542",
   "--amber-700": "#8a5a06",
 } as const;
 

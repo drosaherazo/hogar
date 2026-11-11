@@ -106,13 +106,13 @@ them.
 
 ### Tests for User Story 3
 
-- [ ] T021 [US3] Extend the member-hue test from T008 in `packages/ui/src/tokens/tokens.test.ts` to run for **both** themes, so it moves into the `describe.each` block.
+- [x] T021 [US3] Extend the member-hue test from T008 in `packages/ui/src/tokens/tokens.test.ts` to run for **both** themes, so it moves into the `describe.each` block.
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Remap the dark block of `packages/ui/src/tokens/theme-dark.css` per research R4: bg `plum-950`, surface `plum-900`, sunken `plum-800`, text `plum-50`, muted `plum-300`, border `plum-700`, border-strong `plum-500`, accent `fuchsia-500`, accent-hover `fuchsia-400`, accent-contrast `plum-950`, accent-text `fuchsia-300`, focus `fuchsia-500` (the vivid tone, 4.59:1 on the dark background), selection-bg `fuchsia-800`, selection-text `plum-50`, positive `teal-300`/`teal-950`, negative `coral-300`/`coral-950`, warning `amber-300`/`amber-950` (`--amber-300` is used only by the dark theme: change its value to `#f5c542` in `primitives.css` and mirror the hex in `palette` in `packages/ui/.storybook/themes.ts`), member-text `plum-50`. Overlay `rgb(0 0 0 / 0.55)` and black shadows stay. Update the header comment ("very dark plum instead of brown…").
-- [ ] T023 [US3] Set `--member-dark-1…8` in `packages/ui/src/tokens/primitives.css` to `#1e5b53`, `#325670`, `#464f84`, `#5d4784`, `#205e35`, `#46581b`, `#605222`, `#6d4b2f` (research R3).
-- [ ] T024 [US3] Run `pnpm --filter @hogar/ui test` (covers `packages/ui/src/tokens/tokens.test.ts`) and `pnpm --filter @hogar/web test`, then review every screen from T012 and the money card from T020 in the dark theme: plum background, vivid fuchsia buttons with dark labels, coral vs teal vs fuchsia distinguishable, and selected text readable.
+- [x] T022 [US3] Remap the dark block of `packages/ui/src/tokens/theme-dark.css` per research R4: bg `plum-950`, surface `plum-900`, sunken `plum-800`, text `plum-50`, muted `plum-300`, border `plum-700`, border-strong `plum-500`, accent `fuchsia-500`, accent-hover `fuchsia-400`, accent-contrast `plum-950`, accent-text `fuchsia-300`, focus `fuchsia-500` (the vivid tone, 4.59:1 on the dark background), selection-bg `fuchsia-800`, selection-text `plum-50`, positive `teal-300`/`teal-950`, negative `coral-300`/`coral-950`, warning `amber-300`/`amber-950` (`--amber-300` is used only by the dark theme: change its value to `#f5c542` in `primitives.css` and mirror the hex in `palette` in `packages/ui/.storybook/themes.ts`), member-text `plum-50`. Overlay `rgb(0 0 0 / 0.55)` and black shadows stay. Update the header comment ("very dark plum instead of brown…").
+- [x] T023 [US3] Set `--member-dark-1…8` in `packages/ui/src/tokens/primitives.css` to `#1e5b53`, `#325670`, `#464f84`, `#5d4784`, `#205e35`, `#46581b`, `#605222`, `#6d4b2f` (research R3).
+- [x] T024 [US3] Run `pnpm --filter @hogar/ui test` (covers `packages/ui/src/tokens/tokens.test.ts`) and `pnpm --filter @hogar/web test`, then review every screen from T012 and the money card from T020 in the dark theme: plum background, vivid fuchsia buttons with dark labels, coral vs teal vs fuchsia distinguishable, and selected text readable.
 
 **Checkpoint**: Both themes are complete.
 

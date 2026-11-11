@@ -1,38 +1,39 @@
 /*
  * Layer 2 · Dark theme.
- * Very dark brown backgrounds instead of bluish grey, so it still feels
- * cozy at night. Enabled with data-theme="dark" on <html>.
+ * Very dark plum backgrounds instead of neutral grey, so the fuchsia feels at home at night.
+ * Enabled with data-theme="dark" on <html>.
  */
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --color-bg: var(--earth-950);
-  --color-surface: var(--earth-900);
-  --color-surface-sunken: var(--earth-800);
+  --color-bg: var(--plum-950);
+  --color-surface: var(--plum-900);
+  --color-surface-sunken: var(--plum-800);
   --color-overlay: rgb(0 0 0 / 0.55);
 
-  --color-text: var(--earth-100);
-  --color-text-muted: var(--earth-300);
+  --color-text: var(--plum-50);
+  --color-text-muted: var(--plum-300);
 
-  --color-border: var(--earth-700);
-  --color-border-strong: var(--earth-500);
+  --color-border: var(--plum-700);
+  --color-border-strong: var(--plum-500);
 
-  --color-accent: var(--terracotta-300);
-  --color-accent-hover: var(--terracotta-200);
-  --color-accent-contrast: var(--earth-950);
-  --color-accent-text: var(--terracotta-300);
-  --color-focus: var(--terracotta-300);
-  --color-selection-bg: var(--terracotta-700);
-  --color-selection-text: var(--earth-100);
+  /* The vivid fuchsia carries dark text here (4.59:1) */
+  --color-accent: var(--fuchsia-500);
+  --color-accent-hover: var(--fuchsia-400);
+  --color-accent-contrast: var(--plum-950);
+  --color-accent-text: var(--fuchsia-300);
+  --color-focus: var(--fuchsia-500);
+  --color-selection-bg: var(--fuchsia-800);
+  --color-selection-text: var(--plum-50);
 
-  --color-positive: var(--sage-300);
-  --color-positive-bg: var(--sage-900);
-  --color-negative: var(--brick-300);
-  --color-negative-bg: var(--brick-900);
+  --color-positive: var(--teal-300);
+  --color-positive-bg: var(--teal-950);
+  --color-negative: var(--coral-300);
+  --color-negative-bg: var(--coral-950);
   --color-warning: var(--amber-300);
-  --color-warning-bg: var(--amber-900);
+  --color-warning-bg: var(--amber-950);
 
-  --color-member-text: var(--earth-100);
+  --color-member-text: var(--plum-50);
   --color-member-1: var(--member-dark-1);
   --color-member-2: var(--member-dark-2);
   --color-member-3: var(--member-dark-3);

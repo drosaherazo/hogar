@@ -11,6 +11,13 @@ describe.each(Object.entries(themes))("%s theme", (_, theme) => {
     expect(ratio).toBeGreaterThanOrEqual(pair.minimum);
   });
 
+  it("member colors avoid the brand's pink and magenta hues", () => {
+    for (let i = 1; i <= 8; i++) {
+      const h = hue(resolve(`--color-member-${i}`));
+      expect(h < 290 || h > 350, `member ${i} has hue ${h.toFixed(0)}°`).toBe(true);
+    }
+  });
+
   it("member colors share a similar luminance (visual fairness)", () => {
     const luminances = Array.from({ length: 8 }, (_, i) => relativeLuminance(resolve(`--color-member-${i + 1}`)));
     expect(Math.max(...luminances) - Math.min(...luminances)).toBeLessThan(0.1);
@@ -26,14 +33,6 @@ function hue(hex: string): number {
   const h = max === r ? ((g - b) / delta) % 6 : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
   return (h * 60 + 360) % 360;
 }
-
-it("light member colors avoid the brand's pink and magenta hues", () => {
-  const resolve = (name: string) => resolveToken(name, themes.light, primitives);
-  for (let i = 1; i <= 8; i++) {
-    const h = hue(resolve(`--color-member-${i}`));
-    expect(h < 290 || h > 350, `member ${i} has hue ${h.toFixed(0)}°`).toBe(true);
-  }
-});
 
 it("both themes define exactly the same tokens", () => {
   expect([...themes.dark.keys()].sort()).toEqual([...themes.light.keys()].sort());
