@@ -6,6 +6,12 @@ export type ThemePreference = Theme | "system";
 /** Keep in sync with the inline script in index.html. */
 export const THEME_STORAGE_KEY = "hogar-theme";
 
+/**
+ * The mobile browser bar's color per theme: the page background (`--ink-25` / `--plum-950` in
+ * primitives.css, checked by theme.test.ts). Keep in sync with the inline script in index.html.
+ */
+export const THEME_COLORS = { light: "#fbf8fa", dark: "#141016" } as const satisfies Record<Theme, string>;
+
 const listeners = new Set<() => void>();
 const systemQuery = () => window.matchMedia("(prefers-color-scheme: dark)");
 
@@ -24,7 +30,12 @@ function resolve(preference: ThemePreference): Theme {
 }
 
 function apply() {
-  document.documentElement.dataset["theme"] = resolve(readPreference());
+  const theme = resolve(readPreference());
+  document.documentElement.dataset["theme"] = theme;
+  // Both tags (one per system scheme) follow the app's choice, which may differ from the system.
+  document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+    meta.content = THEME_COLORS[theme];
+  });
   listeners.forEach((listener) => listener());
 }
 
