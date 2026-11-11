@@ -232,3 +232,10 @@ Commit after each task or logical group with Conventional Commits (e.g.
   [research.md](./research.md) (and in `themes.ts` if Storybook mirrors it).
 - No new i18n keys. Docs prose always changes in both `<Lang>` blocks.
 - Never weaken or skip a test to get green; fix the value instead.
+
+---
+
+## Phase 8: Convergence
+
+- [ ] T042 Redraw the sample photo SVG in `packages/ui/src/components/Avatar/Avatar.stories.tsx` (line 23, currently `#c5d8c1` / `#4a634c`, the old sage member color) with tones from the new palette, e.g. the `--member-light-2` sky `#a7cae4` background and `--ink-600` `#5d5360` figure, never pink, per SC-002 (partial)
+- [ ] T043 Update the comment above `.muted` in `packages/ui/src/components/Avatar/Avatar.module.css` ("sand instead of a member color") to describe the current look ("a neutral fill instead of a member color, photo in grey") per SC-002 (partial)
