@@ -1,5 +1,5 @@
 import { canEditContent, type HouseholdView, type PersonBalance, type SuggestedSettlement } from "@hogar/shared";
-import { Avatar, Button, Card, EmptyState, Spinner } from "@hogar/ui";
+import { Avatar, Badge, Button, Card, EmptyState, Spinner } from "@hogar/ui";
 import clsx from "clsx";
 import { ArrowLeft, Check, HandCoins, Scale } from "lucide-react";
 import { useId, useRef, useState } from "react";
@@ -170,6 +170,7 @@ function BalanceRow({ entry, household }: { entry: PersonBalance; household: Hou
       <span className={clsx(styles.sentence, balanceCents < 0 && styles.owes, balanceCents > 0 && styles.owed)}>
         {sentence}
       </span>
+      {person.former && <Badge>{t("balances.former")}</Badge>}
     </li>
   );
 }

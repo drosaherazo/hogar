@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { useDates, useMoney } from "../i18n/format";
 import styles from "./ActivityList.module.css";
+import { usePersonLabel } from "./people";
 
 export interface ActivityListProps {
   items: readonly ActivityItem[];
@@ -109,6 +110,7 @@ function DeletedRow({ item, deletedBy }: { item: ActivityItem; deletedBy: string
 
 function ExpenseRow({ item, viewerId }: { item: Extract<ActivityItem, { kind: "expense" }>; viewerId: string }) {
   const { t } = useTranslation("expenses");
+  const personLabel = usePersonLabel();
   const dates = useDates();
   const money = useMoney();
   const { kind, amountCents } = item.viewerPart;
@@ -128,7 +130,9 @@ function ExpenseRow({ item, viewerId }: { item: Extract<ActivityItem, { kind: "e
         <span className={styles.title}>{item.description}</span>
         <span className={styles.meta}>
           <span>
-            {item.paidBy.userId === viewerId ? t("history.youPaid") : t("history.paid", { name: item.paidBy.name })}
+            {item.paidBy.userId === viewerId
+              ? t("history.youPaid")
+              : t("history.paid", { name: personLabel(item.paidBy) })}
           </span>
           <span className={styles.date}>{dates.short(item.date)}</span>
         </span>

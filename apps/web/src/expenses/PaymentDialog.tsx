@@ -17,7 +17,7 @@ import { useCurrentUser } from "../auth/guards";
 import { localToday, useDates, useMoney } from "../i18n/format";
 import { amountInputValue, parseAmount } from "./money";
 import styles from "./PaymentDialog.module.css";
-import { avatarPropsFor } from "./people";
+import { avatarPropsFor, usePersonLabel } from "./people";
 import { useCreateSettlement, useDeleteSettlement, useSettlement, useUpdateSettlement } from "./useExpenses";
 
 type Field = "from" | "to" | "amount" | "date";
@@ -104,6 +104,7 @@ export function RecordPaymentDialog({
   const formId = useId();
   const firstField = useRef<HTMLSelectElement>(null);
 
+  const personLabel = usePersonLabel();
   const people = paymentPeople(household, balances, editing);
   const nameOf = (userId: string) => people.find((person) => person.userId === userId)?.name ?? "";
   const firstOther = people.find((person) => person.userId !== user.id)?.userId ?? "";
@@ -139,7 +140,7 @@ export function RecordPaymentDialog({
     const code = errors[field];
     return code ? t(`errors:${code}`) : undefined;
   };
-  const options = people.map((person) => ({ value: person.userId, label: person.name }));
+  const options = people.map((person) => ({ value: person.userId, label: personLabel(person) }));
 
   function submit(event: FormEvent) {
     event.preventDefault();

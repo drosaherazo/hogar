@@ -39,7 +39,9 @@
     "allSquare": "¡Todo al día! Nadie debe nada.",
     "allSquareDescription": "Cuando alguien pague algo que compartís, aquí verás quién debe a quién.",
     "everyone": "El saldo de cada persona",
-    "suggestions": "Pagos para quedar todos al día"
+    "suggestions": "Pagos para quedar todos al día",
+    "former": "Ya no está en el hogar",
+    "formerName": "{{name}} (ya no está en el hogar)"
   },
   "suggest": {
     "youPay": "Le debes {{amount}} a {{name}}",

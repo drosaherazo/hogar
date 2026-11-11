@@ -62,10 +62,14 @@
       "leave": "Salir del hogar",
       "leaveTitle": "¿Salir de {{household}}?",
       "leaveDescription": "Dejarás de ver sus gastos, tareas y lista de la compra. Puedes volver con una invitación nueva.",
-      "leaveLastDescription": "Eres la única persona aquí, así que {{household}} se borrará cuando salgas.",
+      "leaveLastDescription": "Eres la única persona aquí, así que {{household}} y todos sus gastos y pagos se borrarán cuando salgas.",
       "leaveConfirm": "Salir del hogar",
       "leaveDeleteConfirm": "Salir y borrar el hogar",
-      "leaving": "Saliendo del hogar"
+      "leaving": "Saliendo del hogar",
+      "leaveOwes": "Todavía debes {{amount}} en total. Seguirá en los saldos a tu nombre hasta que alguien anote que está pagado.",
+      "leaveOwed": "Todavía te deben {{amount}} en total. Seguirá en los saldos hasta que el resto anote que te lo ha pagado.",
+      "removeOwes": "{{name}} todavía debe {{amount}} en total. Seguirá en los saldos hasta que alguien anote que está pagado.",
+      "removeOwed": "A {{name}} todavía le deben {{amount}} en total. Seguirá en los saldos hasta que se le pague."
     },
     "invitations": {
       "title": "Invitaciones",

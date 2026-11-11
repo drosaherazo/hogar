@@ -62,10 +62,14 @@
       "leave": "Leave household",
       "leaveTitle": "Leave {{household}}?",
       "leaveDescription": "You'll stop seeing its expenses, chores and shopping list. You can come back with a new invitation.",
-      "leaveLastDescription": "You're the only person here, so {{household}} will be deleted when you leave.",
+      "leaveLastDescription": "You're the only person here, so {{household}} and all its expenses and payments will be deleted when you leave.",
       "leaveConfirm": "Leave household",
       "leaveDeleteConfirm": "Leave and delete household",
-      "leaving": "Leaving the household"
+      "leaving": "Leaving the household",
+      "leaveOwes": "You still owe {{amount}} in total. It will stay in the balances under your name until someone records that it's paid.",
+      "leaveOwed": "You're still owed {{amount}} in total. It will stay in the balances until the others record that they've paid you.",
+      "removeOwes": "{{name}} still owes {{amount}} in total. It will stay in the balances until someone records that it's paid.",
+      "removeOwed": "{{name}} is still owed {{amount}} in total. It will stay in the balances until it's paid."
     },
     "invitations": {
       "title": "Invitations",

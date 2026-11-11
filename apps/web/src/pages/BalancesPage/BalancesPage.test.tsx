@@ -195,3 +195,34 @@ describe("BalancesPage › recording payments", () => {
     expect(screen.queryByRole("button", { name: "Record a payment" })).not.toBeInTheDocument();
   });
 });
+
+describe("BalancesPage › former members", () => {
+  const formerCarla = personRef({ userId: "user_carla", name: "Carla Ruiz", former: true });
+  const withFormer = balancesView({
+    balances: [
+      { person: anaRef, balanceCents: 500 },
+      { person: brunoRef, balanceCents: 0 },
+      { person: formerCarla, balanceCents: -500 },
+    ],
+    suggestions: [{ from: formerCarla, to: anaRef, amountCents: 500 }],
+    myBalanceCents: 500,
+  });
+
+  it("marks people who are no longer members, in words", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()), handlers.balances(withFormer));
+    renderApp({ path: PATH });
+    const everyone = await screen.findByRole("region", { name: "Everyone's balance" });
+    const carla = within(everyone).getAllByRole("listitem")[2];
+    expect(carla).toHaveTextContent("Carla Ruiz owes €5.00");
+    expect(carla).toHaveTextContent("Former member");
+  });
+
+  it("offers to record a payment with them", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()), handlers.balances(withFormer));
+    renderApp({ path: PATH });
+    await userEvent.click(await screen.findByRole("button", { name: "Record a payment" }));
+    const dialog = await screen.findByRole("dialog", { name: "Record a payment" });
+    const from = within(dialog).getByRole("combobox", { name: "Who paid?" });
+    expect(within(from).getByRole("option", { name: "Carla Ruiz (former member)" })).toBeInTheDocument();
+  });
+});

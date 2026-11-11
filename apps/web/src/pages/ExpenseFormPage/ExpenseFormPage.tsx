@@ -20,7 +20,7 @@ import { Navigate, useNavigate, useParams } from "react-router";
 import { ApiRequestError, errorKey } from "../../api/client";
 import { useCurrentUser } from "../../auth/guards";
 import { amountInputValue, parseAmount } from "../../expenses/money";
-import { avatarPropsFor } from "../../expenses/people";
+import { avatarPropsFor, usePersonLabel } from "../../expenses/people";
 import { useCreateExpense, useExpense, useUpdateExpense } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
 import { useHousehold } from "../../household/useHousehold";
@@ -135,6 +135,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   const update = useUpdateExpense();
   const save = existing ? update : create;
   const previewId = useId();
+  const personLabel = usePersonLabel();
 
   const { members } = household;
   const sharing = members.filter((member) => member.weight > 0);
@@ -313,7 +314,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
       />
       <Select
         label={t("form.paidBy")}
-        options={people.map((person) => ({ value: person.userId, label: person.name }))}
+        options={people.map((person) => ({ value: person.userId, label: personLabel(person) }))}
         value={paidById}
         onChange={(event) => setPaidById(event.target.value)}
       />
@@ -374,7 +375,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
               const index = chosenPeople.indexOf(person);
               return {
                 value: person.userId,
-                label: person.name,
+                label: personLabel(person),
                 trailing: equalShares && index >= 0 ? <Amount cents={equalShares[index] ?? 0} /> : undefined,
               };
             })}
@@ -390,7 +391,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
             <TextField
               key={person.userId}
               inline
-              label={person.name}
+              label={personLabel(person)}
               inputMode="decimal"
               autoComplete="off"
               value={exactTexts[person.userId] ?? ""}

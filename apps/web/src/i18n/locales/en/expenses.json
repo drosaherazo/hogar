@@ -39,7 +39,9 @@
     "allSquare": "All square! Nobody owes anything.",
     "allSquareDescription": "When someone pays for something everyone shares, you'll see here who owes whom.",
     "everyone": "Everyone's balance",
-    "suggestions": "Payments that would settle everyone"
+    "suggestions": "Payments that would settle everyone",
+    "former": "Former member",
+    "formerName": "{{name}} (former member)"
   },
   "suggest": {
     "youPay": "You owe {{name}} {{amount}}",

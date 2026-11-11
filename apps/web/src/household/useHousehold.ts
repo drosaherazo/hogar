@@ -1,6 +1,7 @@
 import type { CurrentHousehold, HouseholdView, InvitableRole, Role, UpdateSplitRequest } from "@hogar/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "../api/ApiClientContext";
+import { expenseKeys } from "../expenses/useExpenses";
 
 export const householdKeys = {
   current: ["household"] as const,
@@ -50,7 +51,13 @@ export function useChangeRole() {
 
 export function useRemoveMember() {
   const client = useApiClient();
-  return useHouseholdMutation((membershipId: string) => client.removeMember(membershipId));
+  const queryClient = useQueryClient();
+  return useHouseholdMutation(async (membershipId: string) => {
+    const household = await client.removeMember(membershipId);
+    // The removed person may still owe or be owed: their balance now shows as a former member's.
+    void queryClient.invalidateQueries({ queryKey: expenseKeys.balances });
+    return household;
+  });
 }
 
 export function useUpdateSplit() {
@@ -70,6 +77,9 @@ export function useLeaveHousehold() {
     mutationFn: () => client.leaveHousehold(),
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: householdKeys.invitations });
+      // That household's money isn't theirs to see any more.
+      queryClient.removeQueries({ queryKey: expenseKeys.activity });
+      queryClient.removeQueries({ queryKey: expenseKeys.balances });
       const noHousehold: CurrentHousehold = { household: null, removedFrom: null };
       queryClient.setQueryData(householdKeys.current, noHousehold);
     },
