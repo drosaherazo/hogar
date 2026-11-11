@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { darkColors, lightColors, palette } from "../../.storybook/themes";
+import { darkColors, lightColors, palette, sidebarIconColors } from "../../.storybook/themes";
 import { AA_TEXT, AA_UI, contrastRatio } from "./contrast";
 import { primitives } from "./parseTokens";
 
@@ -9,15 +9,20 @@ describe("Storybook brand themes", () => {
   });
 
   describe.each([
-    ["light", lightColors],
-    ["dark", darkColors],
-  ] as const)("%s theme", (_, colors) => {
+    ["light", lightColors, sidebarIconColors.light],
+    ["dark", darkColors, sidebarIconColors.dark],
+  ] as const)("%s theme", (_, colors, icons) => {
     const paletteValues = new Set<string>(Object.values(palette));
 
     it("only uses palette colors", () => {
-      for (const value of Object.values(colors)) {
+      for (const value of [...Object.values(colors), ...Object.values(icons)]) {
         expect(paletteValues).toContain(value);
       }
+    });
+
+    it.each(["story", "document"] as const)("paints %s icons visibly on the sidebar", (icon) => {
+      expect(contrastRatio(icons[icon], colors.appBg)).toBeGreaterThanOrEqual(AA_UI);
+      expect(contrastRatio(icons[icon], colors.appHoverBg)).toBeGreaterThanOrEqual(AA_UI);
     });
 
     it.each([
