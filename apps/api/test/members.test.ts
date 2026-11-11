@@ -1,8 +1,8 @@
-import { currentHouseholdSchema, householdResponseSchema } from "@hogar/shared";
+import { createdInvitationSchema, currentHouseholdSchema, householdResponseSchema } from "@hogar/shared";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { addMember, createHousehold, householdRow } from "./householdHelpers";
-import { bruno, carla, createTestApp, dani, db, signIn } from "./testApp";
+import { bruno, carla, createTestApp, dani, db, signIn, type SignedIn } from "./testApp";
 
 /** Ana (ADMIN) with Bruno (MEMBER) and Carla (GUEST). */
 async function setup() {
@@ -225,6 +225,41 @@ describe("DELETE /api/household/members/:id", () => {
       .delete(`/api/household/members/${brunoMember.membershipId}`)
       .set("Authorization", daniSession.auth);
     expect(res.status).toBe(404);
+  });
+});
+
+describe("the removal note", () => {
+  const currentOf = async (app: Awaited<ReturnType<typeof setup>>["app"], who: SignedIn) =>
+    (await request(app).get("/api/household").set("Authorization", who.auth)).body;
+
+  it("is dropped once the removed person joins another household through a link", async () => {
+    const { app, ana, bruno } = await setup();
+    await request(app).delete(`/api/household/members/${bruno.membershipId}`).set("Authorization", ana.auth);
+
+    // Bruno opens Dani's link straight away, so the note about Casa Ana is never shown.
+    const daniSession = await signIn(app, dani);
+    await createHousehold(app, daniSession, "Piso Dani");
+    const invited = await request(app)
+      .post("/api/household/invitations")
+      .set("Authorization", daniSession.auth)
+      .send({ role: "MEMBER" });
+    const { token } = createdInvitationSchema.parse(invited.body);
+    const joined = await request(app).post("/api/invitations/accept").set("Authorization", bruno.auth).send({ token });
+    expect(joined.status).toBe(200);
+
+    // Leaving Piso Dani later must not bring back an old note about Casa Ana.
+    expect((await request(app).post("/api/household/leave").set("Authorization", bruno.auth)).status).toBe(204);
+    expect(await currentOf(app, bruno)).toEqual({ household: null, removedFrom: null });
+  });
+
+  it("is dropped once the removed person creates a household of their own", async () => {
+    const { app, ana, bruno } = await setup();
+    await request(app).delete(`/api/household/members/${bruno.membershipId}`).set("Authorization", ana.auth);
+
+    await createHousehold(app, bruno, "Piso Bruno");
+    // As the only member, leaving deletes Piso Bruno; the note about Casa Ana stays gone.
+    expect((await request(app).post("/api/household/leave").set("Authorization", bruno.auth)).status).toBe(204);
+    expect(await currentOf(app, bruno)).toEqual({ household: null, removedFrom: null });
   });
 });
 

@@ -49,7 +49,7 @@ All Technical Context items were resolvable from the codebase and the constituti
 
 ## R9 · Removal notice
 
-- **Decision:** Nullable `User.removedFromHousehold` (the household's name), set when an admin removes someone and cleared by `DELETE /api/me/removal-notice` after the web shows it. `GET /api/household` returns it alongside `household: null`.
+- **Decision:** Nullable `User.removedFromHousehold` (the household's name), set when an admin removes someone and cleared by `DELETE /api/me/removal-notice` after the web shows it. Creating or joining a household also clears it, in the same transaction, so someone who joins elsewhere before seeing the note never gets it later about a household they have long moved on from. `GET /api/household` returns it alongside `household: null`.
 - **Rationale:** One field covers "shown once on the next visit, any device" (FR-021). A user can only be removed from one household at a time, and a later removal just overwrites the name.
 - **Alternatives rejected:** clearing the notice on read (a GET with side effects), and a notifications table (no other notification type exists yet).
 

@@ -65,9 +65,9 @@ Rules: at most **10 pending** per household (checked when creating or renewing).
 
 ## User (`users`), existing model, one new field
 
-| Field                | Type    | Rules                                                                             |
-| -------------------- | ------- | --------------------------------------------------------------------------------- |
-| removedFromHousehold | String? | name of the household the person was removed from; cleared after the web shows it |
+| Field                | Type    | Rules                                                                                                                              |
+| -------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| removedFromHousehold | String? | name of the household the person was removed from; cleared after the web shows it, or when the person creates or joins a household |
 
 Plus back-relations: `membership` (0–1), `invitationsCreated`, `invitationsUsed`.
 

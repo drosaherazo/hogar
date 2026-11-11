@@ -13,7 +13,7 @@ import type { Database } from "../db";
 import type { Invitation, Membership, Prisma } from "../generated/prisma/client";
 import { conflict, gone, notFound } from "../httpError";
 import type { HouseholdService } from "./householdService";
-import { isUniqueViolation } from "./householdService";
+import { clearRemovalNotice, isUniqueViolation } from "./householdService";
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -165,6 +165,7 @@ export function createInvitationService({ db, households, now = () => new Date()
             },
           });
           await tx.household.update({ where: { id: invitation.householdId }, data: { membersChangedAt: now() } });
+          await clearRemovalNotice(tx, userId);
           return invitation.householdId;
         });
         return await households.view(householdId, userId);
