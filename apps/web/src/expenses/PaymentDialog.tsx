@@ -271,10 +271,11 @@ export function PaymentDetailsDialog({ settlementId, onClose, household, onEdit 
   const [confirming, setConfirming] = useState(false);
   const cancelButton = useRef<HTMLButtonElement>(null);
 
-  // Opening the dialog again always starts on the details, not on the confirmation.
-  useEffect(() => {
-    if (settlementId === null) setConfirming(false);
-  }, [settlementId]);
+  // Closing resets the confirmation, so opening the dialog again always starts on the details.
+  const close = () => {
+    setConfirming(false);
+    onClose();
+  };
   // The confirmation starts on "Cancel", the safe choice.
   useEffect(() => {
     if (confirming) cancelButton.current?.focus();
@@ -290,7 +291,7 @@ export function PaymentDetailsDialog({ settlementId, onClose, household, onEdit 
     <Dialog
       open={settlementId !== null}
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (!open) close();
       }}
       title={title}
       {...(confirming ? { description: t("payment.delete.description") } : {})}
@@ -304,13 +305,13 @@ export function PaymentDetailsDialog({ settlementId, onClose, household, onEdit 
             <Button
               loading={remove.isPending}
               loadingLabel={t("payment.delete.deleting")}
-              onClick={() => remove.mutate({ id: data.id, version: data.version }, { onSuccess: onClose })}
+              onClick={() => remove.mutate({ id: data.id, version: data.version }, { onSuccess: close })}
             >
               {t("payment.delete.confirm")}
             </Button>
           </>
         ) : (
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={close}>
             {t("payment.close")}
           </Button>
         )
