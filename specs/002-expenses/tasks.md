@@ -235,30 +235,30 @@ Within each story, test tasks come first and must fail before implementation.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T043 [P] [US2] Supertest suite `apps/api/test/balances.test.ts`:
+- [x] T043 [P] [US2] Supertest suite `apps/api/test/balances.test.ts`:
   - **Totals:** `GET /api/household/balances` sums to 0, and every member gets identical figures.
   - **Spec example:** Ana 2000 for Bruno, Bruno 2000 for Carla → Bruno 0 and one suggestion Carla → Ana 2000.
   - **Shape:** current members in member order, members without records included at 0; `myBalanceCents`; at most `n − 1` suggestions.
   - **Access:** a GUEST can read; other households are isolated; no household → 404.
-- [ ] T044 [P] [US2] Web tests in `apps/web/src/pages/BalancesPage/BalancesPage.test.tsx` and `apps/web/src/pages/HomePage/HomePage.test.tsx`:
+- [x] T044 [P] [US2] Web tests in `apps/web/src/pages/BalancesPage/BalancesPage.test.tsx` and `apps/web/src/pages/HomePage/HomePage.test.tsx`:
   - **`apps/web/src/pages/BalancesPage/BalancesPage.test.tsx`:** rows in words ("Ana is owed €20.00", "Carla owes €20.00", the viewer in the second person); suggestions phrased from the viewer ("You owe Ana…", "Bruno owes you…", "{{from}} owes {{to}}…"); the "All square! Nobody owes anything." empty state; axe.
   - **`apps/web/src/pages/HomePage/HomePage.test.tsx`:** the balance card shows the owe, owed or square sentence and links to Expenses and Balances; **Add expense** only for editors.
 
 ### Implementation for User Story 2
 
-- [ ] T045 [US2] Implement `balances(householdId, viewerId)` in `apps/api/src/expenses/ledgerService.ts` (research R4):
+- [x] T045 [US2] Implement `balances(householdId, viewerId)` in `apps/api/src/expenses/ledgerService.ts` (research R4):
   - Four grouped sums over **live** records: `Expense` by `paidById`; `ExpenseShare` by `userId` with `expense: { householdId, deletedAt: null }`; `Settlement` by `fromUserId`; `Settlement` by `toUserId`.
   - Combine them with `netBalances`, include every current member (0 if absent) and former members with a non-zero balance, ordered by `orderPeople`.
   - Add `suggestSettlements`, the `PersonRef`s and `myBalanceCents`.
-- [ ] T046 [US2] Add `GET /balances` to `apps/api/src/expenses/ledgerRouter.ts`
-- [ ] T047 [US2] Add `getBalances()` to `apps/web/src/api/client.ts` and `useBalances()` (`["household", "balances"]`, `refetchOnWindowFocus: true`) to `apps/web/src/expenses/useExpenses.ts`
-- [ ] T048 [US2] Build `apps/web/src/expenses/BalanceSentence.tsx`, which renders the viewer's sentence with `formatAmount`: "You owe {{amount}} in total" / "You're owed {{amount}} in total" / "You're all square". Then build `apps/web/src/pages/BalancesPage/`:
+- [x] T046 [US2] Add `GET /balances` to `apps/api/src/expenses/ledgerRouter.ts`
+- [x] T047 [US2] Add `getBalances()` to `apps/web/src/api/client.ts` and `useBalances()` (`["household", "balances"]`, `refetchOnWindowFocus: true`) to `apps/web/src/expenses/useExpenses.ts`
+- [x] T048 [US2] Build `apps/web/src/expenses/BalanceSentence.tsx`, which renders the viewer's sentence with `formatAmount`: "You owe {{amount}} in total" / "You're owed {{amount}} in total" / "You're all square". Then build `apps/web/src/pages/BalancesPage/`:
   - Rows with `Avatar`, a sentence in words and `Amount`.
   - Suggestions phrased per FR-016.
   - An `EmptyState` for all square.
   - Register the `/balances` route in `apps/web/src/App.tsx`.
   - Copy in `expenses.json` en/es.
-- [ ] T049 [US2] Add the balance card to `HouseholdSummary` in `apps/web/src/pages/HomePage/HomePage.tsx`: `BalanceSentence`, links to Expenses and Balances, and **Add expense** for editors. Show `BalanceSentence` and a Balances link at the top of `ExpensesPage`.
+- [x] T049 [US2] Add the balance card to `HouseholdSummary` in `apps/web/src/pages/HomePage/HomePage.tsx`: `BalanceSentence`, links to Expenses and Balances, and **Add expense** for editors. Show `BalanceSentence` and a Balances link at the top of `ExpensesPage`.
 
 **Checkpoint**: US1 + US2: expenses produce balances everyone agrees on.
 
