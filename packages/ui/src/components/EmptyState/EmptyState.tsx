@@ -16,7 +16,7 @@ export interface EmptyStateProps {
   className?: string;
 }
 
-/** Turns "there's nothing here yet" into a warm invitation with a clear next step. */
+/** Turns "there's nothing here yet" into a friendly invitation with a clear next step. */
 export function EmptyState({ title, description, icon, actions, headingLevel = 2, className }: EmptyStateProps) {
   const titleId = useId();
   const Heading = headingLevel === 2 ? "h2" : "h3";
