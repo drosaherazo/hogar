@@ -11,7 +11,8 @@ pnpm-lock.yaml
 !.specify/memory/
 .specify/memory/.constitution-template.json
 .claude/skills/speckit-*
-# Third-party skill vendored as-is from vercel-labs/agent-skills.
+# Third-party skills vendored as-is from vercel-labs/agent-skills.
 .claude/skills/vercel-react-best-practices
 # Third-party skill vendored as-is from nextlevelbuilder/ui-ux-pro-max-skill.
 .claude/skills/ui-ux-pro-max
+.claude/skills/web-design-guidelines
