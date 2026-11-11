@@ -21,6 +21,8 @@ Features are built with [GitHub Spec Kit](https://github.com/github/spec-kit) (v
 5. `/speckit-tasks` → `tasks.md`; optionally `/speckit-analyze` to cross-check spec, plan and tasks.
 6. `/speckit-implement`, then `/speckit-converge` until it reports converged.
 
+Unsure which step comes next? `/sdd-help` explains every speckit skill and inspects the active feature to suggest the next command.
+
 Specs replace the old idea of a single `docs/product.md`. Do not edit the vendored files in `.specify/templates`, `.specify/scripts` or `.claude/skills/speckit-*` by hand (they are excluded from Prettier and get replaced on upgrade); customize through presets or the constitution instead. Upgrading: `uv tool install --force --python 3.13 specify-cli --from git+https://github.com/github/spec-kit.git@<tag>`, then `specify init --here --force --non-interactive --integration claude --script ps` and review the diff.
 
 ## React performance
