@@ -1,6 +1,7 @@
 import { createdInvitationSchema, currentHouseholdSchema, householdResponseSchema } from "@hogar/shared";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
+import { addExpense, addSettlement } from "./expenseHelpers";
 import { addMember, createHousehold, householdRow } from "./householdHelpers";
 import { bruno, carla, createTestApp, dani, db, signIn, type SignedIn } from "./testApp";
 
@@ -307,5 +308,41 @@ describe("POST /api/household/leave", () => {
     const res = await request(app).post("/api/household/leave").set("Authorization", ana.auth);
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: { code: "household.not_member" } });
+  });
+});
+
+describe("leaving and removal with money involved", () => {
+  it("lets people leave or be removed while they still owe or are owed money", async () => {
+    const { app, ana, bruno, carla } = await setup();
+    await addExpense(app, ana, {
+      amountCents: 1000,
+      split: { method: "EQUAL", userIds: [ana.user.id, bruno.user.id, carla.user.id] },
+    });
+
+    expect((await request(app).post("/api/household/leave").set("Authorization", carla.auth)).status).toBe(204);
+    const removed = await request(app)
+      .delete(`/api/household/members/${bruno.membershipId}`)
+      .set("Authorization", ana.auth);
+    expect(removed.status).toBe(200);
+  });
+
+  it("deletes the household's expenses and payments when its last member leaves", async () => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    const household = await createHousehold(app, ana);
+    const brunoMember = await addMember(app, household.id, bruno, "MEMBER");
+    await addExpense(app, ana, {
+      amountCents: 1000,
+      split: { method: "EQUAL", userIds: [ana.user.id, brunoMember.user.id] },
+    });
+    await addSettlement(app, brunoMember, { fromUserId: brunoMember.user.id, toUserId: ana.user.id, amountCents: 500 });
+
+    expect((await request(app).post("/api/household/leave").set("Authorization", brunoMember.auth)).status).toBe(204);
+    expect((await request(app).post("/api/household/leave").set("Authorization", ana.auth)).status).toBe(204);
+
+    expect(await householdRow(household.id)).toBeNull();
+    expect(await db.expense.count()).toBe(0);
+    expect(await db.expenseShare.count()).toBe(0);
+    expect(await db.settlement.count()).toBe(0);
   });
 });
