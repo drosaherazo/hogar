@@ -1,0 +1,87 @@
+.group {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.legend {
+  margin-block-end: var(--space-2);
+  padding: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-block-size: var(--size-touch);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--easing-standard),
+    background-color var(--duration-fast) var(--easing-standard);
+}
+
+/* Selected: the accent border plus the native check mark, so color is never the only sign. */
+.choice:has(.input:checked) {
+  border-color: var(--color-accent);
+  background-color: var(--color-surface-sunken);
+}
+
+.choice:has(.input:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--border-width);
+}
+
+.disabled {
+  cursor: not-allowed;
+}
+
+.disabled .label {
+  color: var(--color-text-muted);
+}
+
+.input {
+  flex: none;
+  inline-size: var(--size-icon-md);
+  block-size: var(--size-icon-md);
+  margin: 0;
+  accent-color: var(--color-accent);
+}
+
+/* The whole card shows focus; keep the input's own ring from doubling it. */
+.input:focus-visible {
+  outline: none;
+}
+
+.text {
+  display: grid;
+  flex: 1;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.label {
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.trailing {
+  flex: none;
+  align-self: center;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}

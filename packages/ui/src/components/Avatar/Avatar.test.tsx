@@ -38,6 +38,14 @@ describe("Avatar", () => {
     expect(screen.getByRole("img")).toHaveClass("member3");
   });
 
+  it("can be muted for someone who is no longer a member, keeping their name", () => {
+    render(<Avatar name="Carla Ruiz" colorIndex={3} muted />);
+    const avatar = screen.getByRole("img", { name: "Carla Ruiz" });
+    expect(avatar).toHaveClass("muted");
+    expect(avatar).not.toHaveClass("member3");
+    expect(avatar).toHaveTextContent("CR");
+  });
+
   it("is hidden from assistive technology when decorative", () => {
     const { container } = render(<Avatar name="Ana" decorative />);
     expect(container.firstChild).toHaveAttribute("aria-hidden", "true");
@@ -49,6 +57,7 @@ describe("Avatar", () => {
       <>
         <Avatar name="Ana García" />
         <Avatar name="Marta" src="https://example.com/marta.jpg" size="lg" colorIndex={2} />
+        <Avatar name="Carla Ruiz" muted />
       </>,
     );
     await expectNoA11yViolations(container);

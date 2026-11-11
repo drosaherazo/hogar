@@ -14,6 +14,11 @@ export interface AvatarProps {
   size?: "sm" | "md" | "lg";
   /** Set when a visible name sits right next to the avatar, so screen readers don't hear it twice. */
   decorative?: boolean;
+  /**
+   * A neutral look for someone who is no longer a member: no member color, photo in grey.
+   * The app adds the words ("Former member"), so the look never carries the meaning alone.
+   */
+  muted?: boolean;
   className?: string;
 }
 
@@ -25,14 +30,27 @@ export function initialsOf(name: string): string {
 }
 
 /** A person's photo, or their initials on their member color. */
-export function Avatar({ name, src, colorIndex = 1, size = "md", decorative = false, className }: AvatarProps) {
+export function Avatar({
+  name,
+  src,
+  colorIndex = 1,
+  size = "md",
+  decorative = false,
+  muted = false,
+  className,
+}: AvatarProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const image = src && failedSrc !== src ? src : null;
   const a11y = decorative ? { "aria-hidden": true } : { role: "img", "aria-label": name };
 
   return (
     <span
-      className={clsx(styles.avatar, size !== "md" && styles[size], styles[`member${colorIndex}`], className)}
+      className={clsx(
+        styles.avatar,
+        size !== "md" && styles[size],
+        muted ? styles.muted : styles[`member${colorIndex}`],
+        className,
+      )}
       {...a11y}
     >
       {image ? (

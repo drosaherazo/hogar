@@ -42,6 +42,17 @@ const household: { name: string; colorIndex: MemberColorIndex }[] = [
   { name: "Elena Vidal", colorIndex: 8 },
 ];
 
+/** For someone who left or was removed; the app shows "Former member" next to it. */
+export const Muted: Story = {
+  args: { name: "Carla Ruiz", muted: true },
+  render: (args) => (
+    <div style={{ display: "flex", gap: "var(--space-3)" }}>
+      <Avatar {...args} />
+      <Avatar {...args} src={PHOTO} />
+    </div>
+  ),
+};
+
 export const MemberColors: Story = {
   render: (args) => (
     <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>

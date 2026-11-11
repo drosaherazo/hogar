@@ -1,0 +1,65 @@
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as SelectStories from "./Select.stories";
+
+<Meta of={SelectStories} />
+
+<Lang locale="en">
+
+# Select
+
+<Canvas of={SelectStories.Default} />
+<Controls of={SelectStories.Default} />
+
+## What it is and when to use it
+A labelled list to pick one value from: who paid an expense, who sent or received a payment. Use it when there are more options than fit comfortably as cards, or when the choice is secondary. For two to five options that need explaining, use `ChoiceGroup`.
+
+## Why it's designed this way
+- **It is the browser's own select,** styled like `TextField`: the same sunken fill, strong border, 44 px height and focus ring, so forms feel like one piece.
+- **The label is always visible** above it, and a chevron marks it as something to open.
+- **Errors in brick with an icon, above the hint,** exactly like text fields, so the color is never the only sign.
+
+## How it helps the person
+- **Familiar on every device:** phones open their own picker, which is easier to use with a thumb than a custom list.
+- **Consistent forms:** fields that look and behave alike leave attention for the decision, not the controls.
+- **Evidence-backed:** native selects come with full keyboard and screen reader support, and persistent labels and inline errors are WCAG requirements (3.3.1, 3.3.2). The styling is design intent.
+
+## Accessibility
+- A real `<label>` linked to the `<select>`; error and hint linked with `aria-describedby` (error first).
+- `aria-invalid` when there is an error; visible focus ring; the chevron is decorative.
+- Every string (label, options, hint, error) comes in already translated through props.
+
+## Variants
+<Canvas of={SelectStories.WithError} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Desplegable
+
+<Canvas of={SelectStories.Default} />
+<Controls of={SelectStories.Default} />
+
+## Qué es y cuándo usarlo
+Una lista con etiqueta para elegir un valor: quién pagó un gasto, quién hizo o recibió un pago. Úsalo cuando hay más opciones de las que caben cómodamente como tarjetas, o cuando la elección es secundaria. Para entre dos y cinco opciones que necesitan explicación, usa `ChoiceGroup`.
+
+## Por qué está diseñado así
+- **Es el desplegable del propio navegador,** con el estilo de `TextField`: el mismo fondo hundido, borde marcado, 44 px de alto y anillo de foco, así los formularios se sienten de una pieza.
+- **La etiqueta siempre está visible** encima, y un chevron indica que se puede abrir.
+- **Errores en ladrillo con icono, encima de la ayuda,** igual que en los campos de texto, así el color nunca es la única señal.
+
+## Cómo ayuda a la persona
+- **Familiar en cualquier dispositivo:** el móvil abre su propio selector, más fácil de usar con el pulgar que una lista hecha a medida.
+- **Formularios coherentes:** campos que se ven y funcionan igual dejan la atención para la decisión, no para los controles.
+- **Respaldado:** los desplegables nativos traen soporte completo de teclado y lector de pantalla, y las etiquetas persistentes y los errores junto al campo son requisitos WCAG (3.3.1, 3.3.2). El estilo es intención de diseño.
+
+## Accesibilidad
+- Un `<label>` real vinculado al `<select>`; error y ayuda vinculados con `aria-describedby` (primero el error).
+- `aria-invalid` cuando hay error; anillo de foco visible; el chevron es decorativo.
+- Todos los textos (etiqueta, opciones, ayuda, error) llegan ya traducidos por props.
+
+## Variantes
+<Canvas of={SelectStories.WithError} />
+
+</Lang>

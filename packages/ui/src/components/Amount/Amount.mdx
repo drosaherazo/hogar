@@ -1,0 +1,69 @@
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as AmountStories from "./Amount.stories";
+
+<Meta of={AmountStories} />
+
+<Lang locale="en">
+
+# Amount
+
+<Canvas of={AmountStories.Default} />
+<Controls of={AmountStories.Default} />
+
+## What it is and when to use it
+A euro amount, written the way each language writes money: €42.80 in English, 42,80 € in Spanish. Use it wherever an amount stands on its own, such as a list of expenses or a share. Inside a translated sentence ("Bruno owes you €10.70"), the app uses `formatAmount`, the same formatting as a function.
+
+## Why it's designed this way
+- **Money arrives as whole cents** and becomes euros only here, for display. Nothing in Hogar calculates with decimals, so a cent can't drift.
+- **Formatted with `Intl` and the active locale:** the symbol, its position, the decimal comma and the thousands separator follow the person's language, never a hand-built string.
+- **Tabular numbers:** every digit is the same width, so amounts in a column line up and are easy to compare.
+- **No sign, no color:** whether someone owes or is owed is said in words by the text around it, so the figure never has to carry that meaning alone.
+
+## How it helps the person
+- **Familiar at a glance:** money looks the way they write it themselves, so nobody has to translate "42.80" into "42,80" in their head.
+- **Calm comparisons:** aligned figures make it easy to scan a list without hunting for the decimal point.
+- **Evidence-backed:** locale-aware formatting is the standard way to avoid misreading amounts across languages (CLDR, which `Intl` implements). The calm presentation is design intent.
+
+## Accessibility
+- Plain text, so screen readers read the amount with its currency in the page's language.
+- `white-space: nowrap` keeps the number and the symbol together.
+- No copy of its own: the surrounding words come from the app.
+
+## Variants
+<Canvas of={AmountStories.InASentence} />
+<Canvas of={AmountStories.LinedUp} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Importe
+
+<Canvas of={AmountStories.Default} />
+<Controls of={AmountStories.Default} />
+
+## Qué es y cuándo usarlo
+Un importe en euros, escrito como cada idioma escribe el dinero: €42.80 en inglés, 42,80 € en español. Úsalo donde un importe aparezca solo, como una lista de gastos o una parte. Dentro de una frase traducida ("Bruno te debe 10,70 €"), la app usa `formatAmount`, el mismo formato como función.
+
+## Por qué está diseñado así
+- **El dinero llega en céntimos enteros** y solo aquí se convierte en euros, para mostrarlo. En Hogar nada calcula con decimales, así que no se pierde ni un céntimo.
+- **Formateado con `Intl` y el idioma activo:** el símbolo, su posición, la coma decimal y el separador de miles siguen el idioma de la persona, nunca una cadena montada a mano.
+- **Números tabulares:** todas las cifras tienen el mismo ancho, así los importes de una columna se alinean y se comparan fácilmente.
+- **Sin signo ni color:** si alguien debe o le deben lo dice con palabras el texto de alrededor, así la cifra nunca tiene que llevar ese significado sola.
+
+## Cómo ayuda a la persona
+- **Familiar a primera vista:** el dinero se ve como lo escribe la propia persona, así nadie tiene que traducir "42.80" a "42,80" de cabeza.
+- **Comparaciones tranquilas:** las cifras alineadas permiten recorrer una lista sin buscar la coma.
+- **Respaldado:** el formato según el idioma es la forma estándar de evitar malentendidos con importes entre idiomas (CLDR, que implementa `Intl`). La presentación tranquila es intención de diseño.
+
+## Accesibilidad
+- Texto normal, así los lectores de pantalla leen el importe con su moneda en el idioma de la página.
+- `white-space: nowrap` mantiene juntos el número y el símbolo.
+- Sin textos propios: las palabras de alrededor vienen de la app.
+
+## Variantes
+<Canvas of={AmountStories.InASentence} />
+<Canvas of={AmountStories.LinedUp} />
+
+</Lang>
