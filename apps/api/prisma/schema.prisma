@@ -26,6 +26,17 @@ model User {
   invitationsCreated Invitation[]   @relation("InvitationCreatedBy")
   invitationsUsed    Invitation[]   @relation("InvitationUsedBy")
 
+  expensesPaid        Expense[]      @relation("ExpensePaidBy")
+  expensesCreated     Expense[]      @relation("ExpenseCreatedBy")
+  expensesEdited      Expense[]      @relation("ExpenseEditedBy")
+  expensesDeleted     Expense[]      @relation("ExpenseDeletedBy")
+  expenseShares       ExpenseShare[]
+  settlementsSent     Settlement[]   @relation("SettlementFrom")
+  settlementsReceived Settlement[]   @relation("SettlementTo")
+  settlementsCreated  Settlement[]   @relation("SettlementCreatedBy")
+  settlementsEdited   Settlement[]   @relation("SettlementEditedBy")
+  settlementsDeleted  Settlement[]   @relation("SettlementDeletedBy")
+
   @@map("users")
 }
 
@@ -48,6 +59,8 @@ model Household {
 
   memberships Membership[]
   invitations Invitation[]
+  expenses    Expense[]
+  settlements Settlement[]
 
   @@map("households")
 }
@@ -88,6 +101,92 @@ model Invitation {
 
   @@index([householdId])
   @@map("invitations")
+}
+
+/// How an expense's shares were computed.
+enum SplitMethod {
+  /// The household's split: members' weights when the expense was saved.
+  WEIGHTS
+  /// Equally among the chosen people.
+  EQUAL
+  /// An amount per person.
+  EXACT
+}
+
+/// Money one person paid for the household, in euro cents (1 – 10,000,000, enforced by a CHECK).
+/// People are users, not memberships, so the history survives people leaving. Deleting keeps the
+/// row (`deletedAt`) so the history can say who deleted it; deleted expenses never count.
+model Expense {
+  id          String      @id @default(cuid())
+  householdId String      @map("household_id")
+  description String
+  amountCents Int         @map("amount_cents")
+  date        DateTime    @db.Date
+  paidById    String      @map("paid_by_id")
+  splitMethod SplitMethod @map("split_method")
+  createdById String      @map("created_by_id")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  editedById  String?     @map("edited_by_id")
+  editedAt    DateTime?   @map("edited_at")
+  /// Starts at 1 and goes up on every edit; edits and deletes must name the version they saw.
+  version     Int         @default(1)
+  deletedById String?     @map("deleted_by_id")
+  deletedAt   DateTime?   @map("deleted_at")
+
+  household Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  paidBy    User           @relation("ExpensePaidBy", fields: [paidById], references: [id], onDelete: Restrict)
+  createdBy User           @relation("ExpenseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  editedBy  User?          @relation("ExpenseEditedBy", fields: [editedById], references: [id], onDelete: Restrict)
+  deletedBy User?          @relation("ExpenseDeletedBy", fields: [deletedById], references: [id], onDelete: Restrict)
+  shares    ExpenseShare[]
+
+  @@index([householdId, date(sort: Desc), createdAt(sort: Desc), id(sort: Desc)])
+  @@index([householdId, paidById])
+  @@map("expenses")
+}
+
+/// One person's part of an expense. The shares of an expense add up exactly to its amount.
+model ExpenseShare {
+  expenseId   String @map("expense_id")
+  userId      String @map("user_id")
+  /// ≥ 0, enforced by a CHECK.
+  amountCents Int    @map("amount_cents")
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@id([expenseId, userId])
+  @@index([userId])
+  @@map("expense_shares")
+}
+
+/// Money one person gave another to settle up ("payment" on screen). Same lifecycle as expenses.
+model Settlement {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  fromUserId  String    @map("from_user_id")
+  toUserId    String    @map("to_user_id")
+  amountCents Int       @map("amount_cents")
+  date        DateTime  @db.Date
+  createdById String    @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  editedById  String?   @map("edited_by_id")
+  editedAt    DateTime? @map("edited_at")
+  version     Int       @default(1)
+  deletedById String?   @map("deleted_by_id")
+  deletedAt   DateTime? @map("deleted_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  from      User      @relation("SettlementFrom", fields: [fromUserId], references: [id], onDelete: Restrict)
+  to        User      @relation("SettlementTo", fields: [toUserId], references: [id], onDelete: Restrict)
+  createdBy User      @relation("SettlementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  editedBy  User?     @relation("SettlementEditedBy", fields: [editedById], references: [id], onDelete: Restrict)
+  deletedBy User?     @relation("SettlementDeletedBy", fields: [deletedById], references: [id], onDelete: Restrict)
+
+  @@index([householdId, date(sort: Desc), createdAt(sort: Desc), id(sort: Desc)])
+  @@index([householdId, fromUserId])
+  @@index([householdId, toUserId])
+  @@map("settlements")
 }
 
 /// Refresh tokens are stored hashed (SHA-256), never in plain text.
