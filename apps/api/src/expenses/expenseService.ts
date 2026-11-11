@@ -1,10 +1,18 @@
-import { canEditContent, splitAmount, type ExpenseInput, type ExpenseView, type SplitMethod } from "@hogar/shared";
+import { splitAmount, type ExpenseInput, type ExpenseView, type SplitMethod } from "@hogar/shared";
 import type { Database } from "../db";
 import type { Membership, Prisma } from "../generated/prisma/client";
 import { lockHousehold } from "../household/householdService";
-import { badRequest, forbidden, notFound } from "../httpError";
+import { badRequest, notFound } from "../httpError";
 import { assertNotFuture, fromCalendarDate, toCalendarDate } from "./dates";
-import { currentMembers, orderPeople, personRefs, refOf, type Client, type CurrentMember } from "./people";
+import {
+  assertStillEditor,
+  currentMembers,
+  orderPeople,
+  personRefs,
+  refOf,
+  type Client,
+  type CurrentMember,
+} from "./people";
 
 const EXPENSE_INCLUDE = { shares: true } satisfies Prisma.ExpenseInclude;
 type ExpenseRow = Prisma.ExpenseGetPayload<{ include: typeof EXPENSE_INCLUDE }>;
@@ -17,15 +25,6 @@ interface ComputedSplit {
 export interface ExpenseServiceDeps {
   db: Database;
   now?: (() => Date) | undefined;
-}
-
-/**
- * The actor's role may have changed since the request's own check (an admin can demote people
- * at any time), so it is checked again against the members read under the household lock.
- */
-function assertStillEditor(members: readonly CurrentMember[], actor: Membership) {
-  const current = members.find((member) => member.userId === actor.userId);
-  if (!current || !canEditContent(current.role)) throw forbidden("household.read_only");
 }
 
 /**

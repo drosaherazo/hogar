@@ -1,7 +1,8 @@
-import type { PersonRef, Role } from "@hogar/shared";
+import { canEditContent, type PersonRef, type Role } from "@hogar/shared";
 import type { Database } from "../db";
-import type { Prisma } from "../generated/prisma/client";
+import type { Membership, Prisma } from "../generated/prisma/client";
 import { MEMBER_ORDER } from "../household/householdView";
+import { forbidden } from "../httpError";
 
 /** Works both inside and outside a transaction. */
 export type Client = Prisma.TransactionClient | Database;
@@ -30,6 +31,15 @@ export async function currentMembers(client: Client, householdId: string): Promi
     role: row.role,
     weight: row.weight,
   }));
+}
+
+/**
+ * The actor's role may have changed since the request's own check (an admin can demote people
+ * at any time), so it is checked again against the members read under the household lock.
+ */
+export function assertStillEditor(members: readonly CurrentMember[], actor: Membership): void {
+  const current = members.find((member) => member.userId === actor.userId);
+  if (!current || !canEditContent(current.role)) throw forbidden("household.read_only");
 }
 
 /**
