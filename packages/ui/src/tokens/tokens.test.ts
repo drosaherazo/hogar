@@ -44,6 +44,11 @@ describe("contrastRatio", () => {
     expect(contrastRatio("#eb2386", "#eb2386")).toBe(1);
   });
 
+  it("accepts the short #rgb form that CSS minifiers produce (#ffffff becomes #fff)", () => {
+    expect(contrastRatio("#000", "#fff")).toBeCloseTo(21);
+    expect(contrastRatio("#c2126a", "#fff")).toBe(contrastRatio("#c2126a", "#ffffff"));
+  });
+
   it("rejects unsupported formats", () => {
     expect(() => contrastRatio("red", "#ffffff")).toThrow();
   });
