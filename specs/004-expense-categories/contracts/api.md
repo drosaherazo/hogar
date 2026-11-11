@@ -55,11 +55,11 @@ Rules beyond the schema:
 
 ## Changes to expense endpoints
 
-**`ExpenseInput`** (POST and PUT `/api/household/expenses…`) gains `categoryId: string | null`, optional and defaulting to `null`. The `WEIGHTS` split gains `reapply` (R3):
+**`ExpenseInput`** (POST and PUT `/api/household/expenses…`) gains `categoryId: string | null`, optional and defaulting to `null`. The `WEIGHTS` split gains `previewShares`, the shares the form showed (R3):
 
 ```ts
 ExpenseSplitInput =
-  | { method: "WEIGHTS", reapply?: { shares: { userId: string, amountCents: number }[] } }
+  | { method: "WEIGHTS", previewShares?: { userId: string, amountCents: number }[] }
   | { method: "EQUAL", userIds: string[] }
   | { method: "EXACT", shares: { userId: string, amountCents: number }[] }
 ```
@@ -71,9 +71,11 @@ ExpenseSplitInput =
 Rules:
 
 - `categoryId` must be a category of the caller's household, or the request gets 400 `expense.category.not_found`. That includes a category deleted after the form loaded.
-- **POST with `WEIGHTS`** uses `defaultWeights(currentMembers, category)`. If they are all 0 or nobody has weight: 400 `expense.split.no_default` (FR-017).
-- **PUT with `WEIGHTS` and no `reapply`** keeps the saved shares, rescaled if the amount changed (002 R3), whatever the category. This covers "keep the current shares" (FR-023).
-- **PUT with `WEIGHTS` and `reapply`** recomputes with `defaultWeights(currentMembers, newCategory)`. If the result differs from `reapply.shares`, the API answers 409 `expense.split.changed` and saves nothing. If the weights are all 0: 400 `expense.split.no_default`.
+- **Fresh default shares are checked against `previewShares`.** Whenever the API computes default shares with `defaultWeights(currentMembers, category)` + `splitAmount`, it compares them with `previewShares` (same people, same cents). A mismatch answers 409 `expense.split.changed` and saves nothing. All-zero weights, or nobody with weight, answer 400 `expense.split.no_default` (FR-017).
+- **POST with `WEIGHTS`**: `previewShares` is required (400 `request.invalid` without it); fresh shares from the category's (or household's) current split.
+- **PUT from `EQUAL` or `EXACT` to `WEIGHTS`**: `previewShares` is required (400 `request.invalid` without it); fresh shares as on POST.
+- **PUT `WEIGHTS` → `WEIGHTS` without `previewShares`** keeps the saved shares, rescaled if the amount changed (002 R3), whatever the category. This covers "keep the current shares" (FR-023) and every edit that doesn't touch the split.
+- **PUT `WEIGHTS` → `WEIGHTS` with `previewShares`** applies the current split of the expense's (new or same) category, with the check above. This covers "apply the new category's split" (FR-023).
 - Changing only `categoryId` on an `EQUAL` or `EXACT` expense changes nothing else (FR-021).
 
 ## Changes to the history

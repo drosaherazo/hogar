@@ -15,7 +15,8 @@ One shared function, `defaultWeights`, decides which weights apply, and the exis
 Shares stay fixed once saved:
 
 - **Weights and deleted categories**: changing a category's weights, or deleting a category, never touches an existing expense.
-- **Moving an expense to another category**: the edit form shows each person's share before and after. Applying the new split sends the previewed shares (`reapply`), and the API saves them only if it computes exactly the same.
+- **Moving an expense to another category**: the edit form shows each person's share before and after. Applying the new split sends the previewed shares (`previewShares`), and the API saves them only if it computes exactly the same.
+- **Every fresh default split is checked**: adding an expense with the default split, or switching an edited expense to it, also sends `previewShares`, so saved shares always match what the person saw (R3).
 
 The history can be filtered by category, and balances ignore the filter.
 
@@ -59,7 +60,7 @@ The work adds:
 
 - Households of 2–10 people, at most 30 categories each.
 - 5 new endpoints and 4 changed flows.
-- 4 changed pages, 3 new web components and 1 new ui component.
+- 4 changed pages, 5 new web components and 1 new ui component.
 
 ## Constitution Check
 
@@ -67,20 +68,20 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 Checked against constitution **v3.1.0** (amended in PR #23 for this feature; this branch is based on it until it merges).
 
-| Principle                        | Gate                                                                                                                                                                                                                                                                                                                                                                                                                            | Status  |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| I. Small, polished, deployed     | Within the MVP item "expense categories (with an optional own split and a list filter)", added in v3.1.0. Charts and totals per category, archiving, sub-categories and colors are out of scope (spec Assumptions). No new packages. Design pieces beyond plain CRUD are justified in Complexity Tracking.                                                                                                                      | ✅ Pass |
-| II. Domain integrity             | Cents stay `Int`, and every split still goes through `splitAmount` (exact sum, leftover cents to the first members). Balances are untouched and computed. The new rule "Category splits extend the default" is implemented by `defaultWeights` in `packages/shared` (R2). "Shares are fixed when saved" is kept: `SET NULL` on delete, no recalculation on weight changes, and `reapply` only inside a previewed edit (R1, R3). | ✅ Pass |
-| III. Server-side security        | Category writes use `requireAdmin` and reads any membership (R10). Category ids are scoped to the caller's household (404 on writes, 400 `expense.category.not_found` on expenses). Weight lists must match the current memberships exactly. Bodies are validated with the shared Zod schemas. No household id comes from the client.                                                                                           | ✅ Pass |
-| IV. Tested by default            | Unit tests for `defaultWeights`, the name and emoji schemas, and starter-set parity with the migration SQL. Supertest for every cell of the permission matrix in `contracts/api.md`, plus versions, the limit, uniqueness, cascades, `reapply` and the filter. `Checkbox` gets test, axe and story. Cypress covers the flows in `quickstart.md`.                                                                                | ✅ Pass |
-| V. Fully internationalized       | New keys in `household`, `expenses` and `errors` (planned in `contracts/ui.md`), with 9 new error codes. The API returns codes only. Starter names are created in `User.locale` (R4), as the constitution allows for server-produced text. Category names people type are data and are shown as typed. Money and percentages use `Intl`.                                                                                        | ✅ Pass |
-| VI. Joyful and accessible design | Emoji plus name in a neutral badge, with no color per category and the emoji `aria-hidden` (R12). The review notice is a text badge. The money-moving choice is explicit, with a before/after table in words (Story 4). Delete and untick confirmations state their consequences, and focus starts on Cancel. Native checkbox (R11). The `docs/design.md` checklist runs on every changed screen.                               | ✅ Pass |
-| Constraints                      | Allowed dependencies respected: `Checkbox` lives in `ui` with no copy, and `defaultWeights` and the schemas live in `shared`. CSS Modules with tokens. Prisma migration generated, with SQL appended. API code goes in a new domain folder, `src/categories`.                                                                                                                                                                   | ✅ Pass |
-| Workflow                         | Branch `feat/expense-categories`; the constitution was amended first in its own PR (#23) with ADR 0005; spec, plan and tasks are committed with the feature; Conventional Commits; PR with CI.                                                                                                                                                                                                                                  | ✅ Pass |
+| Principle                        | Gate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Status  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| I. Small, polished, deployed     | Within the MVP item "expense categories (with an optional own split and a list filter)", added in v3.1.0. Charts and totals per category, archiving, sub-categories and colors are out of scope (spec Assumptions). No new packages. Design pieces beyond plain CRUD are justified in Complexity Tracking.                                                                                                                                                                           | ✅ Pass |
+| II. Domain integrity             | Cents stay `Int`, and every split still goes through `splitAmount` (exact sum, leftover cents to the first members). Balances are untouched and computed. The new rule "Category splits extend the default" is implemented by `defaultWeights` in `packages/shared` (R2). "Shares are fixed when saved" is kept: `SET NULL` on delete, no recalculation on weight changes, and fresh default shares saved only when they match the preview the person saw (`previewShares`, R1, R3). | ✅ Pass |
+| III. Server-side security        | Category writes use `requireAdmin` and reads any membership (R10). Category ids are scoped to the caller's household (404 on writes, 400 `expense.category.not_found` on expenses). Weight lists must match the current memberships exactly. Bodies are validated with the shared Zod schemas. No household id comes from the client.                                                                                                                                                | ✅ Pass |
+| IV. Tested by default            | Unit tests for `defaultWeights`, the name and emoji schemas, and starter-set parity with the migration SQL. Supertest for every cell of the permission matrix in `contracts/api.md`, plus versions, the limit, uniqueness, cascades, `previewShares` (create, method switch, category change) and the filter. `Checkbox` gets test, axe and story. Cypress covers the flows in `quickstart.md`.                                                                                      | ✅ Pass |
+| V. Fully internationalized       | New keys in `household`, `expenses` and `errors` (planned in `contracts/ui.md`), with 9 new error codes. The API returns codes only. Starter names are created in `User.locale` (R4), as the constitution allows for server-produced text. Category names people type are data and are shown as typed. Money and percentages use `Intl`.                                                                                                                                             | ✅ Pass |
+| VI. Joyful and accessible design | Emoji plus name in a neutral badge, with no color per category; the emoji is `aria-hidden` in labels, and native select options always include the name (R12). The review notice is a text badge. The money-moving choice is explicit, with a before/after table in words (Story 4). Delete and untick confirmations state their consequences, and focus starts on Cancel. Native checkbox (R11). The `docs/design.md` checklist runs on every changed screen.                       | ✅ Pass |
+| Constraints                      | Allowed dependencies respected: `Checkbox` lives in `ui` with no copy, and `defaultWeights` and the schemas live in `shared`. CSS Modules with tokens. Prisma migration generated, with SQL appended. API code goes in a new domain folder, `src/categories`.                                                                                                                                                                                                                        | ✅ Pass |
+| Workflow                         | Branch `feat/expense-categories`; the constitution was amended first in its own PR (#23) with ADR 0005; spec, plan and tasks are committed with the feature; Conventional Commits; PR with CI.                                                                                                                                                                                                                                                                                       | ✅ Pass |
 
 **Post-design re-check (after Phase 1):** ✅ Still passing. Design added two refinements, and both strengthen Principle II:
 
-- **`reapply` carries the previewed shares (R3)**: a concurrent weight change can't save shares the person never saw.
+- **`previewShares` carries the previewed shares (R3)**: a concurrent weight change can't save shares the person never saw. After `/speckit-analyze` (2026-11-12) the check covers every fresh default split: create, switching to the default split, and category changes.
 - **The saved-proportions label becomes neutral (R13)**: after "keep the current shares", the label no longer claims the proportions came from the category.
 
 Nothing was relaxed.
@@ -111,7 +112,7 @@ packages/shared/src/
 ├── categories.test.ts       # graphemes (flags, skin tones, ZWJ), names, starter parity with migration SQL
 ├── split.ts                 # + defaultWeights(members, category)
 ├── split.test.ts            # + defaultWeights cases
-├── expenses.ts              # + categoryId on input, WEIGHTS.reapply, category on views, activity `category` query
+├── expenses.ts              # + categoryId on input, WEIGHTS.previewShares, category on views, activity `category` query
 ├── expenses.test.ts
 ├── errors.ts                # + 9 error codes
 └── index.ts                 # re-exports
@@ -123,7 +124,7 @@ apps/api/
 │   ├── categoryService.ts   # list/create/rename/updateSplit/remove, household lock, versions, limit
 │   ├── categoryView.ts      # CategoryView (shareBps, needsReview, expenseCount)
 │   └── categoriesRouter.ts  # /api/household/categories
-├── src/expenses/expenseService.ts   # categoryId check, defaultWeights for WEIGHTS, reapply + 409
+├── src/expenses/expenseService.ts   # categoryId check, defaultWeights for WEIGHTS, previewShares + 409
 ├── src/expenses/ledgerService.ts    # category on activity items, `category` filter
 ├── src/household/householdService.ts   # create seeds STARTER_CATEGORIES in User.locale
 ├── src/household/invitationService.ts  # accept adds category weights
@@ -131,7 +132,7 @@ apps/api/
 └── test/
     ├── testApp.ts           # truncate the new tables
     ├── categories.test.ts   # CRUD, split, permissions, versions, limit, uniqueness, starter set
-    ├── expenses.test.ts     # + category on create/edit, defaultWeights by category, reapply, delete → NULL
+    ├── expenses.test.ts     # + category on create/edit, defaultWeights by category, previewShares, delete → NULL
     ├── activity.test.ts     # + filter
     └── members.test.ts      # + join adds weights / notice, leave cascades
 
@@ -166,13 +167,13 @@ apps/web/cypress/e2e/categories.cy.ts
 
 ## Delivery order (each slice is shippable and tested)
 
-1. **Shared**: category schemas, `STARTER_CATEGORIES`, `defaultWeights`, expense schema changes, 9 error codes with `en`/`es` messages.
+1. **Shared**: category schemas, `STARTER_CATEGORIES`, `defaultWeights`, expense schema changes, 9 error codes with `en`/`es` messages; then `previewShares` checked on create and on switching to the default split (API, test helpers, form).
 2. **Data**: Prisma models, migration with `CHECK`, index and backfill; test truncation; backfill checked by hand (quickstart §6).
 3. **UI component**: `Checkbox`.
 4. **US1 · Categorize**: starter set on household create; `GET /categories`; `categoryId` on expense create and edit; category on views and activity; form select; labels on rows and details.
 5. **US2 · Manage**: `POST`/`PATCH`/`DELETE` categories with versions, limit and uniqueness; Categories section and dialog (name and emoji); delete confirmation with the count.
 6. **US3 · Own split**: `PUT …/split`; `defaultWeights` in create; join adds weights; `needsReview`; `WeightsEditor` extraction; the box, editor and untick confirmation; form split label and preview by category; all-zero category handling.
-7. **US4 · Move between categories**: `reapply` with the 409 check; `CategoryChangeDialog`; neutral "when it was added" label.
+7. **US4 · Move between categories**: `previewShares` on category changes with the 409 check; `CategoryChangeDialog`; neutral "when it was added" label.
 8. **US5 · Filter**: activity `category` query; filter select bound to the URL; empty filtered states.
 9. **E2E and polish**: Cypress flows, the design checklist, the i18n key table regenerated from JSON, README status row.
 
@@ -183,6 +184,6 @@ No constitution violations. Four design pieces go beyond the simplest CRUD; each
 | Addition                                                       | Why needed                                                                                                                 | Simpler alternative rejected because                                                                                                   |
 | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `CategoryWeight` table keyed by membership                     | FR-013, FR-018, FR-019: per-member weights that follow people joining and leaving without leaving stale data               | A JSON column can't cascade on leave or enforce 0–100 per entry; keying by user leaves weights for former members                      |
-| `reapply` with the previewed shares on `PUT` (409 on mismatch) | FR-022–FR-024 and SC-005: one edit, two outcomes chosen by the person, and saved shares must match the preview to the cent | Always recomputing breaks "keep the shares"; sending `EXACT` loses rescaling on later amount fixes; a version can't see weight changes |
+| `previewShares` on every fresh default split (409 on mismatch) | FR-022–FR-024 and SC-005: one edit, two outcomes chosen by the person, and saved shares must match the preview to the cent | Always recomputing breaks "keep the shares"; sending `EXACT` loses rescaling on later amount fixes; a version can't see weight changes |
 | Starter-set backfill inside the migration                      | FR-002: existing households receive the set exactly once, in a sensible language                                           | A separate script can be forgotten on deploy; lazy creation on read is a hidden write with races                                       |
 | `Checkbox` in `packages/ui`                                    | FR-011: the spec and the user name a single box, and `ui` has no checkbox component                                        | A local checkbox in the web skips the axe test, story and docs the constitution requires; `ChoiceGroup` turns one box into two radios  |

@@ -26,7 +26,7 @@ No new routes. Changes live in existing pages:
     - Unticking a category that has saved weights opens a confirmation ("Rent will follow the household's split again. Its own weights will be discarded.").
   - **Actions**: Save, Cancel and Delete category.
   - **Saving**: up to two requests in order, `PATCH` (name and emoji) and `PUT …/split`, only for what changed. Each uses the latest `version`.
-- **Delete confirmation**: names the category and states the count and the safety ("12 expenses will be left without a category. Nobody's share will change." / "No expenses use it."). Focus starts on Cancel.
+- **Delete confirmation**: names the category and states the count and the safety ("12 expenses will be left without a category. Nobody's share will change." / "No expenses use it."). When the category has its own split, it also says its weights will be discarded. Focus starts on Cancel.
 - **Add**: the same dialog without Delete. A new category always starts by following the household.
 - **At 30 categories**: "Add category" is disabled, with a visible note explaining the limit.
 - **No categories left**: an `EmptyState` inviting admins to add one.
@@ -38,6 +38,7 @@ No new routes. Changes live in existing pages:
   - "The household's split" when there is no category or the category follows the household.
   - "Rent's split" when the category has its own split.
   - The preview below it updates as soon as the category changes (FR-015).
+- **Previewed shares**: whenever the form saves fresh default shares (adding an expense with `WEIGHTS`, or switching an `EQUAL` or `EXACT` expense to `WEIGHTS`), it sends the shares it showed as `previewShares` (R3). On 409 `expense.split.changed`, it keeps every field, refetches the household and categories, shows the new preview and the error message, and the person saves again.
 - **All-zero split**: when the chosen category has its own split and every weight is 0, `WEIGHTS` is not offered. The form shows the `noDefaultCategory` message with a link to `/household#categories` (FR-017).
 - **Editing**:
   - The saved-proportions label becomes neutral (R13): "The split when it was added (Ana 75 %, Bruno 25 %)".
@@ -47,7 +48,7 @@ No new routes. Changes live in existing pages:
   - **Body**: a table with one row per person, showing their share before and after ("Ana: €675.00 → €450.00"), in words and numbers, never color alone.
   - **Choice** (`ChoiceGroup`): "Apply Rent's split" (selected) or "Keep the current shares".
   - **If the new category has no default split**: only "Keep the current shares" is offered, with a note and a pointer to choose another way to split (Story 4 #5).
-  - **Confirm**: "Apply" sends `reapply` with the previewed shares; "Keep" sends no `reapply`.
+  - **Confirm**: "Apply" sends `previewShares` with the previewed shares; "Keep" sends no `previewShares`.
   - **Errors**: on 409 `expense.split.changed`, the dialog reopens with the new figures and the error message.
 - **Equal and exact splits**: changing only the category never opens the dialog (FR-021).
 - **Deleted category**: on 400 `expense.category.not_found`, the form keeps every field, refetches the categories, resets the category to "No category" and shows the error next to the select.
@@ -105,6 +106,7 @@ Final keys are regenerated from the JSON at the end of implementation. `en` is t
 | `household` | `settings.categories.delete.title`               | Delete {{name}}?                                                                                                          | ¿Borrar {{name}}?                                                                                                     |
 | `household` | `settings.categories.delete.used_one` / `_other` | {{count}} expense will be left without a category. Nobody's share will change.                                            | {{count}} gasto se quedará sin categoría. La parte de nadie cambia.                                                   |
 | `household` | `settings.categories.delete.unused`              | No expenses use it.                                                                                                       | Ningún gasto la usa.                                                                                                  |
+| `household` | `settings.categories.delete.ownSplit`            | Its own split will be discarded too.                                                                                      | Su reparto propio también se descartará.                                                                              |
 | `expenses`  | `form.category.label`                            | Category                                                                                                                  | Categoría                                                                                                             |
 | `expenses`  | `form.category.none`                             | No category                                                                                                               | Sin categoría                                                                                                         |
 | `expenses`  | `form.split.weightsCategory`                     | {{name}}'s split                                                                                                          | Reparto de {{name}}                                                                                                   |

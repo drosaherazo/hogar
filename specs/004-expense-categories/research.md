@@ -26,25 +26,30 @@ Phase 0 decisions. Each one names what was chosen, why, and what else was consid
 
 **Alternatives considered**: _Let the API return a preview endpoint_ (`POST /expenses/preview`): one more round trip per keystroke for something the web can compute exactly.
 
-## R3 · Changing an expense's category: an explicit "reapply" with the previewed shares
+## R3 · Fresh default shares always carry the previewed shares (`previewShares`)
 
-**Decision**: The `WEIGHTS` split input gains an optional `reapply` field: `{ method: "WEIGHTS", reapply?: { shares: { userId, amountCents }[] } }`.
+**Decision**: The `WEIGHTS` split input gains a `previewShares` field: `{ method: "WEIGHTS", previewShares?: { userId, amountCents }[] }`, the shares the form showed. Whenever the API computes **fresh** default shares, it recomputes them with `defaultWeights` + `splitAmount` from the current members, weights and category, and saves them only if they equal `previewShares` (same people, same cents). The three paths:
 
-- **Without `reapply`** (today's behavior, research 002 R3): an edited default-split expense keeps its saved shares, rescaled if the amount changed. This covers "keep the current shares" and every edit that doesn't touch the category.
-- **With `reapply`**: the API recomputes the shares from the current default weights of the expense's (new) category with `defaultWeights` + `splitAmount`, compares them with `reapply.shares`, and saves them only if they match. Otherwise it answers 409 `expense.split.changed` and saves nothing.
-- On **create**, `WEIGHTS` always uses the category's current weights, so `reapply` is ignored.
+- **Create with `WEIGHTS`**: `previewShares` is required.
+- **Edit from `EQUAL` or `EXACT` to `WEIGHTS`**: `previewShares` is required.
+- **Edit `WEIGHTS` → `WEIGHTS`**: optional. With it, the API applies the current split of the expense's (new or same) category: this is "apply the new category's split". Without it, the expense keeps its saved shares, rescaled if the amount changed (research 002 R3): this is "keep the current shares" and every edit that doesn't touch the split.
+
+A missing required `previewShares` gives 400 `request.invalid`; a mismatch gives 409 `expense.split.changed` and saves nothing; all-zero weights give 400 `expense.split.no_default`.
 
 **Rationale**:
 
-- FR-022–FR-024 need two outcomes from the same edit, so the client must say which one the person chose. Defaulting to "keep" means older clients and every other edit behave exactly as today.
-- Sending the previewed shares closes the one gap in FR-023: if an admin changes the category's weights between the preview and the save, the person would otherwise save shares they never saw. The 409 makes the form refetch and show the new preview, like `expense.changed` already does.
-- The web only sends `reapply` when the before/after dialog was shown and "apply" was chosen. When the new category gives the same shares (FR-024), it sends no `reapply`, and keeping the saved shares gives the same result.
+- FR-022–FR-024 need two outcomes from the same edit, so the client must say which one the person chose; the presence of `previewShares` on a `WEIGHTS` → `WEIGHTS` edit is that choice.
+- Principle II says shares change only when someone sees the new shares before saving. If an admin changes the weights (household or category) or the members change between the preview and the save, the person would otherwise save shares they never saw. Checking every fresh computation, not only category changes, gives one rule everywhere: what is saved is what was shown (SC-005). The 409 makes the form refetch and show the new preview, like `expense.changed` already does.
+- Making it required where shares are fresh means the guarantee doesn't depend on a client remembering to send it. The web is the only client and changes in the same PR.
+- The web sends `previewShares` on create, when switching to the default split, and when the before/after dialog was shown and "apply" was chosen. When the new category gives the same shares (FR-024), it sends nothing, and keeping the saved shares gives the same result.
 
 **Alternatives considered**:
 
 - _Always recompute when the category changes_: breaks "tidy the history without moving balances" (Story 4).
 - _Send the chosen shares as `EXACT`_: saves the right cents, but the expense would stop being a default-split expense, so a later amount correction would no longer rescale it (002 R3).
 - _A category version in the request_: catches changes to the category but not to the household's weights or members, which also change the result.
+- _Check only category changes, as first planned_: leaves the same race on create and when switching to the default split, where the shares are just as fresh. Rejected in the analysis review (2026-11-12).
+- _Optional everywhere_: compatible with older clients, but the guarantee would hold only when the client sends it.
 
 ## R4 · Starter set: shared constants, localized with `User.locale`, backfilled in the migration
 
@@ -144,7 +149,7 @@ Phase 0 decisions. Each one names what was chosen, why, and what else was consid
 
 ## R12 · How categories look
 
-**Decision**: Wherever a category appears (history rows, details, form, filter), it shows as an emoji followed by the name, in a neutral `Badge`. The emoji is `aria-hidden` and the name is always present (FR-032). There is no color per category.
+**Decision**: Wherever a category appears (history rows, details, form, filter), it shows as an emoji followed by the name. In labels (rows, details, settings, the active filter) it is a neutral `Badge` whose emoji is `aria-hidden`. In the form and filter selects, which are native `<select>` elements, each option reads "🏠 Rent": an `<option>` can't hide part of its text, so screen readers announce the emoji's name before the category name. The name is always present (FR-032). There is no color per category.
 
 **Rationale**: the constitution allows one vivid brand color and requires that color never carries meaning on its own. The emoji brings the joy and quick recognition, and the name carries the meaning.
 
@@ -159,7 +164,7 @@ Phase 0 decisions. Each one names what was chosen, why, and what else was consid
 **Decision**:
 
 - **Shared (Vitest)**: `defaultWeights` (no category, follows household, own split, all-zero, former members ignored), the category schemas (name, emoji graphemes such as flags, skin tones and ZWJ sequences, plus invalid text), and en/es parity of `STARTER_CATEGORIES`.
-- **API (Supertest)**: every category endpoint × the permission matrix in `contracts/api.md`; creating a household seeds the starter set in the creator's locale; uniqueness, limit and versions; joining adds weights and raises the notice; leaving removes them; deleting a category leaves expenses uncategorized with identical shares and balances; create and edit with a category; `reapply` match and 409; the activity filter.
+- **API (Supertest)**: every category endpoint × the permission matrix in `contracts/api.md`; creating a household seeds the starter set in the creator's locale; uniqueness, limit and versions; joining adds weights and raises the notice; leaving removes them; deleting a category leaves expenses uncategorized with identical shares and balances; create and edit with a category; `previewShares` on create, on switching to the default split and on category changes (match, missing → 400, mismatch → 409); the activity filter.
 - **UI and web**: the `Checkbox` component (test, axe, story); the categories section, form, dialog and filter tested with Testing Library + MSW.
 - **Cypress**: the three flows in `quickstart.md`, with a second user simulated through API calls.
 - **Backfill**: verified by hand once against a copy of the database (`quickstart.md`), because migrations have already run before the test suite starts.

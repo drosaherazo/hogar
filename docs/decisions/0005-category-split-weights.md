@@ -31,5 +31,6 @@ The expense categories feature (`specs/004-expense-categories`) lets people labe
 - The default split of an expense depends on its category, so the expense form must show which split applies and each person's percentage before saving.
 - Category weights are stored data with their own permission and concurrency checks, and must stay consistent with membership changes.
 - Changing an expense's category is the only edit where a label can move money; it is always previewed and explicit.
+- Because the default split can now come from a category whose weights an admin may change at any moment, every request that saves fresh default shares (adding an expense, switching an edited expense to the default split, or applying a new category's split) carries the shares the person was shown, and the API refuses to save if its own computation differs (`specs/004-expense-categories/research.md`, R3).
 - Totals and charts per category are left to the budgets and charts phase (v1.2), which can build on the category stored on each expense.
 - The constitution's Principle II and MVP scope were amended to v3.1.0 to include this.

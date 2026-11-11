@@ -116,7 +116,7 @@ Bruno wants to see what the dog has cost lately. He filters the expense list by 
 
 - A category deleted while someone has an expense form open with it selected: saving is refused with an explanation, the rest of what they typed is kept, and they choose again.
 - Two admins editing the same category at once: the second save is refused with an explanation that it changed meanwhile, and they see the latest version before trying again.
-- Editing an expense without touching its category keeps today's rule: an expense recorded with the default split keeps the proportions it was recorded with, and the form describes them as they were ("Rent's split when it was added: Ana 50 %, Bruno 50 %"), not as they are now.
+- Editing an expense without touching its category keeps today's rule: an expense recorded with the default split keeps the proportions it was recorded with, and the form describes them as they were, without claiming where they came from ("The split when it was added: Ana 50 %, Bruno 50 %"), not as they are now.
 - An expense whose shares were kept when it moved to another category shows the new category together with the proportions it was recorded with; its category alone does not imply its split.
 - Switching an expense from "equally" or "exact amounts" to the default split uses the current split of its category (or the household's, if it has none or the category follows the household).
 - A deleted category's name can be used again for a new category; the expenses of the old one stay without a category.
@@ -197,7 +197,7 @@ Bruno wants to see what the dog has cost lately. He filters the expense list by 
 - **SC-002**: An admin can give a category its own split in under one minute from opening the household settings.
 - **SC-003**: In acceptance tests, 100 % of expenses split with a category's own weights have shares that add up exactly to their amount, including amounts that cannot be divided evenly (0 cents of difference).
 - **SC-004**: In acceptance tests, renaming or deleting a category, ticking or unticking its box, and changing its weights or the household's change 0 shares and 0 balances of expenses that are already saved.
-- **SC-005**: In acceptance tests, every change of category that would alter someone's share shows each person's share before and after, and the saved shares match the preview to the cent.
+- **SC-005**: In acceptance tests, every change of category that would alter someone's share shows each person's share before and after, and every expense saved with a freshly computed default split (new, switched to the default split, or moved to another category with its split applied) has shares that match the preview to the cent.
 - **SC-006**: A member can list the expenses of one category in at most two actions from the expense list.
 - **SC-007**: In acceptance tests, 100 % of attempts by a MEMBER or GUEST to manage categories or their split, and by a GUEST or someone from another household to categorize an expense, are refused.
 - **SC-008**: Every screen of the feature works in English and Spanish, in light and dark themes, and passes automated accessibility checks.
