@@ -86,12 +86,13 @@ engineering quality in a portfolio.
 **Rationale:** bilingual from day one keeps copy out of logic and makes the app usable by the
 people it is built for.
 
-### VI. Warm and Accessible Design
+### VI. Joyful and Accessible Design
 
 - Before any change that touches the interface, `docs/design.md` is read and its checklist is run
   before calling the task done. Conflicts with the guide are raised, not ignored.
-- The goal is **warmth and comfort**: the interface and its copy lower tension around money and
-  chores ("Ana owes you €12.50" / "Ana te debe 12,50 €").
+- The goal is **joyful and approachable**: a young, energetic interface with one vivid brand color
+  used deliberately, while the interface and its copy still lower tension around money and chores
+  ("Ana owes you €12.50" / "Ana te debe 12,50 €").
 - Styles use only semantic tokens (`--color-*`, `--space-*`…), never primitives or raw values.
 - Everything works in light and dark themes with AA contrast; color never carries meaning on its
   own. The brand palette applies everywhere, Storybook included.
@@ -99,8 +100,8 @@ people it is built for.
 - Every component documents, in bilingual Storybook docs, why it is designed that way and how it
   helps the person using it.
 
-**Rationale:** money and chores are emotionally loaded topics; a calm, inclusive interface is the
-product's main differentiator.
+**Rationale:** money and chores are emotionally loaded topics; a joyful, approachable and inclusive
+interface makes them feel lighter and is the product's main differentiator.
 
 ## Technology and Architecture Constraints
 
@@ -155,4 +156,4 @@ product's main differentiator.
   bump: MAJOR for removed or redefined principles, MINOR for new principles or sections, PATCH for
   clarifications.
 
-**Version**: 2.0.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-10
+**Version**: 3.0.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-11
