@@ -31,7 +31,7 @@ Expected: everything green. In particular:
 ```bash
 grep -rnE -- '--(sand|earth|terracotta|sage|brick)-|#(a9502f|c4643f|e5906a|fffdf9|fbf7f2|1c1714)' \
   packages/ui/src packages/ui/.storybook apps/web/src apps/web/public apps/web/index.html docs/design.md
-grep -rniE 'terracotta|terracota|\bsand\b|arena|\bsage\b|salvia|brick|ladrillo|warmth|calidez' \
+grep -rniE 'terracotta|terracota|\bsand\b|\barena\b|\bsage\b|salvia|\bbrick\b|ladrillo|warmth|calidez' \
   packages/ui/src apps/web/src README.md --include='*.mdx' --include='*.tsx' --include='README.md'
 ```
 

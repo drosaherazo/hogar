@@ -44,51 +44,11 @@
   --coral-700: #b8400f;
   --coral-950: #3a180a;
 
-  /* Sand: warm neutrals (backgrounds, borders, text) */
-  --sand-50: #fbf7f2;
-  --sand-0: #fffdf9;
-  --sand-100: #f3ebdf;
-  --sand-200: #e8dccb;
-  --sand-400: #97846f;
-  --sand-600: #6b5a4c;
-  --sand-900: #2e241d;
-
-  /* Earth: dark warm neutrals (dark mode) */
-  --earth-950: #1c1714;
-  --earth-900: #28211c;
-  --earth-800: #332a24;
-  --earth-700: #463a30;
-  --earth-500: #8a7765;
-  --earth-300: #bfae9c;
-  --earth-100: #f3eae0;
-
-  /* Terracotta: primary accent */
-  --terracotta-100: #f6dccf;
-  --terracotta-200: #eeab8b;
-  --terracotta-300: #e5906a;
-  --terracotta-500: #c4643f;
-  --terracotta-600: #a9502f;
-  --terracotta-700: #8c4126;
-
-  /* Sage: secondary, positive */
-  --sage-100: #e3ece1;
-  --sage-300: #a9c7a8;
-  --sage-700: #4a634c;
-  --sage-900: #2f3f30;
-
-  /* Brick: negative, error */
-  --brick-100: #f6dfda;
-  --brick-300: #ee9a8b;
-  --brick-700: #9b3a2f;
-  --brick-900: #4a2620;
-
   /* Amber: warning */
   --amber-50: #fdf3d3;
-  --amber-950: #33270a;
-  --amber-100: #f8ead0;
   --amber-300: #f5c542;
   --amber-700: #8a5a06;
-  --amber-900: #43300f;
+  --amber-950: #33270a;
 
   /* Members (light): same luminance, dark text, no pink or magenta so no one looks like the brand or a debt */
   --member-light-1: #94d1c8;
