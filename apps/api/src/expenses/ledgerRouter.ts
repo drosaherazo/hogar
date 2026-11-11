@@ -1,4 +1,4 @@
-import { activityQuerySchema, type ActivityPage } from "@hogar/shared";
+import { activityQuerySchema, type ActivityPage, type BalancesView } from "@hogar/shared";
 import { Router } from "express";
 import type { Database } from "../db";
 import { badRequest } from "../httpError";
@@ -19,6 +19,12 @@ export function createLedgerRouter(db: Database, ledger: LedgerService) {
     if (!query.success) throw badRequest("request.invalid");
     const membership = membershipOf(req);
     const body: ActivityPage = await ledger.activity(membership.householdId, membership.userId, query.data);
+    res.json(body);
+  });
+
+  router.get("/balances", member, async (req, res) => {
+    const membership = membershipOf(req);
+    const body: BalancesView = await ledger.balances(membership.householdId, membership.userId);
     res.json(body);
   });
 

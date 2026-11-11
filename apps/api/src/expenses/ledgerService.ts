@@ -1,9 +1,19 @@
-import { viewerPart, type ActivityItem, type ActivityPage, type ActivityQuery, type PersonRef } from "@hogar/shared";
+import {
+  netBalances,
+  suggestSettlements,
+  viewerPart,
+  type ActivityItem,
+  type ActivityPage,
+  type ActivityQuery,
+  type BalancesView,
+  type PersonBalance,
+  type PersonRef,
+} from "@hogar/shared";
 import type { Database } from "../db";
 import type { Prisma } from "../generated/prisma/client";
 import { badRequest } from "../httpError";
 import { fromCalendarDate, toCalendarDate } from "./dates";
-import { currentMembers, personRefs, refOf } from "./people";
+import { currentMembers, orderPeople, personRefs, refOf } from "./people";
 
 /** Where a page ends: the sort key of its last item. */
 interface Cursor {
@@ -136,6 +146,51 @@ export function createLedgerService({ db }: LedgerServiceDeps) {
 
       const last = page.at(-1);
       return { items, nextCursor: merged.length > query.limit && last ? encodeCursor(last.row) : null };
+    },
+
+    /**
+     * Everyone's balance, computed now from the household's live expenses and payments (never
+     * stored), plus the payments that would settle them. Four grouped sums, whatever the history
+     * length. Current members always appear, even at zero; former members only while they still
+     * owe or are owed something.
+     */
+    async balances(householdId: string, viewerId: string): Promise<BalancesView> {
+      const live = { householdId, deletedAt: null };
+      const [paid, owed, sent, received, members] = await Promise.all([
+        db.expense.groupBy({ by: ["paidById"], where: live, _sum: { amountCents: true } }),
+        db.expenseShare.groupBy({ by: ["userId"], where: { expense: live }, _sum: { amountCents: true } }),
+        db.settlement.groupBy({ by: ["fromUserId"], where: live, _sum: { amountCents: true } }),
+        db.settlement.groupBy({ by: ["toUserId"], where: live, _sum: { amountCents: true } }),
+        currentMembers(db, householdId),
+      ]);
+      const net = netBalances({
+        paid: new Map(paid.map((row) => [row.paidById, row._sum.amountCents ?? 0])),
+        owed: new Map(owed.map((row) => [row.userId, row._sum.amountCents ?? 0])),
+        sent: new Map(sent.map((row) => [row.fromUserId, row._sum.amountCents ?? 0])),
+        received: new Map(received.map((row) => [row.toUserId, row._sum.amountCents ?? 0])),
+      });
+
+      const memberIds = members.map((member) => member.userId);
+      const formerWithBalance = [...net]
+        .filter(([userId, cents]) => cents !== 0 && !memberIds.includes(userId))
+        .map(([userId]) => userId);
+      const people = [...memberIds, ...formerWithBalance];
+      const refs = await personRefs(db, members, people);
+      const balances: PersonBalance[] = orderPeople(
+        people.map((userId) => ({ person: refOf(refs, userId), balanceCents: net.get(userId) ?? 0 })),
+        (entry) => entry.person,
+        members,
+      );
+
+      const suggestions = suggestSettlements(
+        balances.map((entry) => ({ userId: entry.person.userId, balanceCents: entry.balanceCents })),
+      ).map((transfer) => ({
+        from: refOf(refs, transfer.fromUserId),
+        to: refOf(refs, transfer.toUserId),
+        amountCents: transfer.amountCents,
+      }));
+
+      return { balances, suggestions, myBalanceCents: net.get(viewerId) ?? 0 };
     },
   };
 }
