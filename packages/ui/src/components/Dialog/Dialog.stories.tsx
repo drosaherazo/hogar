@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { storyText } from "../../docs/blocks/storyLocale";
 import { Button } from "../Button/Button";
 import { TextField } from "../TextField/TextField";
@@ -10,6 +10,9 @@ const meta = {
   component: Dialog,
   args: { open: false, onOpenChange: () => {}, title: "", closeLabel: "" },
 } satisfies Meta<typeof Dialog>;
+
+// Stories start closed, like in the app: a dialog that opened on load would pull keyboard focus
+// away from the Storybook sidebar or the docs page and trap it inside the modal.
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -50,6 +53,8 @@ export const Confirmation: Story = {
 export const WithForm: Story = {
   render: function Render(args, { globals }) {
     const [open, setOpen] = useState(false);
+    // In a form, focus starts in the first field so the person can type right away.
+    const field = useRef<HTMLInputElement>(null);
     const t = (en: string, es: string) => storyText(globals, { en, es });
     return (
       <>
@@ -60,6 +65,7 @@ export const WithForm: Story = {
           onOpenChange={setOpen}
           title={t("Create your household", "Crea tu hogar")}
           closeLabel={t("Close", "Cerrar")}
+          initialFocus={field}
           actions={
             <>
               <Button variant="secondary" onClick={() => setOpen(false)}>
@@ -70,6 +76,7 @@ export const WithForm: Story = {
           }
         >
           <TextField
+            ref={field}
             label={t("Household name", "Nombre del hogar")}
             hint={t("You can change it later.", "Puedes cambiarlo más adelante.")}
           />
