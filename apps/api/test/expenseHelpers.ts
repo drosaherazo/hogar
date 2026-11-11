@@ -1,0 +1,104 @@
+import {
+  balancesViewSchema,
+  expenseResponseSchema,
+  settlementResponseSchema,
+  type BalancesView,
+  type ExpenseInput,
+  type ExpenseView,
+  type HouseholdView,
+  type SettlementInput,
+  type SettlementView,
+} from "@hogar/shared";
+import request from "supertest";
+import { addMember, createHousehold } from "./householdHelpers";
+import { bruno, carla, db, signIn, type createTestApp, type SignedIn } from "./testApp";
+
+type App = ReturnType<typeof createTestApp>["app"];
+export type Member = SignedIn & { membershipId: string };
+
+/** The test clock's day (`TestClock` starts on 2026-10-26 at 10:00 UTC). */
+export const TODAY = "2026-10-26";
+
+/**
+ * A household with Ana (ADMIN) and Bruno (MEMBER), weights 3 and 1 unless told otherwise, and
+ * optionally Carla (GUEST, weight 0). Join times are set explicitly so member order (and so who
+ * gets leftover cents) is always Ana, Bruno, Carla.
+ */
+export async function homeWith(app: App, options: { weights?: [number, number]; withGuest?: boolean } = {}) {
+  const [anaWeight, brunoWeight] = options.weights ?? [3, 1];
+  const anaSession = await signIn(app);
+  const household: HouseholdView = await createHousehold(app, anaSession);
+  const ana: Member = { ...anaSession, membershipId: household.myMembershipId };
+  await db.membership.update({ where: { id: ana.membershipId }, data: { weight: anaWeight } });
+
+  const brunoMember: Member = await addMember(app, household.id, bruno, "MEMBER");
+  await db.membership.update({
+    where: { id: brunoMember.membershipId },
+    data: { weight: brunoWeight, joinedAt: new Date("2026-10-26T10:00:01Z") },
+  });
+
+  let carlaGuest: Member | undefined;
+  if (options.withGuest) {
+    carlaGuest = await addMember(app, household.id, carla, "GUEST");
+    await db.membership.update({
+      where: { id: carlaGuest.membershipId },
+      data: { joinedAt: new Date("2026-10-26T10:00:02Z") },
+    });
+  }
+  return { household, ana, bruno: brunoMember, carla: carlaGuest };
+}
+
+export function postExpense(app: App, who: SignedIn, input: Partial<ExpenseInput>) {
+  const body: ExpenseInput = {
+    description: "Groceries",
+    amountCents: 4280,
+    paidById: who.user.id,
+    date: TODAY,
+    split: { method: "WEIGHTS" },
+    ...input,
+  };
+  return request(app).post("/api/household/expenses").set("Authorization", who.auth).send(body);
+}
+
+/** Records an expense through the API (household split, paid by `who`, today) and returns it. */
+export async function addExpense(app: App, who: SignedIn, input: Partial<ExpenseInput> = {}): Promise<ExpenseView> {
+  const res = await postExpense(app, who, input);
+  if (res.status !== 201) throw new Error(`addExpense failed: ${res.status} ${JSON.stringify(res.body)}`);
+  return expenseResponseSchema.parse(res.body).expense;
+}
+
+export function postSettlement(
+  app: App,
+  who: SignedIn,
+  input: Partial<SettlementInput> & Pick<SettlementInput, "fromUserId" | "toUserId">,
+) {
+  const body: SettlementInput = { amountCents: 1000, date: TODAY, ...input };
+  return request(app).post("/api/household/settlements").set("Authorization", who.auth).send(body);
+}
+
+/** Records a payment through the API and returns it. */
+export async function addSettlement(
+  app: App,
+  who: SignedIn,
+  input: Partial<SettlementInput> & Pick<SettlementInput, "fromUserId" | "toUserId">,
+): Promise<SettlementView> {
+  const res = await postSettlement(app, who, input);
+  if (res.status !== 201) throw new Error(`addSettlement failed: ${res.status} ${JSON.stringify(res.body)}`);
+  return settlementResponseSchema.parse(res.body).settlement;
+}
+
+export async function balancesOf(app: App, who: SignedIn): Promise<BalancesView> {
+  const res = await request(app).get("/api/household/balances").set("Authorization", who.auth);
+  if (res.status !== 200) throw new Error(`balancesOf failed: ${res.status} ${JSON.stringify(res.body)}`);
+  return balancesViewSchema.parse(res.body);
+}
+
+/** `{ userId: cents }` of everyone in the balances, for compact assertions. */
+export function balanceByUser(view: BalancesView): Record<string, number> {
+  return Object.fromEntries(view.balances.map((entry) => [entry.person.userId, entry.balanceCents]));
+}
+
+/** `{ userId: cents }` of an expense's shares. */
+export function sharesByUser(expense: ExpenseView): Record<string, number> {
+  return Object.fromEntries(expense.split.shares.map((share) => [share.person.userId, share.amountCents]));
+}
