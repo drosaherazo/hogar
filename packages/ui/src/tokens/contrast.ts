@@ -1,13 +1,15 @@
-/** WCAG 2.x contrast helpers for hex colors (#rrggbb). */
+/** WCAG 2.x contrast helpers for hex colors (#rrggbb, or #rgb as CSS minifiers write it). */
 
 const WEIGHTS = [0.2126, 0.7152, 0.0722] as const;
 
 export function relativeLuminance(hex: string): number {
-  const match = /^#([0-9a-f]{6})$/i.exec(hex.trim());
+  const match = /^#([0-9a-f]{6}|[0-9a-f]{3})$/i.exec(hex.trim());
   if (!match?.[1]) {
     throw new Error(`Unsupported color: ${hex}`);
   }
-  const value = parseInt(match[1], 16);
+  // Production CSS shortens #ffffff to #fff, and the docs read colors from the built CSS.
+  const digits = match[1].length === 3 ? [...match[1]].map((digit) => digit + digit).join("") : match[1];
+  const value = parseInt(digits, 16);
   const channels = [value >> 16, (value >> 8) & 0xff, value & 0xff];
   return channels.reduce((sum, channel, index) => {
     const srgb = channel / 255;

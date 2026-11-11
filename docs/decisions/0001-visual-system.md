@@ -1,6 +1,6 @@
 # 0001 · Visual system: warm design tokens, Radix primitives and bilingual docs
 
-- **Status:** accepted
+- **Status:** accepted; palette superseded by [0004](./0004-vibrant-palette.md)
 - **Date:** 2026-10-26
 
 ## Context
@@ -10,7 +10,7 @@ Hogar handles sensitive everyday topics (money between people who live together,
 ## Decision
 
 - **Design tokens in three layers** (`packages/ui/src/tokens/`): primitives (raw palette and scales) → semantic tokens per theme (`--color-accent`, `--color-negative`…) → optional component variables. Components only use semantic tokens, so dark mode is a redefinition of layer 2.
-- **Warm palette:** sand, terracotta, sage, brick and amber; warm dark mode (dark browns, not grey-blue). Eight member colors with equal luminance.
+- **Warm palette:** sand, terracotta, sage, brick and amber; warm dark mode (dark browns, not grey-blue). Eight member colors with equal luminance. _Superseded by [0004](./0004-vibrant-palette.md): the palette is now a vivid fuchsia on plum-tinted neutrals._
 - **Contrast enforced by tests:** every text/background pair used by the UI is listed in `contrastPairs.ts` and must meet WCAG AA in both themes; both themes must define the same tokens.
 - **CSS Modules + `clsx`**, no CSS-in-JS or utility frameworks. A grep guard forbids raw hex, `px` and primitive tokens in component styles.
 - **Radix primitives** for complex interactive widgets (menus, dialogs later), styled with our tokens. Accessibility behavior comes from a well-tested library; the look is ours.

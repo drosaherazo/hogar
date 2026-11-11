@@ -4,69 +4,71 @@
  * only the themes (theme-light.css, theme-dark.css) reference them.
  */
 :root {
-  /* Sand: warm neutrals (backgrounds, borders, text) */
-  --sand-50: #fbf7f2;
-  --sand-0: #fffdf9;
-  --sand-100: #f3ebdf;
-  --sand-200: #e8dccb;
-  --sand-400: #97846f;
-  --sand-600: #6b5a4c;
-  --sand-900: #2e241d;
+  /* Fuchsia: the brand. 500 is the vivid tone (logo, focus, art); 600+ carry white text */
+  --fuchsia-50: #fde8f2;
+  --fuchsia-100: #fcd9ea;
+  --fuchsia-300: #ff8cc4;
+  --fuchsia-400: #f4519f;
+  --fuchsia-500: #eb2386;
+  --fuchsia-600: #c2126a;
+  --fuchsia-700: #9e0e56;
+  --fuchsia-800: #760a40;
 
-  /* Earth: dark warm neutrals (dark mode) */
-  --earth-950: #1c1714;
-  --earth-900: #28211c;
-  --earth-800: #332a24;
-  --earth-700: #463a30;
-  --earth-500: #8a7765;
-  --earth-300: #bfae9c;
-  --earth-100: #f3eae0;
+  /* Ink: clean light neutrals with a hint of plum (backgrounds, borders, text) */
+  --ink-0: #ffffff;
+  --ink-25: #fbf8fa;
+  --ink-50: #f4eff3;
+  --ink-100: #e9e2e7;
+  --ink-400: #8b7f88;
+  --ink-600: #5d5360;
+  --ink-900: #1f1a21;
 
-  /* Terracotta: primary accent */
-  --terracotta-100: #f6dccf;
-  --terracotta-200: #eeab8b;
-  --terracotta-300: #e5906a;
-  --terracotta-500: #c4643f;
-  --terracotta-600: #a9502f;
-  --terracotta-700: #8c4126;
+  /* Plum: dark neutrals (dark mode), near-black with a plum tint */
+  --plum-950: #141016;
+  --plum-900: #1e1921;
+  --plum-800: #29222c;
+  --plum-700: #3e3443;
+  --plum-500: #857a8b;
+  --plum-300: #c3b8c7;
+  --plum-50: #f7f2f8;
 
-  /* Sage: secondary, positive */
-  --sage-100: #e3ece1;
-  --sage-300: #a9c7a8;
-  --sage-700: #4a634c;
-  --sage-900: #2f3f30;
+  /* Teal: positive ("owes you", done) */
+  --teal-50: #e3f5f1;
+  --teal-300: #5fd6c2;
+  --teal-700: #0f6f68;
+  --teal-950: #0d2b28;
 
-  /* Brick: negative, error */
-  --brick-100: #f6dfda;
-  --brick-300: #ee9a8b;
-  --brick-700: #9b3a2f;
-  --brick-900: #4a2620;
+  /* Coral: negative ("you owe", errors), orange-leaning so it never reads as the brand */
+  --coral-50: #fdebe2;
+  --coral-300: #ff9e6b;
+  --coral-700: #b8400f;
+  --coral-950: #3a180a;
 
   /* Amber: warning */
-  --amber-100: #f8ead0;
-  --amber-300: #e8be73;
-  --amber-700: #7a5212;
-  --amber-900: #43300f;
+  --amber-50: #fdf3d3;
+  --amber-300: #f5c542;
+  --amber-700: #8a5a06;
+  --amber-950: #33270a;
 
-  /* Members (light): same luminance, dark text on top */
-  --member-light-1: #f2c4ae;
-  --member-light-2: #c5d8c1;
-  --member-light-3: #f1d49a;
-  --member-light-4: #ddc3d6;
-  --member-light-5: #c3d3e0;
-  --member-light-6: #f0c1c4;
-  --member-light-7: #d9d6a8;
-  --member-light-8: #e3cdb5;
+  /* Members (light): same luminance, dark text, no pink or magenta so no one looks like the brand or a debt */
+  --member-light-1: #94d1c8;
+  --member-light-2: #a7cae4;
+  --member-light-3: #bac2f8;
+  --member-light-4: #d2bbf8;
+  --member-light-5: #96d4aa;
+  --member-light-6: #bacc8f;
+  --member-light-7: #d3c596;
+  --member-light-8: #e0c0a3;
 
-  /* Members (dark): same luminance, light text on top */
-  --member-dark-1: #8c4a33;
-  --member-dark-2: #4f6a52;
-  --member-dark-3: #7e5e22;
-  --member-dark-4: #6e4c66;
-  --member-dark-5: #4a6278;
-  --member-dark-6: #8a4b52;
-  --member-dark-7: #626136;
-  --member-dark-8: #76604a;
+  /* Members (dark): same luminance, light text, no pink or magenta */
+  --member-dark-1: #1e5b53;
+  --member-dark-2: #325670;
+  --member-dark-3: #464f84;
+  --member-dark-4: #5d4784;
+  --member-dark-5: #205e35;
+  --member-dark-6: #46581b;
+  --member-dark-7: #605222;
+  --member-dark-8: #6d4b2f;
 
   /* Spacing: 4 px base */
   --space-0: 0;

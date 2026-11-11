@@ -35,7 +35,7 @@ The vendored `ui-ux-pro-max` skill (from `nextlevelbuilder/ui-ux-pro-max-skill`,
 
 ## Design review
 
-The vendored `web-design-guidelines` skill (from `vercel-labs/agent-skills`, MIT; refresh by re-copying its `skills/web-design-guidelines` folder) audits UI code in `apps/web` and `packages/ui` against Vercel's Web Interface Guidelines. It fetches those rules live from `vercel-labs/web-interface-guidelines` on every run, so they can change upstream without a repo change. Its findings add to the `docs/design.md` checklist and never replace it; the constitution and `docs/design.md` (semantic tokens only, no hardcoded copy, warmth) win on any conflict.
+The vendored `web-design-guidelines` skill (from `vercel-labs/agent-skills`, MIT; refresh by re-copying its `skills/web-design-guidelines` folder) audits UI code in `apps/web` and `packages/ui` against Vercel's Web Interface Guidelines. It fetches those rules live from `vercel-labs/web-interface-guidelines` on every run, so they can change upstream without a repo change. Its findings add to the `docs/design.md` checklist and never replace it; the constitution and `docs/design.md` (semantic tokens only, no hardcoded copy, joyful, approachable tone) win on any conflict.
 
 ## Deploy
 

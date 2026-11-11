@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p cypress",
     "e2e": "start-server-and-test dev:e2e http://localhost:5174 \"cypress run\"",
     "e2e:open": "start-server-and-test dev:e2e http://localhost:5174 \"cypress open\"",
+    "capture": "start-server-and-test dev:e2e http://localhost:5174 \"cypress run --spec cypress/captures/palette.cy.ts --config specPattern=cypress/captures/**/*.cy.ts\"",
     "dev:e2e": "vite --mode e2e --port 5174 --strictPort"
   },
   "dependencies": {

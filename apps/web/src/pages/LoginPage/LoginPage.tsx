@@ -14,7 +14,7 @@ export interface LoginPageProps {
   googleClientId: string | undefined;
 }
 
-/** Sign in with Google. Warm and brief: what Hogar is, one button, and what we do with your data. */
+/** Sign in with Google. Friendly and brief: what Hogar is, one button, and what we do with your data. */
 export function LoginPage({ googleClientId }: LoginPageProps) {
   const { t } = useTranslation(["auth", "errors"]);
   const { loginWithGoogle } = useAuth();

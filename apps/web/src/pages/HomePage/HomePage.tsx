@@ -1,10 +1,10 @@
 import { canEditContent, type HouseholdView } from "@hogar/shared";
 import { Alert, Avatar, Button, Card, EmptyState, Spinner } from "@hogar/ui";
-import { House, Plus, Settings } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, House, Plus, Settings } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "../../auth/guards";
-import { BalanceSentence } from "../../expenses/BalanceSentence";
+import { useBalanceSentence } from "../../expenses/BalanceSentence";
 import { useBalances } from "../../expenses/useExpenses";
 import { CreateHouseholdDialog } from "../../household/CreateHouseholdDialog";
 import { LoadError } from "../../household/LoadError";
@@ -120,13 +120,33 @@ function HouseholdSummary({ household }: { household: HouseholdView }) {
 }
 
 /** Where the person stands with money, and the ways into expenses and balances. */
+/**
+ * Where the person stands, in words. On the fuchsia card the positive and negative colors
+ * wouldn't read, so a small arrow echoes the sentence instead: in when owed, out when owing.
+ * It's decorative; the words already say everything.
+ */
+function MyBalance({ cents }: { cents: number }) {
+  const sentence = useBalanceSentence();
+  const Arrow = cents > 0 ? ArrowDownLeft : cents < 0 ? ArrowUpRight : null;
+  return (
+    <p className={styles.balance}>
+      {Arrow && (
+        <span className={styles.direction} aria-hidden="true" data-direction={cents > 0 ? "in" : "out"}>
+          <Arrow />
+        </span>
+      )}
+      <span>{sentence(cents)}</span>
+    </p>
+  );
+}
+
 function MoneyCard({ canEdit }: { canEdit: boolean }) {
   const { t } = useTranslation(["expenses", "common"]);
   const balances = useBalances();
   const titleId = useId();
 
   return (
-    <Card as="section" padding="lg" aria-labelledby={titleId} className={styles.money}>
+    <Card as="section" padding="lg" tone="brand" aria-labelledby={titleId} className={styles.money}>
       <h2 id={titleId} className={styles.moneyTitle}>
         {t("home.title")}
       </h2>
@@ -135,7 +155,7 @@ function MoneyCard({ canEdit }: { canEdit: boolean }) {
       ) : balances.isError ? (
         <p className={styles.people}>{t("balances.loadError")}</p>
       ) : (
-        <BalanceSentence cents={balances.data.myBalanceCents} className={styles.balance} />
+        <MyBalance cents={balances.data.myBalanceCents} />
       )}
       <div className={styles.moneyActions}>
         {canEdit && (

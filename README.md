@@ -1,6 +1,6 @@
 # Hogar
 
-**A warm, shared home organizer** for couples, families and flatmates: split expenses and see who owes whom, share chores and keep one shopping list, with real-time updates.
+**A joyful, shared home organizer** for couples, families and flatmates: split expenses and see who owes whom, share chores and keep one shopping list, with real-time updates.
 
 > Portfolio project. The goal is something small, polished and deployed: tested code, a documented design system and a clean commit history.
 
@@ -58,7 +58,7 @@ Deploying (Vercel, Render and Neon): see [docs/deploy.md](docs/deploy.md).
 ## How it's built
 
 - **Spec-driven.** Features go through [GitHub Spec Kit](https://github.com/github/spec-kit): a spec with user stories and acceptance criteria, a technical plan checked against the [project constitution](.specify/memory/constitution.md), a task list, and then the code. Specs live in `specs/` next to the code they produced.
-- **Warm by design.** Every color, shape and piece of copy aims to lower the tension of talking about money and chores. The reasoning, in English and Spanish, lives in Storybook (_Foundations_ and each component's docs page); the rules and review checklist are in [docs/design.md](docs/design.md).
+- **Joyful by design.** One vivid color used deliberately, friendly shapes and copy that lowers the tension of talking about money and chores. The reasoning, in English and Spanish, lives in Storybook (_Foundations_ and each component's docs page); the rules and review checklist are in [docs/design.md](docs/design.md).
 - **Accessible by default.** AA contrast is enforced by tests in both themes, every component is tested with axe, and color never carries meaning on its own.
 - **Fully internationalized.** No hardcoded copy (ESLint enforces it); the API returns error codes the web translates; a test keeps both languages in sync.
 - **Secure sessions.** Google ID token verified on the server, 15-minute access token kept in memory, hashed and rotating refresh tokens with reuse detection. See [docs/decisions/0002-authentication.md](docs/decisions/0002-authentication.md).

@@ -17,3 +17,33 @@
 .elevated {
   box-shadow: var(--shadow-md);
 }
+
+/*
+ * The brand tone re-themes its whole subtree: it redefines the semantic tokens, so every child
+ * (text, buttons, links, spinners, the focus ring) adapts without its own variant. Primary
+ * actions turn white with brand text, secondary ones become white outlines, focus turns white.
+ */
+.brand {
+  --color-surface: var(--color-brand-surface);
+  --color-surface-sunken: var(--color-brand-surface-hover);
+  --color-text: var(--color-on-brand);
+  --color-text-muted: var(--color-on-brand);
+  --color-accent-text: var(--color-on-brand);
+  --color-border: var(--color-on-brand);
+  --color-border-strong: var(--color-on-brand);
+  --color-focus: var(--color-on-brand);
+  --color-accent: var(--color-on-brand);
+  --color-accent-contrast: var(--color-brand-surface);
+  --color-accent-hover: var(--color-brand-tint);
+
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-brand-surface);
+}
+
+/* When the system replaces colors, keep the card's edge visible. */
+@media (forced-colors: active) {
+  .brand {
+    border-color: CanvasText;
+  }
+}

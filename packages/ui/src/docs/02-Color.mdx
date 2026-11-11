@@ -34,6 +34,13 @@ export const states = [
   { token: "--color-warning-bg", name: { en: "Warning background", es: "Fondo de aviso" } },
 ];
 
+export const brand = [
+  { token: "--color-brand-surface", name: { en: "Brand surface", es: "Superficie de marca" } },
+  { token: "--color-brand-surface-hover", name: { en: "Brand surface on hover", es: "Superficie de marca al pasar el ratón" } },
+  { token: "--color-on-brand", name: { en: "On brand (text, outlines, focus)", es: "Sobre la marca (texto, contornos, foco)" } },
+  { token: "--color-brand-tint", name: { en: "Brand tint", es: "Tinte de marca" } },
+];
+
 export const members = Array.from({ length: 8 }, (_, i) => ({
   token: `--color-member-${i + 1}`,
   name: { en: `Member ${i + 1}`, es: `Miembro ${i + 1}` },
@@ -43,71 +50,81 @@ export const members = Array.from({ length: 8 }, (_, i) => ({
 
 # Color
 
-The palette is built on three warm families: **sand** (neutrals), **terracotta** (accent) and **sage** (secondary), plus two softened state colors: **brick** and **amber**.
+One joyful color, used deliberately. The palette has a single brand color, a vivid **fuchsia**, set against clean neutrals: **ink** in the light theme and **plum** in the dark one. Three state colors (**teal**, **coral** and **amber**) and eight member colors complete it.
 
-## Surfaces: sand and cream
+## Surfaces: clean off-white and white
 
 <ColorSwatches items={surfaces} />
 
 **What it does:** the app background, cards and dividers.
 
-**Why:** pure white (#FFFFFF) across the whole screen is glaring, especially on mobile and at night, and it's associated with clinical or office settings. A very soft cream reduces perceived brightness without losing cleanliness, and evokes paper, linen or light wood: home materials.
+**Why:** an off-white page with a hint of pink and pure white cards give a clean, light look in which the fuchsia stands out without effort. The cards still separate from the page thanks to the slight difference in tone, the border and a soft shadow.
 
-**How it helps the person:** less visual fatigue in daily, repeated use (checking the list at the supermarket, logging an expense from the sofa) and a first impression of a welcoming space, not a form.
+**How it helps the person:** the screen feels light and uncluttered, and what matters (a card, a button) separates clearly from the background.
 
-## Text: toasted brown, not black
+## Text: near-black with a plum tint
 
 <ColorSwatches items={text} />
 
-**Why:** pure black on a warm background creates a harsh contrast and a "printed" look. A very dark brown keeps contrast very high (above 14:1, far above the AA minimum of 4.5:1) and blends with the palette.
+**Why:** a very dark ink with a hint of plum instead of pure black keeps the text in the same family as the rest of the palette. Contrast stays very high: above 16:1 on the page, far above the AA minimum of 4.5:1.
 
-**How it helps the person:** comfortable reading for longer, without the feel of an official document.
+**How it helps the person:** comfortable reading, with text that never fights the color around it.
 
-## Accent: terracotta
+## Accent: one joyful fuchsia
 
 <ColorSwatches items={accent} />
 
 **What it does:** primary buttons, the active navigation item, links and the focus ring.
 
-**Why:** terracotta is the color of fired clay, roof tiles and pottery; in Mediterranean culture it's strongly tied to the idea of home. It's a warm color that draws enough attention to guide the primary action, without the urgency of pure red or the coldness of corporate blue.
+**Why:** a single vivid color gives Hogar a young, recognizable identity. Used only for the primary action, focus and one highlighted card, it guides without shouting. Wherever white text sits on it, a deeper fuchsia is used (5.85:1); the vivid tone is kept for the logo, the focus ring and, in the dark theme, buttons with dark text (4.59:1).
 
-**How it helps the person:** they always know what the main action is ("Add expense") without feeling pushed to press it.
+**How it helps the person:** they always know what the main action is ("Add expense"), and the app feels cheerful instead of administrative.
 
-## States: sage, brick and amber
+## The brand surface: one highlighted card per screen
+
+<ColorSwatches items={brand} />
+
+**What it does:** the background, text, outlines and hover fills of `Card tone="brand"`: the home money card, the screen's brand moment.
+
+**Why:** a full fuchsia card puts the most important number on the screen first. Inside it, the card redefines the color tokens, so text, buttons and the focus ring turn white or invert on their own. State colors aren't used there, because they wouldn't read on fuchsia: words and a small arrow carry the meaning.
+
+**How it helps the person:** where they stand with money is the first thing they see, in a moment that feels like the brand rather than like a bank statement.
+
+## States: teal, coral and amber
 
 <ColorSwatches items={states} />
 
-### Sage (positive)
+### Teal (positive)
 **Use:** "owes you", completed chores, confirmations.
-**Why:** a muted green, associated with plants and nature, that conveys calm and order. Being desaturated, it doesn't compete with terracotta.
-**How it helps:** finishing a chore or settling a debt feels like a small relief, not just another notification.
+**Why:** a fresh teal, clearly away from the fuchsia, so a good outcome never looks like a button.
+**How it helps:** good news reads as good news at a glance.
 
-### Brick (negative)
+### Coral (negative)
 **Use:** "you owe", form errors, destructive actions.
-**Why:** it clearly signals that something needs attention, but without the intense red that triggers alarm or guilt. Owing money to someone you live with is normal and temporary.
-**How it helps:** the person gets the information without feeling singled out, which makes it easier to settle the debt instead of avoiding the app.
+**Why:** an orange-leaning coral instead of red. It signals that something needs attention without the alarm of pure red, and its hue sits far from the brand fuchsia, so a debt never looks "on brand" and a primary button never looks destructive. Owing money to someone you live with is normal and temporary.
+**How it helps:** the person gets the information without feeling singled out, which makes it easier to settle up instead of avoiding the app.
 
 ### Amber (warning)
 **Use:** chores due soon, reminders.
-**Why:** a tone like the warm light of a lamp, instead of traffic-sign yellow.
+**Why:** a clean, deep amber: noticeable, but softer than traffic-sign yellow.
 **How it helps:** it reminds without overwhelming.
 
 ### Rule: color never goes alone
 Each state always comes with text, an icon or a sign ("owes you", "+", "✓"). That way the information reaches people with color blindness, low-brightness screens or grayscale equally.
 
-## Member colors
+## Member colors: fair and never pink
 
 <ColorSwatches items={members} />
 
 **What it does:** avatar backgrounds and "who" indicators in expenses, chores and the shopping list.
 
-**Why:** eight tones from the same warm family with **the same luminance** (a test checks it). They're assigned deterministically by the order in which each person joined the household, so your color never changes from one screen to another.
+**Why:** eight tones (teal, sky, periwinkle, lavender, green, lime, yellow, apricot) with **the same luminance and the same saturation**, so no one stands out (a test checks the luminance). None of them is pink or magenta, also checked by a test, so nobody looks like the brand or like a debt. They're assigned deterministically by the order in which each person joined the household, so your color never changes from one screen to another.
 
 **How it helps the person:** they recognize who did what at a glance, feel "present" in the household with a color of their own, and nobody stands out more than anyone else by accident of design.
 
-## Warm dark mode
+## Dark mode: deep plum
 
-In dark mode, backgrounds are a very dark brown, not bluish grey or pure black, and accents are lightened to keep contrast. So when checking the shopping list in bed, the app still feels like a dim lamp rather than an office screen.
+In dark mode, backgrounds are a near-black with a plum tint instead of neutral grey, so the fuchsia feels at home. Accents are lightened to keep contrast, and the primary button uses the vivid fuchsia with dark text.
 
 ## Verified contrast
 
@@ -117,11 +134,13 @@ This table is computed live from the tokens. The same pairs are checked in `toke
 
 ## Storybook uses the brand too
 
-The palette isn't only for the app: Storybook's own interface (sidebar, toolbar, panels, these docs pages, the selection highlight and the favicon) uses the same sand, terracotta and earth tones, and the **Theme** toolbar switches the chrome, the docs and the canvas together.
+The palette isn't only for the app: Storybook's own interface (sidebar, toolbar, panels, these docs pages, the selection highlight and the favicon) uses the same fuchsia, ink and plum, and the **Theme** toolbar switches the chrome, the docs and the canvas together.
 
-**Why:** a design system that documents warmth inside a cold, generic tool sends mixed signals. Seeing the brand everywhere lets anyone reviewing the project judge the palette in a real interface, in both themes, and keeps reading long docs comfortable at night.
+**Why:** seeing the brand everywhere lets anyone reviewing the project judge the palette in a real interface, in both themes, instead of inside a generic tool.
 
 **How it stays in sync:** Storybook can't read CSS variables, so `.storybook/themes.ts` mirrors the palette as hex values. `storybookThemes.test.ts` checks that every one of them matches `primitives.css` exactly and that the chrome's text meets AA. Change the palette and the test tells you to update Storybook too.
+
+**Evidence and intent:** the contrast ratios, the equal member luminance and the hue separation between coral, teal and fuchsia are measured and tested. The joy and the "brand moment" are design intent.
 
 </Lang>
 
@@ -129,71 +148,81 @@ The palette isn't only for the app: Storybook's own interface (sidebar, toolbar,
 
 # Color
 
-La paleta se construye sobre tres familias cálidas: **arena** (neutros), **terracota** (acento) y **salvia** (secundario), más dos colores de estado suavizados: **ladrillo** y **ámbar**.
+Un solo color alegre, usado con intención. La paleta tiene un único color de marca, un **fucsia** vivo, sobre neutros limpios: **ink** en el tema claro y **plum** (ciruela) en el oscuro. La completan tres colores de estado (**teal**, **coral** y **ámbar**) y ocho colores de miembro.
 
-## Superficies: arena y crema
+## Superficies: blanco roto y blanco
 
 <ColorSwatches items={surfaces} />
 
 **Qué hace:** fondo general de la app, tarjetas y separadores.
 
-**Por qué así:** el blanco puro (#FFFFFF) a pantalla completa deslumbra, sobre todo en móvil y de noche, y se asocia a entornos clínicos o de oficina. Un crema muy suave reduce el brillo percibido sin perder limpieza, y evoca papel, lino o madera clara: materiales del hogar.
+**Por qué así:** un fondo blanco roto con un toque rosado y tarjetas blancas dan un aspecto limpio y ligero en el que el fucsia destaca sin esfuerzo. Las tarjetas se siguen separando del fondo gracias a la ligera diferencia de tono, al borde y a una sombra suave.
 
-**Cómo ayuda a la persona:** menos cansancio visual en un uso diario y repetido (mirar la lista en el súper, apuntar un gasto en el sofá) y una primera impresión de espacio acogedor, no de formulario.
+**Cómo ayuda a la persona:** la pantalla se siente ligera y despejada, y lo importante (una tarjeta, un botón) se separa claramente del fondo.
 
-## Texto: marrón tostado, no negro
+## Texto: casi negro con un toque ciruela
 
 <ColorSwatches items={text} />
 
-**Por qué así:** el negro puro sobre un fondo cálido crea un contraste duro y un aspecto "impreso". Un marrón muy oscuro mantiene un contraste muy alto (más de 14:1, muy por encima del mínimo AA de 4,5:1) y se integra con la paleta.
+**Por qué así:** una tinta muy oscura con un toque ciruela en vez de negro puro mantiene el texto en la misma familia que el resto de la paleta. El contraste sigue siendo muy alto: más de 16:1 sobre el fondo, muy por encima del mínimo AA de 4,5:1.
 
-**Cómo ayuda a la persona:** lectura cómoda durante más tiempo, sin la sensación de documento oficial.
+**Cómo ayuda a la persona:** lectura cómoda, con un texto que nunca choca con el color que lo rodea.
 
-## Acento: terracota
+## Acento: un fucsia alegre
 
 <ColorSwatches items={accent} />
 
 **Qué hace:** botones principales, elemento activo de la navegación, enlaces y anillo de foco.
 
-**Por qué así:** la terracota es el color del barro cocido, de las tejas y de la cerámica; en la cultura mediterránea está muy ligada a la idea de casa. Es un color cálido que llama la atención lo suficiente para guiar la acción principal, pero sin la urgencia del rojo puro ni la frialdad del azul corporativo.
+**Por qué así:** un único color vivo da a Hogar una identidad joven y reconocible. Usado solo para la acción principal, el foco y una tarjeta destacada, guía sin gritar. Donde hay texto blanco encima se usa un fucsia más profundo (5,85:1); el tono vivo se reserva para el logo, el anillo de foco y, en el tema oscuro, los botones con texto oscuro (4,59:1).
 
-**Cómo ayuda a la persona:** sabe en todo momento cuál es la acción principal ("Añadir gasto") sin sentirse empujada a pulsarla.
+**Cómo ayuda a la persona:** sabe en todo momento cuál es la acción principal ("Añadir gasto"), y la app se siente alegre en vez de administrativa.
 
-## Estados: salvia, ladrillo y ámbar
+## La superficie de marca: una tarjeta destacada por pantalla
+
+<ColorSwatches items={brand} />
+
+**Qué hace:** el fondo, el texto, los contornos y los rellenos al pasar el ratón de `Card tone="brand"`: la tarjeta de dinero del inicio, el momento de marca de la pantalla.
+
+**Por qué así:** una tarjeta entera en fucsia pone primero el número más importante de la pantalla. Dentro, la tarjeta redefine los tokens de color, así que el texto, los botones y el anillo de foco pasan a blanco o se invierten solos. Ahí no se usan los colores de estado, porque no se leerían sobre el fucsia: el significado lo llevan las palabras y una pequeña flecha.
+
+**Cómo ayuda a la persona:** cómo va con el dinero es lo primero que ve, en un momento que se siente de la marca y no de un extracto del banco.
+
+## Estados: teal, coral y ámbar
 
 <ColorSwatches items={states} />
 
-### Salvia (positivo)
+### Teal (positivo)
 **Uso:** "te deben", tareas completadas, confirmaciones.
-**Por qué:** un verde apagado, asociado a plantas y naturaleza, que transmite calma y orden. Al estar desaturado no compite con la terracota.
-**Cómo ayuda:** completar una tarea o saldar una deuda se siente como un pequeño alivio, no como una notificación más.
+**Por qué:** un teal fresco, claramente lejos del fucsia, para que un buen resultado nunca parezca un botón.
+**Cómo ayuda:** una buena noticia se lee como buena noticia de un vistazo.
 
-### Ladrillo (negativo)
+### Coral (negativo)
 **Uso:** "debes", errores de formulario, acciones destructivas.
-**Por qué:** comunica claramente que algo requiere atención, pero sin el rojo intenso que dispara sensación de alarma o de culpa. Deber dinero a quien vive contigo es normal y temporal.
-**Cómo ayuda:** la persona recibe la información sin sentirse señalada, lo que facilita resolver la deuda en vez de evitar mirar la app.
+**Por qué:** un coral tirando a naranja en vez de rojo. Indica que algo requiere atención sin la alarma del rojo puro, y su tono queda lejos del fucsia de marca, así que una deuda nunca parece "de marca" y un botón principal nunca parece destructivo. Deber dinero a quien vive contigo es normal y temporal.
+**Cómo ayuda:** la persona recibe la información sin sentirse señalada, lo que facilita saldar cuentas en vez de evitar la app.
 
 ### Ámbar (aviso)
 **Uso:** tareas que vencen pronto, recordatorios.
-**Por qué:** un tono como la luz cálida de una lámpara, en vez del amarillo de señal de tráfico.
+**Por qué:** un ámbar limpio y profundo: se nota, pero es más suave que el amarillo de señal de tráfico.
 **Cómo ayuda:** recuerda sin agobiar.
 
 ### Regla: el color nunca va solo
 Cada estado va siempre acompañado de texto, icono o signo ("te debe", "+", "✓"). Así la información llega igual a personas con daltonismo, en pantallas de bajo brillo o en escala de grises.
 
-## Colores de miembro
+## Colores de miembro: justos y nunca rosas
 
 <ColorSwatches items={members} />
 
 **Qué hace:** fondo de avatares e indicadores de "quién" en gastos, tareas y lista.
 
-**Por qué así:** ocho tonos de la misma familia cálida con **la misma luminosidad** (un test lo verifica). Se asignan de forma determinista según el orden en que cada persona se unió al hogar, así que tu color no cambia de una pantalla a otra.
+**Por qué así:** ocho tonos (teal, celeste, pervinca, lavanda, verde, lima, amarillo, albaricoque) con **la misma luminosidad y la misma saturación**, para que nadie destaque (un test verifica la luminosidad). Ninguno es rosa ni magenta, también comprobado por un test, así que nadie parece la marca ni una deuda. Se asignan de forma determinista según el orden en que cada persona se unió al hogar, así que tu color no cambia de una pantalla a otra.
 
 **Cómo ayuda a la persona:** reconoce de un vistazo quién hizo qué, se siente "presente" en el hogar con un color propio, y nadie destaca más que otro por azar del diseño.
 
-## Modo oscuro cálido
+## Modo oscuro: ciruela profundo
 
-En modo oscuro los fondos son marrón muy oscuro, no gris azulado ni negro puro, y los acentos se aclaran para mantener el contraste. Así, al revisar la lista de la compra en la cama, la app sigue sintiéndose como una lámpara tenue y no como una pantalla de oficina.
+En modo oscuro los fondos son casi negros con un toque ciruela en vez de gris neutro, para que el fucsia se sienta en casa. Los acentos se aclaran para mantener el contraste, y el botón principal usa el fucsia vivo con texto oscuro.
 
 ## Contraste comprobado
 
@@ -203,10 +232,12 @@ Esta tabla se calcula en vivo a partir de los tokens. Las mismas combinaciones s
 
 ## Storybook también usa la marca
 
-La paleta no es solo para la app: la propia interfaz de Storybook (barra lateral, barra de herramientas, paneles, estas páginas de documentación, el color de selección y el favicon) usa los mismos tonos arena, terracota y tierra, y la barra **Theme** cambia a la vez la interfaz, la documentación y el lienzo.
+La paleta no es solo para la app: la propia interfaz de Storybook (barra lateral, barra de herramientas, paneles, estas páginas de documentación, el color de selección y el favicon) usa los mismos fucsia, ink y ciruela, y la barra **Theme** cambia a la vez la interfaz, la documentación y el lienzo.
 
-**Por qué:** un sistema de diseño que documenta calidez dentro de una herramienta fría y genérica manda señales contradictorias. Ver la marca en todas partes permite a quien revise el proyecto juzgar la paleta en una interfaz real, en los dos temas, y hace que leer documentación larga de noche sea cómodo.
+**Por qué:** ver la marca en todas partes permite a quien revise el proyecto juzgar la paleta en una interfaz real, en los dos temas, y no dentro de una herramienta genérica.
 
 **Cómo se mantiene sincronizada:** Storybook no puede leer variables CSS, así que `.storybook/themes.ts` replica la paleta en hexadecimal. `storybookThemes.test.ts` comprueba que cada valor coincide exactamente con `primitives.css` y que el texto de la interfaz cumple AA. Si cambias la paleta, el test te avisa de que también hay que actualizar Storybook.
+
+**Evidencia e intención:** las ratios de contraste, la luminosidad igual de los miembros y la separación de tono entre coral, teal y fucsia están medidas y testeadas. La alegría y el "momento de marca" son intención de diseño.
 
 </Lang>

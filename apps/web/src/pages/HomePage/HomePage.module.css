@@ -80,8 +80,25 @@
 }
 
 .balance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
   margin: 0;
   font-size: var(--font-size-lg);
+}
+
+/* A decorative arrow that echoes the sentence; the words carry the meaning. */
+.direction {
+  display: inline-flex;
+  flex: none;
+  inline-size: var(--size-icon-md);
+  block-size: var(--size-icon-md);
+}
+
+.direction svg {
+  inline-size: 100%;
+  block-size: 100%;
 }
 
 .moneyActions {
