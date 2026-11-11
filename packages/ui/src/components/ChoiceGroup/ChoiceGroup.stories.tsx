@@ -8,6 +8,41 @@ const meta = {
   title: "Components/ChoiceGroup",
   component: ChoiceGroup,
   args: { legend: "", options: [], value: "", onChange: () => {} },
+  // The props are a union (one value or several), which react-docgen can't read, so the table
+  // is described here. Keep it in sync with the JSDoc in ChoiceGroup.tsx.
+  argTypes: {
+    legend: {
+      description: 'Names the whole group ("How should it be split?"), already translated.',
+      table: { type: { summary: "string" } },
+    },
+    options: {
+      description:
+        "The choices: `value`, a translated `label`, an optional `hint` read together with the option, " +
+        "`disabled` (give a `hint` explaining why) and `trailing` content such as a person's share.",
+      table: { type: { summary: "readonly ChoiceOption[]" } },
+    },
+    multiple: {
+      description: "Lets people pick several options (checkboxes) instead of one (radios).",
+      table: { type: { summary: "boolean" }, defaultValue: { summary: "false" } },
+    },
+    value: {
+      description: "The selected value, or the selected values when `multiple`.",
+      table: { type: { summary: "string | readonly string[]" } },
+    },
+    onChange: {
+      description: "Called with the new value, or with the selected values in the options' order when `multiple`.",
+      table: { type: { summary: "(value: string) => void | (value: string[]) => void" } },
+    },
+    name: {
+      description: "Form field name; generated when omitted.",
+      table: { type: { summary: "string" } },
+    },
+    initialFocusRef: {
+      description: "Attached to the selected option (or the first one), so a dialog can start there.",
+      table: { type: { summary: "Ref<HTMLInputElement>" } },
+    },
+    className: { table: { type: { summary: "string" } } },
+  },
 } satisfies Meta<typeof ChoiceGroup>;
 
 export default meta;
