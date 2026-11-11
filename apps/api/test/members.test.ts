@@ -86,6 +86,25 @@ describe("PATCH /api/household/members/:id", () => {
     expect(res.body).toEqual({ error: { code: "household.member_not_found" } });
   });
 
+  it("refuses someone without a household", async () => {
+    const { app, bruno: brunoMember } = await setup();
+    const daniSession = await signIn(app, dani);
+    const responses = await Promise.all([
+      request(app)
+        .patch(`/api/household/members/${brunoMember.membershipId}`)
+        .set("Authorization", daniSession.auth)
+        .send({ role: "GUEST" }),
+      request(app).delete(`/api/household/members/${brunoMember.membershipId}`).set("Authorization", daniSession.auth),
+    ]);
+    for (const res of responses) {
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: { code: "household.not_member" } });
+    }
+    expect(await db.membership.findUnique({ where: { id: brunoMember.membershipId } })).toEqual(
+      expect.objectContaining({ role: "MEMBER" }),
+    );
+  });
+
   it("validates the role", async () => {
     const { app, ana, bruno } = await setup();
     const res = await request(app)
@@ -210,13 +229,19 @@ describe("DELETE /api/household/members/:id", () => {
 });
 
 describe("POST /api/household/leave", () => {
-  it("lets a member leave", async () => {
-    const { app, bruno, household } = await setup();
-    const res = await request(app).post("/api/household/leave").set("Authorization", bruno.auth);
+  it.each([
+    ["a member", "bruno"],
+    ["a guest", "carla"],
+  ] as const)("lets %s leave", async (_, who) => {
+    const context = await setup();
+    const leaving = context[who];
+    const res = await request(context.app).post("/api/household/leave").set("Authorization", leaving.auth);
     expect(res.status).toBe(204);
-    expect((await householdRow(household.id))?.memberships).toHaveLength(2);
+    const remaining = (await householdRow(context.household.id))?.memberships.map((m) => m.userId);
+    expect(remaining).toHaveLength(2);
+    expect(remaining).not.toContain(leaving.user.id);
     // Leaving on your own leaves no note behind.
-    expect((await request(app).get("/api/household").set("Authorization", bruno.auth)).body).toEqual({
+    expect((await request(context.app).get("/api/household").set("Authorization", leaving.auth)).body).toEqual({
       household: null,
       removedFrom: null,
     });

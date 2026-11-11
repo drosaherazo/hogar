@@ -73,15 +73,21 @@ describe("creating invitations", () => {
     expect(res.body).toEqual({ error: { code: "household.forbidden" } });
   });
 
-  it("refuses someone without a household", async () => {
-    const { app } = await setup();
+  it("refuses someone without a household, on every admin route", async () => {
+    const { app, ana } = await setup();
+    const { invitation } = await invite(app, ana);
     const loner = await signIn(app, dani);
-    const res = await request(app)
-      .post("/api/household/invitations")
-      .set("Authorization", loner.auth)
-      .send({ role: "MEMBER" });
-    expect(res.status).toBe(404);
-    expect(res.body).toEqual({ error: { code: "household.not_member" } });
+    const responses = await Promise.all([
+      request(app).get("/api/household/invitations").set("Authorization", loner.auth),
+      request(app).post("/api/household/invitations").set("Authorization", loner.auth).send({ role: "MEMBER" }),
+      request(app).post(`/api/household/invitations/${invitation.id}/renew`).set("Authorization", loner.auth),
+      request(app).delete(`/api/household/invitations/${invitation.id}`).set("Authorization", loner.auth),
+    ]);
+    for (const res of responses) {
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: { code: "household.not_member" } });
+    }
+    expect((await db.invitation.findUniqueOrThrow({ where: { id: invitation.id } })).revokedAt).toBeNull();
   });
 
   it("allows at most 10 pending invitations, counting only live ones", async () => {
@@ -174,6 +180,28 @@ describe("listing, renewing and revoking", () => {
     const other = await addMember(app, household.id, bruno, role);
     const res = await request(app).get("/api/household/invitations").set("Authorization", other.auth);
     expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: { code: "household.forbidden" } });
+  });
+
+  it.each(["MEMBER", "GUEST"] as const)("lets no %s renew or revoke a link, which keeps working", async (role) => {
+    const { app, ana, household } = await setup();
+    const { invitation, token } = await invite(app, ana);
+    const other = await addMember(app, household.id, bruno, role);
+
+    const renew = await request(app)
+      .post(`/api/household/invitations/${invitation.id}/renew`)
+      .set("Authorization", other.auth);
+    expect(renew.status).toBe(403);
+    expect(renew.body).toEqual({ error: { code: "household.forbidden" } });
+    const revoke = await request(app)
+      .delete(`/api/household/invitations/${invitation.id}`)
+      .set("Authorization", other.auth);
+    expect(revoke.status).toBe(403);
+    expect(revoke.body).toEqual({ error: { code: "household.forbidden" } });
+
+    expect(await db.invitation.count({ where: { householdId: household.id } })).toBe(1);
+    expect((await db.invitation.findUniqueOrThrow({ where: { id: invitation.id } })).revokedAt).toBeNull();
+    expect((await lookup(app, await signIn(app, carla), token)).status).toBe(200);
   });
 });
 

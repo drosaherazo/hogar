@@ -26,6 +26,25 @@ describe("GET /api/household", () => {
     expect(household.myRole).toBe("ADMIN");
   });
 
+  it.each(["MEMBER", "GUEST"] as const)("shows a %s the household, its members and their roles", async (role) => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    const created = await createHousehold(app, ana);
+    const other = await addMember(app, created.id, bruno, role);
+
+    const res = await request(app).get("/api/household").set("Authorization", other.auth);
+    expect(res.status).toBe(200);
+    const { household } = householdResponseSchema.parse(res.body);
+    expect(household.myRole).toBe(role);
+    expect(household.myMembershipId).toBe(other.membershipId);
+    expect(household.members.map((member) => [member.name, member.role])).toEqual([
+      ["Ana García", "ADMIN"],
+      ["Bruno Díaz", role],
+    ]);
+    // The household view never carries invitations: only admins can list them.
+    expect(res.body.household).not.toHaveProperty("invitations");
+  });
+
   it("requires a signed-in user", async () => {
     const { app } = createTestApp();
     const res = await request(app).get("/api/household");
