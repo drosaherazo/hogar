@@ -24,7 +24,7 @@ export interface AmountProps {
    * by the surrounding text, never by a sign alone.
    */
   cents: number;
-  className?: string;
+  className?: string | undefined;
 }
 
 /** A euro amount in the active locale, with tabular numbers so figures line up in lists. */

@@ -25,7 +25,7 @@ interface CommonProps {
    * `initialFocus`.
    */
   initialFocusRef?: Ref<HTMLInputElement>;
-  className?: string;
+  className?: string | undefined;
 }
 
 export interface SingleChoiceGroupProps extends CommonProps {
