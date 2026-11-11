@@ -2,7 +2,16 @@ import { expenseResponseSchema } from "@hogar/shared";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { createHousehold } from "./householdHelpers";
-import { addExpense, homeWith, homeWithGuest, postExpense, sharesByUser, TODAY } from "./expenseHelpers";
+import {
+  addExpense,
+  balanceByUser,
+  balancesOf,
+  homeWith,
+  homeWithGuest,
+  postExpense,
+  sharesByUser,
+  TODAY,
+} from "./expenseHelpers";
 import { createTestApp, dani, db, signIn } from "./testApp";
 
 describe("POST /api/household/expenses", () => {
@@ -122,6 +131,112 @@ describe("POST /api/household/expenses", () => {
     const { app } = createTestApp();
     const res = await request(app).post("/api/household/expenses").send({});
     expect(res.status).toBe(401);
+  });
+});
+
+describe("other ways to split", () => {
+  it("splits equally among the chosen people, leftover cents to whoever joined first", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, carla } = await homeWithGuest(app);
+    // The order people are chosen in doesn't matter: member order decides the leftover cent.
+    const expense = await addExpense(app, ana, {
+      amountCents: 1000,
+      split: { method: "EQUAL", userIds: [carla.user.id, ana.user.id, bruno.user.id] },
+    });
+    expect(expense.split.method).toBe("EQUAL");
+    expect(expense.split.shares.map((share) => [share.person.name, share.amountCents])).toEqual([
+      ["Ana García", 334],
+      ["Bruno Díaz", 333],
+      ["Carla Ruiz", 333],
+    ]);
+  });
+
+  it("keeps everyone chosen, even with a share of €0.00", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, carla } = await homeWithGuest(app);
+    const expense = await addExpense(app, ana, {
+      amountCents: 2,
+      split: { method: "EQUAL", userIds: [ana.user.id, bruno.user.id, carla.user.id] },
+    });
+    expect(sharesByUser(expense)).toEqual({ [ana.user.id]: 1, [bruno.user.id]: 1, [carla.user.id]: 0 });
+    expect(await db.expenseShare.count()).toBe(3);
+  });
+
+  it("lets guests and people whose weight is 0 share an expense", async () => {
+    const { app } = createTestApp();
+    const { ana, carla } = await homeWithGuest(app, { weights: [0, 1] });
+    const expense = await addExpense(app, ana, {
+      amountCents: 1000,
+      split: { method: "EQUAL", userIds: [ana.user.id, carla.user.id] },
+    });
+    expect(sharesByUser(expense)).toEqual({ [ana.user.id]: 500, [carla.user.id]: 500 });
+  });
+
+  it("takes exact amounts as entered, leaving out people given €0.00", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, carla } = await homeWithGuest(app);
+    const expense = await addExpense(app, bruno, {
+      amountCents: 5000,
+      split: {
+        method: "EXACT",
+        shares: [
+          { userId: bruno.user.id, amountCents: 3000 },
+          { userId: ana.user.id, amountCents: 2000 },
+          { userId: carla.user.id, amountCents: 0 },
+        ],
+      },
+    });
+    expect(expense.split.method).toBe("EXACT");
+    expect(expense.split.shares.map((share) => [share.person.name, share.amountCents])).toEqual([
+      ["Ana García", 2000],
+      ["Bruno Díaz", 3000],
+    ]);
+  });
+
+  it("refuses exact amounts that don't add up to the total", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const res = await postExpense(app, bruno, {
+      amountCents: 5000,
+      split: {
+        method: "EXACT",
+        shares: [
+          { userId: bruno.user.id, amountCents: 3000 },
+          { userId: ana.user.id, amountCents: 1500 },
+        ],
+      },
+    });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: { code: "expense.split.mismatch" } });
+  });
+
+  it("lets the payer leave themselves out, so the whole amount is owed to them", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const expense = await addExpense(app, ana, { split: { method: "EQUAL", userIds: [bruno.user.id] } });
+    expect(sharesByUser(expense)).toEqual({ [bruno.user.id]: 4280 });
+    expect(balanceByUser(await balancesOf(app, ana))).toEqual({ [ana.user.id]: 4280, [bruno.user.id]: -4280 });
+  });
+
+  it("refuses the same person twice", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const res = await postExpense(app, ana, { split: { method: "EQUAL", userIds: [ana.user.id, ana.user.id] } });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: { code: "expense.split.invalid" } });
+  });
+
+  it("refuses people who aren't members of the household", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const outsider = await signIn(app, dani);
+    const equal = await postExpense(app, ana, { split: { method: "EQUAL", userIds: [ana.user.id, outsider.user.id] } });
+    expect(equal.status).toBe(400);
+    expect(equal.body).toEqual({ error: { code: "expense.person.not_member" } });
+    const exact = await postExpense(app, ana, {
+      split: { method: "EXACT", shares: [{ userId: outsider.user.id, amountCents: 4280 }] },
+    });
+    expect(exact.body).toEqual({ error: { code: "expense.person.not_member" } });
   });
 });
 

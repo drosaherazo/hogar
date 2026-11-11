@@ -32,7 +32,11 @@ export interface ExpenseServiceDeps {
  * members stay in the history but can't be added to new expenses.
  */
 function computeSplit(input: ExpenseInput, members: readonly CurrentMember[]): ComputedSplit {
-  if (!members.some((member) => member.userId === input.paidById)) throw badRequest("expense.person.not_member");
+  const memberIds = new Set(members.map((member) => member.userId));
+  const assertMembers = (userIds: readonly string[]) => {
+    if (userIds.some((userId) => !memberIds.has(userId))) throw badRequest("expense.person.not_member");
+  };
+  assertMembers([input.paidById]);
 
   switch (input.split.method) {
     case "WEIGHTS": {
@@ -48,9 +52,32 @@ function computeSplit(input: ExpenseInput, members: readonly CurrentMember[]): C
         shares: sharing.map((member, index) => ({ userId: member.userId, amountCents: amounts[index] ?? 0 })),
       };
     }
-    default:
-      // "Equally" and "exact amounts" arrive with their own story (US4).
-      throw badRequest("expense.split.invalid");
+    case "EQUAL": {
+      // Everyone chosen is kept, even at €0.00 (€0.02 among three); leftovers follow member order.
+      assertMembers(input.split.userIds);
+      const chosen = new Set(input.split.userIds);
+      const sharing = members.filter((member) => chosen.has(member.userId));
+      const amounts = splitAmount(
+        input.amountCents,
+        sharing.map(() => 1),
+      );
+      return {
+        method: "EQUAL",
+        shares: sharing.map((member, index) => ({ userId: member.userId, amountCents: amounts[index] ?? 0 })),
+      };
+    }
+    case "EXACT": {
+      // As entered (the schema checked they add up); someone given €0.00 doesn't share it.
+      const { shares } = input.split;
+      assertMembers(shares.map((share) => share.userId));
+      return {
+        method: "EXACT",
+        shares: members.flatMap((member) => {
+          const share = shares.find((entry) => entry.userId === member.userId);
+          return share && share.amountCents > 0 ? [{ userId: member.userId, amountCents: share.amountCents }] : [];
+        }),
+      };
+    }
   }
 }
 
