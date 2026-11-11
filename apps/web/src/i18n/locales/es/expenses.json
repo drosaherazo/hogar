@@ -1,1 +1,57 @@
-{}
+{
+  "title": "Gastos",
+  "add": "Añadir gasto",
+  "loadError": "No hemos podido cargar los gastos.",
+  "empty": {
+    "title": "Aún no hay gastos",
+    "description": "Cuando alguien pague algo que compartís, añádelo aquí."
+  },
+  "history": {
+    "label": "Historial",
+    "showMore": "Ver más",
+    "loadingMore": "Cargando más",
+    "paid": "Pagó {{name}}",
+    "youPaid": "Pagaste tú",
+    "payment": "{{from}} le pagó a {{to}}"
+  },
+  "part": {
+    "owes": "Debes {{amount}}",
+    "lent": "Prestaste {{amount}}",
+    "none": "No participas"
+  },
+  "form": {
+    "newTitle": "Añadir un gasto",
+    "back": "Volver a gastos",
+    "description": "¿Qué fue?",
+    "descriptionHint": "Hasta 100 caracteres, para que todo el mundo lo reconozca.",
+    "amount": "Importe (€)",
+    "amountHint": "Por ejemplo, 42,80.",
+    "paidBy": "¿Quién pagó?",
+    "date": "Fecha",
+    "split": {
+      "legend": "¿Cómo se reparte?",
+      "weights": "El reparto del hogar",
+      "noDefault": "Todavía nadie paga en el reparto del hogar. Elige personas o revisa el reparto.",
+      "reviewSplit": "Revisar el reparto",
+      "preview": "La parte de cada persona"
+    },
+    "save": "Guardar gasto",
+    "saving": "Guardando el gasto",
+    "cancel": "Cancelar"
+  },
+  "details": {
+    "back": "Volver a gastos",
+    "paidBy": "Pagó",
+    "date": "Fecha",
+    "split": "Cómo se reparte",
+    "shares": "La parte de cada persona",
+    "recordedBy": "Lo añadió {{name}} el {{date}}",
+    "saved": "Gasto guardado.",
+    "method": {
+      "WEIGHTS": "El reparto del hogar",
+      "EQUAL_one": "A partes iguales entre {{count}} persona",
+      "EQUAL_other": "A partes iguales entre {{count}} personas",
+      "EXACT": "Importes exactos"
+    }
+  }
+}

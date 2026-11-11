@@ -1,17 +1,22 @@
 import {
+  activityPageSchema,
   apiErrorSchema,
   authResponseSchema,
   authUserSchema,
   createdInvitationSchema,
   currentHouseholdSchema,
+  expenseResponseSchema,
   householdResponseSchema,
   invitationListSchema,
   invitationPreviewSchema,
+  type ActivityPage,
   type AuthResponse,
   type AuthUser,
   type CreatedInvitation,
   type CurrentHousehold,
   type ErrorCode,
+  type ExpenseInput,
+  type ExpenseView,
   type HouseholdView,
   type InvitableRole,
   type InvitationPreview,
@@ -179,6 +184,24 @@ export class ApiClient {
     return (
       await this.request("/invitations/accept", { method: "POST", body: { token }, schema: householdResponseSchema })
     ).household;
+  }
+
+  // --- Expenses and history ---------------------------------------------------
+
+  /** One page of expenses and payments, newest first; pass the previous page's `nextCursor` for the next. */
+  getActivity(cursor?: string): Promise<ActivityPage> {
+    const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
+    return this.request(`/household/activity${query}`, { schema: activityPageSchema });
+  }
+
+  async getExpense(id: string): Promise<ExpenseView> {
+    const path = `/household/expenses/${encodeURIComponent(id)}`;
+    return (await this.request(path, { schema: expenseResponseSchema })).expense;
+  }
+
+  async createExpense(input: ExpenseInput): Promise<ExpenseView> {
+    return (await this.request("/household/expenses", { method: "POST", body: input, schema: expenseResponseSchema }))
+      .expense;
   }
 
   async request<T = void>(path: string, options: RequestOptions<T> = {}, isRetry = false): Promise<T> {

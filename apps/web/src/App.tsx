@@ -9,6 +9,9 @@ import { ApiClient } from "./api/client";
 import { AuthProvider } from "./auth/AuthProvider";
 import { RedirectIfAuthenticated, RequireAuth } from "./auth/guards";
 import { currentLocale } from "./i18n";
+import { ExpenseDetailPage } from "./pages/ExpenseDetailPage/ExpenseDetailPage";
+import { ExpenseFormPage } from "./pages/ExpenseFormPage/ExpenseFormPage";
+import { ExpensesPage } from "./pages/ExpensesPage/ExpensesPage";
 import { HomePage } from "./pages/HomePage/HomePage";
 import { HouseholdSettingsPage } from "./pages/HouseholdSettingsPage/HouseholdSettingsPage";
 import { InvitePage } from "./pages/InvitePage/InvitePage";
@@ -30,6 +33,9 @@ export function createRoutes({ googleClientId }: AppConfig): RouteObject[] {
         { path: "/", element: <HomePage /> },
         { path: "/household/settings", element: <HouseholdSettingsPage /> },
         { path: "/invite", element: <InvitePage /> },
+        { path: "/expenses", element: <ExpensesPage /> },
+        { path: "/expenses/new", element: <ExpenseFormPage /> },
+        { path: "/expenses/:id", element: <ExpenseDetailPage /> },
       ],
     },
     { path: "*", element: <RedirectIfAuthenticated /> },

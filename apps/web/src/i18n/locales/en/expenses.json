@@ -1,1 +1,57 @@
-{}
+{
+  "title": "Expenses",
+  "add": "Add expense",
+  "loadError": "We couldn't load the expenses.",
+  "empty": {
+    "title": "No expenses yet",
+    "description": "When someone pays for something everyone shares, add it here."
+  },
+  "history": {
+    "label": "History",
+    "showMore": "Show more",
+    "loadingMore": "Loading more",
+    "paid": "{{name}} paid",
+    "youPaid": "You paid",
+    "payment": "{{from}} paid {{to}}"
+  },
+  "part": {
+    "owes": "You owe {{amount}}",
+    "lent": "You lent {{amount}}",
+    "none": "Not involved"
+  },
+  "form": {
+    "newTitle": "Add an expense",
+    "back": "Back to expenses",
+    "description": "What was it?",
+    "descriptionHint": "Up to 100 characters, so everyone recognises it.",
+    "amount": "Amount (€)",
+    "amountHint": "For example 42.80.",
+    "paidBy": "Who paid?",
+    "date": "Date",
+    "split": {
+      "legend": "How should it be split?",
+      "weights": "The household's split",
+      "noDefault": "Nobody pays in the household's split yet. Choose people, or review the split.",
+      "reviewSplit": "Review the split",
+      "preview": "Each person's share"
+    },
+    "save": "Save expense",
+    "saving": "Saving the expense",
+    "cancel": "Cancel"
+  },
+  "details": {
+    "back": "Back to expenses",
+    "paidBy": "Paid by",
+    "date": "Date",
+    "split": "How it's split",
+    "shares": "Each person's share",
+    "recordedBy": "Added by {{name}} on {{date}}",
+    "saved": "Expense saved.",
+    "method": {
+      "WEIGHTS": "The household's split",
+      "EQUAL_one": "Equally between {{count}} person",
+      "EQUAL_other": "Equally between {{count}} people",
+      "EXACT": "Exact amounts"
+    }
+  }
+}

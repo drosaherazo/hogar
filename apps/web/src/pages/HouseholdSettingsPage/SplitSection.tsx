@@ -6,14 +6,8 @@ import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router";
 import { errorKey } from "../../api/client";
 import { useUpdateSplit } from "../../household/useHousehold";
+import { usePercent } from "../../i18n/format";
 import styles from "./HouseholdSettingsPage.module.css";
-
-/** Whole-number percentage of shared costs, in the active language ("75 %" / "75 %"). */
-function usePercent() {
-  const { i18n } = useTranslation();
-  const format = new Intl.NumberFormat(i18n.resolvedLanguage, { style: "percent", maximumFractionDigits: 0 });
-  return (bps: number) => format.format(bps / 10000);
-}
 
 /** Live shares for the weights being typed, or null while any of them isn't valid yet. */
 function sharesFor(drafts: string[]): number[] | null {

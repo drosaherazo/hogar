@@ -1,4 +1,14 @@
-import type { AuthResponse, AuthUser, ErrorCode, HouseholdView, MemberView } from "@hogar/shared";
+import type {
+  ActivityItem,
+  ActivityPage,
+  AuthResponse,
+  AuthUser,
+  ErrorCode,
+  ExpenseView,
+  HouseholdView,
+  MemberView,
+  PersonRef,
+} from "@hogar/shared";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
@@ -47,8 +57,75 @@ export function householdView(overrides: Partial<HouseholdView> = {}): Household
   };
 }
 
+/** Ana (ADMIN, weight 3) and Bruno (MEMBER, weight 1): 75 % and 25 % of shared costs. */
+export function homeView(overrides: Partial<HouseholdView> = {}): HouseholdView {
+  return householdView({
+    members: [
+      member({ id: "m_ana", userId: ana.id, name: ana.name, role: "ADMIN", weight: 3, shareBps: 7500 }),
+      member({ id: "m_bruno", name: "Bruno Díaz", weight: 1, shareBps: 2500, joinedAt: "2026-11-10T10:00:01.000Z" }),
+    ],
+    ...overrides,
+  });
+}
+
+export function personRef(overrides: Partial<PersonRef> & Pick<PersonRef, "userId" | "name">): PersonRef {
+  return { avatarUrl: null, former: false, ...overrides };
+}
+
+export const anaRef = personRef({ userId: ana.id, name: ana.name });
+export const brunoRef = personRef({ userId: "user_m_bruno", name: "Bruno Díaz" });
+
+/** Groceries, €42.80, paid by Ana, with the 3 / 1 household split. */
+export function expenseView(overrides: Partial<ExpenseView> = {}): ExpenseView {
+  return {
+    id: "expense_1",
+    description: "Groceries",
+    amountCents: 4280,
+    date: "2026-11-10",
+    paidBy: anaRef,
+    split: {
+      method: "WEIGHTS",
+      shares: [
+        { person: anaRef, amountCents: 3210 },
+        { person: brunoRef, amountCents: 1070 },
+      ],
+    },
+    createdBy: anaRef,
+    createdAt: "2026-11-10T10:00:00.000Z",
+    editedBy: null,
+    editedAt: null,
+    version: 1,
+    ...overrides,
+  };
+}
+
+type ExpenseItem = Extract<ActivityItem, { kind: "expense" }>;
+
+export function expenseItem(overrides: Partial<ExpenseItem> = {}): ExpenseItem {
+  return {
+    kind: "expense",
+    id: "expense_1",
+    description: "Groceries",
+    amountCents: 4280,
+    date: "2026-11-10",
+    paidBy: anaRef,
+    viewerPart: { kind: "lent", amountCents: 1070 },
+    deleted: null,
+    ...overrides,
+  };
+}
+
 export const handlers = {
   signedIn: (user: AuthUser = ana) => http.post("*/api/auth/refresh", () => HttpResponse.json(session(user))),
+  /** Serves `pages` in order: the first without a cursor, then the one after each `nextCursor`. */
+  activity: (...pages: ActivityPage[]) =>
+    http.get("*/api/household/activity", ({ request }) => {
+      const cursor = new URL(request.url).searchParams.get("cursor");
+      const index = cursor === null ? 0 : pages.findIndex((page, at) => pages[at - 1]?.nextCursor === cursor);
+      return HttpResponse.json(pages[Math.max(index, 0)] ?? { items: [], nextCursor: null });
+    }),
+  expense: (expense: ExpenseView = expenseView()) =>
+    http.get("*/api/household/expenses/:id", () => HttpResponse.json({ expense })),
   noHousehold: (removedFrom: string | null = null) =>
     http.get("*/api/household", () => HttpResponse.json({ household: null, removedFrom })),
   household: (household: HouseholdView = householdView()) =>

@@ -2,6 +2,11 @@
   "appName": "Hogar",
   "loading": "Loading your home…",
   "skipToContent": "Skip to content",
+  "nav": {
+    "label": "Main",
+    "home": "Home",
+    "expenses": "Expenses"
+  },
   "theme": {
     "label": "Theme",
     "light": "Light",
