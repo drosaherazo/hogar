@@ -48,6 +48,12 @@
   --color-member-7: var(--member-light-7);
   --color-member-8: var(--member-light-8);
 
+  /* Brand surface: the one highlighted card per screen */
+  --color-brand-surface: var(--fuchsia-600);
+  --color-brand-surface-hover: var(--fuchsia-700);
+  --color-on-brand: var(--ink-0);
+  --color-brand-tint: var(--fuchsia-50);
+
   /* Warm shadows (earth tint, not black) */
   --shadow-sm: 0 1px 2px rgb(46 36 29 / 0.06), 0 1px 3px rgb(46 36 29 / 0.08);
   --shadow-md: 0 4px 12px rgb(46 36 29 / 0.08), 0 2px 4px rgb(46 36 29 / 0.06);

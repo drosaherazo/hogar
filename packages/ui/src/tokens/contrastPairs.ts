@@ -59,6 +59,34 @@ export const contrastPairs: ContrastPair[] = [
   pair("--color-text", "--color-negative-bg", AA_TEXT, "Text in an error notice", "Texto en un aviso de error"),
   pair("--color-focus", "--color-bg", AA_UI, "Focus ring", "Anillo de foco"),
   pair("--color-selection-text", "--color-selection-bg", AA_TEXT, "Selected text", "Texto seleccionado"),
+  pair(
+    "--color-on-brand",
+    "--color-brand-surface",
+    AA_TEXT,
+    "Text and focus on the highlighted card",
+    "Texto y foco en la tarjeta destacada",
+  ),
+  pair(
+    "--color-on-brand",
+    "--color-brand-surface-hover",
+    AA_TEXT,
+    "Outlined action on the highlighted card, on hover",
+    "Acción con contorno en la tarjeta destacada, al pasar el ratón",
+  ),
+  pair(
+    "--color-brand-surface",
+    "--color-on-brand",
+    AA_TEXT,
+    "Main action on the highlighted card",
+    "Acción principal en la tarjeta destacada",
+  ),
+  pair(
+    "--color-brand-surface",
+    "--color-brand-tint",
+    AA_TEXT,
+    "Main action on the highlighted card, on hover",
+    "Acción principal en la tarjeta destacada, al pasar el ratón",
+  ),
   ...Array.from({ length: 8 }, (_, index) =>
     pair(
       "--color-member-text",

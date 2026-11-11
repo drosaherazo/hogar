@@ -4,6 +4,46 @@
  * only the themes (theme-light.css, theme-dark.css) reference them.
  */
 :root {
+  /* Fuchsia: the brand. 500 is the vivid tone (logo, focus, art); 600+ carry white text */
+  --fuchsia-50: #fde8f2;
+  --fuchsia-100: #fcd9ea;
+  --fuchsia-300: #ff8cc4;
+  --fuchsia-400: #f4519f;
+  --fuchsia-500: #eb2386;
+  --fuchsia-600: #c2126a;
+  --fuchsia-700: #9e0e56;
+  --fuchsia-800: #760a40;
+
+  /* Ink: clean light neutrals with a hint of plum (backgrounds, borders, text) */
+  --ink-0: #ffffff;
+  --ink-25: #fbf8fa;
+  --ink-50: #f4eff3;
+  --ink-100: #e9e2e7;
+  --ink-400: #8b7f88;
+  --ink-600: #5d5360;
+  --ink-900: #1f1a21;
+
+  /* Plum: dark neutrals (dark mode), near-black with a plum tint */
+  --plum-950: #141016;
+  --plum-900: #1e1921;
+  --plum-800: #29222c;
+  --plum-700: #3e3443;
+  --plum-500: #857a8b;
+  --plum-300: #c3b8c7;
+  --plum-50: #f7f2f8;
+
+  /* Teal: positive ("owes you", done) */
+  --teal-50: #e3f5f1;
+  --teal-300: #5fd6c2;
+  --teal-700: #0f6f68;
+  --teal-950: #0d2b28;
+
+  /* Coral: negative ("you owe", errors), orange-leaning so it never reads as the brand */
+  --coral-50: #fdebe2;
+  --coral-300: #ff9e6b;
+  --coral-700: #b8400f;
+  --coral-950: #3a180a;
+
   /* Sand: warm neutrals (backgrounds, borders, text) */
   --sand-50: #fbf7f2;
   --sand-0: #fffdf9;
@@ -43,6 +83,8 @@
   --brick-900: #4a2620;
 
   /* Amber: warning */
+  --amber-50: #fdf3d3;
+  --amber-950: #33270a;
   --amber-100: #f8ead0;
   --amber-300: #e8be73;
   --amber-700: #7a5212;

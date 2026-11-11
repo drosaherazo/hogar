@@ -6,48 +6,51 @@ If something new doesn't fit these rules, there are no silent exceptions: justif
 
 ## Emotional goal
 
-**Warmth and comfort.** Opening Hogar should feel like walking into your home, not like opening your bank. The app deals with small but sensitive topics (money between people who live together, pending chores), so the interface must **lower tension, never raise it**. This holds in every language.
+**Joyful and approachable.** Opening Hogar should feel young, light and friendly: one vivid fuchsia used with intention, set against clean, calm neutrals. The app deals with small but sensitive topics (money between people who live together, pending chores), so the interface must still **lower tension, never raise it**. The joy comes from the brand and the copy, never from alarming colors. This holds in every language.
 
 ## Principles
 
-| Principle              | Concrete rule                                                                                                           |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Warmth over neutrality | Only the warm palette (sand, terracotta, sage, brick, amber). No cold greys, corporate blues or pure white backgrounds. |
-| Calm: nothing shouts   | Moderate saturation. No neon, no bright red, no ALL CAPS for emphasis, no flashy animations.                            |
-| Friendly shapes        | Rounded corners, soft warm shadows, generous white space.                                                               |
-| Closeness in language  | Copy sounds like someone who lives in the house, in natural sentences ("Ana owes you €12.50").                          |
-| Inclusive by default   | AA contrast in both themes, visible focus, full keyboard use, color never alone, `prefers-reduced-motion` respected.    |
-| Visual fairness        | No member stands out more than another: all member colors share the same luminance.                                     |
+| Principle                           | Concrete rule                                                                                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| One joyful color, used deliberately | Fuchsia is the only brand color: primary actions, focus, the logo and the one highlighted card per screen. Everything else uses the clean ink (light) and plum (dark) neutrals. |
+| Nothing alarms                      | Debts and errors in coral, never red. No neon besides the brand, no ALL CAPS for emphasis, no flashy animations.                                                                |
+| Friendly shapes                     | Rounded corners, soft shadows, generous white space.                                                                                                                            |
+| Closeness in language               | Copy sounds like someone who lives in the house, in natural sentences ("Ana owes you €12.50").                                                                                  |
+| Inclusive by default                | AA contrast in both themes, visible focus, full keyboard use, color never alone, `prefers-reduced-motion` respected.                                                            |
+| Visual fairness                     | No member stands out more than another: all member colors share the same luminance.                                                                                             |
 
 ## Color
 
-Components use **only semantic tokens** (`--color-*`), never primitives (`--terracotta-600`, `--sand-50`…) or raw values.
+Components use **only semantic tokens** (`--color-*`), never primitives (`--fuchsia-600`, `--ink-25`…) or raw values.
 
-| I need…                                                 | Token                                                                 |
-| ------------------------------------------------------- | --------------------------------------------------------------------- |
-| App background                                          | `--color-bg`                                                          |
-| Card or panel                                           | `--color-surface`                                                     |
-| Sunken area (inputs, secondary sections)                | `--color-surface-sunken`                                              |
-| Layer under dialogs                                     | `--color-overlay`                                                     |
-| Text                                                    | `--color-text` / `--color-text-muted`                                 |
-| Dividers                                                | `--color-border`                                                      |
-| Form field border                                       | `--color-border-strong`                                               |
-| Primary action (background / text on top / hover)       | `--color-accent` / `--color-accent-contrast` / `--color-accent-hover` |
-| Links and accent text                                   | `--color-accent-text`                                                 |
-| Focus ring                                              | `--color-focus`                                                       |
-| Text selection (already applied globally in `base.css`) | `--color-selection-bg` / `--color-selection-text`                     |
-| "Owes you", done, confirmation                          | `--color-positive` (+ `--color-positive-bg`)                          |
-| "You owe", error, destructive action                    | `--color-negative` (+ `--color-negative-bg`)                          |
-| Reminder, due soon                                      | `--color-warning` (+ `--color-warning-bg`)                            |
-| A member's identity                                     | `--color-member-1…8` with `--color-member-text` on top                |
+| I need…                                                   | Token                                                                           |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| App background                                            | `--color-bg`                                                                    |
+| Card or panel                                             | `--color-surface`                                                               |
+| Sunken area (inputs, secondary sections)                  | `--color-surface-sunken`                                                        |
+| Layer under dialogs                                       | `--color-overlay`                                                               |
+| Text                                                      | `--color-text` / `--color-text-muted`                                           |
+| Dividers                                                  | `--color-border`                                                                |
+| Form field border                                         | `--color-border-strong`                                                         |
+| Primary action (background / text on top / hover)         | `--color-accent` / `--color-accent-contrast` / `--color-accent-hover`           |
+| Links and accent text                                     | `--color-accent-text`                                                           |
+| Focus ring                                                | `--color-focus`                                                                 |
+| Text selection (already applied globally in `base.css`)   | `--color-selection-bg` / `--color-selection-text`                               |
+| "Owes you", done, confirmation                            | `--color-positive` (+ `--color-positive-bg`)                                    |
+| "You owe", error, destructive action                      | `--color-negative` (+ `--color-negative-bg`)                                    |
+| Reminder, due soon                                        | `--color-warning` (+ `--color-warning-bg`)                                      |
+| A member's identity                                       | `--color-member-1…8` with `--color-member-text` on top                          |
+| The one highlighted card per screen (`Card tone="brand"`) | `--color-brand-surface` / `--color-on-brand` (+ `-hover`, `--color-brand-tint`) |
 
 Rules:
 
 - **Color never goes alone:** every state comes with text, an icon or a sign.
-- **Terracotta is for the primary action.** One primary action per screen or block.
-- **Brick, not red:** errors and debts inform without alarming or blaming.
+- **Fuchsia is for the primary action.** One primary action per screen or block; secondary actions stay neutral.
+- **Coral, not red:** errors and debts inform without alarming or blaming, and never look like the brand.
+- **One brand surface per screen.** Only the home money card uses `Card tone="brand"`. Inside it, meaning is carried by words and icons, never by state colors.
+- **Members are never pink:** member colors avoid the brand's hue, so nobody looks like the brand or a debt.
 - **Deterministic member colors:** assigned by join order in the household; they never change between screens.
-- **The brand is everywhere, Storybook included.** Storybook's chrome, docs pages and canvas use the brand themes in `packages/ui/.storybook/themes.ts` (light and dark, switched together by the Theme toolbar). Those themes mirror the palette as hex values; `storybookThemes.test.ts` fails if they drift from `primitives.css` or lose AA contrast. No default Storybook blues or greys, no backgrounds addon.
+- **The brand is everywhere, Storybook included.** Storybook's chrome, docs pages and canvas use the brand themes in `packages/ui/.storybook/themes.ts` (light and dark, switched together by the Theme toolbar). Those themes mirror the palette as hex values; `storybookThemes.test.ts` fails if they drift from `primitives.css` or lose AA contrast. No default Storybook blues or greys, no old palette, no backgrounds addon.
 
 ## Typography
 
@@ -62,7 +65,7 @@ Rules:
 - Spacing only with `--space-*` (4 px base). When in doubt, more space, not less.
 - Touch targets at least 44 px tall.
 - Radii: `sm` tags · `md` buttons and inputs · `lg` cards · `xl` dialogs and sheets · `full` avatars and badges.
-- Shadows only with `--shadow-sm|md|lg`.
+- Shadows only with `--shadow-sm|md|lg` (soft, plum-tinted in light, black in dark).
 - Mobile-first: design at 375 px first.
 
 ## Motion
@@ -78,7 +81,7 @@ Rules:
 - Money, dates and numbers with `Intl` and the active locale (`€12.50` / `12,50 €`). Never build them by concatenating strings.
 - Never concatenate translated fragments into a sentence: use one key with interpolation, so each language controls its own word order.
 - Plurals with `_one` / `_other`, never `count === 1 ? … : …`.
-- The warm tone is reviewed in **each** language, not just translated literally.
+- The friendly tone is reviewed in **each** language, not just translated literally.
 
 ## Copy tone
 
@@ -118,7 +121,8 @@ Before calling done any task that touches the interface:
 - [ ] AA contrast; new pairs added to `contrastPairs.ts`.
 - [ ] No state conveyed by color alone.
 - [ ] No hardcoded copy; every key exists in `en` and `es`.
-- [ ] Copy reviewed in both languages for a warm tone; empty states and errors written.
+- [ ] Copy reviewed in both languages for a friendly, approachable tone; empty states and errors written.
+- [ ] Fuchsia only for the primary action, focus and the one brand card; states in teal, coral and amber.
 - [ ] Layout holds with the longer language (no clipped or overflowing text).
 - [ ] Money, dates and numbers formatted with `Intl` and the active locale.
 - [ ] Visible focus, full keyboard use and touch targets ≥ 44 px.
@@ -130,5 +134,5 @@ Before calling done any task that touches the interface:
 Quick style check:
 
 ```bash
-grep -rnE '#[0-9a-fA-F]{3,6}|[0-9]px|--(terracotta|sand|sage|brick|amber|earth|member-(light|dark))-' --include='*.module.css' packages apps
+grep -rnE '#[0-9a-fA-F]{3,6}|[0-9]px|--(fuchsia|ink|plum|teal|coral|amber|member-(light|dark))-' --include='*.module.css' packages apps
 ```
