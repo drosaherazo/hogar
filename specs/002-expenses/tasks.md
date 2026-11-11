@@ -335,7 +335,7 @@ Within each story, test tasks come first and must fail before implementation.
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T062 [P] [US5] Add an "editing and deleting" describe to `apps/api/test/expenses.test.ts`:
+- [x] T062 [P] [US5] Add an "editing and deleting" describe to `apps/api/test/expenses.test.ts`:
   - **Edit:** `PUT` as an editor changes fields and split, bumps `version` and sets `editedBy`/`editedAt`. A stale `version` → 409 `expense.changed` with nothing changed.
   - **Default-split rules (research R3):**
     - Unchanged amount: keeps its stored shares even after the weights changed.
@@ -344,8 +344,8 @@ Within each story, test tasks come first and must fail before implementation.
   - **Former members:** one already in the expense may stay; one can't be added (`expense.person.not_member`).
   - **Delete:** `DELETE ?version=n` → 204 and sets `deletedAt`/`deletedById`. Then `GET`, `PUT` and a second `DELETE` → 404 `expense.not_found`; balances exclude it; `activity` keeps it with `deleted: { by, at }` and `viewerPart` `none`. A missing version → 400 `request.invalid`; a stale version → 409.
   - **Permissions:** GUEST → 403; another household's id → 404.
-- [ ] T063 [P] [US5] Add the matching "editing and deleting" describe to `apps/api/test/settlements.test.ts`: versions, 409 `settlement.changed`, soft delete with 404 afterwards, balances excluding deleted settlements, `deleted` set in `activity`, GUEST 403, other household 404
-- [ ] T064 [P] [US5] Web tests in `apps/web/src/pages/ExpenseFormPage/ExpenseFormPage.test.tsx`, `apps/web/src/pages/ExpenseDetailPage/ExpenseDetailPage.test.tsx`, `apps/web/src/expenses/ActivityList.test.tsx` and `apps/web/src/expenses/PaymentDialog.test.tsx`:
+- [x] T063 [P] [US5] Add the matching "editing and deleting" describe to `apps/api/test/settlements.test.ts`: versions, 409 `settlement.changed`, soft delete with 404 afterwards, balances excluding deleted settlements, `deleted` set in `activity`, GUEST 403, other household 404
+- [x] T064 [P] [US5] Web tests in `apps/web/src/pages/ExpenseFormPage/ExpenseFormPage.test.tsx`, `apps/web/src/pages/ExpenseDetailPage/ExpenseDetailPage.test.tsx`, `apps/web/src/expenses/ActivityList.test.tsx` and `apps/web/src/expenses/PaymentDialog.test.tsx`:
   - **`ExpenseFormPage.test.tsx`** (edit mode):
     - Prefilled values.
     - A default-split expense reads "The household's split when it was added (Ana 75 %, Bruno 25 %)", from its stored shares.
@@ -357,21 +357,21 @@ Within each story, test tasks come first and must fail before implementation.
 
 ### Implementation for User Story 5
 
-- [ ] T065 [US5] Implement `update` and `remove` in `apps/api/src/expenses/expenseService.ts`:
+- [x] T065 [US5] Implement `update` and `remove` in `apps/api/src/expenses/expenseService.ts`:
   - **Updates** use `updateMany WHERE id, householdId, version, deletedAt null`, then distinguish 409 from 404. They replace the shares in the same transaction under `lockHousehold`, set `editedById`/`editedAt` and bump `version`.
   - **Default split (R3):** keep the stored shares when the amount is unchanged; rescale with `splitAmount(newAmount, oldShares)` when it changes; use the current weights when switching from another method.
   - **Former members (R11):** people already in the expense may stay; no new former members.
   - **Remove** is a soft delete setting `deletedAt`/`deletedById`, guarded by `version` (R17).
-- [ ] T066 [US5] Implement `update` and `remove` in `apps/api/src/expenses/settlementService.ts` with the same version and soft-delete rules
-- [ ] T067 [US5] Add `PUT /:id` and `DELETE /:id` (with a `version` query param parsed as a positive integer, otherwise 400 `request.invalid`) to `expensesRouter.ts` and `settlementsRouter.ts`, both behind `requireEditor`
-- [ ] T068 [US5] Add `updateExpense`, `deleteExpense(id, version)`, `updateSettlement` and `deleteSettlement` to `apps/web/src/api/client.ts`, with mutations in `useExpenses.ts` that invalidate activity, balances and the record's key
-- [ ] T069 [US5] Add edit mode to `ExpenseFormPage` under the `/expenses/:id/edit` route (editors only) in `App.tsx`:
+- [x] T066 [US5] Implement `update` and `remove` in `apps/api/src/expenses/settlementService.ts` with the same version and soft-delete rules
+- [x] T067 [US5] Add `PUT /:id` and `DELETE /:id` (with a `version` query param parsed as a positive integer, otherwise 400 `request.invalid`) to `expensesRouter.ts` and `settlementsRouter.ts`, both behind `requireEditor`
+- [x] T068 [US5] Add `updateExpense`, `deleteExpense(id, version)`, `updateSettlement` and `deleteSettlement` to `apps/web/src/api/client.ts`, with mutations in `useExpenses.ts` that invalidate activity, balances and the record's key
+- [x] T069 [US5] Add edit mode to `ExpenseFormPage` under the `/expenses/:id/edit` route (editors only) in `App.tsx`:
   - The stored shares, and the "when it was added" label built with `Intl.ListFormat` and percentages.
   - The rescale preview when the amount changes.
   - Handling for 409 `expense.changed`.
   - On `ExpenseDetailPage`, add **Edit**, **Delete** (with the confirmation `Dialog`) and "Changed by {{name}} on {{date}}".
   - Copy in en/es.
-- [ ] T070 [US5] Render deleted records in `ActivityList` as muted lines with a trash icon and `expenses:history.deletedExpense` / `deletedPayment`, without links. Add edit and delete (`expenses:payment.delete.*`) to `PaymentDialog`. Copy in en/es.
+- [x] T070 [US5] Render deleted records in `ActivityList` as muted lines with a trash icon and `expenses:history.deletedExpense` / `deletedPayment`, without links. Add edit and delete (`expenses:payment.delete.*`) to `PaymentDialog`. Copy in en/es.
 
 **Checkpoint**: mistakes can be fixed openly; nothing disappears without a trace.
 
