@@ -13,6 +13,14 @@ describe("AppShell navigation", () => {
     expect(within(nav).getByRole("link", { name: "Expenses" })).not.toHaveAttribute("aria-current");
   });
 
+  it("keeps Expenses marked on the balances, which belong to the same section", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()));
+    renderApp({ path: "/balances" });
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    expect(within(nav).getByRole("link", { name: "Expenses" })).toHaveAttribute("aria-current", "true");
+    expect(within(nav).getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current");
+  });
+
   it("has nothing to navigate to without a household", async () => {
     server.use(handlers.signedIn(), handlers.noHousehold());
     renderApp({ path: "/" });

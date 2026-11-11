@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { NavLink } from "react-router";
+import { Link, NavLink, useLocation } from "react-router";
 import { useAuth } from "../auth/AuthProvider";
 import { useCurrentUser } from "../auth/guards";
 import { useHousehold } from "../household/useHousehold";
@@ -17,7 +17,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const user = useCurrentUser();
   const { logout } = useAuth();
   const household = useHousehold();
+  const { pathname } = useLocation();
   const navClass = ({ isActive }: { isActive: boolean }) => clsx(styles.navLink, isActive && styles.current);
+  // Balances belong to the money section too, so "Expenses" stays marked there.
+  const inMoney = pathname.startsWith("/expenses") || pathname.startsWith("/balances");
 
   return (
     <div className={styles.page}>
@@ -30,9 +33,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           <NavLink to="/" end className={navClass}>
             {t("nav.home")}
           </NavLink>
-          <NavLink to="/expenses" className={navClass}>
+          <Link
+            to="/expenses"
+            className={clsx(styles.navLink, inMoney && styles.current)}
+            aria-current={pathname === "/expenses" ? "page" : inMoney ? "true" : undefined}
+          >
             {t("nav.expenses")}
-          </NavLink>
+          </Link>
         </nav>
       )}
       <main id="main" className={styles.main} tabIndex={-1}>
