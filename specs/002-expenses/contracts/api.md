@@ -37,11 +37,15 @@ SettlementView = { id, from: PersonRef, to: PersonRef, amountCents, date,
                    createdBy: PersonRef, createdAt: string, editedBy: PersonRef | null, editedAt: string | null,
                    version: number }
 
+Deletion = { by: PersonRef, at: string /* ISO */ }
+
 ActivityItem =
   | { kind: "expense", id, description, amountCents, date, paidBy: PersonRef,
-      viewerPart: { kind: "owes" | "lent" | "none", amountCents: number } }
-  | { kind: "settlement", id, amountCents, date, from: PersonRef, to: PersonRef }
-ActivityPage = { items: ActivityItem[] /* date desc, createdAt desc, id desc */, nextCursor: string | null }
+      viewerPart: { kind: "owes" | "lent" | "none", amountCents: number },  // "none" when deleted
+      deleted: Deletion | null }
+  | { kind: "settlement", id, amountCents, date, from: PersonRef, to: PersonRef, deleted: Deletion | null }
+ActivityPage = { items: ActivityItem[] /* live and deleted; date desc, createdAt desc, id desc */,
+                 nextCursor: string | null }
 
 PersonBalance = { person: PersonRef, balanceCents: number /* > 0 is owed, < 0 owes */ }
 SuggestedSettlement = { from: PersonRef, to: PersonRef, amountCents: number }
@@ -64,6 +68,8 @@ BalancesView = { balances: PersonBalance[]   /* current members in member order,
 | `POST /api/household/expenses`       | editor | `ExpenseInput`       | 201 `{ expense: ExpenseView }` | 400 `expense.description.required` / `expense.description.too_long` / `money.amount.invalid` / `money.date.invalid` / `money.date.future` / `expense.split.invalid` / `expense.split.mismatch` / `expense.split.no_default` / `expense.person.not_member`; 403 `household.forbidden` |
 | `PUT /api/household/expenses/:id`    | editor | `UpdateExpenseInput` | 200 `{ expense: ExpenseView }` | as POST; 404 `expense.not_found`; 409 `expense.changed`                                                                                                                                                                                                                              |
 | `DELETE /api/household/expenses/:id` | editor | — (`?version=`)      | 204                            | 400 `request.invalid` (no version); 403; 404 `expense.not_found`; 409 `expense.changed`                                                                                                                                                                                              |
+
+Deleting is a soft delete (research R17): it records who deleted the expense and when (still guarded by `?version=`). Afterwards the expense no longer counts in balances, suggestions or the viewer's part, `GET`/`PUT`/`DELETE` on it answer 404 `expense.not_found`, and the history keeps it as an item with `deleted` set. Settlements behave the same way.
 
 Rules the API enforces beyond the schema:
 

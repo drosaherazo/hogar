@@ -15,6 +15,12 @@
 - Q: Is leaving or removal allowed while the person still owes or is owed money? → A: Yes, after a confirmation that states the open balance; it stays in the balances under the former member's name until settled (FR-026, FR-027).
 - Q: Who may edit and delete expenses and payments? → A: Any MEMBER or ADMIN, on any record, whoever recorded it; every record shows who recorded it and who last changed it (FR-022, FR-023).
 
+### Design review 2026-11-11
+
+- Q: Does deleting leave a trace? → A: Yes. A deleted expense or payment stops counting everywhere, and the history keeps a muted line saying who deleted it and when; that line can't be opened or edited (Story 5 #2, FR-025).
+- Q: When can an expense's shares change? → A: Only when someone edits that expense, and the form shows the new shares before saving. Nothing changes them behind the scenes: not weight changes, not people joining or leaving. Correcting the amount of a default-split expense keeps the proportions it was recorded with (FR-009, edge cases).
+- Q: Does someone who rejoins get their old balance back? → A: Yes, their history and balance are theirs again (FR-029, confirmed).
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Record a shared expense (Priority: P1)
@@ -97,12 +103,12 @@ Bruno typed €4.20 instead of €42.00 for the electricity bill. He opens the e
 
 **Why this priority**: Mistakes with shared money cause friction if they can't be fixed openly; showing who changed what keeps everyone's trust. It builds on Stories 1 and 3.
 
-**Independent Test**: Edit an expense's amount and split, delete another one and a settlement, and check that balances follow each change and that each record shows who recorded and last changed it.
+**Independent Test**: Edit an expense's amount and split, delete another one and a settlement, and check that balances follow each change, that each record shows who recorded and last changed it, and that each deletion leaves a line in the history saying who deleted what.
 
 **Acceptance Scenarios**:
 
 1. **Given** an expense or payment recorded by anyone, **When** a MEMBER or ADMIN changes any of its details (including the split) and saves, **Then** the change is saved and everyone's balances reflect it.
-2. **Given** an expense or payment recorded by anyone, **When** a MEMBER or ADMIN deletes it and confirms in a dialog that names it ("Delete 'Groceries' (€42.80)?"), **Then** it disappears from the history and the balances.
+2. **Given** an expense or payment recorded by anyone, **When** a MEMBER or ADMIN deletes it and confirms in a dialog that names it ("Delete 'Groceries' (€42.80)?"), **Then** it stops counting in the balances, and the history keeps a muted line in its place saying who deleted it and when ("Ana deleted 'Groceries' (€42.80)"), which can't be opened or edited.
 3. **Given** any expense or payment, **When** someone opens it, **Then** they see who recorded it and, if it was changed, who changed it last and when.
 4. **Given** two people editing the same expense, **When** the second one saves after the first, **Then** the second save is refused with an explanation that it changed meanwhile, and they see the latest version before trying again.
 5. **Given** a GUEST, **When** they try to edit or delete (from any client), **Then** the request is rejected.
@@ -135,7 +141,7 @@ Carla moves out while she still owes Ana €15.00. Her expenses stay in the hist
 - An amount smaller than the number of people sharing it (€0.02 among three) gives some people a share of €0.00; the shares still add up to the total.
 - With exact amounts, a person given €0.00 does not share the expense.
 - An expense paid by someone for themselves only does not change any balance; it stays in the history.
-- Editing an expense recorded with the default split keeps its saved shares. If its amount changes, the shares are recalculated in the same proportions among the same people, so later weight changes still don't affect it; choosing the default split for an expense that used another method uses the current weights. The new shares are shown before saving.
+- Editing an expense recorded with the default split keeps its saved shares, and the form describes that option with the proportions it was recorded with ("The household's split when it was added: Ana 75 %, Bruno 25 %"), not today's. If its amount changes, the shares are recalculated in the same proportions among the same people, so later weight changes still don't affect it; choosing the default split for an expense that used another method uses the current weights. The new shares are shown before saving.
 - A member whose role changes between MEMBER and GUEST keeps their place in past expenses and balances, and can still be chosen to share or pay new expenses.
 - People who joined after an expense's date can still be included in it; dates are informational and do not limit who can share.
 - Amounts are typed with the decimal separator of the person's language ("12.50" in English, "12,50" in Spanish).
@@ -159,7 +165,7 @@ Carla moves out while she still owes Ana €15.00. Her expenses stay in the hist
 - **FR-006**: An expense MUST also be splittable equally among people chosen from the current members (at least one), or by an exact amount per person.
 - **FR-007**: The shares of every expense MUST add up exactly to its amount. When an amount cannot be divided exactly, the leftover cents MUST go one each to the people who come first in the household's member order (the order in which they joined).
 - **FR-008**: With exact amounts, saving MUST be impossible until the amounts add up to the total, and the form MUST show how much is left to assign or how much it exceeds the total.
-- **FR-009**: Shares MUST be fixed when an expense is saved: later changes to weights or members MUST NOT change existing expenses.
+- **FR-009**: Shares MUST be fixed when an expense is saved and MUST only change when someone edits that expense, with the new shares shown before saving. Later changes to weights or members MUST NOT change existing expenses.
 - **FR-010**: When every weight in the household is 0, the default split MUST NOT be offered; the person MUST choose another way to split and MUST see a pointer to the household's split settings.
 - **FR-011**: The payer MUST NOT be required to share the expense.
 
@@ -184,7 +190,7 @@ Carla moves out while she still owes Ana €15.00. Her expenses stay in the hist
 - **FR-022**: MEMBERs and ADMINs MUST be able to change any detail of any expense or payment (including the split), whoever recorded it, and to delete it after a confirmation that names it.
 - **FR-023**: Every expense and payment MUST show who recorded it and, if it was changed, who changed it last and when.
 - **FR-024**: A change based on an outdated version of an expense or payment MUST be refused with an explanation, so nobody overwrites a change they have not seen.
-- **FR-025**: Editing or deleting MUST update everyone's balances.
+- **FR-025**: Editing or deleting MUST update everyone's balances. A deleted expense or payment MUST no longer count anywhere, and the history MUST keep a line in its place naming what was deleted, who deleted it and when; that line MUST NOT be editable.
 
 **People who move out (deferred from households)**
 
@@ -204,9 +210,9 @@ Carla moves out while she still owes Ana €15.00. Her expenses stay in the hist
 
 ### Key Entities
 
-- **Expense**: money one person paid for the household. Has a description, an amount in euros, the person who paid, a date, how it was split (household split, equally among chosen people, or exact amounts), who recorded it and who last changed it.
+- **Expense**: money one person paid for the household. Has a description, an amount in euros, the person who paid, a date, how it was split (household split, equally among chosen people, or exact amounts), who recorded it and who last changed it. If deleted, it keeps who deleted it and when, and no longer counts.
 - **Share**: one person's part of an expense, an exact amount. The shares of an expense add up to its amount and are fixed when it is saved.
-- **Payment (settlement)**: money one person gave another to settle up. Has who paid, who received, an amount, a date, who recorded it and who last changed it.
+- **Payment (settlement)**: money one person gave another to settle up. Has who paid, who received, an amount, a date, who recorded it and who last changed it. If deleted, it keeps who deleted it and when, and no longer counts.
 - **Balance**: what a person is owed or owes overall in the household. Always derived from expenses and payments, never kept separately.
 - **Suggested payment**: one transfer in the shortest list of transfers that would bring every balance to zero. Derived, never kept.
 - **Former member**: a person who left or was removed but still appears in the household's history and balances.

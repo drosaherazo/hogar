@@ -2,6 +2,8 @@
 
 All Technical Context items were resolvable from the spec, the constitution and the households code; no open clarifications remain. Each decision lists what was chosen, why, and what was rejected.
 
+A design review on 2026-11-11 (a decision-by-decision interview) confirmed R1–R16 and the spec's defaults (no future dates, the €100,000.00 limit, two screens, the vocabulary in `contracts/ui.md`). It made R3's rule explicit and added R17: deleting leaves a trace.
+
 ## R1 · Expenses and payments refer to users, not memberships
 
 - **Decision:** `Expense.paidById`, `ExpenseShare.userId`, `Settlement.fromUserId` / `toUserId` and the `createdById` / `editedById` columns all reference `User`, and every expense or settlement row carries its `householdId`. A **former member** is a user who appears in a household's expenses or settlements but has no current `Membership` in it. It is derived, never stored.
@@ -24,6 +26,7 @@ All Technical Context items were resolvable from the spec, the constitution and 
   - If the expense used the default split and **the amount changes**, the new shares are `splitAmount(newAmount, oldShares)`: the same people in the same proportions.
   - If the person switches to the default split from another method, the current weights are used.
   - `EQUAL` and `EXACT` edits send their people or amounts again, like a new expense. Former members already in the expense may stay in it (R11).
+- **The rule behind it (design review):** an expense's shares only change when someone edits that expense, and the form shows the new shares before saving (FR-009). When editing a default-split expense, the option reads "The household's split when it was added (Ana 75 %, Bruno 25 %)", using the proportions of its stored shares, not today's weights.
 - **Rationale:** "Later changes to weights or members must not change existing expenses" (FR-009) should also hold when someone fixes a typo in the amount. Rescaling the saved shares keeps the agreement that applied when the money was spent, and keeps former members in it (FR-028). **The spec was updated** to say so: the edge case on editing default-split expenses now describes rescaling instead of "recalculated with the current weights".
 - **Alternatives rejected:** Recomputing with today's weights (an old expense silently changes proportion, and former members drop out of it). Forbidding amount edits on default-split expenses (unfriendly for typos).
 
@@ -113,3 +116,13 @@ All Technical Context items were resolvable from the spec, the constitution and 
 
 - **Decision:** The interface says **payment** ("Record a payment", "Bruno paid Ana €10.70"). The code and database say **settlement** (`Settlement`, `/api/household/settlements`, `settlement.*` error codes), the name the constitution uses.
 - **Rationale:** "Payment" is the everyday word in both languages (pago); "settlement" is precise and matches the constitution's domain rules.
+
+## R17 · Deleting leaves a trace
+
+- **Decision:** Deleting an expense or settlement is a soft delete. It sets `deletedAt` and `deletedById` (guarded by `version`, like edits) and keeps the row and its shares. Deleted records:
+  - Never count: balances, suggestions, the viewer's part and the "people in the household's history" check all use live records only.
+  - Answer 404 to `GET`, `PUT` and a second `DELETE` (`expense.not_found` / `settlement.not_found`).
+  - Stay in the history feed at their original date as items with `deleted: { by, at }`. The web shows them as a muted line that can't be opened, such as "Ana deleted 'Groceries' (€42.80)" or "Ana deleted the payment from Bruno to Ana (€13.20)".
+  - Have no restore action.
+- **Rationale:** The clarification lets any MEMBER or ADMIN edit or delete any record and relies on openness for trust ("changed by Bruno"). A hard delete would be the one change that leaves no trace, and it's the most sensitive one (FR-025, design review).
+- **Alternatives rejected:** Hard delete (silent). Soft delete with a **Restore** action (more endpoints and tests; re-adding a record covers the rare mistake). A separate audit log table (a new layer for one kind of event).

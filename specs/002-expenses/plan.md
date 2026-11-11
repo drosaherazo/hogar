@@ -14,7 +14,7 @@ Add the money layer of the household. Members and admins record expenses (descri
 
 One integer splitter in `packages/shared` (`splitAmount`, the cents version of the households leftover rule) computes every split, both in the API and in the form's live preview. Balances are never stored: the API sums expenses, shares and settlements per person and `shared` turns them into balances and a short list of suggested payments (at most `n − 1`).
 
-Payments (settlements) are recorded the same way. Expenses and payments are editable by any editor, with a `version` guarding against overwriting someone else's change.
+Payments (settlements) are recorded the same way. Expenses and payments are editable by any editor, with a `version` guarding against overwriting someone else's change. Deleting keeps a trace: the record stops counting, and the history shows who deleted it.
 
 Records reference users, not memberships, so people who leave stay in the history as former members, their balance keeps counting until settled, and rejoining brings it back. The API adds ten endpoints under `/api/household`. The web adds:
 
@@ -72,6 +72,11 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 | Workflow                       | Branch `feat/expenses`; spec, plan and tasks committed with the feature; Conventional Commits; PR with CI.                                                                                                                                                                                                                                                                                     | ✅ Pass |
 
 **Post-design re-check (after Phase 1):** ✅ Still passing. Design produced one spec refinement (R3): editing the amount of a default-split expense rescales its saved shares instead of using today's weights. That strengthens FR-009 ("later weight changes don't affect existing expenses") and keeps former members in their expenses (FR-028). Nothing was relaxed.
+
+**Post-review re-check (design review, 2026-11-11):** ✅ Still passing. The review confirmed R1–R16 and changed two things, both of which strengthen principles II and VI:
+
+- **Deleting leaves a trace (R17):** soft delete with `deletedAt`/`deletedById`. Balances use live records only, so they stay computed and never stored.
+- **Shares only change when someone edits that expense (FR-009):** editing a default-split expense shows the proportions it was recorded with.
 
 ## Project Structure
 
@@ -167,16 +172,17 @@ apps/web/cypress/e2e/expenses.cy.ts
 5. **US2 · Balances:** `GET balances`, the balances page, the home card.
 6. **US3 · Settle up:** settlements `POST`/`GET`, the payment dialog, payment rows in the history.
 7. **US4 · Other splits:** `EQUAL` and `EXACT` in the API and the form.
-8. **US5 · Fix mistakes:** `PUT`/`DELETE` with versions for expenses and settlements, the edit form, delete dialogs, "changed by".
+8. **US5 · Fix mistakes:** `PUT` and soft `DELETE` with versions for expenses and settlements, the edit form ("when it was added" label), delete dialogs, "changed by", muted "deleted by" lines in the history.
 9. **US6 · People move out:** former member flags, payments with former members, balance-aware leave and remove dialogs, last-member copy, cascade tests.
 10. **E2E and polish:** Cypress flows, the design checklist, the i18n key table regenerated from JSON, README status row.
 
 ## Complexity Tracking
 
-No constitution violations. Three design pieces go beyond the simplest CRUD; each is required by the spec:
+No constitution violations. Four design pieces go beyond the simplest CRUD; each is required by the spec:
 
 | Addition                                     | Why needed                                                                                                               | Simpler alternative rejected because                                                                                |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
 | `version` column on expenses and settlements | FR-024: an edit based on an outdated version must be refused, not overwrite someone else's change                        | Last write wins breaks FR-024; timestamps collide and couple to clocks                                              |
+| Soft delete (`deletedAt`, `deletedById`)     | FR-025 (design review): any editor can delete any record, so deletions must leave a visible trace                        | A hard delete is the one change that would leave no trace; an audit log table is a new layer for one event          |
 | Keyset-paginated history merging two tables  | FR-003/FR-021: one history of expenses and payments, unbounded over time, stable while people add records                | Loading everything grows without limit; offsets skip or repeat rows when records are added                          |
 | `ChoiceGroup` and `Select` in `packages/ui`  | Split method, people, payer and payment selects need them, and the invitation role picker already duplicates the pattern | Keeping local copies in the web duplicates markup and styles, which households R11 deferred until a second consumer |

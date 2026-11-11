@@ -22,8 +22,12 @@ PostgreSQL via Prisma 7 (`apps/api/prisma/schema.prisma`). Table and column name
 | editedById  | String?             | FK → User, `onDelete: Restrict`; set on every edit                           |
 | editedAt    | DateTime?           | set on every edit                                                            |
 | version     | Int                 | default 1; incremented on every edit; guards edits and deletes (research R6) |
+| deletedById | String?             | FK → User, `onDelete: Restrict`; who deleted it (research R17)               |
+| deletedAt   | DateTime?           | set when deleted; a deleted expense never counts and can't be edited         |
 
 Indexes: `(householdId, date DESC, createdAt DESC, id DESC)` for the history feed; `(householdId, paidById)` for balance sums.
+
+States: **live** (`deletedAt` null) → **deleted** (`deletedAt` set), one way only. Deleting keeps the row and its shares so the history can say what was deleted (FR-025).
 
 Relations: `shares` (1–n, cascade on delete).
 
@@ -64,10 +68,12 @@ Editing (research R3): a `WEIGHTS` expense whose amount is unchanged keeps its s
 | editedById  | String?             | FK → User                                                              |
 | editedAt    | DateTime?           | —                                                                      |
 | version     | Int                 | default 1                                                              |
+| deletedById | String?             | FK → User, `onDelete: Restrict`                                        |
+| deletedAt   | DateTime?           | same lifecycle as expenses: live → deleted                             |
 
 Indexes: `(householdId, date DESC, createdAt DESC, id DESC)`; `(householdId, fromUserId)`; `(householdId, toUserId)`.
 
-`fromUserId` and `toUserId` must each be a current member or a person in the household's history: payer or share in one of its expenses, or party to one of its settlements (research R11).
+`fromUserId` and `toUserId` must each be a current member or a person in the household's history: payer or share in one of its live expenses, or party to one of its live settlements (research R11).
 
 ## Existing models
 
@@ -77,10 +83,10 @@ Indexes: `(householdId, date DESC, createdAt DESC, id DESC)`; `(householdId, fro
 
 ## Derived views (never stored)
 
-- **Former member** of household H: a user referenced by H's expenses, shares or settlements with no `Membership` in H.
-- **Balance** per user (research R4): `paid − owed + sent − received`, where `paid` = Σ `Expense.amountCents` by `paidById`, `owed` = Σ `ExpenseShare.amountCents` by `userId`, `sent` = Σ `Settlement.amountCents` by `fromUserId`, `received` = Σ by `toUserId`, all within H. Positive = is owed money. Σ over all users = 0.
+- **Former member** of household H: a user referenced by H's live expenses, shares or settlements with no `Membership` in H. (Deleted records still show the names they mention, but don't make anyone part of the history.)
+- **Balance** per user (research R4): `paid − owed + sent − received`, where `paid` = Σ `Expense.amountCents` by `paidById`, `owed` = Σ `ExpenseShare.amountCents` by `userId`, `sent` = Σ `Settlement.amountCents` by `fromUserId`, `received` = Σ by `toUserId`, all over H's **live** records only. Positive = is owed money. Σ over all users = 0.
 - **Suggested payments** (research R5): `suggestSettlements(balances)`; at most `n − 1` transfers for `n` non-zero balances.
-- **Viewer's part** of an expense (research R9): `owes` (their share when someone else paid), `lent` (amount − their share when they paid) or `none`.
+- **Viewer's part** of an expense (research R9): `owes` (their share when someone else paid), `lent` (amount − their share when they paid) or `none`; always `none` for a deleted expense.
 
 ## Constraints added to the generated migration
 
