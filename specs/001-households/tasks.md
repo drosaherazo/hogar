@@ -193,7 +193,7 @@
 - [x] T058 [P] Run the `docs/design.md` checklist on Home, Settings (three sections) and Invite in light and dark themes and in en and es, fixing anything found (tokens only, visible focus, color never alone, warm copy)
 - [x] T059 [P] Update the status table in `README.md`: households, invitations, members and split become ✅, and expenses, chores, shopping list and real time stay 🔜
 - [x] T060 Run the full gate: `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test` (API against Docker `hogar_test`) and `env -u ELECTRON_RUN_AS_NODE pnpm --filter @hogar/web e2e`
-- [ ] T061 Walk through the 10 manual scenarios in `specs/001-households/quickstart.md` with two browsers on `pnpm dev`, and fix any gap against the spec
+- [x] T061 Walk through the 10 manual scenarios in `specs/001-households/quickstart.md` with two browsers on `pnpm dev`, and fix any gap against the spec
 
 ---
 
