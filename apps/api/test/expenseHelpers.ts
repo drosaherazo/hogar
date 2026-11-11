@@ -94,6 +94,47 @@ export async function addSettlement(
   return settlementResponseSchema.parse(res.body).settlement;
 }
 
+/** The input that would save `expense` as it is: the starting point for an edit. */
+export function inputOf(expense: ExpenseView): ExpenseInput {
+  const people = expense.split.shares.map((share) => share.person.userId);
+  return {
+    description: expense.description,
+    amountCents: expense.amountCents,
+    paidById: expense.paidBy.userId,
+    date: expense.date,
+    split:
+      expense.split.method === "EQUAL"
+        ? { method: "EQUAL", userIds: people }
+        : expense.split.method === "EXACT"
+          ? {
+              method: "EXACT",
+              shares: expense.split.shares.map((share) => ({
+                userId: share.person.userId,
+                amountCents: share.amountCents,
+              })),
+            }
+          : { method: "WEIGHTS" },
+  };
+}
+
+export function putExpense(app: App, who: SignedIn, id: string, body: ExpenseInput & { version: number }) {
+  return request(app).put(`/api/household/expenses/${id}`).set("Authorization", who.auth).send(body);
+}
+
+export function deleteExpense(app: App, who: SignedIn, id: string, version?: number) {
+  const query = version === undefined ? {} : { version: String(version) };
+  return request(app).delete(`/api/household/expenses/${id}`).query(query).set("Authorization", who.auth);
+}
+
+export function putSettlement(app: App, who: SignedIn, id: string, body: SettlementInput & { version: number }) {
+  return request(app).put(`/api/household/settlements/${id}`).set("Authorization", who.auth).send(body);
+}
+
+export function deleteSettlement(app: App, who: SignedIn, id: string, version?: number) {
+  const query = version === undefined ? {} : { version: String(version) };
+  return request(app).delete(`/api/household/settlements/${id}`).query(query).set("Authorization", who.auth);
+}
+
 export async function balancesOf(app: App, who: SignedIn): Promise<BalancesView> {
   const res = await request(app).get("/api/household/balances").set("Authorization", who.auth);
   if (res.status !== 200) throw new Error(`balancesOf failed: ${res.status} ${JSON.stringify(res.body)}`);

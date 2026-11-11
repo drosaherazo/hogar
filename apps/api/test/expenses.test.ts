@@ -1,4 +1,4 @@
-import { expenseResponseSchema } from "@hogar/shared";
+import { activityPageSchema, expenseResponseSchema } from "@hogar/shared";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { createHousehold } from "./householdHelpers";
@@ -6,9 +6,12 @@ import {
   addExpense,
   balanceByUser,
   balancesOf,
+  deleteExpense,
   homeWith,
   homeWithGuest,
+  inputOf,
   postExpense,
+  putExpense,
   sharesByUser,
   TODAY,
 } from "./expenseHelpers";
@@ -237,6 +240,197 @@ describe("other ways to split", () => {
       split: { method: "EXACT", shares: [{ userId: outsider.user.id, amountCents: 4280 }] },
     });
     expect(exact.body).toEqual({ error: { code: "expense.person.not_member" } });
+  });
+});
+
+describe("editing and deleting expenses", () => {
+  it("lets any editor change any expense, and says who changed it and when", async () => {
+    const { app, clock } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const expense = await addExpense(app, ana, { amountCents: 4280 });
+    clock.advance(60 * 60 * 1000);
+
+    const res = await putExpense(app, bruno, expense.id, {
+      ...inputOf(expense),
+      description: "Big shop",
+      amountCents: 5000,
+      split: { method: "EQUAL", userIds: [ana.user.id, bruno.user.id] },
+      version: 1,
+    });
+    expect(res.status).toBe(200);
+    const edited = expenseResponseSchema.parse(res.body).expense;
+    expect(edited).toEqual(
+      expect.objectContaining({
+        description: "Big shop",
+        amountCents: 5000,
+        version: 2,
+        editedAt: clock.now().toISOString(),
+      }),
+    );
+    expect(edited.editedBy?.userId).toBe(bruno.user.id);
+    expect(edited.createdBy.userId).toBe(ana.user.id);
+    expect(sharesByUser(edited)).toEqual({ [ana.user.id]: 2500, [bruno.user.id]: 2500 });
+    expect(balanceByUser(await balancesOf(app, ana))).toEqual({ [ana.user.id]: 2500, [bruno.user.id]: -2500 });
+  });
+
+  it("refuses a change based on an outdated version, keeping the newer one", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const expense = await addExpense(app, ana);
+    expect(
+      (await putExpense(app, bruno, expense.id, { ...inputOf(expense), description: "Bruno's", version: 1 })).status,
+    ).toBe(200);
+
+    const stale = await putExpense(app, ana, expense.id, { ...inputOf(expense), description: "Ana's", version: 1 });
+    expect(stale.status).toBe(409);
+    expect(stale.body).toEqual({ error: { code: "expense.changed" } });
+    const latest = await request(app).get(`/api/household/expenses/${expense.id}`).set("Authorization", ana.auth);
+    expect(latest.body.expense.description).toBe("Bruno's");
+  });
+
+  it("keeps the saved shares of a household-split expense when its amount stays the same", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const expense = await addExpense(app, ana, { amountCents: 4280 });
+    await db.membership.updateMany({ data: { weight: 1 } });
+
+    const res = await putExpense(app, ana, expense.id, {
+      ...inputOf(expense),
+      description: "Groceries (Mercadona)",
+      version: 1,
+    });
+    expect(sharesByUser(expenseResponseSchema.parse(res.body).expense)).toEqual({
+      [ana.user.id]: 3210,
+      [bruno.user.id]: 1070,
+    });
+  });
+
+  it("rescales a household-split expense in its original proportions when the amount changes", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const expense = await addExpense(app, ana, { amountCents: 4280 });
+    await db.membership.updateMany({ data: { weight: 1 } });
+
+    const res = await putExpense(app, ana, expense.id, { ...inputOf(expense), amountCents: 4400, version: 1 });
+    expect(sharesByUser(expenseResponseSchema.parse(res.body).expense)).toEqual({
+      [ana.user.id]: 3300,
+      [bruno.user.id]: 1100,
+    });
+  });
+
+  it("uses today's weights when switching to the household split from another way", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const expense = await addExpense(app, ana, {
+      amountCents: 4000,
+      split: { method: "EQUAL", userIds: [ana.user.id, bruno.user.id] },
+    });
+    const res = await putExpense(app, ana, expense.id, {
+      ...inputOf(expense),
+      split: { method: "WEIGHTS" },
+      version: 1,
+    });
+    expect(sharesByUser(expenseResponseSchema.parse(res.body).expense)).toEqual({
+      [ana.user.id]: 3000,
+      [bruno.user.id]: 1000,
+    });
+  });
+
+  it("keeps a former member in an expense they were part of, but never adds one", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, carla } = await homeWithGuest(app);
+    const shared = await addExpense(app, ana, {
+      amountCents: 1000,
+      split: { method: "EQUAL", userIds: [ana.user.id, carla.user.id] },
+    });
+    const other = await addExpense(app, ana, { amountCents: 1000 });
+    expect((await request(app).post("/api/household/leave").set("Authorization", carla.auth)).status).toBe(204);
+
+    const kept = await putExpense(app, bruno, shared.id, { ...inputOf(shared), description: "Dinner", version: 1 });
+    expect(kept.status).toBe(200);
+    const carlaShare = expenseResponseSchema.parse(kept.body).expense.split.shares.at(-1);
+    expect(carlaShare?.person).toEqual(expect.objectContaining({ userId: carla.user.id, former: true }));
+
+    const added = await putExpense(app, bruno, other.id, {
+      ...inputOf(other),
+      split: { method: "EQUAL", userIds: [ana.user.id, carla.user.id] },
+      version: 1,
+    });
+    expect(added.status).toBe(400);
+    expect(added.body).toEqual({ error: { code: "expense.person.not_member" } });
+  });
+
+  it("deletes an expense with its version, leaving a trace in the history", async () => {
+    const { app, clock } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const expense = await addExpense(app, ana, { amountCents: 4280 });
+    clock.advance(1000);
+
+    expect((await deleteExpense(app, bruno, expense.id, 1)).status).toBe(204);
+    for (const res of [
+      await request(app).get(`/api/household/expenses/${expense.id}`).set("Authorization", ana.auth),
+      await putExpense(app, ana, expense.id, { ...inputOf(expense), version: 1 }),
+      await deleteExpense(app, ana, expense.id, 1),
+    ]) {
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: { code: "expense.not_found" } });
+    }
+
+    expect(balanceByUser(await balancesOf(app, ana))).toEqual({ [ana.user.id]: 0, [bruno.user.id]: 0 });
+    const history = activityPageSchema.parse(
+      (await request(app).get("/api/household/activity").set("Authorization", ana.auth)).body,
+    );
+    expect(history.items).toEqual([
+      expect.objectContaining({
+        kind: "expense",
+        id: expense.id,
+        description: "Groceries",
+        viewerPart: { kind: "none", amountCents: 0 },
+        deleted: { by: expect.objectContaining({ userId: bruno.user.id }), at: clock.now().toISOString() },
+      }),
+    ]);
+  });
+
+  it("asks for the version when deleting, and refuses an outdated one", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const expense = await addExpense(app, ana);
+    const missing = await deleteExpense(app, ana, expense.id);
+    expect(missing.status).toBe(400);
+    expect(missing.body).toEqual({ error: { code: "request.invalid" } });
+
+    await putExpense(app, ana, expense.id, { ...inputOf(expense), description: "Changed", version: 1 });
+    const stale = await deleteExpense(app, ana, expense.id, 1);
+    expect(stale.status).toBe(409);
+    expect(stale.body).toEqual({ error: { code: "expense.changed" } });
+  });
+
+  it("refuses guests", async () => {
+    const { app } = createTestApp();
+    const { ana, carla } = await homeWithGuest(app);
+    const expense = await addExpense(app, ana);
+    for (const res of [
+      await putExpense(app, carla, expense.id, { ...inputOf(expense), version: 1 }),
+      await deleteExpense(app, carla, expense.id, 1),
+    ]) {
+      expect(res.status).toBe(403);
+      expect(res.body).toEqual({ error: { code: "household.read_only" } });
+    }
+  });
+
+  it("can't touch another household's expenses", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const expense = await addExpense(app, ana);
+    const outsider = await signIn(app, dani);
+    await createHousehold(app, outsider, "Piso Dani");
+    for (const res of [
+      await putExpense(app, outsider, expense.id, { ...inputOf(expense), paidById: outsider.user.id, version: 1 }),
+      await deleteExpense(app, outsider, expense.id, 1),
+    ]) {
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: { code: "expense.not_found" } });
+    }
   });
 });
 

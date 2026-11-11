@@ -7,9 +7,11 @@ import {
   addSettlement,
   balanceByUser,
   balancesOf,
+  deleteSettlement,
   homeWith,
   homeWithGuest,
   postSettlement,
+  putSettlement,
   TODAY,
 } from "./expenseHelpers";
 import { createTestApp, dani, db, signIn } from "./testApp";
@@ -128,6 +130,79 @@ describe("GET /api/household/settlements/:id", () => {
       .set("Authorization", outsider.auth);
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: { code: "settlement.not_found" } });
+  });
+});
+
+describe("editing and deleting payments", () => {
+  it("lets any editor change a payment, and says who changed it", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const payment = await addSettlement(app, bruno, {
+      fromUserId: bruno.user.id,
+      toUserId: ana.user.id,
+      amountCents: 1000,
+    });
+    const res = await putSettlement(app, ana, payment.id, {
+      fromUserId: bruno.user.id,
+      toUserId: ana.user.id,
+      amountCents: 500,
+      date: TODAY,
+      version: 1,
+    });
+    expect(res.status).toBe(200);
+    const edited = settlementResponseSchema.parse(res.body).settlement;
+    expect(edited).toEqual(expect.objectContaining({ amountCents: 500, version: 2 }));
+    expect(edited.editedBy?.userId).toBe(ana.user.id);
+    expect(balanceByUser(await balancesOf(app, ana))).toEqual({ [ana.user.id]: -500, [bruno.user.id]: 500 });
+  });
+
+  it("refuses a change based on an outdated version", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const payment = await addSettlement(app, bruno, { fromUserId: bruno.user.id, toUserId: ana.user.id });
+    const body = { fromUserId: bruno.user.id, toUserId: ana.user.id, amountCents: 700, date: TODAY, version: 1 };
+    expect((await putSettlement(app, ana, payment.id, body)).status).toBe(200);
+    const stale = await putSettlement(app, bruno, payment.id, { ...body, amountCents: 800 });
+    expect(stale.status).toBe(409);
+    expect(stale.body).toEqual({ error: { code: "settlement.changed" } });
+  });
+
+  it("deletes a payment with its version, leaving a trace in the history", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const payment = await addSettlement(app, bruno, { fromUserId: bruno.user.id, toUserId: ana.user.id });
+
+    expect((await deleteSettlement(app, ana, payment.id)).status).toBe(400);
+    expect((await deleteSettlement(app, ana, payment.id, 1)).status).toBe(204);
+    const gone = await request(app).get(`/api/household/settlements/${payment.id}`).set("Authorization", ana.auth);
+    expect(gone.status).toBe(404);
+    expect(gone.body).toEqual({ error: { code: "settlement.not_found" } });
+    expect(balanceByUser(await balancesOf(app, ana))).toEqual({ [ana.user.id]: 0, [bruno.user.id]: 0 });
+
+    const history = activityPageSchema.parse(
+      (await request(app).get("/api/household/activity").set("Authorization", ana.auth)).body,
+    );
+    expect(history.items[0]).toEqual(
+      expect.objectContaining({
+        kind: "settlement",
+        id: payment.id,
+        deleted: expect.objectContaining({ by: expect.objectContaining({ userId: ana.user.id }) }),
+      }),
+    );
+  });
+
+  it("refuses guests, and people from other households", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, carla } = await homeWithGuest(app);
+    const payment = await addSettlement(app, bruno, { fromUserId: bruno.user.id, toUserId: ana.user.id });
+    const body = { fromUserId: bruno.user.id, toUserId: ana.user.id, amountCents: 700, date: TODAY, version: 1 };
+    expect((await putSettlement(app, carla, payment.id, body)).status).toBe(403);
+    expect((await deleteSettlement(app, carla, payment.id, 1)).status).toBe(403);
+
+    const outsider = await signIn(app, dani);
+    await createHousehold(app, outsider, "Piso Dani");
+    expect((await putSettlement(app, outsider, payment.id, body)).status).toBe(404);
+    expect((await deleteSettlement(app, outsider, payment.id, 1)).status).toBe(404);
   });
 });
 

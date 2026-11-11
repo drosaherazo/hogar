@@ -129,6 +129,9 @@ export const updateSettlementInputSchema = z
   .refine(differentPeople, { message: code("settlement.same_person"), path: ["toUserId"] });
 export type UpdateSettlementInput = z.infer<typeof updateSettlementInputSchema>;
 
+/** Query string of a delete: the version the person saw (`?version=3`). */
+export const versionQuerySchema = z.object({ version: z.coerce.number().int().min(1) });
+
 /** Query string of `GET /api/household/activity`. */
 export const activityQuerySchema = z.object({
   cursor: z.string().min(1).max(500).optional(),
