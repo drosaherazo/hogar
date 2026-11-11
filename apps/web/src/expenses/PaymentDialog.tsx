@@ -125,8 +125,13 @@ export function RecordPaymentDialog({
     suggestSettlements(base).find((entry) => entry.fromUserId === fromUserId && entry.toUserId === toUserId)
       ?.amountCents ?? 0;
   const cents = parseAmount(amountText);
+  // Right after a former member's last debt is settled, the refetched balances drop them while
+  // they're still selected here; previewing a payment to or from someone outside `base` would
+  // unbalance it, so there's no reversal note until both people are back in the list.
+  const bothListed =
+    base.some((entry) => entry.userId === fromUserId) && base.some((entry) => entry.userId === toUserId);
   const reversed =
-    cents !== null && cents > 0 && fromUserId !== toUserId
+    cents !== null && cents > 0 && fromUserId !== toUserId && bothListed
       ? suggestSettlements(
           base.map((entry) => ({
             userId: entry.userId,

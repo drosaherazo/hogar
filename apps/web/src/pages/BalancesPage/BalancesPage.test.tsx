@@ -225,4 +225,33 @@ describe("BalancesPage › former members", () => {
     const from = within(dialog).getByRole("combobox", { name: "Who paid?" });
     expect(within(from).getByRole("option", { name: "Carla Ruiz (former member)" })).toBeInTheDocument();
   });
+
+  it("keeps working after settling a former member's last debt, when they drop out of the list", async () => {
+    let settled = false;
+    const afterwards = balancesView({
+      balances: [
+        { person: anaRef, balanceCents: 0 },
+        { person: brunoRef, balanceCents: 0 },
+        { person: formerCarla, balanceCents: 0 },
+      ],
+    });
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      http.get("*/api/household/balances", () => HttpResponse.json(settled ? afterwards : withFormer)),
+      http.post("*/api/household/settlements", () => {
+        settled = true;
+        return HttpResponse.json({ settlement: settlementView() }, { status: 201 });
+      }),
+    );
+    renderApp({ path: PATH });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Record this payment" }));
+    const dialog = await screen.findByRole("dialog", { name: "Record a payment" });
+    expect(within(dialog).getByRole("combobox", { name: "Who paid?" })).toHaveValue(formerCarla.userId);
+    await userEvent.click(within(dialog).getByRole("button", { name: "Record payment" }));
+
+    expect(await screen.findByRole("heading", { name: "All square! Nobody owes anything." })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Payment recorded.");
+  });
 });
