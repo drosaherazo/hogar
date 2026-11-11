@@ -1,8 +1,8 @@
-import { currentHouseholdSchema, householdResponseSchema } from "@hogar/shared";
+import { createdInvitationSchema, currentHouseholdSchema, householdResponseSchema } from "@hogar/shared";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { addMember, createHousehold, householdRow } from "./householdHelpers";
-import { bruno, carla, createTestApp, dani, db, signIn } from "./testApp";
+import { bruno, carla, createTestApp, dani, db, signIn, type SignedIn } from "./testApp";
 
 /** Ana (ADMIN) with Bruno (MEMBER) and Carla (GUEST). */
 async function setup() {
@@ -84,6 +84,25 @@ describe("PATCH /api/household/members/:id", () => {
       .send({ role: "GUEST" });
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: { code: "household.member_not_found" } });
+  });
+
+  it("refuses someone without a household", async () => {
+    const { app, bruno: brunoMember } = await setup();
+    const daniSession = await signIn(app, dani);
+    const responses = await Promise.all([
+      request(app)
+        .patch(`/api/household/members/${brunoMember.membershipId}`)
+        .set("Authorization", daniSession.auth)
+        .send({ role: "GUEST" }),
+      request(app).delete(`/api/household/members/${brunoMember.membershipId}`).set("Authorization", daniSession.auth),
+    ]);
+    for (const res of responses) {
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: { code: "household.not_member" } });
+    }
+    expect(await db.membership.findUnique({ where: { id: brunoMember.membershipId } })).toEqual(
+      expect.objectContaining({ role: "MEMBER" }),
+    );
   });
 
   it("validates the role", async () => {
@@ -209,14 +228,55 @@ describe("DELETE /api/household/members/:id", () => {
   });
 });
 
+describe("the removal note", () => {
+  const currentOf = async (app: Awaited<ReturnType<typeof setup>>["app"], who: SignedIn) =>
+    (await request(app).get("/api/household").set("Authorization", who.auth)).body;
+
+  it("is dropped once the removed person joins another household through a link", async () => {
+    const { app, ana, bruno } = await setup();
+    await request(app).delete(`/api/household/members/${bruno.membershipId}`).set("Authorization", ana.auth);
+
+    // Bruno opens Dani's link straight away, so the note about Casa Ana is never shown.
+    const daniSession = await signIn(app, dani);
+    await createHousehold(app, daniSession, "Piso Dani");
+    const invited = await request(app)
+      .post("/api/household/invitations")
+      .set("Authorization", daniSession.auth)
+      .send({ role: "MEMBER" });
+    const { token } = createdInvitationSchema.parse(invited.body);
+    const joined = await request(app).post("/api/invitations/accept").set("Authorization", bruno.auth).send({ token });
+    expect(joined.status).toBe(200);
+
+    // Leaving Piso Dani later must not bring back an old note about Casa Ana.
+    expect((await request(app).post("/api/household/leave").set("Authorization", bruno.auth)).status).toBe(204);
+    expect(await currentOf(app, bruno)).toEqual({ household: null, removedFrom: null });
+  });
+
+  it("is dropped once the removed person creates a household of their own", async () => {
+    const { app, ana, bruno } = await setup();
+    await request(app).delete(`/api/household/members/${bruno.membershipId}`).set("Authorization", ana.auth);
+
+    await createHousehold(app, bruno, "Piso Bruno");
+    // As the only member, leaving deletes Piso Bruno; the note about Casa Ana stays gone.
+    expect((await request(app).post("/api/household/leave").set("Authorization", bruno.auth)).status).toBe(204);
+    expect(await currentOf(app, bruno)).toEqual({ household: null, removedFrom: null });
+  });
+});
+
 describe("POST /api/household/leave", () => {
-  it("lets a member leave", async () => {
-    const { app, bruno, household } = await setup();
-    const res = await request(app).post("/api/household/leave").set("Authorization", bruno.auth);
+  it.each([
+    ["a member", "bruno"],
+    ["a guest", "carla"],
+  ] as const)("lets %s leave", async (_, who) => {
+    const context = await setup();
+    const leaving = context[who];
+    const res = await request(context.app).post("/api/household/leave").set("Authorization", leaving.auth);
     expect(res.status).toBe(204);
-    expect((await householdRow(household.id))?.memberships).toHaveLength(2);
+    const remaining = (await householdRow(context.household.id))?.memberships.map((m) => m.userId);
+    expect(remaining).toHaveLength(2);
+    expect(remaining).not.toContain(leaving.user.id);
     // Leaving on your own leaves no note behind.
-    expect((await request(app).get("/api/household").set("Authorization", bruno.auth)).body).toEqual({
+    expect((await request(context.app).get("/api/household").set("Authorization", leaving.auth)).body).toEqual({
       household: null,
       removedFrom: null,
     });

@@ -41,6 +41,15 @@ async function guardAdmins(
   return result;
 }
 
+/**
+ * Drops the "you were removed from …" note. Besides the web dismissing it, creating or joining a
+ * household drops it too: otherwise someone who joined elsewhere before seeing it would get an old
+ * note about their previous household the day they leave the new one (FR-021).
+ */
+export function clearRemovalNotice(client: Prisma.TransactionClient | Database, userId: string) {
+  return client.user.update({ where: { id: userId }, data: { removedFromHousehold: null } });
+}
+
 export interface HouseholdServiceDeps {
   db: Database;
   now?: (() => Date) | undefined;
@@ -75,13 +84,16 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
     /** Creates the household and its first membership (ADMIN, weight 1) together, or neither. */
     async create(userId: string, name: string): Promise<HouseholdView> {
       try {
-        const household = await db.household.create({
-          data: {
-            name,
-            membersChangedAt: now(),
-            memberships: { create: { userId, role: "ADMIN", weight: 1, joinedAt: now() } },
-          },
-        });
+        const [household] = await db.$transaction([
+          db.household.create({
+            data: {
+              name,
+              membersChangedAt: now(),
+              memberships: { create: { userId, role: "ADMIN", weight: 1, joinedAt: now() } },
+            },
+          }),
+          clearRemovalNotice(db, userId),
+        ]);
         return await view(household.id, userId);
       } catch (error) {
         // Membership.userId is unique: one household per user, even under concurrent requests.
@@ -164,7 +176,7 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
     },
 
     async dismissRemovalNotice(userId: string): Promise<void> {
-      await db.user.update({ where: { id: userId }, data: { removedFromHousehold: null } });
+      await clearRemovalNotice(db, userId);
     },
   };
 }

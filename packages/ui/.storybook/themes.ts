@@ -26,6 +26,10 @@ export const palette = {
   "--terracotta-300": "#e5906a",
   "--terracotta-600": "#a9502f",
   "--terracotta-700": "#8c4126",
+  "--sage-300": "#a9c7a8",
+  "--sage-700": "#4a634c",
+  "--amber-300": "#e8be73",
+  "--amber-700": "#7a5212",
 } as const;
 
 const FONT_BASE = '"Figtree Variable", system-ui, -apple-system, "Segoe UI", sans-serif';
@@ -112,6 +116,16 @@ export type ThemeName = "light" | "dark";
 export const storybookThemes: Record<ThemeName, typeof hogarLight> = {
   light: hogarLight,
   dark: hogarDark,
+};
+
+/**
+ * Sidebar icons for stories and docs pages. Storybook paints them in fixed colors (seafoam and
+ * orange) that `create()` can't change, so `manager.ts` repaints them with these: sage and amber,
+ * the brand's closest equivalents. Component icons already follow `colorSecondary`.
+ */
+export const sidebarIconColors: Record<ThemeName, { story: string; document: string }> = {
+  light: { story: palette["--sage-700"], document: palette["--amber-700"] },
+  dark: { story: palette["--sage-300"], document: palette["--amber-300"] },
 };
 
 /** Theme stored in the toolbar, or the system preference when none was chosen. */

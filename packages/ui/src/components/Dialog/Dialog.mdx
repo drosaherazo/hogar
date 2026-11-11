@@ -1,4 +1,4 @@
-import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
 import { Lang } from "../../docs/blocks/locale";
 import * as DialogStories from "./Dialog.stories";
 
@@ -8,7 +8,11 @@ import * as DialogStories from "./Dialog.stories";
 
 # Dialog
 
+Press the button in each example to open the dialog; Escape or "Cancel" closes it.
+
 <Canvas of={DialogStories.Confirmation} />
+
+<ArgTypes of={DialogStories} />
 
 ## What it is and when to use it
 A window over the page for a decision that needs full attention: confirming something that can't be undone (leaving a household, removing someone) or a short form (creating a household). Don't use it for information that could sit in the page, or for long flows.
@@ -38,7 +42,11 @@ A window over the page for a decision that needs full attention: confirming some
 
 # Diálogo
 
+Pulsa el botón de cada ejemplo para abrir el diálogo; Escape o "Cancelar" lo cierran.
+
 <Canvas of={DialogStories.Confirmation} />
+
+<ArgTypes of={DialogStories} />
 
 ## Qué es y cuándo usarlo
 Una ventana sobre la página para una decisión que necesita toda la atención: confirmar algo que no se puede deshacer (salir de un hogar, quitar a alguien) o un formulario corto (crear un hogar). No lo uses para información que podría estar en la página ni para flujos largos.

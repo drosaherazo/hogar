@@ -4,7 +4,9 @@ import { useRef, type ReactNode, type RefObject } from "react";
 import styles from "./Dialog.module.css";
 
 export interface DialogProps {
+  /** Whether the dialog is showing. The app owns this state and opens it from its own button. */
   open: boolean;
+  /** Called with `false` when the person closes it (Escape, the × button or outside the dialog). */
   onOpenChange: (open: boolean) => void;
   /** Says exactly what the dialog is about, already translated ("Leave Casa Ana?"). */
   title: string;
@@ -12,6 +14,7 @@ export interface DialogProps {
   description?: string;
   /** Accessible name of the close (×) button, already translated. */
   closeLabel: string;
+  /** The body, such as a short form. */
   children?: ReactNode;
   /**
    * Buttons at the bottom. Put the safe choice ("Cancel") first: it gets focus when the dialog
