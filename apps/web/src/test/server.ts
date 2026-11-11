@@ -9,6 +9,7 @@ import type {
   HouseholdView,
   MemberView,
   PersonRef,
+  SettlementView,
 } from "@hogar/shared";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -121,6 +122,38 @@ export function anaIsOwed(): BalancesView {
   });
 }
 
+/** Bruno paid Ana €7.70, recorded by Ana. */
+export function settlementView(overrides: Partial<SettlementView> = {}): SettlementView {
+  return {
+    id: "settlement_1",
+    from: brunoRef,
+    to: anaRef,
+    amountCents: 770,
+    date: "2026-11-10",
+    createdBy: anaRef,
+    createdAt: "2026-11-10T10:00:00.000Z",
+    editedBy: null,
+    editedAt: null,
+    version: 1,
+    ...overrides,
+  };
+}
+
+type SettlementItem = Extract<ActivityItem, { kind: "settlement" }>;
+
+export function settlementItem(overrides: Partial<SettlementItem> = {}): SettlementItem {
+  return {
+    kind: "settlement",
+    id: "settlement_1",
+    amountCents: 770,
+    date: "2026-11-10",
+    from: brunoRef,
+    to: anaRef,
+    deleted: null,
+    ...overrides,
+  };
+}
+
 type ExpenseItem = Extract<ActivityItem, { kind: "expense" }>;
 
 export function expenseItem(overrides: Partial<ExpenseItem> = {}): ExpenseItem {
@@ -149,6 +182,8 @@ export const handlers = {
   expense: (expense: ExpenseView = expenseView()) =>
     http.get("*/api/household/expenses/:id", () => HttpResponse.json({ expense })),
   balances: (view: BalancesView = anaIsOwed()) => http.get("*/api/household/balances", () => HttpResponse.json(view)),
+  settlement: (settlement: SettlementView = settlementView()) =>
+    http.get("*/api/household/settlements/:id", () => HttpResponse.json({ settlement })),
   noHousehold: (removedFrom: string | null = null) =>
     http.get("*/api/household", () => HttpResponse.json({ household: null, removedFrom })),
   household: (household: HouseholdView = householdView()) =>

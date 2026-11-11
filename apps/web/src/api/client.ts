@@ -10,6 +10,7 @@ import {
   householdResponseSchema,
   invitationListSchema,
   invitationPreviewSchema,
+  settlementResponseSchema,
   type ActivityPage,
   type AuthResponse,
   type AuthUser,
@@ -24,6 +25,8 @@ import {
   type InvitationPreview,
   type InvitationView,
   type Role,
+  type SettlementInput,
+  type SettlementView,
   type UpdateSplitRequest,
 } from "@hogar/shared";
 import type { z } from "zod";
@@ -209,6 +212,17 @@ export class ApiClient {
   async createExpense(input: ExpenseInput): Promise<ExpenseView> {
     return (await this.request("/household/expenses", { method: "POST", body: input, schema: expenseResponseSchema }))
       .expense;
+  }
+
+  async getSettlement(id: string): Promise<SettlementView> {
+    const path = `/household/settlements/${encodeURIComponent(id)}`;
+    return (await this.request(path, { schema: settlementResponseSchema })).settlement;
+  }
+
+  async createSettlement(input: SettlementInput): Promise<SettlementView> {
+    return (
+      await this.request("/household/settlements", { method: "POST", body: input, schema: settlementResponseSchema })
+    ).settlement;
   }
 
   async request<T = void>(path: string, options: RequestOptions<T> = {}, isRetry = false): Promise<T> {

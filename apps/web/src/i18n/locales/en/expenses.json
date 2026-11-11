@@ -42,7 +42,27 @@
   "suggest": {
     "youPay": "You owe {{name}} {{amount}}",
     "paysYou": "{{name}} owes you {{amount}}",
-    "others": "{{from}} owes {{to}} {{amount}}"
+    "others": "{{from}} owes {{to}} {{amount}}",
+    "record": "Record this payment"
+  },
+  "payment": {
+    "record": "Record a payment",
+    "recordTitle": "Record a payment",
+    "description": "Write down money that changed hands outside the app, so the balances stay right.",
+    "from": "Who paid?",
+    "to": "Who received it?",
+    "amount": "Amount (€)",
+    "date": "Date",
+    "owedNow": "Right now, {{from}} owes {{to}} {{amount}}.",
+    "reverses": "That's more than what's owed, so afterwards {{to}} will owe {{from}} {{amount}}.",
+    "save": "Record payment",
+    "saving": "Recording the payment",
+    "saved": "Payment recorded.",
+    "detailsTitle": "Payment",
+    "paid": "{{from}} paid {{to}}",
+    "recordedBy": "Added by {{name}} on {{date}}",
+    "close": "Close",
+    "cancel": "Cancel"
   },
   "form": {
     "newTitle": "Add an expense",

@@ -1,11 +1,13 @@
-import { canEditContent } from "@hogar/shared";
+import { canEditContent, type HouseholdView } from "@hogar/shared";
 import { Card, EmptyState, Spinner } from "@hogar/ui";
 import { Plus, ReceiptText, Scale } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { useCurrentUser } from "../../auth/guards";
 import { ActivityList } from "../../expenses/ActivityList";
 import { BalanceSentence } from "../../expenses/BalanceSentence";
+import { PaymentDetailsDialog } from "../../expenses/PaymentDialog";
 import { useActivity, useBalances } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
 import { useHousehold } from "../../household/useHousehold";
@@ -39,7 +41,7 @@ export function ExpensesPage() {
         current && (
           <>
             <Summary />
-            <History />
+            <History household={current} />
           </>
         )
       )}
@@ -61,10 +63,11 @@ function Summary() {
   );
 }
 
-function History() {
+function History({ household }: { household: HouseholdView }) {
   const { t } = useTranslation(["expenses", "common"]);
   const user = useCurrentUser();
   const activity = useActivity();
+  const [openSettlement, setOpenSettlement] = useState<string | null>(null);
 
   if (activity.isPending) return <Spinner label={t("common:loading")} />;
   if (activity.isError) {
@@ -80,12 +83,20 @@ function History() {
     );
   }
   return (
-    <ActivityList
-      items={items}
-      viewerId={user.id}
-      hasMore={activity.hasNextPage}
-      loadingMore={activity.isFetchingNextPage}
-      onShowMore={() => void activity.fetchNextPage()}
-    />
+    <>
+      <ActivityList
+        items={items}
+        viewerId={user.id}
+        hasMore={activity.hasNextPage}
+        loadingMore={activity.isFetchingNextPage}
+        onShowMore={() => void activity.fetchNextPage()}
+        onOpenSettlement={setOpenSettlement}
+      />
+      <PaymentDetailsDialog
+        settlementId={openSettlement}
+        onClose={() => setOpenSettlement(null)}
+        household={household}
+      />
+    </>
   );
 }

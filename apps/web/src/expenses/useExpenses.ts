@@ -1,4 +1,4 @@
-import type { ExpenseInput } from "@hogar/shared";
+import type { ExpenseInput, SettlementInput } from "@hogar/shared";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "../api/ApiClientContext";
 import { ApiRequestError } from "../api/client";
@@ -46,6 +46,30 @@ export function useExpense(id: string) {
     queryFn: () => client.getExpense(id),
     refetchOnWindowFocus: true,
     retry: retryUnlessMissing,
+  });
+}
+
+export function useSettlement(id: string | null) {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: expenseKeys.settlement(id ?? ""),
+    queryFn: () => client.getSettlement(id ?? ""),
+    enabled: id !== null,
+    retry: retryUnlessMissing,
+  });
+}
+
+/** Records a payment; the history and balances are refetched. */
+export function useCreateSettlement() {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SettlementInput) => client.createSettlement(input),
+    onSuccess: (settlement) => {
+      queryClient.setQueryData(expenseKeys.settlement(settlement.id), settlement);
+      void queryClient.invalidateQueries({ queryKey: expenseKeys.activity });
+      void queryClient.invalidateQueries({ queryKey: expenseKeys.balances });
+    },
   });
 }
 

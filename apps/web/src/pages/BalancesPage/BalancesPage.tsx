@@ -1,12 +1,13 @@
-import type { HouseholdView, PersonBalance, SuggestedSettlement } from "@hogar/shared";
-import { Avatar, Card, EmptyState, Spinner } from "@hogar/ui";
+import { canEditContent, type HouseholdView, type PersonBalance, type SuggestedSettlement } from "@hogar/shared";
+import { Avatar, Button, Card, EmptyState, Spinner } from "@hogar/ui";
 import clsx from "clsx";
-import { ArrowLeft, HandCoins, Scale } from "lucide-react";
-import { useId } from "react";
+import { ArrowLeft, Check, HandCoins, Scale } from "lucide-react";
+import { useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { useCurrentUser } from "../../auth/guards";
 import { useBalanceSentence } from "../../expenses/BalanceSentence";
+import { RecordPaymentDialog, type PaymentDraft } from "../../expenses/PaymentDialog";
 import { avatarPropsFor } from "../../expenses/people";
 import { useBalances } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
@@ -48,6 +49,21 @@ function Balances({ household }: { household: HouseholdView }) {
   const balances = useBalances();
   const everyoneId = useId();
   const suggestionsId = useId();
+  const canEdit = canEditContent(household.myRole);
+
+  // A new key per payment started, so the dialog opens fresh; closing keeps it mounted so
+  // focus can return to the button that opened it.
+  const nextKey = useRef(0);
+  const [payment, setPayment] = useState<{ key: number; initial?: PaymentDraft } | null>(null);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [recorded, setRecorded] = useState(false);
+
+  function startPayment(initial?: PaymentDraft) {
+    nextKey.current += 1;
+    setPayment({ key: nextKey.current, ...(initial ? { initial } : {}) });
+    setPaymentOpen(true);
+    setRecorded(false);
+  }
 
   if (balances.isPending) return <Spinner label={t("common:loading")} />;
   if (balances.isError) {
@@ -55,37 +71,78 @@ function Balances({ household }: { household: HouseholdView }) {
   }
 
   const view = balances.data;
-  if (view.balances.every((entry) => entry.balanceCents === 0)) {
-    return (
-      <Card padding="lg">
-        <EmptyState icon={<Scale />} title={t("balances.allSquare")} description={t("balances.allSquareDescription")} />
-      </Card>
-    );
-  }
+  const allSquare = view.balances.every((entry) => entry.balanceCents === 0);
 
   return (
     <>
-      <Card as="section" padding="lg" aria-labelledby={everyoneId} className={styles.section}>
-        <h2 id={everyoneId} className={styles.sectionTitle}>
-          {t("balances.everyone")}
-        </h2>
-        <ul className={styles.list}>
-          {view.balances.map((entry) => (
-            <BalanceRow key={entry.person.userId} entry={entry} household={household} />
-          ))}
-        </ul>
-      </Card>
-      {view.suggestions.length > 0 && (
-        <Card as="section" padding="lg" aria-labelledby={suggestionsId} className={styles.section}>
-          <h2 id={suggestionsId} className={styles.sectionTitle}>
-            {t("balances.suggestions")}
-          </h2>
-          <ul className={styles.list}>
-            {view.suggestions.map((suggestion) => (
-              <SuggestionRow key={`${suggestion.from.userId}-${suggestion.to.userId}`} suggestion={suggestion} />
-            ))}
-          </ul>
+      {recorded && (
+        <p role="status" className={styles.saved}>
+          <Check aria-hidden="true" className={styles.savedIcon} />
+          {t("payment.saved")}
+        </p>
+      )}
+      {canEdit && (
+        <Button variant="secondary" icon={<HandCoins />} onClick={() => startPayment()} className={styles.record}>
+          {t("payment.record")}
+        </Button>
+      )}
+      {allSquare ? (
+        <Card padding="lg">
+          <EmptyState
+            icon={<Scale />}
+            title={t("balances.allSquare")}
+            description={t("balances.allSquareDescription")}
+          />
         </Card>
+      ) : (
+        <>
+          <Card as="section" padding="lg" aria-labelledby={everyoneId} className={styles.section}>
+            <h2 id={everyoneId} className={styles.sectionTitle}>
+              {t("balances.everyone")}
+            </h2>
+            <ul className={styles.list}>
+              {view.balances.map((entry) => (
+                <BalanceRow key={entry.person.userId} entry={entry} household={household} />
+              ))}
+            </ul>
+          </Card>
+          {view.suggestions.length > 0 && (
+            <Card as="section" padding="lg" aria-labelledby={suggestionsId} className={styles.section}>
+              <h2 id={suggestionsId} className={styles.sectionTitle}>
+                {t("balances.suggestions")}
+              </h2>
+              <ul className={styles.list}>
+                {view.suggestions.map((suggestion) => (
+                  <SuggestionRow
+                    key={`${suggestion.from.userId}-${suggestion.to.userId}`}
+                    suggestion={suggestion}
+                    onRecord={
+                      canEdit
+                        ? () =>
+                            startPayment({
+                              fromUserId: suggestion.from.userId,
+                              toUserId: suggestion.to.userId,
+                              amountCents: suggestion.amountCents,
+                            })
+                        : undefined
+                    }
+                  />
+                ))}
+              </ul>
+            </Card>
+          )}
+        </>
+      )}
+      {payment && (
+        <RecordPaymentDialog
+          key={payment.key}
+          open={paymentOpen}
+          onOpenChange={setPaymentOpen}
+          household={household}
+          balances={view}
+          initial={payment.initial}
+          onRecorded={() => setRecorded(true)}
+        />
       )}
     </>
   );
@@ -117,7 +174,13 @@ function BalanceRow({ entry, household }: { entry: PersonBalance; household: Hou
   );
 }
 
-function SuggestionRow({ suggestion }: { suggestion: SuggestedSettlement }) {
+function SuggestionRow({
+  suggestion,
+  onRecord,
+}: {
+  suggestion: SuggestedSettlement;
+  onRecord?: (() => void) | undefined;
+}) {
   const { t } = useTranslation("expenses");
   const user = useCurrentUser();
   const money = useMoney();
@@ -137,6 +200,11 @@ function SuggestionRow({ suggestion }: { suggestion: SuggestedSettlement }) {
         <HandCoins />
       </span>
       <span className={styles.sentence}>{sentence}</span>
+      {onRecord && (
+        <Button variant="secondary" size="sm" onClick={onRecord}>
+          {t("suggest.record")}
+        </Button>
+      )}
     </li>
   );
 }

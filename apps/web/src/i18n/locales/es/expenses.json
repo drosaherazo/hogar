@@ -42,7 +42,27 @@
   "suggest": {
     "youPay": "Le debes {{amount}} a {{name}}",
     "paysYou": "{{name}} te debe {{amount}}",
-    "others": "{{from}} le debe {{amount}} a {{to}}"
+    "others": "{{from}} le debe {{amount}} a {{to}}",
+    "record": "Anotar este pago"
+  },
+  "payment": {
+    "record": "Anotar un pago",
+    "recordTitle": "Anotar un pago",
+    "description": "Apunta el dinero que se ha movido fuera de la app, para que los saldos sigan cuadrando.",
+    "from": "¿Quién pagó?",
+    "to": "¿Quién lo recibió?",
+    "amount": "Importe (€)",
+    "date": "Fecha",
+    "owedNow": "Ahora mismo, {{from}} le debe {{amount}} a {{to}}.",
+    "reverses": "Es más de lo que se debe, así que después {{to}} le deberá {{amount}} a {{from}}.",
+    "save": "Anotar pago",
+    "saving": "Anotando el pago",
+    "saved": "Pago anotado.",
+    "detailsTitle": "Pago",
+    "paid": "{{from}} le pagó a {{to}}",
+    "recordedBy": "Lo anotó {{name}} el {{date}}",
+    "close": "Cerrar",
+    "cancel": "Cancelar"
   },
   "form": {
     "newTitle": "Añadir un gasto",

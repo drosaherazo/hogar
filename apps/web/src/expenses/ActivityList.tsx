@@ -15,6 +15,8 @@ export interface ActivityListProps {
   hasMore: boolean;
   loadingMore: boolean;
   onShowMore: () => void;
+  /** Payments open in a dialog rather than a page. */
+  onOpenSettlement: (id: string) => void;
 }
 
 /** Groups items (already newest first) by calendar month, keeping their order. */
@@ -30,7 +32,14 @@ function byMonth(items: readonly ActivityItem[]) {
 }
 
 /** The household's history: expenses and payments by month, newest first. */
-export function ActivityList({ items, viewerId, hasMore, loadingMore, onShowMore }: ActivityListProps) {
+export function ActivityList({
+  items,
+  viewerId,
+  hasMore,
+  loadingMore,
+  onShowMore,
+  onOpenSettlement,
+}: ActivityListProps) {
   const { t } = useTranslation("expenses");
   const dates = useDates();
   const baseId = useId();
@@ -50,7 +59,7 @@ export function ActivityList({ items, viewerId, hasMore, loadingMore, onShowMore
                   {item.kind === "expense" ? (
                     <ExpenseRow item={item} viewerId={viewerId} />
                   ) : (
-                    <SettlementRow item={item} />
+                    <SettlementRow item={item} onOpen={() => onOpenSettlement(item.id)} />
                   )}
                 </li>
               ))}
@@ -101,11 +110,11 @@ function ExpenseRow({ item, viewerId }: { item: Extract<ActivityItem, { kind: "e
   );
 }
 
-function SettlementRow({ item }: { item: Extract<ActivityItem, { kind: "settlement" }> }) {
+function SettlementRow({ item, onOpen }: { item: Extract<ActivityItem, { kind: "settlement" }>; onOpen: () => void }) {
   const { t } = useTranslation("expenses");
   const dates = useDates();
   return (
-    <div className={styles.row}>
+    <button type="button" className={clsx(styles.row, styles.link, styles.button)} onClick={onOpen}>
       <span className={styles.icon} aria-hidden="true">
         <HandCoins />
       </span>
@@ -118,6 +127,6 @@ function SettlementRow({ item }: { item: Extract<ActivityItem, { kind: "settleme
       <span className={styles.side}>
         <Amount cents={item.amountCents} className={styles.amount} />
       </span>
-    </div>
+    </button>
   );
 }

@@ -1,8 +1,21 @@
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
+import { localToday } from "../../i18n/format";
 import { expectNoA11yViolations } from "../../test/axe";
 import { renderApp } from "../../test/renderApp";
-import { anaIsOwed, anaRef, balancesView, brunoRef, handlers, homeView, personRef, server } from "../../test/server";
+import {
+  anaIsOwed,
+  anaRef,
+  balancesView,
+  brunoRef,
+  handlers,
+  homeView,
+  personRef,
+  server,
+  settlementView,
+} from "../../test/server";
 
 const PATH = "/balances";
 const carlaRef = personRef({ userId: "user_m_carla", name: "Carla Ruiz" });
@@ -90,5 +103,95 @@ describe("BalancesPage", () => {
     const { container } = renderApp({ path: PATH });
     await screen.findByRole("region", { name: "Everyone's balance" });
     await expectNoA11yViolations(container);
+  });
+});
+
+describe("BalancesPage › recording payments", () => {
+  const square = balancesView({
+    balances: [
+      { person: anaRef, balanceCents: 0 },
+      { person: brunoRef, balanceCents: 0 },
+    ],
+  });
+
+  it("records a suggested payment, already filled in, and shows the new balances", async () => {
+    let settled = false;
+    let body: unknown;
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      http.get("*/api/household/balances", () => HttpResponse.json(settled ? square : anaIsOwed())),
+      http.post("*/api/household/settlements", async ({ request }) => {
+        body = await request.json();
+        settled = true;
+        return HttpResponse.json({ settlement: settlementView() }, { status: 201 });
+      }),
+    );
+    renderApp({ path: PATH });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Record this payment" }));
+    const dialog = await screen.findByRole("dialog", { name: "Record a payment" });
+    expect(within(dialog).getByRole("combobox", { name: "Who paid?" })).toHaveValue(brunoRef.userId);
+    expect(within(dialog).getByRole("combobox", { name: "Who received it?" })).toHaveValue(anaRef.userId);
+    expect(within(dialog).getByRole("textbox", { name: "Amount (€)" })).toHaveValue("7.70");
+    expect(within(dialog).getByText("Right now, Bruno Díaz owes Ana García €7.70.")).toBeInTheDocument();
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "Record payment" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Payment recorded.");
+    expect(await screen.findByRole("heading", { name: "All square! Nobody owes anything." })).toBeInTheDocument();
+    expect(body).toEqual({
+      fromUserId: brunoRef.userId,
+      toUserId: anaRef.userId,
+      amountCents: 770,
+      date: localToday(),
+    });
+  });
+
+  it("explains that paying more than what's owed reverses who owes whom", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()), handlers.balances(anaIsOwed()));
+    renderApp({ path: PATH });
+    await userEvent.click(await screen.findByRole("button", { name: "Record this payment" }));
+    const dialog = await screen.findByRole("dialog", { name: "Record a payment" });
+    const amount = within(dialog).getByRole("textbox", { name: "Amount (€)" });
+    await userEvent.clear(amount);
+    await userEvent.type(amount, "10.00");
+    expect(
+      within(dialog).getByText("That's more than what's owed, so afterwards Ana García will owe Bruno Díaz €2.30."),
+    ).toBeInTheDocument();
+  });
+
+  it("explains mistakes next to the fields, without sending anything", async () => {
+    let posted = false;
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      handlers.balances(anaIsOwed()),
+      http.post("*/api/household/settlements", () => {
+        posted = true;
+        return HttpResponse.json({}, { status: 500 });
+      }),
+    );
+    renderApp({ path: PATH });
+    await userEvent.click(await screen.findByRole("button", { name: "Record a payment" }));
+    const dialog = await screen.findByRole("dialog", { name: "Record a payment" });
+    expect(within(dialog).getByRole("combobox", { name: "Who paid?" })).toHaveValue(anaRef.userId);
+    await userEvent.selectOptions(within(dialog).getByRole("combobox", { name: "Who received it?" }), anaRef.userId);
+    await userEvent.click(within(dialog).getByRole("button", { name: "Record payment" }));
+
+    expect(within(dialog).getByRole("combobox", { name: "Who received it?" })).toHaveAccessibleDescription(
+      "Choose two different people.",
+    );
+    expect(within(dialog).getByRole("textbox", { name: "Amount (€)" })).toHaveAccessibleDescription(
+      expect.stringContaining("Enter an amount from €0.01"),
+    );
+    expect(posted).toBe(false);
+  });
+
+  it("doesn't offer guests to record payments", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView({ myRole: "GUEST" })), handlers.balances(anaIsOwed()));
+    renderApp({ path: PATH });
+    await screen.findByRole("region", { name: "Payments that would settle everyone" });
+    expect(screen.queryByRole("button", { name: "Record this payment" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Record a payment" })).not.toBeInTheDocument();
   });
 });

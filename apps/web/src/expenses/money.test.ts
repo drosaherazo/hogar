@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { parseAmount } from "./money";
+import { amountInputValue, parseAmount } from "./money";
+
+describe("amountInputValue", () => {
+  it("writes cents the way people type them in each language", () => {
+    expect(amountInputValue(770, "en")).toBe("7.70");
+    expect(amountInputValue(770, "es")).toBe("7,70");
+    expect(amountInputValue(5, "en")).toBe("0.05");
+    expect(amountInputValue(10_000_000, "es")).toBe("100000,00");
+  });
+
+  it("round-trips through parseAmount", () => {
+    for (const cents of [1, 99, 100, 4280, 123_456]) {
+      expect(parseAmount(amountInputValue(cents, "es"))).toBe(cents);
+      expect(parseAmount(amountInputValue(cents, "en"))).toBe(cents);
+    }
+  });
+});
 
 describe("parseAmount", () => {
   it.each([

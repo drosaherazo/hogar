@@ -49,6 +49,14 @@
   background-color: var(--color-surface-sunken);
 }
 
+/* A payment row is a button (it opens a dialog) that looks like the other rows. */
+.button {
+  inline-size: 100%;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
 .icon {
   display: inline-flex;
   flex: none;

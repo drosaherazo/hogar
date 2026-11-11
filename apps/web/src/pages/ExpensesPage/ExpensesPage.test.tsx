@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { expectNoA11yViolations } from "../../test/axe";
 import { renderApp } from "../../test/renderApp";
-import { brunoRef, expenseItem, handlers, homeView, server } from "../../test/server";
+import { brunoRef, expenseItem, handlers, homeView, server, settlementItem, settlementView } from "../../test/server";
 
 const PATH = "/expenses";
 
@@ -72,6 +72,23 @@ describe("ExpensesPage", () => {
     expect(await screen.findByRole("link", { name: /Groceries/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Dinner/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Show more" })).not.toBeInTheDocument();
+  });
+
+  it("shows payments in the history and opens their details", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      handlers.activity({ items: [settlementItem(), expenseItem({ date: "2026-11-09" })], nextCursor: null }),
+      handlers.settlement(settlementView()),
+    );
+    renderApp({ path: PATH });
+
+    const payment = await screen.findByRole("button", { name: /Bruno Díaz paid Ana García/ });
+    expect(payment).toHaveTextContent("€7.70");
+    await userEvent.click(payment);
+    const dialog = await screen.findByRole("dialog", { name: "Payment" });
+    expect(await within(dialog).findByText(/Added by Ana García on/)).toBeInTheDocument();
+    expect(within(dialog).getByText("Bruno Díaz paid Ana García")).toBeInTheDocument();
   });
 
   it("doesn't offer to add expenses to guests", async () => {
