@@ -2,7 +2,7 @@
 
 REST, JSON. Every endpoint requires `Authorization: Bearer <access token>` and resolves the caller's household on the server (`/api/household/…`, as in households). Bodies are validated with the Zod schemas in `packages/shared/src/expenses.ts`. Errors use the existing shape `{ "error": { "code": "<code>" } }`.
 
-Authorization legend: **any** = any member of the caller's household (GUEST included); **editor** = ADMIN or MEMBER (`canEditContent(role)`). Without a household, every endpoint answers 404 `household.not_member`.
+Authorization legend: **any** = any member of the caller's household (GUEST included); **editor** = ADMIN or MEMBER (`canEditContent(role)`). A GUEST calling an editor endpoint gets 403 `household.read_only`, written for guests rather than the admin-only `household.forbidden`. Without a household, every endpoint answers 404 `household.not_member`. In the tables below, "403" means `household.read_only`.
 
 ## Types (shared, Zod)
 
@@ -65,7 +65,7 @@ BalancesView = { balances: PersonBalance[]   /* current members in member order,
 | Method & path                        | Auth   | Body                 | Success                        | Errors                                                                                                                                                                                                                                                                               |
 | ------------------------------------ | ------ | -------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `GET /api/household/expenses/:id`    | any    | —                    | 200 `{ expense: ExpenseView }` | 404 `expense.not_found`                                                                                                                                                                                                                                                              |
-| `POST /api/household/expenses`       | editor | `ExpenseInput`       | 201 `{ expense: ExpenseView }` | 400 `expense.description.required` / `expense.description.too_long` / `money.amount.invalid` / `money.date.invalid` / `money.date.future` / `expense.split.invalid` / `expense.split.mismatch` / `expense.split.no_default` / `expense.person.not_member`; 403 `household.forbidden` |
+| `POST /api/household/expenses`       | editor | `ExpenseInput`       | 201 `{ expense: ExpenseView }` | 400 `expense.description.required` / `expense.description.too_long` / `money.amount.invalid` / `money.date.invalid` / `money.date.future` / `expense.split.invalid` / `expense.split.mismatch` / `expense.split.no_default` / `expense.person.not_member`; 403 `household.read_only` |
 | `PUT /api/household/expenses/:id`    | editor | `UpdateExpenseInput` | 200 `{ expense: ExpenseView }` | as POST; 404 `expense.not_found`; 409 `expense.changed`                                                                                                                                                                                                                              |
 | `DELETE /api/household/expenses/:id` | editor | — (`?version=`)      | 204                            | 400 `request.invalid` (no version); 403; 404 `expense.not_found`; 409 `expense.changed`                                                                                                                                                                                              |
 
@@ -105,8 +105,8 @@ Rules the API enforces beyond the schema:
 
 None. `POST /api/household/leave` and `DELETE /api/household/members/:id` keep working with open balances (clarification Q1); the warning lives in the web (research R12). Deleting the household when the last member leaves now also deletes its expenses, shares and settlements (FK cascade).
 
-## New error codes (15)
+## New error codes (16)
 
-`money.amount.invalid`, `money.date.invalid`, `money.date.future`, `expense.description.required`, `expense.description.too_long`, `expense.split.invalid`, `expense.split.mismatch`, `expense.split.no_default`, `expense.person.not_member`, `expense.not_found`, `expense.changed`, `settlement.same_person`, `settlement.person.not_found`, `settlement.not_found`, `settlement.changed`.
+`household.read_only`, `money.amount.invalid`, `money.date.invalid`, `money.date.future`, `expense.description.required`, `expense.description.too_long`, `expense.split.invalid`, `expense.split.mismatch`, `expense.split.no_default`, `expense.person.not_member`, `expense.not_found`, `expense.changed`, `settlement.same_person`, `settlement.person.not_found`, `settlement.not_found`, `settlement.changed`.
 
 Each is added to `ERROR_CODES` in `packages/shared/src/errors.ts` with warm `en` and `es` messages in `apps/web/src/i18n/locales/{en,es}/errors.json` (for example `expense.changed`: "Someone changed this expense while you were editing it. Here's the latest version."; `expense.split.mismatch`: "The amounts don't add up to the total yet.").

@@ -15,7 +15,7 @@ pnpm format:check && pnpm lint && pnpm typecheck
 pnpm --filter @hogar/shared test   # splitAmount, netBalances, suggestSettlements, viewerPart, schemas (+ seeded generated cases)
 pnpm --filter @hogar/api test      # Supertest: 10 endpoints × permission matrix, versions, former members, cascade
 pnpm --filter @hogar/ui test       # Amount, ChoiceGroup, Select, Avatar muted (+ axe)
-pnpm --filter @hogar/web test      # pages with MSW, parseAmount, i18n parity incl. 15 new error codes
+pnpm --filter @hogar/web test      # pages with MSW, parseAmount, i18n parity incl. 16 new error codes
 env -u ELECTRON_RUN_AS_NODE pnpm --filter @hogar/web e2e   # Cypress flows below (API and Google stubbed)
 ```
 

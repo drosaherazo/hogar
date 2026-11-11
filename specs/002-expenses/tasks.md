@@ -33,8 +33,8 @@ Within each story, test tasks come first and must fail before implementation.
 
 **Purpose**: Environment and the new i18n namespace.
 
-- [ ] T001 Confirm the baseline: Docker Desktop running and Postgres up (`pnpm db:up`), `pnpm typecheck` and `pnpm test` green on `feat/expenses` before any change
-- [ ] T002 [P] Add the `expenses` i18n namespace: create `apps/web/src/i18n/locales/en/expenses.json` and `apps/web/src/i18n/locales/es/expenses.json` (empty objects for now) and register them in `apps/web/src/i18n/resources.ts` so keys are typed
+- [x] T001 Confirm the baseline: Docker Desktop running and Postgres up (`pnpm db:up`), `pnpm typecheck` and `pnpm test` green on `feat/expenses` before any change
+- [x] T002 [P] Add the `expenses` i18n namespace: create `apps/web/src/i18n/locales/en/expenses.json` and `apps/web/src/i18n/locales/es/expenses.json` (empty objects for now) and register them in `apps/web/src/i18n/resources.ts` so keys are typed
 
 ---
 
@@ -46,7 +46,7 @@ Within each story, test tasks come first and must fail before implementation.
 
 ### Shared money logic (tests first)
 
-- [ ] T003 [P] Write unit tests for `splitAmount` in `packages/shared/src/split.test.ts`:
+- [x] T003 [P] Write unit tests for `splitAmount` in `packages/shared/src/split.test.ts`:
   - The result always sums to the amount.
   - Splits: `(4280, [3, 1])` → `[3210, 1070]`; `(1001, [3, 1])` → `[751, 250]`; `(1000, [1, 1, 1])` → `[334, 333, 333]`; `(2, [1, 1, 1])` → `[1, 1, 0]`.
   - A zero weight gets 0 and never a leftover: `(1001, [0, 3, 1])` → `[0, 751, 250]`.
@@ -54,27 +54,27 @@ Within each story, test tasks come first and must fail before implementation.
   - Rescaling stored shares: `(4400, [3210, 1070])` → `[3300, 1100]`.
   - Large values stay exact: `(10000000, [10000000, 1])`.
   - Throws on an empty list, all-zero weights, or an amount that isn't a positive integer.
-- [ ] T004 [P] Write unit tests for `netBalances`, `suggestSettlements` and `viewerPart` in `packages/shared/src/balances.test.ts`:
+- [x] T004 [P] Write unit tests for `netBalances`, `suggestSettlements` and `viewerPart` in `packages/shared/src/balances.test.ts`:
   - **netBalances:** `balance = paid − owed + sent − received`.
   - **Spec example:** Ana paid 2000 for Bruno only, Bruno paid 2000 for Carla only → Bruno 0 and a single suggestion Carla → Ana 2000.
   - **Suggestions:** at most `n − 1` for `n` non-zero balances; debtors only pay and creditors only receive; ties follow the input order; all-zero → `[]`.
   - **viewerPart:** `owes` (share when someone else paid), `lent` (amount − share when the viewer paid; `none` if that is 0) and `none` (not involved).
   - **Generated cases (research R15):** a seeded loop of ≥ 300 generated households with expenses and settlements. Each must have shares summing to the amount, balances summing to 0, applying every suggestion leaving everyone at 0, at most `n − 1` suggestions, and identical output for identical input. Write the seeded generator in the test file; no new dependency.
-- [ ] T005 [P] Add tests for `canEditContent(role)` in `packages/shared/src/permissions.test.ts`: true for `ADMIN` and `MEMBER`, false for `GUEST`
-- [ ] T006 [P] Implement `splitAmount(amountCents: number, weights: readonly number[]): number[]` in `packages/shared/src/split.ts` (research R2):
+- [x] T005 [P] Add tests for `canEditContent(role)` in `packages/shared/src/permissions.test.ts`: true for `ADMIN` and `MEMBER`, false for `GUEST`
+- [x] T006 [P] Implement `splitAmount(amountCents: number, weights: readonly number[]): number[]` in `packages/shared/src/split.ts` (research R2):
   - Integer math only: each share is `floor(amount × w / Σw)`.
   - Leftover cents go one each to the first entries with a weight above 0, in the order given.
   - Throws on an empty list, `Σw = 0` or a non-positive or non-integer amount.
   - Document it as the cents version of `weightsToBasisPoints`.
-- [ ] T007 [P] Implement `packages/shared/src/balances.ts` (research R4, R5, R9):
+- [x] T007 [P] Implement `packages/shared/src/balances.ts` (research R4, R5, R9):
   - `netBalances({ paid, owed, sent, received }: Record<"paid" | "owed" | "sent" | "received", ReadonlyMap<string, number>>): Map<string, number>`.
   - `suggestSettlements(balances: readonly { userId: string; balanceCents: number }[]): { fromUserId: string; toUserId: string; amountCents: number }[]`: greedy, the largest debtor pays the largest creditor, ties by input order.
   - `viewerPart(expense: { paidById: string; amountCents: number; shares: readonly { userId: string; amountCents: number }[] }, viewerId: string): { kind: "owes" | "lent" | "none"; amountCents: number }`.
-- [ ] T008 [P] Implement `canEditContent(role: Role): boolean` in `packages/shared/src/permissions.ts` (ADMIN or MEMBER: the constitution's "create and edit content")
+- [x] T008 [P] Implement `canEditContent(role: Role): boolean` in `packages/shared/src/permissions.ts` (ADMIN or MEMBER: the constitution's "create and edit content")
 
 ### Shared schemas and error codes
 
-- [ ] T009 Write schema tests in `packages/shared/src/expenses.test.ts`:
+- [x] T009 Write schema tests in `packages/shared/src/expenses.test.ts`:
   - **Description:** trimmed and 1–100 characters (`expense.description.required` when empty or only spaces, `expense.description.too_long` at 101).
   - **Amount:** `amountCents` an integer from 1 to 10,000,000 (`money.amount.invalid` for 0, −1, 1.5 and 10000001).
   - **Date:** `YYYY-MM-DD` (`money.date.invalid` for `2026-13-01` and `11/11/2026`).
@@ -83,13 +83,13 @@ Within each story, test tasks come first and must fail before implementation.
   - **Settlements:** `fromUserId` ≠ `toUserId` (`settlement.same_person`).
   - **Updates:** require an integer `version` ≥ 1.
   - **Activity query:** `limit` from 1 to 50, default 30.
-- [ ] T010 Implement `packages/shared/src/expenses.ts` per `contracts/api.md` › Types. Zod issues carry error codes as messages, not sentences, as in `household.ts`.
+- [x] T010 Implement `packages/shared/src/expenses.ts` per `contracts/api.md` › Types. Zod issues carry error codes as messages, not sentences, as in `household.ts`.
   - **Constants:** `MAX_AMOUNT_CENTS = 10_000_000`, `EXPENSE_DESCRIPTION_MAX = 100`, `ACTIVITY_PAGE_SIZE = 30`.
   - **Base schemas:** `splitMethodSchema` (`WEIGHTS` | `EQUAL` | `EXACT`), `moneyCentsSchema`, `calendarDateSchema`, `expenseDescriptionSchema`.
   - **Requests:** `expenseSplitInputSchema` (discriminated by `method`), `expenseInputSchema` (with the EXACT sum refinement), `updateExpenseInputSchema`, `settlementInputSchema`, `updateSettlementInputSchema`, `activityQuerySchema`.
   - **Responses:** `personRefSchema`, `deletionSchema`, `expenseViewSchema`, `settlementViewSchema`, `activityItemSchema`, `activityPageSchema`, `personBalanceSchema`, `suggestedSettlementSchema`, `balancesViewSchema`, `expenseResponseSchema` (`{ expense }`), `settlementResponseSchema` (`{ settlement }`).
-- [ ] T011 Add the 15 new codes from `contracts/api.md` › New error codes to `ERROR_CODES` in `packages/shared/src/errors.ts`, and export `expenses` and `balances` from `packages/shared/src/index.ts`
-- [ ] T012 Add the `en` and `es` messages for the 15 codes to `apps/web/src/i18n/locales/en/errors.json` and `apps/web/src/i18n/locales/es/errors.json`, copied from `contracts/ui.md` › `errors` namespace, and confirm `apps/web/src/i18n/i18n.test.ts` passes
+- [x] T011 Add the 16 new codes (the 15 planned plus `household.read_only`, found during implementation) from `contracts/api.md` › New error codes to `ERROR_CODES` in `packages/shared/src/errors.ts`, and export `expenses` and `balances` from `packages/shared/src/index.ts`
+- [x] T012 Add the `en` and `es` messages for the 15 codes to `apps/web/src/i18n/locales/en/errors.json` and `apps/web/src/i18n/locales/es/errors.json`, copied from `contracts/ui.md` › `errors` namespace, and confirm `apps/web/src/i18n/i18n.test.ts` passes
 
 ### Data model
 
