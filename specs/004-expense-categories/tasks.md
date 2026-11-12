@@ -253,8 +253,8 @@ Fresh default shares are saved only when they match what the person saw. These t
 
 **Purpose**: End-to-end flows, docs and the final checks.
 
-- [ ] T072 Add a `GET /api/household/categories` intercept (the five `en` starter categories) to the shared stubs used by `apps/web/cypress/e2e/expenses.cy.ts` and `household.cy.ts` (extract into `apps/web/cypress/support/` if they don't share one yet), and update their expense fixtures with `category: null`, so the existing specs stay green.
-- [ ] T073 Create `apps/web/cypress/e2e/categories.cy.ts` with the flows of [quickstart.md](./quickstart.md), stubbing the API with `cy.intercept` as the other specs do and simulating the second person by changing stubbed responses mid-test (real time isn't built yet; this matches `expenses.cy.ts`):
+- [x] T072 Add a `GET /api/household/categories` intercept (the five `en` starter categories) to the shared stubs used by `apps/web/cypress/e2e/expenses.cy.ts` and `household.cy.ts` (extract into `apps/web/cypress/support/` if they don't share one yet), and update their expense fixtures with `category: null`, so the existing specs stay green.
+- [x] T073 Create `apps/web/cypress/e2e/categories.cy.ts` with the flows of [quickstart.md](./quickstart.md), stubbing the API with `cy.intercept` as the other specs do and simulating the second person by changing stubbed responses mid-test (real time isn't built yet; this matches `expenses.cy.ts`):
   - Categorize: add an expense in "Groceries" and one with no category; the row shows the label only for the first (§1).
   - Manage: as ADMIN, add "🐶 Dog", rename one and delete one with the count in the confirmation; as MEMBER, the list is read-only (§2).
   - Own split: tick "Use its own split" on "Rent", set 1 and 1, save; the expense form shows "Rent's split" and €450.00 / €450.00 for €900.00 (§3).
