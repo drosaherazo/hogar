@@ -66,7 +66,7 @@ Every spec MUST state in its Implementation Decisions how it meets the rules bel
 
 - Supported locales are `en` and `es`; detection order is stored preference → `navigator.languages` → fallback `en`, with `<html lang>` kept in sync.
 - There is no hardcoded user-facing copy: every string goes through i18n, with semantic, dot-separated keys per feature namespace. `en` is the source of truth and keys are typed, so a missing key is a type error.
-- Zod schemas and the API return **error codes**, never sentences; the web translates them. The server renders no user-facing text except emails (such as the sign-in code), which are localized with `User.locale`, falling back to `Accept-Language`.
+- Zod schemas and the API return **error codes**, never sentences; the web translates them. The server renders no user-facing text except emails (such as the sign-in code), which are localized with `User.locale`, or with the language the requesting page is showing when there is no person yet (ADR 0008).
 - `packages/ui` contains no copy: every visible or accessible string comes in through props.
 - Money, dates and numbers are always formatted with `Intl` and the active locale.
 - The parity test keeps `en` and `es` identical in keys with no empty values.
@@ -121,8 +121,8 @@ Package guidance loads on demand from `apps/web/CLAUDE.md` (i18n) and `packages/
 Standard scripts live in the root `package.json`. Non-obvious bits:
 
 - Database: `pnpm db:up` (Docker; needs WSL on Windows). API tests need Postgres with a `hogar_test` database.
-- E2E: `pnpm --filter @hogar/web e2e` (own Vite on :5174, API and Google stubbed). If Cypress says "bad option: --smoke-test", unset `ELECTRON_RUN_AS_NODE`.
+- E2E: `pnpm --filter @hogar/web e2e` (own Vite on :5174, API and Google stubbed).
 - Env files: copy `apps/api/.env.example` and `apps/web/.env.example` to `.env`; Google setup in `docs/setup-google-oauth.md`.
 - Deploy: `docs/deploy.md` (`render.yaml`, `apps/web/vercel.json`, `packages/ui/vercel.json`). API production build: `pnpm --filter @hogar/api build`.
 
-**Version**: 5.0.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-12
+**Version**: 5.0.1 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-12
