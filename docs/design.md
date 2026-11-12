@@ -71,6 +71,7 @@ Rules:
 ## Motion
 
 - Durations only with `--duration-fast` (hover, press), `--duration-base` (menus, toasts, theme) and `--duration-slow` (dialogs, sheets).
+- `--duration-ambient` is only for slow ambient loops (today, just the wake-up house), always with `--easing-gentle`, and the keyframes must end on a complete still frame, because that frame is what people with reduced motion see.
 - Easing `--easing-standard` or `--easing-gentle`. Nothing bounces or blinks.
 - `prefers-reduced-motion` is already handled in `base.css`; don't override it from JavaScript.
 
@@ -103,6 +104,7 @@ Rules:
 - **Real time:** changes by other people show their name and member color ("Marta added milk").
 - **Deleting:** a confirmation that names exactly what will be deleted, with a destructive button using a verb; initial focus on "Cancel". Or an undo option.
 - **Money:** first _with whom_, then _how much_.
+- **Waiting:** say what is happening and roughly how long it takes, show honest stages instead of fake percentages, and never leave an endless spinner: after a limit, offer a way forward (`WakeUpScreen`).
 
 ## Adding something new
 
