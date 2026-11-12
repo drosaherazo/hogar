@@ -20,5 +20,35 @@
   "account": {
     "menu": "Menú de la cuenta de {{name}}",
     "signOut": "Cerrar sesión"
+  },
+  "wakeUp": {
+    "stage": {
+      "knocking": "Llamando a la puerta de tu hogar…",
+      "lights": "Encendiendo las luces…",
+      "almost": "Ya casi está, poniendo el agua a calentar…"
+    },
+    "description": "Hogar se echa la siesta cuando no hay nadie, así que despertarse puede llevar hasta un minuto. ¡Gracias por esperar!",
+    "tipLabel": "Un consejo",
+    "tips": {
+      "inviteLink": "Invita a quien vive contigo compartiendo un enlace. Sin emails de por medio.",
+      "weights": "Dale un peso a cada persona en los ajustes del hogar y cada gasto se repartirá en esa proporción.",
+      "exactCents": "Los repartos siempre cuadran al céntimo: nadie se queda con un céntimo de menos.",
+      "customSplit": "¿Un gasto va distinto? Cambia cómo se reparte en el propio formulario.",
+      "settleUp": "¿Le has devuelto dinero a alguien? Registra el pago y los saldos se actualizan para todos.",
+      "fixMistakes": "¿Te has equivocado en un gasto? Ábrelo para editarlo o borrarlo.",
+      "guests": "Las personas invitadas lo ven todo pero no cambian nada. Ideal para quien se queda una temporada.",
+      "movedOut": "Cuando alguien se muda, sus gastos pasados se quedan en el historial.",
+      "darkTheme": "¿Lo prefieres oscuro? Cambia al tema oscuro desde el menú de tu cuenta.",
+      "language": "Hogar habla español e inglés. Cámbialo cuando quieras desde el menú de tu cuenta."
+    },
+    "slow": {
+      "title": "Esto está tardando más de lo normal",
+      "description": "Puede que tu hogar siga despertándose. Vuelve a intentarlo en un momento."
+    },
+    "retry": "Intentarlo de nuevo",
+    "offline": {
+      "title": "Parece que no tienes conexión",
+      "description": "Seguiremos en cuanto vuelvas a tener conexión."
+    }
   }
 }
