@@ -11,5 +11,9 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: { path: "prisma/migrations" },
   // `prisma generate` (run on install) needs no database; migrate commands fail clearly if it's missing.
-  datasource: { url: process.env["DATABASE_URL"] ?? "" },
+  // The shadow database is scratch space for `pnpm db:check` to replay the migrations into.
+  datasource: {
+    url: process.env["DATABASE_URL"] ?? "",
+    ...(process.env["SHADOW_DATABASE_URL"] && { shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"] }),
+  },
 });
