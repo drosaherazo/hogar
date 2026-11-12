@@ -238,6 +238,34 @@ describe("LoginPage: signing in with a code", () => {
     }
   });
 
+  it("counts down on the email step when the first code is asked for too soon, for that address only", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      installFakeGoogle();
+      server.use(handlers.emailCodeFails(429, "auth.code.too_soon", 42));
+      renderApp({ path: "/login" });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const field = await screen.findByRole("textbox", { name: "Email" });
+      await user.type(field, "lucia@example.com");
+      await user.click(screen.getByRole("button", { name: "Email me a code" }));
+
+      expect(await screen.findByText("Hang on a moment before asking for another code.")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "You can ask for a new code in 42 sec" })).toBeDisabled();
+
+      await user.clear(field);
+      await user.type(field, "ana@example.com");
+      expect(screen.getByRole("button", { name: "Email me a code" })).toBeEnabled();
+      await user.clear(field);
+      await user.type(field, "Lucia@Example.com ");
+      expect(screen.getByRole("button", { name: /You can ask for a new code in/ })).toBeDisabled();
+
+      act(() => vi.advanceTimersByTime(42_000));
+      expect(screen.getByRole("button", { name: "Email me a code" })).toBeEnabled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("goes back to change the address, keeping what was typed", async () => {
     installFakeGoogle();
     server.use(handlers.emailCode());
