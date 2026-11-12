@@ -7,10 +7,12 @@ datasource db {
   provider = "postgresql"
 }
 
-/// A person who signed in with Google.
+/// A person: one per email address, however they sign in (ADR 0008).
 model User {
   id                   String   @id @default(cuid())
-  googleId             String   @unique @map("google_id")
+  /// The linked Google account (`sub`), if any. At most one per person.
+  googleId             String?  @unique @map("google_id")
+  /// Always stored trimmed and lower-cased.
   email                String   @unique
   name                 String
   avatarUrl            String?  @map("avatar_url")

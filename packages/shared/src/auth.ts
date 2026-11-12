@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { localeSchema } from "./locale";
 
+/**
+ * One person per email address (ADR 0008): addresses are compared, and stored, trimmed and
+ * lower-cased. `+` addresses and dots are kept as typed; there are no provider-specific rules.
+ */
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 /** Body of `POST /api/auth/google`: the ID token Google Identity Services hands to the browser. */
 export const googleLoginRequestSchema = z.object({
   credential: z.string().min(1),

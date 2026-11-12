@@ -1,5 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { claimsFromUser, resolveLocale, type AuthResponse, type AuthUser } from "@hogar/shared";
+import {
+  claimsFromUser,
+  normalizeEmail,
+  pickStarterName,
+  resolveLocale,
+  type AuthResponse,
+  type AuthUser,
+} from "@hogar/shared";
 import type { Database } from "../db";
 import type { User } from "../generated/prisma/client";
 import { unauthorized } from "../httpError";
@@ -63,23 +70,27 @@ export function createAuthService({
   }
 
   return {
-    /** Verifies the Google ID token, creates or updates the user and starts a new session. */
+    /**
+     * Verifies the Google ID token, creates the person on first sign-in and starts a new session.
+     * Google names a person only once (ADR 0008): later sign-ins refresh only the photo.
+     */
     async loginWithGoogle(credential: string, acceptLanguage: string | undefined): Promise<Session> {
       const identity = await google.verify(credential);
       if (!identity) throw unauthorized("auth.google.invalid_token");
       if (!identity.emailVerified) throw unauthorized("auth.google.email_not_verified");
 
+      // The locale is only guessed on sign-up; afterwards it's the person's own choice.
+      const locale = resolveLocale(identity.locale ?? acceptLanguage);
       const user = await db.user.upsert({
         where: { googleId: identity.googleId },
-        // The locale is only guessed on sign-up; afterwards it's the person's own choice.
         create: {
           googleId: identity.googleId,
-          email: identity.email,
-          name: identity.name,
+          email: normalizeEmail(identity.email),
+          name: identity.name ?? pickStarterName(locale),
           avatarUrl: identity.avatarUrl,
-          locale: resolveLocale(identity.locale ?? acceptLanguage),
+          locale,
         },
-        update: { email: identity.email, name: identity.name, avatarUrl: identity.avatarUrl },
+        update: { avatarUrl: identity.avatarUrl },
       });
       return issueSession(user, randomUUID());
     },

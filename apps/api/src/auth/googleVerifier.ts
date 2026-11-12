@@ -5,7 +5,8 @@ export interface GoogleIdentity {
   googleId: string;
   email: string;
   emailVerified: boolean;
-  name: string;
+  /** `null` when the Google account has no name; a new person then gets a starter name. */
+  name: string | null;
   avatarUrl: string | null;
   locale: string | null;
 }
@@ -28,7 +29,7 @@ export function createGoogleVerifier(clientId: string): GoogleVerifier {
           googleId: payload.sub,
           email: payload.email,
           emailVerified: payload.email_verified === true,
-          name: payload.name ?? payload.email,
+          name: payload.name?.trim() || null,
           avatarUrl: payload.picture ?? null,
           locale: payload.locale ?? null,
         };
