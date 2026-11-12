@@ -11,6 +11,7 @@ import {
 } from "@hogar/shared";
 import type { Database } from "../db";
 import type { Prisma } from "../generated/prisma/client";
+import { toCategoryRef } from "../categories/categoryView";
 import { badRequest } from "../httpError";
 import { fromCalendarDate, toCalendarDate } from "./dates";
 import { currentMembers, orderPeople, personRefs, refOf } from "./people";
@@ -85,19 +86,28 @@ export function createLedgerService({ db }: LedgerServiceDeps) {
      * One page of the household's history, expenses and payments together, newest first.
      * Keyset pagination: each table gives `limit + 1` rows after the cursor, the two are merged
      * and the first `limit` returned, so records added meanwhile never shift later pages.
-     * Deleted records stay in the history (with who deleted them) but never count.
+     * Deleted records stay in the history (with who deleted them) but never count. Balances
+     * never take the category filter.
      */
     async activity(householdId: string, viewerId: string, query: ActivityQuery): Promise<ActivityPage> {
       const cursor = query.cursor === undefined ? undefined : decodeCursor(query.cursor);
       const take = query.limit + 1;
+      // A category filter shows only expenses (live and deleted) in it, or without one; payments
+      // have no category, so they are left out. An unknown id simply matches nothing.
+      const { category } = query;
+      const filtered = category !== undefined;
+      const byCategory: Prisma.ExpenseWhereInput =
+        category === undefined ? {} : { categoryId: category === "none" ? null : category };
       const [expenses, settlements] = await Promise.all([
         db.expense.findMany({
-          where: { householdId, ...after(cursor) },
+          where: { householdId, ...byCategory, ...after(cursor) },
           orderBy: NEWEST_FIRST,
           take,
-          include: { shares: true },
+          include: { shares: true, category: { select: { id: true, name: true, emoji: true } } },
         }),
-        db.settlement.findMany({ where: { householdId, ...after(cursor) }, orderBy: NEWEST_FIRST, take }),
+        filtered
+          ? Promise.resolve([])
+          : db.settlement.findMany({ where: { householdId, ...after(cursor) }, orderBy: NEWEST_FIRST, take }),
       ]);
 
       type Row =
@@ -131,6 +141,7 @@ export function createLedgerService({ db }: LedgerServiceDeps) {
               date: toCalendarDate(row.date),
               paidBy: ref(row.paidById),
               viewerPart: row.deletedAt ? { kind: "none", amountCents: 0 } : viewerPart(row, viewerId),
+              category: toCategoryRef(row.category),
               deleted: deletion(row),
             }
           : {

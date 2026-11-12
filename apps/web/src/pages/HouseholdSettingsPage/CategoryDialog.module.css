@@ -1,0 +1,25 @@
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* An emoji is one character: a narrow field, so it does not look like it wants a sentence. */
+.emoji input {
+  inline-size: calc(var(--size-touch) * 2);
+}
+
+.split {
+  display: grid;
+  gap: var(--space-3);
+  padding-block-start: var(--space-3);
+  border-block-start: var(--border-width) solid var(--color-border);
+}
+
+.muted {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.delete {
+  justify-self: start;
+}

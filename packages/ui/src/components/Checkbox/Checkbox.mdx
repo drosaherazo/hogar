@@ -1,0 +1,71 @@
+import { Canvas, Controls, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as CheckboxStories from "./Checkbox.stories";
+
+<Meta of={CheckboxStories} />
+
+<Lang locale="en">
+
+# Checkbox
+
+<Canvas of={CheckboxStories.WithHint} />
+<Controls of={CheckboxStories.Default} />
+
+## What it is and when to use it
+A single yes-or-no choice inside a form, such as "Use its own split" for an expense category. Use it when the choice only takes effect once the person saves. For picking one of several options, use radio buttons (`ChoiceGroup`) instead.
+
+## Why it's designed this way
+- **A native checkbox, not a switch.** A switch suggests that something happens the moment you flip it; here nothing changes until Save, which is what a checkbox says.
+- **The label is visible and clickable.** The whole line toggles the box and is at least 44 px tall, so it's easy to hit on a phone.
+- **An optional hint under the label** explains what ticking it means ("If unticked, it follows the household's split."), so the choice is never a guess.
+- **The accent color (`--color-accent`) tints the box**, but the check mark is what carries the meaning, in light and dark themes.
+
+## How it helps the person
+- **No surprises:** ticking the box only changes the form; the person sees what will happen (for example, the weights to edit) before saving anything.
+- **Confidence:** the hint says in plain words what the choice does, which matters when money is involved.
+- **Evidence-backed:** native form controls get keyboard, screen reader and form behavior right by default, and visible labels and descriptions are WCAG requirements (1.3.1, 3.3.2). Preferring a checkbox over a switch for choices applied on save follows common platform guidance; the reassuring wording is design intent.
+
+## Accessibility
+- A native `<input type="checkbox">` with its own `<label>`; Space toggles it.
+- The hint is linked with `aria-describedby`. Visible focus ring.
+- Every string (label, hint) comes in already translated through props.
+
+## Variants
+<Canvas of={CheckboxStories.Default} />
+<Canvas of={CheckboxStories.Checked} />
+<Canvas of={CheckboxStories.Disabled} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Casilla
+
+<Canvas of={CheckboxStories.WithHint} />
+<Controls of={CheckboxStories.Default} />
+
+## Qué es y cuándo usarla
+Una única opción de sí o no dentro de un formulario, como "Usar un reparto propio" en una categoría de gastos. Úsala cuando la opción solo tiene efecto al guardar. Para elegir una entre varias opciones, usa botones de opción (`ChoiceGroup`).
+
+## Por qué está diseñada así
+- **Una casilla nativa, no un interruptor.** Un interruptor da a entender que algo pasa en cuanto lo mueves; aquí nada cambia hasta Guardar, que es justo lo que dice una casilla.
+- **La etiqueta es visible y se puede pulsar.** Toda la línea marca la casilla y mide al menos 44 px de alto, así es fácil acertar en el móvil.
+- **Una ayuda opcional bajo la etiqueta** explica qué significa marcarla ("Si no la marcas, sigue el reparto de la casa."), para que la opción nunca sea una adivinanza.
+- **El color de acento (`--color-accent`) tiñe la casilla**, pero lo que lleva el significado es la marca de verificación, en tema claro y oscuro.
+
+## Cómo ayuda a la persona
+- **Sin sorpresas:** marcar la casilla solo cambia el formulario; la persona ve qué va a pasar (por ejemplo, los pesos a editar) antes de guardar nada.
+- **Confianza:** la ayuda dice con palabras sencillas qué hace la opción, algo importante cuando hay dinero de por medio.
+- **Respaldado:** los controles nativos ya funcionan bien con teclado, lectores de pantalla y formularios, y las etiquetas y descripciones visibles son requisitos WCAG (1.3.1, 3.3.2). Preferir una casilla a un interruptor para opciones que se aplican al guardar sigue las guías habituales de las plataformas; el tono tranquilizador es intención de diseño.
+
+## Accesibilidad
+- Un `<input type="checkbox">` nativo con su propio `<label>`; la barra espaciadora lo marca.
+- La ayuda se vincula con `aria-describedby`. Anillo de foco visible.
+- Todos los textos (etiqueta, ayuda) llegan ya traducidos por props.
+
+## Variantes
+<Canvas of={CheckboxStories.Default} />
+<Canvas of={CheckboxStories.Checked} />
+<Canvas of={CheckboxStories.Disabled} />
+
+</Lang>

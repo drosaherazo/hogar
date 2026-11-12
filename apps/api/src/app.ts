@@ -8,6 +8,8 @@ import { createAuthService } from "./auth/authService";
 import type { GoogleVerifier } from "./auth/googleVerifier";
 import { requireAuth } from "./auth/requireAuth";
 import { createAccessTokenSigner } from "./auth/tokens";
+import { createCategoriesRouter } from "./categories/categoriesRouter";
+import { createCategoryService } from "./categories/categoryService";
 import type { Config } from "./config";
 import type { Database } from "./db";
 import { createExpenseService } from "./expenses/expenseService";
@@ -77,6 +79,8 @@ export function createApp({ config, db, google, authRateLimit = 100, invitationR
   app.use("/api/household/invitations", requireAuth(signer), createHouseholdInvitationsRouter(db, invitations));
   const expenses = createExpenseService({ db, now });
   app.use("/api/household/expenses", requireAuth(signer), createExpensesRouter(db, expenses));
+  const categories = createCategoryService({ db, now });
+  app.use("/api/household/categories", requireAuth(signer), createCategoriesRouter(db, categories));
   const settlements = createSettlementService({ db, now });
   app.use("/api/household/settlements", requireAuth(signer), createSettlementsRouter(db, settlements));
   app.use("/api/household", requireAuth(signer), createLedgerRouter(db, createLedgerService({ db })));

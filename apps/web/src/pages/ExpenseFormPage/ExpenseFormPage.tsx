@@ -1,11 +1,13 @@
 import {
   canEditContent,
+  defaultWeights,
   expenseInputSchema,
   MAX_AMOUNT_CENTS,
   SPLIT_METHODS,
   splitAmount,
   weightsToBasisPoints,
   type ErrorCode,
+  type ExpenseInput,
   type ExpenseSplitInput,
   type ExpenseView,
   type HouseholdView,
@@ -13,23 +15,27 @@ import {
   type SplitMethod,
 } from "@hogar/shared";
 import { Alert, Amount, Avatar, Button, ChoiceGroup, Select, Spinner, TextField, useLocale } from "@hogar/ui";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CircleAlert } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate, useParams } from "react-router";
 import { ApiRequestError, errorKey } from "../../api/client";
 import { useCurrentUser } from "../../auth/guards";
+import { CategoryChangeDialog, type CategoryChangeChoice } from "../../expenses/CategoryChangeDialog";
+import { categoryText } from "../../expenses/CategoryLabel";
 import { amountInputValue, parseAmount } from "../../expenses/money";
 import { avatarPropsFor, usePersonLabel } from "../../expenses/people";
+import { categoryKeys, useCategories } from "../../expenses/useCategories";
 import { useCreateExpense, useExpense, useUpdateExpense } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
-import { useHousehold } from "../../household/useHousehold";
+import { householdKeys, useHousehold } from "../../household/useHousehold";
 import { localToday, useList, useMoney, usePercent } from "../../i18n/format";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell } from "../../layout/AppShell";
 import styles from "./ExpenseFormPage.module.css";
 
-type Field = "description" | "amount" | "date" | "split";
+type Field = "description" | "amount" | "date" | "split" | "category";
 type FieldErrors = Partial<Record<Field, ErrorCode>>;
 
 const FIELD_OF: Record<string, Field> = {
@@ -37,7 +43,16 @@ const FIELD_OF: Record<string, Field> = {
   amountCents: "amount",
   date: "date",
   split: "split",
+  categoryId: "category",
 };
+
+type Share = { person: PersonRef; amountCents: number };
+
+/** Same people, same cents: the new split wouldn't change anyone's share. */
+function sameShares(a: readonly Share[], b: readonly Share[]): boolean {
+  const byPerson = new Map(a.map((share) => [share.person.userId, share.amountCents]));
+  return a.length === b.length && b.every((share) => byPerson.get(share.person.userId) === share.amountCents);
+}
 
 /** The first error code for each field, from a failed schema check. */
 function fieldErrors(issues: readonly { path: readonly PropertyKey[]; message: string }[]): FieldErrors {
@@ -136,10 +151,26 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   const save = existing ? update : create;
   const previewId = useId();
   const personLabel = usePersonLabel();
+  const queryClient = useQueryClient();
 
   const { members } = household;
-  const sharing = members.filter((member) => member.weight > 0);
+  const categories = useCategories();
+  const categoryList = categories.data ?? [];
+  const [categoryId, setCategoryId] = useState(existing?.category?.id ?? "");
+  const category = categoryList.find((entry) => entry.id === categoryId) ?? null;
+
+  // The default split for this expense's category: its own weights, or the household's. The same
+  // shared function decides it on the API (research R2).
+  const weights = defaultWeights(
+    members.map((member) => ({ membershipId: member.id, weight: member.weight })),
+    category,
+  );
+  const sharing = members
+    .map((member, index) => ({ member, weight: weights[index] ?? 0 }))
+    .filter((entry) => entry.weight > 0);
   const nobodyPays = sharing.length === 0;
+  const categoryNoDefault = nobodyPays && Boolean(category?.ownSplit);
+  const sharingBps = nobodyPays ? [] : weightsToBasisPoints(sharing.map((entry) => entry.weight));
 
   // People who can appear in this expense: current members, plus former members already in it.
   const memberRefs: PersonRef[] = members.map((member) => ({
@@ -176,28 +207,37 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
       : {},
   );
   const [errors, setErrors] = useState<FieldErrors>({});
+  // The category-change dialog: the checked input waiting for the person's choice.
+  const [pendingInput, setPendingInput] = useState<ExpenseInput | null>(null);
+  const [changeError, setChangeError] = useState<string | undefined>();
 
   const cents = parseAmount(amountText);
   const amount = isValidAmount(cents) ? cents : null;
 
-  // The household's split: a live preview with the same function the API uses. A saved expense
-  // keeps its proportions (same amount, same shares; new amount, rescaled); otherwise today's weights.
-  function weightPreviewFor(total: number | null): { person: PersonRef; amountCents: number }[] | null {
+  // The default split with today's weights, computed with the same function the API uses. These
+  // are the shares the API checks before saving fresh default shares (research R3).
+  function freshSharesFor(total: number | null): Share[] | null {
+    if (total === null || nobodyPays) return null;
+    const amounts = splitAmount(
+      total,
+      sharing.map((entry) => entry.weight),
+    );
+    return sharing.map(({ member }, index) => ({
+      person: { userId: member.userId, name: member.name, avatarUrl: member.avatarUrl, former: false },
+      amountCents: amounts[index] ?? 0,
+    }));
+  }
+
+  // A live preview of the default split. A saved expense keeps its proportions (same amount,
+  // same shares; new amount, rescaled); otherwise today's weights.
+  function weightPreviewFor(total: number | null): Share[] | null {
     if (total === null) return null;
     if (savedShares) {
       const saved = savedShares.map((share) => share.amountCents);
       const amounts = total === existing?.amountCents ? saved : splitAmount(total, saved);
       return savedShares.map((share, index) => ({ person: share.person, amountCents: amounts[index] ?? 0 }));
     }
-    if (nobodyPays) return null;
-    const amounts = splitAmount(
-      total,
-      sharing.map((member) => member.weight),
-    );
-    return sharing.map((member, index) => ({
-      person: { userId: member.userId, name: member.name, avatarUrl: member.avatarUrl, former: false },
-      amountCents: amounts[index] ?? 0,
-    }));
+    return freshSharesFor(total);
   }
   const weightPreview = weightPreviewFor(amount);
 
@@ -232,14 +272,75 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
         ),
       };
     }
-    return { method: "WEIGHTS" };
+    // Fresh default shares (a new expense, or one switched to the default split) carry the
+    // previewed shares; an expense that keeps its saved shares sends none.
+    if (savedShares) return { method: "WEIGHTS" };
+    const preview = freshSharesFor(amount);
+    return preview
+      ? {
+          method: "WEIGHTS",
+          previewShares: preview.map((share) => ({ userId: share.person.userId, amountCents: share.amountCents })),
+        }
+      : { method: "WEIGHTS" };
   }
 
   const error = (field: Field) => {
     const code = errors[field];
     return code ? t(`errors:${code}`) : undefined;
   };
-  const isConflict = save.error instanceof ApiRequestError && save.error.code === "expense.changed";
+  const failedCode = save.error instanceof ApiRequestError ? save.error.code : null;
+  // These are shown where they happened (the edit conflict above the form, the category next to
+  // its field, a changed split inside the dialog), so they don't repeat at the top.
+  const shownElsewhere =
+    failedCode === "expense.changed" ||
+    failedCode === "expense.category.not_found" ||
+    (failedCode === "expense.split.changed" && pendingInput !== null);
+
+  // An expense saved with the default split whose category changed: compare its current shares
+  // (rescaled to the amount) with the new category's split (FR-022, FR-024).
+  const categoryChanged = existing !== undefined && categoryId !== (existing.category?.id ?? "");
+  const keptShares = savedShares ? weightPreviewFor(amount) : null;
+  const newShares = freshSharesFor(amount);
+  const asksAboutShares = keptShares !== null && method === "WEIGHTS" && categoryChanged;
+
+  function changeCategory(next: string) {
+    setCategoryId(next);
+    setErrors(({ category: _category, ...rest }) => rest);
+    // A category where nobody pays has no default split: pick people instead (FR-017).
+    const nextCategory = categoryList.find((entry) => entry.id === next) ?? null;
+    const nextWeights = defaultWeights(
+      members.map((member) => ({ membershipId: member.id, weight: member.weight })),
+      nextCategory,
+    );
+    if (!savedShares && method === "WEIGHTS" && !nextWeights.some((weight) => weight > 0)) setMethod("EQUAL");
+  }
+
+  /** Sends the expense; `input` already passed the shared schema. */
+  function send(input: ExpenseInput) {
+    const done = (saved: ExpenseView) => void navigate(`/expenses/${saved.id}`, { state: { saved: true } });
+    const onError = (failure: Error) => {
+      if (!(failure instanceof ApiRequestError)) return;
+      if (failure.code === "expense.changed") onConflict?.();
+      if (failure.code === "expense.split.changed") {
+        // The weights changed since the preview: fetch them (and the categories) again, so the
+        // form or the dialog shows the new shares next to the message.
+        void queryClient.invalidateQueries({ queryKey: householdKeys.current });
+        setChangeError(t("errors:expense.split.changed"));
+      }
+      if (failure.code === "expense.category.not_found") {
+        // Deleted while the form was open: keep everything else and ask for another one.
+        setPendingInput(null);
+        setCategoryId("");
+        setErrors((current) => ({ ...current, category: "expense.category.not_found" }));
+        void queryClient.invalidateQueries({ queryKey: categoryKeys.all });
+      }
+    };
+    if (existing) {
+      update.mutate({ id: existing.id, input: { ...input, version: existing.version } }, { onSuccess: done, onError });
+    } else {
+      create.mutate(input, { onSuccess: done, onError });
+    }
+  }
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -249,27 +350,43 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
       paidById,
       date,
       split: splitInput(),
+      categoryId: categoryId === "" ? null : categoryId,
     });
     if (!result.success) {
       setErrors(fieldErrors(result.error.issues));
       return;
     }
     setErrors({});
-    const done = (saved: ExpenseView) => void navigate(`/expenses/${saved.id}`, { state: { saved: true } });
-    if (existing) {
-      update.mutate(
-        { id: existing.id, input: { ...result.data, version: existing.version } },
-        {
-          onSuccess: done,
-          onError: (failure) => {
-            if (failure instanceof ApiRequestError && failure.code === "expense.changed") onConflict?.();
-          },
+    if (asksAboutShares && (newShares === null || !sameShares(keptShares, newShares))) {
+      setChangeError(undefined);
+      setPendingInput(result.data);
+      return;
+    }
+    send(result.data);
+  }
+
+  function confirmChange(choice: CategoryChangeChoice) {
+    if (!pendingInput) return;
+    if (choice === "apply" && newShares) {
+      send({
+        ...pendingInput,
+        split: {
+          method: "WEIGHTS",
+          previewShares: newShares.map((share) => ({ userId: share.person.userId, amountCents: share.amountCents })),
         },
-      );
+      });
     } else {
-      create.mutate(result.data, { onSuccess: done });
+      send(pendingInput);
     }
   }
+
+  // Before and after for each person in either split, in the order people are listed.
+  const changeRows = people.flatMap((person) => {
+    const before = keptShares?.find((share) => share.person.userId === person.userId)?.amountCents;
+    const after = newShares?.find((share) => share.person.userId === person.userId)?.amountCents;
+    if (before === undefined && after === undefined) return [];
+    return [{ userId: person.userId, name: person.name, beforeCents: before ?? 0, afterCents: after ?? before ?? 0 }];
+  });
 
   const weightsOption = savedShares
     ? {
@@ -285,16 +402,18 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
       }
     : {
         value: "WEIGHTS",
-        label: t("form.split.weights"),
-        hint: nobodyPays
-          ? t("form.split.noDefault")
-          : list(sharing.map((member) => `${member.name} ${percent(member.shareBps)}`)),
+        label: category?.ownSplit ? t("form.split.weightsCategory", { name: category.name }) : t("form.split.weights"),
+        hint: categoryNoDefault
+          ? t("form.split.noDefaultCategory", { name: category?.name ?? "" })
+          : nobodyPays
+            ? t("form.split.noDefault")
+            : list(sharing.map(({ member }, index) => `${member.name} ${percent(sharingBps[index] ?? 0)}`)),
         disabled: nobodyPays,
       };
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      {save.isError && !isConflict && <Alert tone="danger">{t(errorKey(save.error))}</Alert>}
+      {save.isError && !shownElsewhere && <Alert tone="danger">{t(errorKey(save.error))}</Alert>}
       <TextField
         label={t("form.description")}
         hint={t("form.descriptionHint")}
@@ -302,6 +421,16 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
         onChange={(event) => setDescription(event.target.value)}
         error={error("description")}
         autoComplete="off"
+      />
+      <Select
+        label={t("form.category.label")}
+        options={[
+          { value: "", label: t("form.category.none") },
+          ...categoryList.map((entry) => ({ value: entry.id, label: categoryText(entry) })),
+        ]}
+        value={categoryList.some((entry) => entry.id === categoryId) ? categoryId : ""}
+        onChange={(event) => changeCategory(event.target.value)}
+        error={error("category")}
       />
       <TextField
         label={t("form.amount")}
@@ -339,7 +468,12 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
             { value: "EXACT", label: t("form.split.exact") },
           ]}
         />
-        {nobodyPays && !savedShares && (
+        {categoryNoDefault && !savedShares && (
+          <ActionLink to="/household/settings#categories" variant="ghost" className={styles.reviewSplit}>
+            {t("form.split.reviewCategory")}
+          </ActionLink>
+        )}
+        {nobodyPays && !categoryNoDefault && !savedShares && (
           <ActionLink to="/household/settings#split" variant="ghost" className={styles.reviewSplit}>
             {t("form.split.reviewSplit")}
           </ActionLink>
@@ -419,6 +553,20 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
           {t("form.save")}
         </Button>
       </div>
+      {pendingInput && (
+        <CategoryChangeDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setPendingInput(null);
+          }}
+          target={category ? { name: category.name, ownSplit: category.ownSplit } : null}
+          rows={changeRows}
+          canApply={newShares !== null}
+          error={changeError}
+          saving={save.isPending}
+          onConfirm={confirmChange}
+        />
+      )}
     </form>
   );
 }

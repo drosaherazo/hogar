@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { splitAmount, weightsToBasisPoints } from "./split";
+import { defaultWeights, splitAmount, weightsToBasisPoints } from "./split";
 
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
@@ -100,5 +100,85 @@ describe("splitAmount", () => {
     expect(() => splitAmount(0, [1])).toThrow();
     expect(() => splitAmount(-5, [1])).toThrow();
     expect(() => splitAmount(10.5, [1])).toThrow();
+  });
+});
+
+describe("defaultWeights", () => {
+  const ana = { membershipId: "m-ana", weight: 3 };
+  const bruno = { membershipId: "m-bruno", weight: 1 };
+  const rent = (weights: { membershipId: string; weight: number }[]) => ({ ownSplit: true, weights });
+
+  it("uses the household's weights without a category", () => {
+    expect(defaultWeights([ana, bruno], null)).toEqual([3, 1]);
+  });
+
+  it("uses the household's weights for a category that follows the household", () => {
+    expect(defaultWeights([ana, bruno], { ownSplit: false, weights: null })).toEqual([3, 1]);
+    // Stale rows are ignored while the box is unticked.
+    expect(defaultWeights([ana, bruno], { ownSplit: false, weights: [{ membershipId: "m-ana", weight: 1 }] })).toEqual([
+      3, 1,
+    ]);
+  });
+
+  it("uses the category's own weights, in member order", () => {
+    const weights = defaultWeights(
+      [ana, bruno],
+      rent([
+        { membershipId: "m-bruno", weight: 1 },
+        { membershipId: "m-ana", weight: 1 },
+      ]),
+    );
+    expect(weights).toEqual([1, 1]);
+    expect(splitAmount(90000, weights)).toEqual([45000, 45000]);
+    expect(splitAmount(90000, defaultWeights([ana, bruno], null))).toEqual([67500, 22500]);
+  });
+
+  it("returns all zeros when the category's own weights are all 0, so there is no default split", () => {
+    const weights = defaultWeights(
+      [ana, bruno],
+      rent([
+        { membershipId: "m-ana", weight: 0 },
+        { membershipId: "m-bruno", weight: 0 },
+      ]),
+    );
+    expect(weights).toEqual([0, 0]);
+    expect(() => splitAmount(90000, weights)).toThrow();
+  });
+
+  it("ignores rows of former members and gives 0 to a member without a row", () => {
+    const weights = defaultWeights(
+      [ana, bruno],
+      rent([
+        { membershipId: "m-ana", weight: 2 },
+        { membershipId: "m-gone", weight: 5 },
+      ]),
+    );
+    expect(weights).toEqual([2, 0]);
+  });
+
+  it("lets a member with weight 0 in the household pay in a category, and the other way round", () => {
+    const guest = { membershipId: "m-carla", weight: 0 };
+    expect(
+      defaultWeights(
+        [ana, guest],
+        rent([
+          { membershipId: "m-ana", weight: 0 },
+          { membershipId: "m-carla", weight: 1 },
+        ]),
+      ),
+    ).toEqual([0, 1]);
+  });
+
+  it("works for a household of one", () => {
+    expect(splitAmount(1001, defaultWeights([ana], rent([{ membershipId: "m-ana", weight: 1 }])))).toEqual([1001]);
+  });
+
+  it("keeps the leftover-cent rule: leftovers go to the first members", () => {
+    const three = [ana, bruno, { membershipId: "m-carla", weight: 1 }];
+    const weights = defaultWeights(
+      three,
+      rent(three.map((member) => ({ membershipId: member.membershipId, weight: 1 }))),
+    );
+    expect(splitAmount(100, weights)).toEqual([34, 33, 33]);
   });
 });

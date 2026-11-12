@@ -101,13 +101,20 @@
       "noDefault": "Todavía nadie paga en el reparto del hogar. Elige personas o revisa el reparto.",
       "reviewSplit": "Revisar el reparto",
       "preview": "La parte de cada persona",
-      "weightsSaved": "El reparto del hogar cuando se anotó ({{shares}})"
+      "weightsSaved": "El reparto cuando se añadió ({{shares}})",
+      "weightsCategory": "Reparto de {{name}}",
+      "noDefaultCategory": "Nadie paga en el reparto de {{name}}. Elige personas o revisa la categoría.",
+      "reviewCategory": "Revisar la categoría"
     },
     "save": "Guardar gasto",
     "saving": "Guardando el gasto",
     "cancel": "Cancelar",
     "editTitle": "Editar gasto",
-    "backToExpense": "Volver al gasto"
+    "backToExpense": "Volver al gasto",
+    "category": {
+      "label": "Categoría",
+      "none": "Sin categoría"
+    }
   },
   "details": {
     "back": "Volver a gastos",
@@ -118,7 +125,7 @@
     "recordedBy": "Lo añadió {{name}} el {{date}}",
     "saved": "Gasto guardado.",
     "method": {
-      "WEIGHTS": "El reparto del hogar",
+      "WEIGHTS": "En proporción a los pesos",
       "EQUAL_one": "A partes iguales entre {{count}} persona",
       "EQUAL_other": "A partes iguales entre {{count}} personas",
       "EXACT": "Importes exactos"
@@ -135,5 +142,29 @@
     "cancel": "Cancelar",
     "done": "Gasto borrado.",
     "close": "Cerrar"
+  },
+  "categoryChange": {
+    "title": "Las partes cambiarían",
+    "intro": "Al pasarlo a {{name}} cambia quién paga qué:",
+    "introNone": "Al dejarlo sin categoría cambia quién paga qué:",
+    "row": "{{name}}: {{before}} → {{after}}",
+    "legend": "¿Qué hacemos con las partes?",
+    "apply": "Aplicar el reparto de {{name}}",
+    "applyHousehold": "Aplicar el reparto del hogar",
+    "keep": "Mantener las partes actuales",
+    "noDefault": "En el reparto de {{name}} no paga nadie, así que no se puede aplicar.",
+    "confirm": "Guardar gasto",
+    "close": "Cerrar",
+    "cancel": "Volver al formulario"
+  },
+  "filter": {
+    "label": "Categoría",
+    "all": "Todos los gastos",
+    "none": "Sin categoría",
+    "showing": "Mostrando: {{name}}",
+    "showingNone": "Mostrando: gastos sin categoría",
+    "clear": "Mostrar todo",
+    "empty": "Aún no hay gastos en {{name}}.",
+    "emptyNone": "No hay gastos sin categoría."
   }
 }

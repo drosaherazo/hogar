@@ -42,13 +42,30 @@
     "split": {
       "invalid": "Choose at least one person to share it.",
       "mismatch": "The amounts don't add up to the total yet.",
-      "no_default": "Nobody pays in the household's split yet. Choose people, or review the split first."
+      "no_default": "Nobody pays in the household's split yet. Choose people, or review the split first.",
+      "changed": "The split changed while you were editing. Here are the new shares."
     },
     "person": {
       "not_member": "Someone in this expense is no longer part of the household. Review who paid and who shares it."
     },
     "not_found": "That expense isn't here any more. Someone may have deleted it.",
-    "changed": "Someone changed this expense while you were editing it. Here's the latest version."
+    "changed": "Someone changed this expense while you were editing it. Here's the latest version.",
+    "category": {
+      "not_found": "That category isn't here any more. Pick another one, or leave it without a category."
+    }
+  },
+  "category": {
+    "name": {
+      "required": "Give the category a name, so everyone recognises it.",
+      "too_long": "That name is a bit long. Keep it to 30 characters or fewer.",
+      "taken": "There's already a category with that name."
+    },
+    "emoji": {
+      "invalid": "Pick just one emoji, or leave it empty."
+    },
+    "limit_reached": "You've reached 30 categories. Delete one to add another.",
+    "not_found": "That category isn't here any more. Someone may have deleted it.",
+    "changed": "Someone changed this category while you were editing it. Here's the latest version."
   },
   "settlement": {
     "same_person": "Choose two different people.",

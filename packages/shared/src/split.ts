@@ -65,3 +65,30 @@ export function splitAmount(amountCents: number, weights: readonly number[]): nu
   }
   return shares;
 }
+
+/** A current member as the default split sees them, in the household's member order. */
+export interface WeightedMember {
+  membershipId: string;
+  /** The member's weight in the household's split (0–100). */
+  weight: number;
+}
+
+/** What the default split needs to know about an expense's category. */
+export interface CategorySplit {
+  ownSplit: boolean;
+  /** One row per member while `ownSplit` is true; ignored otherwise. */
+  weights: readonly { membershipId: string; weight: number }[] | null;
+}
+
+/**
+ * The weights of an expense's default split, one per member in member order (research R2):
+ * the category's own weights when it uses its own split, the household's weights otherwise
+ * (no category, or a category that follows the household). Rows for people who are no longer
+ * members are ignored, and a member without a row gets 0. `splitAmount` turns the result into
+ * cents; when every weight is 0 there is no default split (`expense.split.no_default`).
+ */
+export function defaultWeights(members: readonly WeightedMember[], category: CategorySplit | null): number[] {
+  if (!category?.ownSplit) return members.map((member) => member.weight);
+  const own = new Map((category.weights ?? []).map((row) => [row.membershipId, row.weight]));
+  return members.map((member) => own.get(member.membershipId) ?? 0);
+}

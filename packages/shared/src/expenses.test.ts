@@ -170,3 +170,43 @@ describe("activityQuerySchema", () => {
     expect(activityQuerySchema.safeParse({ limit }).success).toBe(false);
   });
 });
+
+describe("categories on expenses", () => {
+  it("leaves an expense without a category when categoryId is missing", () => {
+    expect(expenseInputSchema.parse(groceries).categoryId).toBeNull();
+    expect(expenseInputSchema.parse({ ...groceries, categoryId: null }).categoryId).toBeNull();
+    expect(expenseInputSchema.parse({ ...groceries, categoryId: "cat-rent" }).categoryId).toBe("cat-rent");
+  });
+
+  it("refuses an empty category id", () => {
+    expect(codeOf(expenseInputSchema.safeParse({ ...groceries, categoryId: "" }))).toBe("request.invalid");
+  });
+
+  it("filters the history by a category or by none", () => {
+    expect(activityQuerySchema.parse({ category: "none" })).toEqual({ limit: 30, category: "none" });
+    expect(activityQuerySchema.parse({ category: "cat-rent" }).category).toBe("cat-rent");
+  });
+});
+
+describe("previewShares on the default split", () => {
+  const preview = [
+    { userId: "user-ana", amountCents: 3210 },
+    { userId: "user-bruno", amountCents: 1070 },
+  ];
+
+  it("accepts the default split with and without the previewed shares", () => {
+    expect(expenseInputSchema.safeParse(groceries).success).toBe(true);
+    const parsed = expenseInputSchema.parse({ ...groceries, split: { method: "WEIGHTS", previewShares: preview } });
+    expect(parsed.split).toEqual({ method: "WEIGHTS", previewShares: preview });
+  });
+
+  it("refuses previewed shares with the same person twice, or none at all", () => {
+    const twice = [preview[0], preview[0]];
+    expect(
+      codeOf(expenseInputSchema.safeParse({ ...groceries, split: { method: "WEIGHTS", previewShares: twice } })),
+    ).toBe("request.invalid");
+    expect(
+      codeOf(expenseInputSchema.safeParse({ ...groceries, split: { method: "WEIGHTS", previewShares: [] } })),
+    ).toBe("request.invalid");
+  });
+});

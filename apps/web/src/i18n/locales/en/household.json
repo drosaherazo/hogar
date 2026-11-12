@@ -101,6 +101,47 @@
       "copied": "Link copied.",
       "copyFailed": "We couldn't copy it automatically. Select the link and copy it.",
       "done": "Done"
+    },
+    "categories": {
+      "title": "Categories",
+      "description": "Label expenses to tell them apart. A category can follow the household's split or have its own.",
+      "add": "Add category",
+      "edit": "Edit {{name}}",
+      "readOnly": "Only admins can change categories.",
+      "followsHousehold": "Follows the household's split",
+      "ownSplit": "Own split: {{shares}}",
+      "needsReview": "Review this split: people have changed.",
+      "limit": "You've reached 30 categories. Delete one to add another.",
+      "empty": "No categories yet. Add one to start labeling expenses.",
+      "emptyReadOnly": "No categories yet. An admin can add some to label expenses.",
+      "dialog": {
+        "titleNew": "New category",
+        "name": "Name",
+        "emoji": "Emoji (optional)",
+        "emojiHint": "Pick one from your keyboard.",
+        "ownSplit": "Use its own split",
+        "ownSplitHint": "If unticked, it follows the household's split.",
+        "householdShares": "The household's split: {{shares}}",
+        "save": "Save category",
+        "saving": "Saving the category",
+        "saved": "Category saved."
+      },
+      "untick": {
+        "title": "Follow the household's split?",
+        "description": "{{name}} will follow the household's split again. Its own weights will be discarded. Expenses already added won't change.",
+        "confirm": "Follow the household's split"
+      },
+      "delete": {
+        "action": "Delete category",
+        "title": "Delete {{name}}?",
+        "used_one": "{{count}} expense will be left without a category. Nobody's share will change.",
+        "used_other": "{{count}} expenses will be left without a category. Nobody's share will change.",
+        "unused": "No expenses use it.",
+        "ownSplit": "Its own split will be discarded too.",
+        "deleting": "Deleting the category",
+        "deleted": "Category deleted."
+      },
+      "editButton": "Edit"
     }
   },
   "invite": {

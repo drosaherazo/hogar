@@ -15,14 +15,15 @@ const retryUnlessMissing = (failureCount: number, error: unknown) =>
   !(error instanceof ApiRequestError && error.status === 404) && failureCount < 1;
 
 /**
- * The household's history, page by page. Refetched when people come back to the tab, so other
- * people's expenses show up without real time (that's a later feature).
+ * The household's history, page by page, optionally only one category (an id, or `none`). Each
+ * filter is cached on its own. Refetched when people come back to the tab, so other people's
+ * expenses show up without real time (that's a later feature).
  */
-export function useActivity() {
+export function useActivity(category?: string) {
   const client = useApiClient();
   return useInfiniteQuery({
-    queryKey: expenseKeys.activity,
-    queryFn: ({ pageParam }) => client.getActivity(pageParam),
+    queryKey: [...expenseKeys.activity, category ?? "all"],
+    queryFn: ({ pageParam }) => client.getActivity(pageParam, category),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     refetchOnWindowFocus: true,

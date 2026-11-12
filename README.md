@@ -6,13 +6,14 @@
 
 ## Status
 
-| Area                             | State                                                                                                                                                                                                                     |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Design system (`packages/ui`)    | ✅ Tokens, light/dark themes, 13 components, bilingual Storybook                                                                                                                                                          |
-| Sign in with Google              | ✅ API + web, rotating refresh tokens                                                                                                                                                                                     |
-| Households                       | ✅ Create and rename, single-use invitation links, roles (admin, member, guest), leave and remove, default split by weight ([spec](specs/001-households/spec.md))                                                         |
-| Expenses                         | ✅ Split by weight, equally or with exact amounts; balances simplified to the fewest payments; settling up; edit and delete with conflict checks; former members kept in the history ([spec](specs/002-expenses/spec.md)) |
-| Chores, shopping list, real time | 🔜 Next (MVP)                                                                                                                                                                                                             |
+| Area                             | State                                                                                                                                                                                                                           |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Design system (`packages/ui`)    | ✅ Tokens, light/dark themes, 14 components, bilingual Storybook                                                                                                                                                                |
+| Sign in with Google              | ✅ API + web, rotating refresh tokens                                                                                                                                                                                           |
+| Households                       | ✅ Create and rename, single-use invitation links, roles (admin, member, guest), leave and remove, default split by weight ([spec](specs/001-households/spec.md))                                                               |
+| Expenses                         | ✅ Split by weight, equally or with exact amounts; balances simplified to the fewest payments; settling up; edit and delete with conflict checks; former members kept in the history ([spec](specs/002-expenses/spec.md))       |
+| Expense categories               | ✅ Starter set per household, admins add, rename and delete; an optional own split per category; before/after confirmation when moving an expense changes shares; history filter ([spec](specs/004-expense-categories/spec.md)) |
+| Chores, shopping list, real time | 🔜 Next (MVP)                                                                                                                                                                                                                   |
 
 ## Stack
 

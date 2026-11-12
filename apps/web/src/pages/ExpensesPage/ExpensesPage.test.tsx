@@ -124,6 +124,49 @@ describe("ExpensesPage", () => {
   });
 });
 
+describe("ExpensesPage › categories", () => {
+  const rent = { id: "cat_rent", name: "Rent", emoji: "🏠" };
+
+  it("shows each expense's category under its description, and nothing for one without", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      handlers.activity({
+        items: [
+          expenseItem({ id: "e1", description: "March rent", category: rent }),
+          expenseItem({ id: "e2", description: "Coffee", category: null }),
+        ],
+        nextCursor: null,
+      }),
+    );
+    renderApp({ path: PATH });
+    const rentRow = await screen.findByRole("link", { name: /March rent/ });
+    expect(rentRow).toHaveTextContent("Rent");
+    expect(within(rentRow).getByText("🏠")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByRole("link", { name: /Coffee/ })).not.toHaveTextContent("Rent");
+  });
+
+  it("keeps a deleted expense's line as it was, without its category", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      handlers.activity({
+        items: [
+          expenseItem({
+            category: rent,
+            deleted: { by: brunoRef, at: "2026-11-11T09:00:00.000Z" },
+            viewerPart: { kind: "none", amountCents: 0 },
+          }),
+        ],
+        nextCursor: null,
+      }),
+    );
+    renderApp({ path: PATH });
+    const line = await screen.findByText('Bruno Díaz deleted "Groceries" (€42.80)');
+    expect(line.closest("li")).not.toHaveTextContent("Rent");
+  });
+});
+
 describe("ExpensesPage › fixing mistakes", () => {
   const deletion = (by = brunoRef) => ({ by, at: "2026-11-11T09:00:00.000Z" });
 
@@ -216,5 +259,103 @@ describe("ExpensesPage › fixing mistakes", () => {
     await within(details).findByText(/Added by/);
     expect(within(details).queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
     expect(within(details).queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+  });
+});
+
+describe("ExpensesPage › filtering by category", () => {
+  const rent = { id: "cat_rent", name: "Rent", emoji: "🏠" };
+
+  /** Answers by the `category` query param, recording each one. */
+  function activityByCategory() {
+    const asked: (string | null)[] = [];
+    server.use(
+      http.get("*/api/household/activity", ({ request }) => {
+        const category = new URL(request.url).searchParams.get("category");
+        asked.push(category);
+        const items =
+          category === "cat_rent"
+            ? [expenseItem({ id: "e1", description: "March rent", category: rent })]
+            : category === "none"
+              ? [expenseItem({ id: "e2", description: "Coffee" })]
+              : category === null
+                ? [
+                    expenseItem({ id: "e1", description: "March rent", category: rent }),
+                    expenseItem({ id: "e2", description: "Coffee" }),
+                    settlementItem(),
+                  ]
+                : [];
+        return HttpResponse.json({ items, nextCursor: null });
+      }),
+    );
+    return asked;
+  }
+
+  it("offers all expenses, each category and no category", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()));
+    activityByCategory();
+    renderApp({ path: PATH });
+    const select = await screen.findByRole("combobox", { name: "Category" });
+    await within(select).findByRole("option", { name: "🏠 Rent" });
+    expect(
+      within(select)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["All expenses", "🏠 Rent", "🛒 Groceries", "💡 Utilities", "🎉 Leisure", "📦 Other", "No category"]);
+    expect(select).toHaveValue("");
+  });
+
+  it("lists only one category's expenses, says so, keeps it in the URL and clears it", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()));
+    const asked = activityByCategory();
+    const { router } = renderApp({ path: PATH });
+    expect(await screen.findByRole("link", { name: /Coffee/ })).toBeInTheDocument();
+
+    const select = screen.getByRole("combobox", { name: "Category" });
+    await within(select).findByRole("option", { name: "🏠 Rent" });
+    await userEvent.selectOptions(select, "cat_rent");
+
+    expect(await screen.findByText("Showing: Rent")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("link", { name: /Coffee/ })).not.toBeInTheDocument());
+    expect(screen.getByRole("link", { name: /March rent/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /paid Ana García/ })).not.toBeInTheDocument();
+    expect(router.state.location.search).toBe("?category=cat_rent");
+    expect(asked).toContain("cat_rent");
+
+    await userEvent.click(screen.getByRole("button", { name: "Show everything" }));
+    expect(await screen.findByRole("link", { name: /Coffee/ })).toBeInTheDocument();
+    expect(router.state.location.search).toBe("");
+    expect(select).toHaveValue("");
+  });
+
+  it("starts filtered from the URL, for expenses without a category", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()));
+    activityByCategory();
+    renderApp({ path: `${PATH}?category=none` });
+    expect(await screen.findByText("Showing: expenses without a category")).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: /Coffee/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /March rent/ })).not.toBeInTheDocument();
+  });
+
+  it("explains kindly when a category has no expenses yet", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()));
+    activityByCategory();
+    renderApp({ path: `${PATH}?category=cat_groceries` });
+    expect(await screen.findByText("No expenses in Groceries yet.")).toBeInTheDocument();
+  });
+
+  it("shows everything again when the category in the link no longer exists", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()));
+    activityByCategory();
+    const { router } = renderApp({ path: `${PATH}?category=cat_gone` });
+    expect(await screen.findByRole("link", { name: /Coffee/ })).toBeInTheDocument();
+    await waitFor(() => expect(router.state.location.search).toBe(""));
+  });
+
+  it("has no accessibility violations while filtered", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()));
+    activityByCategory();
+    const { container } = renderApp({ path: `${PATH}?category=cat_rent` });
+    await screen.findByText("Showing: Rent");
+    await expectNoA11yViolations(container);
   });
 });

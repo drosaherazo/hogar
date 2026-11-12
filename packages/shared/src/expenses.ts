@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { categoryRefSchema } from "./categories";
 import type { ErrorCode } from "./errors";
 
 /** Zod messages are error codes the web translates, never sentences. */
@@ -43,6 +44,12 @@ const userIdSchema = z
   .min(1, code("request.invalid"))
   .max(100, code("request.invalid"));
 const versionSchema = z.number(code("request.invalid")).int(code("request.invalid")).min(1, code("request.invalid"));
+const idOrNullSchema = z
+  .string(code("request.invalid"))
+  .min(1, code("request.invalid"))
+  .max(100, code("request.invalid"))
+  .nullable()
+  .default(null);
 
 // ---------------------------------------------------------------------------
 // Splits
@@ -55,13 +62,23 @@ export type SplitMethod = z.infer<typeof splitMethodSchema>;
 const unique = (values: readonly string[]) => new Set(values).size === values.length;
 
 /**
+ * The shares the form showed for a default split. The API saves fresh default shares only when
+ * its own computation gives exactly these (research R3): on create and when switching to
+ * `WEIGHTS` they are required; on a `WEIGHTS` edit they mean "apply the current split".
+ */
+const previewSharesSchema = z
+  .array(z.object({ userId: userIdSchema, amountCents: shareCentsSchema }))
+  .min(1, code("request.invalid"))
+  .refine((shares) => unique(shares.map((share) => share.userId)), { message: code("request.invalid") });
+
+/**
  * How an expense is split:
- * - `WEIGHTS`: the household's split, from the members' weights when it's saved;
+ * - `WEIGHTS`: the default split (the category's own weights, or the household's) when it's saved;
  * - `EQUAL`: equally among the chosen people;
  * - `EXACT`: an amount per person, adding up to the total.
  */
 export const expenseSplitInputSchema = z.discriminatedUnion("method", [
-  z.object({ method: z.literal("WEIGHTS") }),
+  z.object({ method: z.literal("WEIGHTS"), previewShares: previewSharesSchema.optional() }),
   z.object({
     method: z.literal("EQUAL"),
     userIds: z
@@ -89,6 +106,8 @@ const expenseFields = {
   paidById: userIdSchema,
   date: calendarDateSchema,
   split: expenseSplitInputSchema,
+  /** One of the household's categories, or `null` for none. */
+  categoryId: idOrNullSchema,
 };
 
 /** Exact amounts must add up to the total; the other methods compute shares that always do. */
@@ -101,13 +120,17 @@ function exactAmountsAddUp(input: { amountCents: number; split: ExpenseSplitInpu
 }
 
 export const expenseInputSchema = z.object(expenseFields).superRefine(exactAmountsAddUp);
-export type ExpenseInput = z.infer<typeof expenseInputSchema>;
+/** What the form sends (`categoryId` may be left out) … */
+export type ExpenseInput = z.input<typeof expenseInputSchema>;
+/** … and what the API works with after parsing (`categoryId` is always there). */
+export type ParsedExpenseInput = z.infer<typeof expenseInputSchema>;
 
 /** An edit carries the version it started from, so it can't overwrite a change it hasn't seen. */
 export const updateExpenseInputSchema = z
   .object({ ...expenseFields, version: versionSchema })
   .superRefine(exactAmountsAddUp);
-export type UpdateExpenseInput = z.infer<typeof updateExpenseInputSchema>;
+export type UpdateExpenseInput = z.input<typeof updateExpenseInputSchema>;
+export type ParsedUpdateExpenseInput = z.infer<typeof updateExpenseInputSchema>;
 
 const settlementFields = {
   fromUserId: userIdSchema,
@@ -136,6 +159,8 @@ export const versionQuerySchema = z.object({ version: z.coerce.number().int().mi
 export const activityQuerySchema = z.object({
   cursor: z.string().min(1).max(500).optional(),
   limit: z.coerce.number().int().min(1).max(ACTIVITY_PAGE_MAX).default(ACTIVITY_PAGE_SIZE),
+  /** Only expenses in this category, or without one (`none`); payments are left out. */
+  category: z.string().min(1).max(100).optional(),
 });
 export type ActivityQuery = z.infer<typeof activityQuerySchema>;
 
@@ -175,6 +200,7 @@ export const expenseViewSchema = z.object({
   paidBy: personRefSchema,
   /** Shares in member order (former members last); they add up to `amountCents`. */
   split: z.object({ method: splitMethodSchema, shares: z.array(expenseShareViewSchema) }),
+  category: categoryRefSchema.nullable(),
   ...auditFields,
 });
 export type ExpenseView = z.infer<typeof expenseViewSchema>;
@@ -210,6 +236,7 @@ export const activityItemSchema = z.discriminatedUnion("kind", [
     paidBy: personRefSchema,
     /** Always `none` for a deleted expense. */
     viewerPart: viewerPartSchema,
+    category: categoryRefSchema.nullable(),
     deleted: deletionSchema.nullable(),
   }),
   z.object({

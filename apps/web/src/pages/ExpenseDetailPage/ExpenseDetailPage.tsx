@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router";
 import { errorKey } from "../../api/client";
+import { CategoryLabel } from "../../expenses/CategoryLabel";
 import { avatarPropsFor } from "../../expenses/people";
 import { useDeleteExpense, useExpense } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
@@ -117,6 +118,7 @@ function Details({ expense, members, canEdit }: { expense: ExpenseView; members:
         <h1 id={titleId} className={styles.title}>
           {expense.description}
         </h1>
+        <CategoryLabel category={expense.category} className={styles.category} />
         <Amount cents={expense.amountCents} className={styles.total} />
       </div>
 

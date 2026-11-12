@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { describe, expect, it, vi } from "vitest";
-import { ana, apiError, server, session } from "../test/server";
+import { ana, apiError, categoryView, server, session, starterCategories } from "../test/server";
 import { ApiClient, ApiRequestError, errorKey } from "./client";
 
 const BASE = "http://localhost/api";
@@ -101,6 +101,73 @@ describe("ApiClient", () => {
     await client.loginWithGoogle("x");
     await expect(client.logout()).rejects.toBeInstanceOf(ApiRequestError);
     expect(client.hasAccessToken).toBe(false);
+  });
+});
+
+describe("ApiClient categories", () => {
+  it("reads, creates, renames, splits and deletes categories", async () => {
+    const calls: { method: string; path: string; body: unknown }[] = [];
+    const record = async ({ request }: { request: Request }) => {
+      const url = new URL(request.url);
+      calls.push({
+        method: request.method,
+        path: `${url.pathname}${url.search}`,
+        body: request.method === "GET" || request.method === "DELETE" ? null : await request.json(),
+      });
+    };
+    const dog = categoryView({ id: "cat_dog", name: "Dog", emoji: "🐶", position: 6 });
+    server.use(
+      http.get(`${BASE}/household/categories`, async (info) => {
+        await record(info);
+        return HttpResponse.json({ categories: starterCategories() });
+      }),
+      http.post(`${BASE}/household/categories`, async (info) => {
+        await record(info);
+        return HttpResponse.json({ category: dog }, { status: 201 });
+      }),
+      http.patch(`${BASE}/household/categories/:id`, async (info) => {
+        await record(info);
+        return HttpResponse.json({ category: { ...dog, name: "Perro", version: 2 } });
+      }),
+      http.put(`${BASE}/household/categories/:id/split`, async (info) => {
+        await record(info);
+        return HttpResponse.json({ category: { ...dog, version: 3 } });
+      }),
+      http.delete(`${BASE}/household/categories/:id`, async (info) => {
+        await record(info);
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const client = new ApiClient(BASE);
+
+    expect(await client.getCategories()).toHaveLength(5);
+    expect(await client.createCategory({ name: "Dog", emoji: "🐶" })).toEqual(dog);
+    expect((await client.updateCategory("cat_dog", { name: "Perro", emoji: "🐶", version: 1 })).name).toBe("Perro");
+    await client.updateCategorySplit("cat_dog", { version: 2, ownSplit: false });
+    await client.deleteCategory("cat_dog", 3);
+
+    expect(calls).toEqual([
+      { method: "GET", path: "/api/household/categories", body: null },
+      { method: "POST", path: "/api/household/categories", body: { name: "Dog", emoji: "🐶" } },
+      { method: "PATCH", path: "/api/household/categories/cat_dog", body: { name: "Perro", emoji: "🐶", version: 1 } },
+      { method: "PUT", path: "/api/household/categories/cat_dog/split", body: { version: 2, ownSplit: false } },
+      { method: "DELETE", path: "/api/household/categories/cat_dog?version=3", body: null },
+    ]);
+  });
+
+  it("filters the history by category, keeping the cursor", async () => {
+    const searches: string[] = [];
+    server.use(
+      http.get(`${BASE}/household/activity`, ({ request }) => {
+        searches.push(new URL(request.url).search);
+        return HttpResponse.json({ items: [], nextCursor: null });
+      }),
+    );
+    const client = new ApiClient(BASE);
+    await client.getActivity();
+    await client.getActivity(undefined, "none");
+    await client.getActivity("abc", "cat_rent");
+    expect(searches).toEqual(["", "?category=none", "?cursor=abc&category=cat_rent"]);
   });
 });
 

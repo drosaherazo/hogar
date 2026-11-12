@@ -61,6 +61,7 @@ model Household {
   invitations Invitation[]
   expenses    Expense[]
   settlements Settlement[]
+  categories  ExpenseCategory[]
 
   @@map("households")
 }
@@ -75,8 +76,9 @@ model Membership {
   weight      Int      @default(1)
   joinedAt    DateTime @default(now()) @map("joined_at")
 
-  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household       Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryWeights CategoryWeight[]
 
   @@index([householdId])
   @@map("memberships")
@@ -132,17 +134,63 @@ model Expense {
   version     Int         @default(1)
   deletedById String?     @map("deleted_by_id")
   deletedAt   DateTime?   @map("deleted_at")
+  /// Optional; deleting the category leaves the expense without one and never touches its shares.
+  categoryId  String?     @map("category_id")
 
-  household Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  paidBy    User           @relation("ExpensePaidBy", fields: [paidById], references: [id], onDelete: Restrict)
-  createdBy User           @relation("ExpenseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  editedBy  User?          @relation("ExpenseEditedBy", fields: [editedById], references: [id], onDelete: Restrict)
-  deletedBy User?          @relation("ExpenseDeletedBy", fields: [deletedById], references: [id], onDelete: Restrict)
+  household Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  category  ExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  paidBy    User             @relation("ExpensePaidBy", fields: [paidById], references: [id], onDelete: Restrict)
+  createdBy User             @relation("ExpenseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  editedBy  User?            @relation("ExpenseEditedBy", fields: [editedById], references: [id], onDelete: Restrict)
+  deletedBy User?            @relation("ExpenseDeletedBy", fields: [deletedById], references: [id], onDelete: Restrict)
   shares    ExpenseShare[]
 
   @@index([householdId, date(sort: Desc), createdAt(sort: Desc), id(sort: Desc)])
   @@index([householdId, paidById])
+  @@index([householdId, categoryId])
   @@map("expenses")
+}
+
+/// A kind of spending in one household ("Rent", "Dog"). Names are unique per household ignoring
+/// case (expression index in the migration). A category follows the household's split unless
+/// `ownSplit` is true, in which case it has one `CategoryWeight` per current member.
+model ExpenseCategory {
+  id           String    @id @default(cuid())
+  householdId  String    @map("household_id")
+  /// Trimmed, 1–30 characters.
+  name         String
+  /// One emoji grapheme, or null.
+  emoji        String?
+  /// `max + 1` within the household when created; lists are ordered by it.
+  position     Int
+  ownSplit     Boolean   @default(false) @map("own_split")
+  /// Last time an admin saved its own split; compared with `households.members_changed_at`.
+  splitSavedAt DateTime? @map("split_saved_at")
+  /// Bumped on every rename, emoji change and split save; changes must name the version they saw.
+  version      Int       @default(1)
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  household Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  weights   CategoryWeight[]
+  expenses  Expense[]
+
+  @@index([householdId, position])
+  @@map("expense_categories")
+}
+
+/// A member's weight (0–100, enforced by a CHECK) in a category with its own split. Keyed by
+/// membership, so leaving the household removes it everywhere.
+model CategoryWeight {
+  categoryId   String @map("category_id")
+  membershipId String @map("membership_id")
+  weight       Int
+
+  category   ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  membership Membership      @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@id([categoryId, membershipId])
+  @@index([membershipId])
+  @@map("category_weights")
 }
 
 /// One person's part of an expense. The shares of an expense add up exactly to its amount.

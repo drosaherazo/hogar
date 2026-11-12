@@ -1,5 +1,6 @@
 import {
   checkAdminInvariant,
+  resolveLocale,
   type CurrentHousehold,
   type HouseholdView,
   type MembershipChange,
@@ -7,6 +8,7 @@ import {
 } from "@hogar/shared";
 import type { Database } from "../db";
 import { Prisma, type Membership } from "../generated/prisma/client";
+import { seedStarterCategories } from "../categories/starterCategories";
 import { badRequest, conflict, forbidden, notFound } from "../httpError";
 import { HOUSEHOLD_VIEW_INCLUDE, toHouseholdView } from "./householdView";
 
@@ -84,16 +86,19 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
     /** Creates the household and its first membership (ADMIN, weight 1) together, or neither. */
     async create(userId: string, name: string): Promise<HouseholdView> {
       try {
-        const [household] = await db.$transaction([
-          db.household.create({
+        const household = await db.$transaction(async (tx) => {
+          const created = await tx.household.create({
             data: {
               name,
               membersChangedAt: now(),
               memberships: { create: { userId, role: "ADMIN", weight: 1, joinedAt: now() } },
             },
-          }),
-          clearRemovalNotice(db, userId),
-        ]);
+          });
+          // The starter categories are named in the creator's language (research R4).
+          const { locale } = await clearRemovalNotice(tx, userId);
+          await seedStarterCategories(tx, created.id, resolveLocale(locale));
+          return created;
+        });
         return await view(household.id, userId);
       } catch (error) {
         // Membership.userId is unique: one household per user, even under concurrent requests.

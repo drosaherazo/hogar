@@ -1,20 +1,14 @@
-import { updateSplitRequestSchema, weightsToBasisPoints, weightSchema, type HouseholdView } from "@hogar/shared";
-import { Alert, Button, Card, TextField } from "@hogar/ui";
+import { updateSplitRequestSchema, type HouseholdView } from "@hogar/shared";
+import { Alert, Button, Card } from "@hogar/ui";
 import { Check } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router";
 import { errorKey } from "../../api/client";
 import { useUpdateSplit } from "../../household/useHousehold";
+import { sharesForDrafts, WeightsEditor } from "../../household/WeightsEditor";
 import { usePercent } from "../../i18n/format";
 import styles from "./HouseholdSettingsPage.module.css";
-
-/** Live shares for the weights being typed, or null while any of them isn't valid yet. */
-function sharesFor(drafts: string[]): number[] | null {
-  const weights = drafts.map((draft) => (draft.trim() === "" ? Number.NaN : Number(draft)));
-  if (!weights.every((weight) => weightSchema.safeParse(weight).success)) return null;
-  return weights.some((weight) => weight > 0) ? weightsToBasisPoints(weights) : weights.map(() => 0);
-}
 
 /** Each member's weight and resulting share. Admins edit; everyone sees the same numbers. */
 export function SplitSection({ household }: { household: HouseholdView }) {
@@ -46,7 +40,7 @@ export function SplitSection({ household }: { household: HouseholdView }) {
       )}
       {isAdmin ? (
         // Re-start the form whenever the member list changes, so it never edits stale people.
-        <SplitForm key={household.members.map((member) => member.id).join()} household={household} percent={percent} />
+        <SplitForm key={household.members.map((member) => member.id).join()} household={household} />
       ) : (
         <>
           <ul className={styles.list}>
@@ -67,11 +61,11 @@ export function SplitSection({ household }: { household: HouseholdView }) {
   );
 }
 
-function SplitForm({ household, percent }: { household: HouseholdView; percent: (bps: number) => string }) {
+function SplitForm({ household }: { household: HouseholdView }) {
   const { t } = useTranslation(["household", "errors"]);
   const save = useUpdateSplit();
   const [drafts, setDrafts] = useState(() => household.members.map((member) => String(member.weight)));
-  const shares = sharesFor(drafts);
+  const shares = sharesForDrafts(drafts);
   const nobodyPays = shares !== null && shares.every((share) => share === 0);
 
   function submit(event: FormEvent) {
@@ -84,34 +78,14 @@ function SplitForm({ household, percent }: { household: HouseholdView; percent: 
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      <div className={styles.weights}>
-        {household.members.map((member, index) => {
-          const draft = drafts[index] ?? "";
-          const invalid = !weightSchema.safeParse(draft.trim() === "" ? Number.NaN : Number(draft)).success;
-          const share = shares?.[index];
-          return (
-            <TextField
-              key={member.id}
-              inline
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={100}
-              step={1}
-              label={member.name}
-              value={draft}
-              onChange={(event) => {
-                save.reset();
-                setDrafts((current) => current.map((value, i) => (i === index ? event.target.value : value)));
-              }}
-              error={invalid ? t("errors:split.weight.invalid") : undefined}
-              hint={
-                share !== undefined && !nobodyPays ? t("settings.split.share", { percent: percent(share) }) : undefined
-              }
-            />
-          );
-        })}
-      </div>
+      <WeightsEditor
+        members={household.members}
+        drafts={drafts}
+        onChange={(index, draft) => {
+          save.reset();
+          setDrafts((current) => current.map((value, i) => (i === index ? draft : value)));
+        }}
+      />
       {nobodyPays && <Alert tone="warning">{t("errors:split.all_zero")}</Alert>}
       {save.isError && <Alert tone="danger">{t(errorKey(save.error))}</Alert>}
       <div className={styles.row}>

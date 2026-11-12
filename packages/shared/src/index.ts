@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./balances";
+export * from "./categories";
 export * from "./errors";
 export * from "./expenses";
 export * from "./household";

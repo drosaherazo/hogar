@@ -10,6 +10,7 @@ import { AppShell } from "../../layout/AppShell";
 import styles from "./HouseholdSettingsPage.module.css";
 import { InvitationsSection } from "./InvitationsSection";
 import { MembersSection } from "./MembersSection";
+import { CategoriesSection } from "./CategoriesSection";
 import { NameSection } from "./NameSection";
 import { SplitSection } from "./SplitSection";
 
@@ -47,6 +48,7 @@ function Sections({ household }: { household: HouseholdView }) {
       <MembersSection household={household} />
       {isAdmin && <InvitationsSection />}
       <SplitSection household={household} />
+      <CategoriesSection household={household} />
     </div>
   );
 }

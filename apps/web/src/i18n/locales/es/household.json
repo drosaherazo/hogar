@@ -101,6 +101,47 @@
       "copied": "Enlace copiado.",
       "copyFailed": "No hemos podido copiarlo automáticamente. Selecciona el enlace y cópialo.",
       "done": "Listo"
+    },
+    "categories": {
+      "title": "Categorías",
+      "description": "Etiqueta los gastos para distinguirlos. Una categoría puede seguir el reparto del hogar o tener el suyo.",
+      "add": "Añadir categoría",
+      "edit": "Editar {{name}}",
+      "readOnly": "Solo los admins pueden cambiar las categorías.",
+      "followsHousehold": "Sigue el reparto del hogar",
+      "ownSplit": "Reparto propio: {{shares}}",
+      "needsReview": "Revisa este reparto: ha cambiado la gente.",
+      "limit": "Habéis llegado a 30 categorías. Borra una para añadir otra.",
+      "empty": "Aún no hay categorías. Añade una para empezar a etiquetar gastos.",
+      "emptyReadOnly": "Aún no hay categorías. Un admin puede añadir algunas para etiquetar gastos.",
+      "dialog": {
+        "titleNew": "Nueva categoría",
+        "name": "Nombre",
+        "emoji": "Emoji (opcional)",
+        "emojiHint": "Elige uno del teclado.",
+        "ownSplit": "Usar un reparto propio",
+        "ownSplitHint": "Si no la marcas, sigue el reparto del hogar.",
+        "householdShares": "El reparto del hogar: {{shares}}",
+        "save": "Guardar categoría",
+        "saving": "Guardando la categoría",
+        "saved": "Categoría guardada."
+      },
+      "untick": {
+        "title": "¿Seguir el reparto del hogar?",
+        "description": "{{name}} volverá a seguir el reparto del hogar. Sus pesos propios se descartarán. Los gastos ya añadidos no cambian.",
+        "confirm": "Seguir el reparto del hogar"
+      },
+      "delete": {
+        "action": "Borrar categoría",
+        "title": "¿Borrar {{name}}?",
+        "used_one": "{{count}} gasto se quedará sin categoría. La parte de nadie cambia.",
+        "used_other": "{{count}} gastos se quedarán sin categoría. La parte de nadie cambia.",
+        "unused": "Ningún gasto la usa.",
+        "ownSplit": "Su reparto propio también se descartará.",
+        "deleting": "Borrando la categoría",
+        "deleted": "Categoría borrada."
+      },
+      "editButton": "Editar"
     }
   },
   "invite": {

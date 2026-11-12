@@ -16,7 +16,7 @@ describe("ExpenseDetailPage", () => {
     expect(await screen.findByRole("heading", { name: "Groceries" })).toBeInTheDocument();
     expect(screen.getByText("€42.80")).toBeInTheDocument();
     expect(screen.getByText("Paid by").nextElementSibling).toHaveTextContent("Ana García");
-    expect(screen.getByText("How it's split").nextElementSibling).toHaveTextContent("The household's split");
+    expect(screen.getByText("How it's split").nextElementSibling).toHaveTextContent("In proportion to the weights");
 
     const shares = screen.getByRole("list", { name: "Each person's share" });
     const rows = within(shares).getAllByRole("listitem");
@@ -37,6 +37,18 @@ describe("ExpenseDetailPage", () => {
     renderApp({ path: PATH });
     await screen.findByRole("heading", { name: "Groceries" });
     expect(screen.getByText("How it's split").nextElementSibling).toHaveTextContent(label);
+  });
+
+  it("shows the expense's category under its description", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      handlers.expense(expenseView({ category: { id: "cat_groceries", name: "Groceries shop", emoji: "🛒" } })),
+    );
+    renderApp({ path: PATH });
+    await screen.findByRole("heading", { name: "Groceries" });
+    expect(screen.getByText("Groceries shop")).toBeInTheDocument();
+    expect(screen.getByText("🛒")).toHaveAttribute("aria-hidden", "true");
   });
 
   it("explains kindly when the expense isn't there any more", async () => {
