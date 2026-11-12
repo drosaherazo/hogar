@@ -218,8 +218,9 @@ describe("HomePage", () => {
     it("asks admins to review the split when members changed", async () => {
       server.use(handlers.signedIn(), handlers.household({ ...shared, splitNeedsReview: true }));
       renderApp({ path: "/" });
-      const notice = await screen.findByRole("status", { name: "" });
-      expect(notice).toHaveTextContent("Review the split");
+      // The notice itself, not just any status region (the wake-up screen also has one while loading).
+      const notice = (await screen.findByText("Review the split")).closest<HTMLElement>("[role=status]");
+      if (!notice) throw new Error("The review notice should be a status region");
       expect(within(notice).getByRole("link", { name: "Review split" })).toHaveAttribute(
         "href",
         "/household/settings#split",

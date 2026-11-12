@@ -50,6 +50,8 @@ interface RequestOptions<T> {
   schema?: z.ZodType<T>;
   /** Send the access token and, on 401, refresh it once and retry. */
   authenticated?: boolean;
+  /** Cancels the request; an abort surfaces as ApiRequestError("network", 0). */
+  signal?: AbortSignal;
 }
 
 /**
@@ -109,6 +111,11 @@ export class ApiClient {
         this.refreshing = null;
       });
     return this.refreshing;
+  }
+
+  /** Resolves when the API answers 2xx; rejects with ApiRequestError otherwise. */
+  health(signal?: AbortSignal): Promise<void> {
+    return this.request("/health", { authenticated: false, ...(signal ? { signal } : {}) });
   }
 
   async logout(): Promise<void> {
@@ -248,7 +255,7 @@ export class ApiClient {
   }
 
   async request<T = void>(path: string, options: RequestOptions<T> = {}, isRetry = false): Promise<T> {
-    const { method = "GET", body, schema, authenticated = true } = options;
+    const { method = "GET", body, schema, authenticated = true, signal } = options;
     const headers: Record<string, string> = { Accept: "application/json" };
     if (body !== undefined) headers["Content-Type"] = "application/json";
     if (authenticated && this.accessToken) headers["Authorization"] = `Bearer ${this.accessToken}`;
@@ -259,6 +266,7 @@ export class ApiClient {
         method,
         headers,
         credentials: "same-origin",
+        ...(signal ? { signal } : {}),
         ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       });
     } catch {
