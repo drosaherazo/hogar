@@ -9,6 +9,7 @@
     "start": "node --enable-source-maps dist/server.js",
     "db:deploy": "prisma migrate deploy",
     "db:migrate": "prisma migrate dev",
+    "db:check": "node --env-file-if-exists=.env scripts/checkMigrations.mjs",
     "db:generate": "prisma generate",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
