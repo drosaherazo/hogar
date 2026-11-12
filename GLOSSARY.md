@@ -4,6 +4,18 @@ The shared language of Hogar: a web app where the people who share a home (a cou
 
 ## Home and people
 
+**Person** (`User`):
+Someone who uses Hogar, with one email address, a name and a language. There is one person per email address, however they sign in.
+_Avoid_: account, user, profile
+
+**Name**:
+What a person's household calls them ("Ana owes you €12.50"). It doesn't have to be unique and is never used to sign in.
+_Avoid_: username, display name, nickname
+
+**Starter name**:
+The playful name a new person gets when nobody has given one, an animal and a friendly adjective in their language ("Brave Otter", "Nutria Valiente").
+_Avoid_: random name, placeholder name
+
 **Household**:
 A shared home: a named group of people who split its expenses and chores. It exists only while it has at least one member.
 _Avoid_: home, flat, group, house
@@ -85,6 +97,16 @@ A member's weight for one category that uses its own split. Exists for every cur
 **Starter set**:
 The five categories every household gets when it is created (Rent, Groceries, Utilities, Leisure, Other), named in the creator's language.
 _Avoid_: default categories, presets
+
+## Signing in
+
+**Sign-in method**:
+A way into a person's place in Hogar: their Google account or a sign-in code sent to their email. A person has at most one Google account linked.
+_Avoid_: provider, login type
+
+**Sign-in code**:
+A 6-digit code, sent by email, that works once and for 10 minutes to prove a person controls that address.
+_Avoid_: OTP, PIN, magic code
 
 ## Starting the app
 
