@@ -170,3 +170,47 @@ describe("ApiClient categories", () => {
     expect(searches).toEqual(["", "?category=none", "?cursor=abc&category=cat_rent"]);
   });
 });
+
+describe("ApiClient.health", () => {
+  it("asks the API whether it is awake, without credentials", async () => {
+    let authorization: string | null = "unset";
+    server.use(
+      http.post(`${BASE}/auth/google`, () => HttpResponse.json(session(ana, "token-123"))),
+      http.get(`${BASE}/health`, ({ request }) => {
+        authorization = request.headers.get("authorization");
+        return HttpResponse.json({ status: "ok" });
+      }),
+    );
+    const client = new ApiClient(BASE);
+    await client.loginWithGoogle("google-token");
+    await expect(client.health()).resolves.toBeUndefined();
+    expect(authorization).toBeNull();
+  });
+
+  it("keeps the status of a proxy error while the server is still starting", async () => {
+    server.use(http.get(`${BASE}/health`, () => new HttpResponse("<html>Bad gateway</html>", { status: 503 })));
+    const error: unknown = await new ApiClient(BASE).health().catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(ApiRequestError);
+    expect(error).toMatchObject({ status: 503 });
+  });
+
+  it("reports a network failure as status 0", async () => {
+    const client = new ApiClient(BASE, () => Promise.reject(new TypeError("Failed to fetch")));
+    await expect(client.health()).rejects.toMatchObject({ code: "network", status: 0 });
+  });
+
+  it("passes the abort signal to fetch, and an abort becomes a network failure", async () => {
+    let received: AbortSignal | null | undefined;
+    const fetchImpl = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      received = init?.signal;
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+      });
+    });
+    const controller = new AbortController();
+    const pending = new ApiClient(BASE, fetchImpl).health(controller.signal);
+    controller.abort();
+    await expect(pending).rejects.toMatchObject({ code: "network", status: 0 });
+    expect(received).toBe(controller.signal);
+  });
+});

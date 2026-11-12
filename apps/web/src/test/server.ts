@@ -30,10 +30,11 @@ export function session(user: AuthUser = ana, accessToken = "access-1"): AuthRes
 export const apiError = (status: number, code: ErrorCode) => HttpResponse.json({ error: { code } }, { status });
 
 /**
- * By default nobody is signed in: refresh answers 401 and logout succeeds. Balances default to
+ * By default the server is awake (health answers 200) and nobody is signed in: refresh answers 401 and logout succeeds. Balances default to
  * "all square", so pages that show a balance sentence work without setting them up.
  */
 export const server = setupServer(
+  http.get("*/api/health", () => HttpResponse.json({ status: "ok" })),
   http.post("*/api/auth/refresh", () => apiError(401, "auth.session.missing")),
   http.post("*/api/auth/logout", () => new HttpResponse(null, { status: 204 })),
   http.get("*/api/household/balances", () => HttpResponse.json(balancesView())),

@@ -40,6 +40,8 @@ beforeEach(() => {
     fixture: "fake-google.txt",
     headers: { "content-type": "application/javascript" },
   }).as("gsi");
+  // The startup polls the health check before restoring the session, so the server is "awake" by default.
+  cy.intercept("GET", "/api/health", { statusCode: 200, body: { status: "ok" } }).as("health");
   cy.intercept("POST", "/api/auth/refresh", { statusCode: 401, body: { error: { code: "auth.session.missing" } } }).as(
     "refresh",
   );

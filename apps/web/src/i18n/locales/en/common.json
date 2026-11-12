@@ -20,5 +20,35 @@
   "account": {
     "menu": "Account menu for {{name}}",
     "signOut": "Sign out"
+  },
+  "wakeUp": {
+    "stage": {
+      "knocking": "Knocking on your home's door…",
+      "lights": "Turning on the lights…",
+      "almost": "Almost there, putting the kettle on…"
+    },
+    "description": "Hogar takes a nap when nobody's around, so waking up can take up to a minute. Thanks for waiting!",
+    "tipLabel": "Quick tip",
+    "tips": {
+      "inviteLink": "Invite the people you live with by sharing a link. No emails needed.",
+      "weights": "Give each person a weight in the household settings and every expense splits in that proportion.",
+      "exactCents": "Splits always add up to the exact cent, so nobody ends up a cent short.",
+      "customSplit": "One expense works differently? Change how it's split right in the expense form.",
+      "settleUp": "Paid someone back? Record the payment and everyone's balance updates.",
+      "fixMistakes": "Got an expense wrong? Open it to edit or delete it.",
+      "guests": "Guests can see everything but change nothing. Handy for someone staying a while.",
+      "movedOut": "When someone moves out, their past expenses stay in the history.",
+      "darkTheme": "Prefer it darker? Switch to the dark theme from your account menu.",
+      "language": "Hogar speaks English and Spanish. Switch any time from your account menu."
+    },
+    "slow": {
+      "title": "This is taking longer than usual",
+      "description": "Your home may still be waking up. Give it another go in a moment."
+    },
+    "retry": "Try again",
+    "offline": {
+      "title": "You seem to be offline",
+      "description": "We'll carry on as soon as you're back online."
+    }
   }
 }

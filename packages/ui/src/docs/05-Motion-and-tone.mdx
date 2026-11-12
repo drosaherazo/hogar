@@ -19,6 +19,7 @@ Hover or focus each track with the keyboard to see the transition:
 | `--duration-fast` | 120 ms | Hover, button press, checkboxes |
 | `--duration-base` | 200 ms | Menus appearing, theme change, toasts |
 | `--duration-slow` | 320 ms | Dialogs and sheets sliding up |
+| `--duration-ambient` | 2400 ms | Slow ambient loops only: the house lighting up while Hogar wakes |
 
 The `--easing-standard` and `--easing-gentle` curves start fast and slow down softly, like an object settling into place.
 
@@ -37,6 +38,14 @@ Hogar is real-time: what one person adds appears instantly on everyone else's ph
 - **Other people's changes, with a name:** "Marta added milk" with her member color. Knowing who did what builds trust and a sense of team.
 - **Errors that explain and suggest:** what happened and what to do, without blame ("We couldn't…", never "You entered an invalid…").
 - **Destructive actions with a safety net:** deleting asks for a clear confirmation or offers undo. Removing the fear of making a mistake makes the app calmer to use.
+
+## Waiting
+
+Sometimes Hogar has to wait for its server to wake up, which can take up to a minute. Instead of an endless spinner, the wake-up screen (`WakeUpScreen`) says what is happening and roughly how long it takes, moves through honest stages ("Knocking on your home's door…", "Turning on the lights…") instead of a fake percentage, and shows short tips about Hogar. After a limit it offers a way forward ("Try again").
+
+Its little house is the only ambient animation in Hogar: windows light up slowly with `--duration-ambient` and `--easing-gentle`. With "reduce motion" on, it becomes a still picture with every window lit.
+
+**How it helps the person:** an explained wait feels shorter and calmer than a silent one, and nobody is left wondering whether the app is broken.
 
 ## Empty states
 
@@ -65,6 +74,7 @@ Pasa el ratón o enfoca con el teclado cada pista para ver la transición:
 | `--duration-fast` | 120 ms | Hover, pulsación de botones, casillas |
 | `--duration-base` | 200 ms | Aparición de menús, cambio de tema, avisos |
 | `--duration-slow` | 320 ms | Diálogos y paneles que entran desde abajo |
+| `--duration-ambient` | 2400 ms | Solo bucles ambientales lentos: la casa que se ilumina mientras Hogar despierta |
 
 Las curvas `--easing-standard` y `--easing-gentle` arrancan rápido y frenan con suavidad, como un objeto que se posa.
 
@@ -83,6 +93,14 @@ Hogar es en tiempo real: lo que añade una persona aparece al momento en el móv
 - **Cambios de otras personas, con nombre:** "Marta ha añadido leche" con su color de miembro. Saber quién hizo qué genera confianza y sensación de equipo.
 - **Errores que explican y proponen:** qué ha pasado y qué hacer, sin culpar ("No hemos podido…", nunca "Has introducido mal…").
 - **Acciones destructivas con red:** borrar pide confirmación clara o permite deshacer. Quitar el miedo a equivocarse hace que la app se use con más tranquilidad.
+
+## Esperas
+
+A veces Hogar tiene que esperar a que su servidor despierte, y eso puede llevar hasta un minuto. En vez de un spinner sin fin, la pantalla de despertar (`WakeUpScreen`) cuenta qué está pasando y cuánto suele tardar, avanza por etapas honestas ("Llamando a la puerta de tu hogar…", "Encendiendo las luces…") en vez de un porcentaje inventado y muestra consejos breves sobre Hogar. Pasado un límite, ofrece una salida ("Intentarlo de nuevo").
+
+Su casita es la única animación ambiental de Hogar: las ventanas se encienden despacio con `--duration-ambient` y `--easing-gentle`. Con "reducir movimiento" activado, se queda como una imagen fija con todas las ventanas encendidas.
+
+**Cómo ayuda a la persona:** una espera explicada se siente más corta y tranquila que una en silencio, y nadie se queda pensando si la app se ha roto.
 
 ## Estados vacíos
 

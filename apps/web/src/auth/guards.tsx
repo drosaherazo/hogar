@@ -1,7 +1,7 @@
 import type { AuthUser } from "@hogar/shared";
 import { createContext, useContext } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
-import { FullPageLoading } from "../layout/FullPageLoading";
+import { WakeUpLoading } from "../layout/WakeUpLoading";
 import { useAuth } from "./AuthProvider";
 
 const CurrentUserContext = createContext<AuthUser | null>(null);
@@ -25,7 +25,7 @@ export function safeReturnPath(from: unknown): string {
 export function RequireAuth() {
   const { state } = useAuth();
   const location = useLocation();
-  if (state.status === "loading") return <FullPageLoading />;
+  if (state.status === "loading") return <WakeUpLoading />;
   if (state.status === "anonymous") {
     const from = `${location.pathname}${location.search}${location.hash}`;
     return <Navigate to="/login" replace state={{ from } satisfies LoginState} />;
@@ -41,7 +41,7 @@ export function RequireAuth() {
 export function RedirectIfAuthenticated() {
   const { state } = useAuth();
   const location = useLocation();
-  if (state.status === "loading") return <FullPageLoading />;
+  if (state.status === "loading") return <WakeUpLoading />;
   if (state.status === "authenticated") {
     return <Navigate to={safeReturnPath((location.state as LoginState | null)?.from)} replace />;
   }

@@ -7,7 +7,7 @@
 | API       | Render | `render.yaml` (Blueprint)                 |
 | Database  | Neon   | connection string in Render's environment |
 
-All of them have free plans. Render's free web service sleeps after ~15 minutes without traffic, so the first request after a while takes 30–50 seconds.
+All of them have free plans. Render's free web service sleeps after ~15 minutes without traffic, so the first request after a while takes 30–50 seconds. The web shows a wake-up screen meanwhile (`specs/005-wake-up-loading`): it polls `GET /api/health` until the API answers and only then restores the session with a single refresh, because the refresh token rotates on every use and a refresh cut off by the proxy during a cold start must never be retried blindly. Keeping the API warm with a scheduled ping would shorten those waits and is a possible future improvement.
 
 ## One origin for the browser
 

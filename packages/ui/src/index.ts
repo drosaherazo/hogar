@@ -35,3 +35,5 @@ export { Spinner } from "./components/Spinner/Spinner";
 export type { SpinnerProps } from "./components/Spinner/Spinner";
 export { TextField } from "./components/TextField/TextField";
 export type { TextFieldProps } from "./components/TextField/TextField";
+export { WakeUpScreen } from "./components/WakeUpScreen/WakeUpScreen";
+export type { WakeUpScreenProps } from "./components/WakeUpScreen/WakeUpScreen";

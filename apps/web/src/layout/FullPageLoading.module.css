@@ -1,6 +1,0 @@
-.page {
-  display: grid;
-  place-items: center;
-  min-block-size: 100dvh;
-  color: var(--color-accent-text);
-}
