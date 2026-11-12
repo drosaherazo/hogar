@@ -192,7 +192,13 @@ export function EmailSignIn() {
           loading={send.isPending}
           loadingLabel={t("login.email.sending")}
         >
-          {secondsLeft > 0 ? t("login.code.resendIn", { seconds: secondsLeft }) : t("login.code.resend")}
+          {secondsLeft > 0
+            ? t("login.code.resendIn", {
+                time: new Intl.NumberFormat(i18n.resolvedLanguage, { style: "unit", unit: "second" }).format(
+                  secondsLeft,
+                ),
+              })
+            : t("login.code.resend")}
         </Button>
         {resendError && (
           <p className={styles.error} role="alert">

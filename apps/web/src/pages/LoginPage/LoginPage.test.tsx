@@ -203,15 +203,15 @@ describe("LoginPage: signing in with a code", () => {
       await user.type(await screen.findByRole("textbox", { name: "Email" }), "lucia@example.com");
       await user.click(screen.getByRole("button", { name: "Email me a code" }));
 
-      const waiting = await screen.findByRole("button", { name: "You can ask for a new code in 60 s" });
+      const waiting = await screen.findByRole("button", { name: "You can ask for a new code in 60 sec" });
       expect(waiting).toBeDisabled();
       act(() => vi.advanceTimersByTime(20_000));
-      expect(screen.getByRole("button", { name: "You can ask for a new code in 40 s" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "You can ask for a new code in 40 sec" })).toBeDisabled();
       act(() => vi.advanceTimersByTime(40_000));
 
       await user.click(await screen.findByRole("button", { name: "Send me a new code" }));
       await waitFor(() => expect(requests).toHaveLength(2));
-      expect(await screen.findByRole("button", { name: "You can ask for a new code in 60 s" })).toBeDisabled();
+      expect(await screen.findByRole("button", { name: "You can ask for a new code in 60 sec" })).toBeDisabled();
     } finally {
       vi.useRealTimers();
     }
@@ -232,7 +232,7 @@ describe("LoginPage: signing in with a code", () => {
       server.use(handlers.emailCodeFails(429, "auth.code.too_soon", 1500));
       await user.click(await screen.findByRole("button", { name: "Send me a new code" }));
       expect(await screen.findByRole("alert")).toHaveTextContent("Hang on a moment before asking for another code.");
-      expect(screen.getByRole("button", { name: "You can ask for a new code in 1500 s" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "You can ask for a new code in 1,500 sec" })).toBeDisabled();
     } finally {
       vi.useRealTimers();
     }
