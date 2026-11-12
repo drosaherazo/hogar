@@ -140,7 +140,8 @@
         "ownSplit": "Its own split will be discarded too.",
         "deleting": "Deleting the category",
         "deleted": "Category deleted."
-      }
+      },
+      "editButton": "Edit"
     }
   },
   "invite": {

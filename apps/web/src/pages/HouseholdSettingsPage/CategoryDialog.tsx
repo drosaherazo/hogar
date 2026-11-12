@@ -7,6 +7,7 @@ import {
   type HouseholdView,
 } from "@hogar/shared";
 import { Alert, Button, Checkbox, Dialog, TextField } from "@hogar/ui";
+import { Trash2 } from "lucide-react";
 import { useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiRequestError, errorKey } from "../../api/client";
@@ -224,7 +225,12 @@ export function CategoryDialog({ household, category, onClose, onDone }: Categor
           </div>
         )}
         {saved && (
-          <Button variant="ghost" className={styles.delete} onClick={() => setConfirmingDelete(true)}>
+          <Button
+            variant="secondary"
+            icon={<Trash2 />}
+            className={styles.delete}
+            onClick={() => setConfirmingDelete(true)}
+          >
             {t("settings.categories.delete.action")}
           </Button>
         )}

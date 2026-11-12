@@ -1,6 +1,6 @@
 import { MAX_CATEGORIES, type CategoryView, type HouseholdView } from "@hogar/shared";
 import { Badge, Button, Card, EmptyState, Spinner } from "@hogar/ui";
-import { Check, Plus } from "lucide-react";
+import { Check, Pencil, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router";
@@ -147,8 +147,15 @@ function CategoryRow({
         <span className={styles.itemMeta}>{summary}</span>
       </span>
       {isAdmin && (
-        <Button variant="ghost" size="sm" onClick={onEdit}>
-          {t("settings.categories.edit", { name: category.name })}
+        // Short visible text, full name for screen readers ("Edit Rent" contains "Edit").
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={<Pencil />}
+          aria-label={t("settings.categories.edit", { name: category.name })}
+          onClick={onEdit}
+        >
+          {t("settings.categories.editButton")}
         </Button>
       )}
     </li>

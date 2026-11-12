@@ -140,7 +140,8 @@
         "ownSplit": "Su reparto propio también se descartará.",
         "deleting": "Borrando la categoría",
         "deleted": "Categoría borrada."
-      }
+      },
+      "editButton": "Editar"
     }
   },
   "invite": {
