@@ -5,6 +5,8 @@ export class HttpError extends Error {
   constructor(
     readonly status: number,
     readonly code: ErrorCode,
+    /** Extra response headers, such as `Retry-After`. */
+    readonly headers: Readonly<Record<string, string>> = {},
   ) {
     super(code);
     this.name = "HttpError";
@@ -18,3 +20,8 @@ export const notFound = (code: ErrorCode) => new HttpError(404, code);
 export const conflict = (code: ErrorCode) => new HttpError(409, code);
 /** The resource existed but can't be used any more (an expired, used or revoked invitation). */
 export const gone = (code: ErrorCode) => new HttpError(410, code);
+/** Asked too often; `retryAfterSeconds`, when known, tells the client when to try again. */
+export const tooManyRequests = (code: ErrorCode, retryAfterSeconds?: number) =>
+  new HttpError(429, code, retryAfterSeconds === undefined ? {} : { "Retry-After": String(retryAfterSeconds) });
+/** A service we depend on (the email provider) failed; trying again later may work. */
+export const serviceUnavailable = (code: ErrorCode) => new HttpError(503, code);

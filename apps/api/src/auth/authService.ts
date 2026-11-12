@@ -6,13 +6,16 @@ import {
   resolveLocale,
   type AuthResponse,
   type AuthUser,
+  type Locale,
 } from "@hogar/shared";
 import type { Database } from "../db";
-import type { User } from "../generated/prisma/client";
 import type { Mailer } from "../email/mailer";
+import { renderSignInCodeEmail } from "../email/signInCodeEmail";
+import type { User } from "../generated/prisma/client";
 import { isUniqueViolation } from "../household/householdService";
-import { conflict, unauthorized } from "../httpError";
+import { conflict, serviceUnavailable, unauthorized } from "../httpError";
 import type { GoogleIdentity, GoogleVerifier } from "./googleVerifier";
+import { createSignInCodes } from "./signInCodes";
 import { generateSecretToken, hashSecretToken, type AccessTokenSigner } from "./tokens";
 
 /**
@@ -61,10 +64,14 @@ async function retryOnceOnUniqueViolation<T>(create: () => Promise<T>): Promise<
 export function createAuthService({
   db,
   google,
+  mailer,
+  codeSecret,
   signer,
   refreshTokenTtlDays,
   now = () => new Date(),
 }: AuthServiceDeps) {
+  const codes = createSignInCodes({ db, secret: codeSecret, now });
+
   async function issueSession(user: User, familyId: string): Promise<Session> {
     const refreshToken = generateSecretToken();
     const refreshTokenExpiresAt = new Date(now().getTime() + refreshTokenTtlDays * DAY_MS);
@@ -129,6 +136,41 @@ export function createAuthService({
 
       // A simultaneous first sign-in can win the race to create the row; the retry then finds it.
       const user = await retryOnceOnUniqueViolation(() => findOrCreateGoogleUser(identity, acceptLanguage));
+      return issueSession(user, randomUUID());
+    },
+
+    /**
+     * Emails a new sign-in code to `email` (already normalized). It behaves the same whether or
+     * not someone uses that address, so nobody can find out who uses Hogar. The email is in the
+     * person's own language, or the login page's for a new address.
+     */
+    async requestEmailCode(email: string, locale: Locale): Promise<void> {
+      const { id, code } = await codes.issue(email, locale);
+      const person = await db.user.findUnique({ where: { email }, select: { locale: true } });
+      try {
+        await mailer.send({
+          to: email,
+          ...renderSignInCodeEmail(code, person ? resolveLocale(person.locale) : locale),
+        });
+      } catch (error) {
+        console.error("Sign-in code email failed", error);
+        await codes.discard(id);
+        throw serviceUnavailable("auth.email.send_failed");
+      }
+    },
+
+    /**
+     * Signs in with a sign-in code. A code for an address nobody uses yet creates the person,
+     * with a starter name and the language the code was asked for in.
+     */
+    async signInWithEmailCode(email: string, code: string): Promise<Session> {
+      const { locale: codeLocale } = await codes.consume(email, code);
+      const user = await retryOnceOnUniqueViolation(async () => {
+        const existing = await db.user.findUnique({ where: { email } });
+        if (existing) return existing;
+        const locale = resolveLocale(codeLocale);
+        return db.user.create({ data: { email, name: pickStarterName(locale), locale } });
+      });
       return issueSession(user, randomUUID());
     },
 

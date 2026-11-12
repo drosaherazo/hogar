@@ -1,4 +1,10 @@
-import { googleLoginRequestSchema, type AuthResponse } from "@hogar/shared";
+import {
+  emailCodeRequestSchema,
+  emailSignInRequestSchema,
+  errorCodeFrom,
+  googleLoginRequestSchema,
+  type AuthResponse,
+} from "@hogar/shared";
 import { Router, type Response } from "express";
 import { badRequest } from "../httpError";
 import type { AuthService, Session } from "./authService";
@@ -17,6 +23,19 @@ export function createAuthRouter(auth: AuthService, { cookieSecure }: { cookieSe
     const parsed = googleLoginRequestSchema.safeParse(req.body);
     if (!parsed.success) throw badRequest();
     respondWithSession(res, await auth.loginWithGoogle(parsed.data.credential, req.get("accept-language")));
+  });
+
+  router.post("/email/code", async (req, res) => {
+    const parsed = emailCodeRequestSchema.safeParse(req.body);
+    if (!parsed.success) throw badRequest(errorCodeFrom(parsed.error));
+    await auth.requestEmailCode(parsed.data.email, parsed.data.locale);
+    res.status(204).end();
+  });
+
+  router.post("/email/sign-in", async (req, res) => {
+    const parsed = emailSignInRequestSchema.safeParse(req.body);
+    if (!parsed.success) throw badRequest(errorCodeFrom(parsed.error));
+    respondWithSession(res, await auth.signInWithEmailCode(parsed.data.email, parsed.data.code));
   });
 
   router.post("/refresh", async (req, res) => {
