@@ -45,8 +45,9 @@ Every spec MUST state in its Implementation Decisions how it meets the rules bel
 
 - Every endpoint MUST check household membership and role on the server. The frontend only hides buttons; that is never a security measure.
 - **Roles:** `ADMIN` (everything, including managing members), `MEMBER` (create and edit content), `GUEST` (read only). A household is never left without an admin.
-- Passwords, refresh tokens and invitation tokens are never stored in plain text; they are hashed.
-- Authentication follows ADR 0002: a Google Identity Services ID token verified by the API, a 15-minute JWT kept in memory on the web, and a rotating, hashed refresh token in an httpOnly cookie scoped to `/api/auth`.
+- Passwords, refresh tokens, invitation tokens and sign-in codes are never stored in plain text; they are hashed (sign-in codes with a keyed HMAC).
+- People sign in with Google or with a sign-in code sent by email; there are never passwords. Both lead to the same person, one per email address (ADR 0008).
+- Sessions follow ADR 0002: Google's ID token is verified by the API, and either sign-in method gets a 15-minute JWT kept in memory on the web and a rotating, hashed refresh token in an httpOnly cookie scoped to `/api/auth`.
 - All API input MUST be validated with the Zod schemas from `packages/shared`, the same ones the forms use.
 
 **Why:** a shared home mixes people with different levels of trust (flatmates, guests); access rules must hold no matter which client calls the API.
@@ -65,7 +66,7 @@ Every spec MUST state in its Implementation Decisions how it meets the rules bel
 
 - Supported locales are `en` and `es`; detection order is stored preference → `navigator.languages` → fallback `en`, with `<html lang>` kept in sync.
 - There is no hardcoded user-facing copy: every string goes through i18n, with semantic, dot-separated keys per feature namespace. `en` is the source of truth and keys are typed, so a missing key is a type error.
-- Zod schemas and the API return **error codes**, never sentences; the web translates them. The server renders no user-facing text; if it ever does (e.g. invitation emails), it is localized with `User.locale`, falling back to `Accept-Language`.
+- Zod schemas and the API return **error codes**, never sentences; the web translates them. The server renders no user-facing text except emails (such as the sign-in code), which are localized with `User.locale`, falling back to `Accept-Language`.
 - `packages/ui` contains no copy: every visible or accessible string comes in through props.
 - Money, dates and numbers are always formatted with `Intl` and the active locale.
 - The parity test keeps `en` and `es` identical in keys with no empty values.
@@ -93,14 +94,14 @@ Every spec MUST state in its Implementation Decisions how it meets the rules bel
 - **Real time:** Socket.io with one room per household; events typed in `packages/shared`.
 - **TypeScript:** strict everywhere, pinned to 6.0 until typescript-eslint supports 7.x; no `any` unless justified in a comment.
 - **Testing:** Vitest + Testing Library, Supertest, Cypress.
-- **Infra:** Docker Compose locally, GitHub Actions CI, Vercel (web and Storybook), Render (API), Neon (Postgres). Vercel rewrites `/api/*` to Render so the browser sees one origin; see [docs/deploy.md](docs/deploy.md).
+- **Infra:** Docker Compose locally, GitHub Actions CI, Vercel (web and Storybook), Render (API), Neon (Postgres), Resend (email over its HTTP API, since Render's free plan blocks SMTP). Vercel rewrites `/api/*` to Render so the browser sees one origin; see [docs/deploy.md](docs/deploy.md).
 - **Language:** code, identifiers, comments, docs, issues, test names and commit messages are in English.
 
 Package guidance loads on demand from `apps/web/CLAUDE.md` (i18n) and `packages/ui/CLAUDE.md` (components and Storybook).
 
 ## Scope
 
-- **Current phase, MVP (v1):** auth and roles, household with shareable-link invitations, expenses with splits and balances, expense categories (with an optional own split and a list filter), chores with an assignee, shopping list, and real time.
+- **Current phase, MVP (v1):** auth (Google or an email sign-in code) and roles, household with shareable-link invitations, expenses with splits and balances, expense categories (with an optional own split and a list filter), chores with an assignee, shopping list, and real time.
 - **Out of the MVP:** invitation emails, recurring expenses and recurring chores (v1.1), budgets and charts, including totals and charts per category (v1.2).
 - **Out of scope:** multiple households per user, a shared pot, real payments, multiple currencies, native mobile app, and gamification. They are not implemented unless explicitly requested and these rules are amended.
 
@@ -124,4 +125,4 @@ Standard scripts live in the root `package.json`. Non-obvious bits:
 - Env files: copy `apps/api/.env.example` and `apps/web/.env.example` to `.env`; Google setup in `docs/setup-google-oauth.md`.
 - Deploy: `docs/deploy.md` (`render.yaml`, `apps/web/vercel.json`, `packages/ui/vercel.json`). API production build: `pnpm --filter @hogar/api build`.
 
-**Version**: 4.0.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-12
+**Version**: 5.0.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-12
