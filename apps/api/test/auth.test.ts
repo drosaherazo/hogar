@@ -1,4 +1,4 @@
-import { authResponseSchema } from "@hogar/shared";
+import { authResponseSchema, STARTER_ADJECTIVES, STARTER_ANIMALS } from "@hogar/shared";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { createAccessTokenSigner, hashSecretToken } from "../src/auth/tokens";
@@ -65,17 +65,69 @@ describe("POST /api/auth/google", () => {
     expect(stored[0]?.tokenHash).not.toBe(token);
   });
 
-  it("updates name and photo on later logins but keeps the same user and their chosen locale", async () => {
+  it("refreshes only the photo on later logins: name, email and chosen locale are kept", async () => {
     const { app, google } = createTestApp();
     const first = authResponseSchema.parse((await login(app)).res.body);
     await db.user.update({ where: { id: first.user.id }, data: { locale: "en" } });
 
-    google.identities.set("new-ana-token", { ...ana, name: "Ana G.", avatarUrl: null, locale: "es" });
+    const newPhoto = "https://lh3.googleusercontent.com/a/ana-2";
+    google.identities.set("new-ana-token", {
+      ...ana,
+      email: "ana.garcia@example.com",
+      name: "Ana G.",
+      avatarUrl: newPhoto,
+      locale: "es",
+    });
     const second = authResponseSchema.parse((await login(app, "new-ana-token")).res.body);
 
-    expect(second.user).toMatchObject({ id: first.user.id, name: "Ana G.", avatarUrl: null, locale: "en" });
+    expect(second.user).toEqual({
+      id: first.user.id,
+      email: ana.email,
+      name: ana.name,
+      avatarUrl: newPhoto,
+      locale: "en",
+    });
     expect(await db.user.count()).toBe(1);
   });
+
+  it("signs in someone who signed up with Google before email sign-in existed, exactly as before", async () => {
+    const { app } = createTestApp();
+    const existing = await db.user.create({
+      data: { googleId: ana.googleId, email: ana.email, name: "Ana", avatarUrl: null, locale: "en" },
+    });
+    const body = authResponseSchema.parse((await login(app)).res.body);
+    expect(body.user).toEqual({
+      id: existing.id,
+      email: ana.email,
+      name: "Ana",
+      avatarUrl: ana.avatarUrl,
+      locale: "en",
+    });
+    expect(await db.user.count()).toBe(1);
+  });
+
+  it("stores a new person's email trimmed and lower-cased", async () => {
+    const { app, google } = createTestApp();
+    google.identities.set("shouty", { ...ana, email: "  Ana.Garcia@Example.COM " });
+    const body = authResponseSchema.parse((await login(app, "shouty")).res.body);
+    expect(body.user.email).toBe("ana.garcia@example.com");
+  });
+
+  it.each(["es", "en"] as const)(
+    "gives a new person whose Google account has no name a starter name in their language (%s)",
+    async (locale) => {
+      const { app, google } = createTestApp();
+      google.identities.set("nameless", { ...ana, name: null, locale });
+      const body = authResponseSchema.parse((await login(app, "nameless")).res.body);
+      expect(body.user.locale).toBe(locale);
+      const [first = "", second = ""] = body.user.name.split(" ");
+      const animals = STARTER_ANIMALS.map((animal) => animal[locale]);
+      const adjectives = STARTER_ADJECTIVES.map((adjective) => adjective[locale]);
+      const [animal, adjective] = locale === "es" ? [first, second] : [second, first];
+      expect(animals).toContain(animal);
+      expect(adjectives).toContain(adjective);
+    },
+  );
 
   it("guesses the locale from Accept-Language when Google doesn't send one", async () => {
     const { app, google } = createTestApp();

@@ -3,6 +3,7 @@ import request from "supertest";
 import { afterAll, beforeEach } from "vitest";
 import { createApp } from "../src/app";
 import type { GoogleIdentity, GoogleVerifier } from "../src/auth/googleVerifier";
+import type { EmailMessage, Mailer } from "../src/email/mailer";
 import type { Config } from "../src/config";
 import { createDatabase } from "../src/db";
 
@@ -24,6 +25,10 @@ export const config: Config = {
   trustProxyHops: 0,
   accessTokenTtlSeconds: 900,
   refreshTokenTtlDays: 30,
+  email: {
+    codeSecret: "test-email-code-secret-that-is-long-enough",
+    provider: { kind: "mailpit", url: "http://mailpit.invalid", from: "Hogar <hogar@localhost>" },
+  },
 };
 
 export const db = createDatabase(config.databaseUrl);
@@ -46,6 +51,24 @@ export class FakeGoogleVerifier implements GoogleVerifier {
   }
 }
 
+/** Fake mailer: records every email it sends, or fails while `failing` is set. */
+export class RecordingMailer implements Mailer {
+  readonly sent: EmailMessage[] = [];
+  failing = false;
+
+  async send(message: EmailMessage) {
+    if (this.failing) throw new Error("Fake email provider is down");
+    this.sent.push(message);
+  }
+
+  /** The most recent email sent to `to`. */
+  lastTo(to: string): EmailMessage {
+    const message = this.sent.findLast((sent) => sent.to === to);
+    if (!message) throw new Error(`No email was sent to ${to}`);
+    return message;
+  }
+}
+
 /** A controllable clock so expiry and grace windows can be tested without waiting. */
 export class TestClock {
   current = new Date("2026-10-26T10:00:00Z");
@@ -63,15 +86,17 @@ export function createTestApp({
   const google = new FakeGoogleVerifier();
   for (const identity of PEOPLE) google.identities.set(credentialFor(identity), identity);
   const clock = new TestClock();
+  const mailer = new RecordingMailer();
   const app = createApp({
     config: { ...config, ...overrides },
     db,
     google,
+    mailer,
     authRateLimit,
     invitationRateLimit,
     now: clock.now,
   });
-  return { app, google, clock };
+  return { app, google, mailer, clock };
 }
 
 const person = (key: string, name: string): GoogleIdentity => ({
@@ -111,7 +136,7 @@ export async function signIn(app: ReturnType<typeof createTestApp>["app"], ident
 
 beforeEach(async () => {
   await db.$executeRawUnsafe(
-    'TRUNCATE TABLE "expense_shares", "category_weights", "expenses", "expense_categories", "settlements", "invitations", "memberships", "households", "refresh_tokens", "users" CASCADE',
+    'TRUNCATE TABLE "expense_shares", "category_weights", "expenses", "expense_categories", "settlements", "invitations", "memberships", "households", "refresh_tokens", "sign_in_codes", "users" CASCADE',
   );
 });
 

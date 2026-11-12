@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { MailProvider } from "./email/mailer";
 
 const envSchema = z.object({
   DATABASE_URL: z.url(),
@@ -14,7 +15,25 @@ const envSchema = z.object({
     .positive()
     .default(15 * 60),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  EMAIL_CODE_SECRET: z.string("Set EMAIL_CODE_SECRET").min(32, "EMAIL_CODE_SECRET must be at least 32 characters"),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().min(3).optional(),
+  MAILPIT_URL: z.url().optional(),
 });
+
+type Env = z.infer<typeof envSchema>;
+
+/** Email always needs a provider: Resend in production, Mailpit locally (ADR 0008). */
+function mailProviderFrom(values: Env): MailProvider | string {
+  if (values.RESEND_API_KEY) {
+    if (!values.EMAIL_FROM) return "EMAIL_FROM: set the sender on Hogar's verified domain to use Resend";
+    return { kind: "resend", apiKey: values.RESEND_API_KEY, from: values.EMAIL_FROM };
+  }
+  if (values.MAILPIT_URL) {
+    return { kind: "mailpit", url: values.MAILPIT_URL, from: values.EMAIL_FROM ?? "Hogar <hogar@localhost>" };
+  }
+  return "email: set RESEND_API_KEY or MAILPIT_URL (see docs/deploy.md)";
+}
 
 export interface Config {
   databaseUrl: string;
@@ -27,16 +46,23 @@ export interface Config {
   trustProxyHops: number;
   accessTokenTtlSeconds: number;
   refreshTokenTtlDays: number;
+  email: {
+    /** HMAC key for sign-in codes; codes are never stored readable. */
+    codeSecret: string;
+    provider: MailProvider;
+  };
 }
 
 /** Reads and validates the environment once at startup, failing fast with a readable message. */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
+  const fail = (problems: string[]) => {
+    throw new Error(`Invalid API environment. Check apps/api/.env:\n${problems.map((p) => `  - ${p}`).join("\n")}`);
+  };
   const parsed = envSchema.safeParse(env);
-  if (!parsed.success) {
-    const problems = parsed.error.issues.map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`).join("\n");
-    throw new Error(`Invalid API environment. Check apps/api/.env:\n${problems}`);
-  }
+  if (!parsed.success) return fail(parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`));
   const values = parsed.data;
+  const provider = mailProviderFrom(values);
+  if (typeof provider === "string") return fail([provider]);
   return {
     databaseUrl: values.DATABASE_URL,
     googleClientId: values.GOOGLE_CLIENT_ID,
@@ -47,5 +73,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     trustProxyHops: values.TRUST_PROXY_HOPS,
     accessTokenTtlSeconds: values.ACCESS_TOKEN_TTL_SECONDS,
     refreshTokenTtlDays: values.REFRESH_TOKEN_TTL_DAYS,
+    email: { codeSecret: values.EMAIL_CODE_SECRET, provider },
   };
 }

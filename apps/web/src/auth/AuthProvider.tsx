@@ -20,6 +20,8 @@ export interface AuthContextValue {
   /** Starts a new wait after "taking longer than usual". Does nothing otherwise. */
   retry: () => void;
   loginWithGoogle: (credential: string) => Promise<AuthUser>;
+  /** Signs in with a code sent by email; the session behaves exactly like a Google one. */
+  signInWithEmailCode: (email: string, code: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
 }
 
@@ -205,6 +207,7 @@ export function AuthProvider({ client, children }: { client: ApiClient; children
       state,
       retry,
       loginWithGoogle: async (credential) => signIn((await client.loginWithGoogle(credential)).user),
+      signInWithEmailCode: async (email, code) => signIn((await client.signInWithEmailCode(email, code)).user),
       logout: async () => {
         try {
           await client.logout();

@@ -14,6 +14,7 @@ export const notFoundHandler: RequestHandler = (_req, res) => {
 /** Turns every error into `{ error: { code } }`. Unexpected errors are logged and never leak details. */
 export const errorHandler: ErrorRequestHandler = (error: unknown, _req, res, _next) => {
   if (error instanceof HttpError) {
+    res.set(error.headers);
     send(res, error.status, error.code);
     return;
   }

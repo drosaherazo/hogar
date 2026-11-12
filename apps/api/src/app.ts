@@ -6,6 +6,7 @@ import helmet from "helmet";
 import { createAuthRouter } from "./auth/authRouter";
 import { createAuthService } from "./auth/authService";
 import type { GoogleVerifier } from "./auth/googleVerifier";
+import type { Mailer } from "./email/mailer";
 import { requireAuth } from "./auth/requireAuth";
 import { createAccessTokenSigner } from "./auth/tokens";
 import { createCategoriesRouter } from "./categories/categoriesRouter";
@@ -30,6 +31,7 @@ export interface AppDeps {
   config: Config;
   db: Database;
   google: GoogleVerifier;
+  mailer: Mailer;
   /** Requests allowed per IP on /api/auth every 15 minutes. */
   authRateLimit?: number;
   /** Requests allowed per IP on /api/invitations (lookup and accept) every 15 minutes. */
@@ -51,9 +53,17 @@ function limitPerIp(limit: number) {
   });
 }
 
-export function createApp({ config, db, google, authRateLimit = 100, invitationRateLimit = 30, now }: AppDeps) {
+export function createApp({ config, db, google, mailer, authRateLimit = 100, invitationRateLimit = 30, now }: AppDeps) {
   const signer = createAccessTokenSigner(config.jwtAccessSecret, config.accessTokenTtlSeconds);
-  const auth = createAuthService({ db, google, signer, refreshTokenTtlDays: config.refreshTokenTtlDays, now });
+  const auth = createAuthService({
+    db,
+    google,
+    mailer,
+    signer,
+    codeSecret: config.email.codeSecret,
+    refreshTokenTtlDays: config.refreshTokenTtlDays,
+    now,
+  });
 
   const app = express();
   app.disable("x-powered-by");

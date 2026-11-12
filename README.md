@@ -9,7 +9,7 @@
 | Area                             | State                                                                                                                                                                                |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Design system (`packages/ui`)    | ✅ Tokens, light/dark themes, 14 components, bilingual Storybook                                                                                                                     |
-| Sign in with Google              | ✅ API + web, rotating refresh tokens                                                                                                                                                |
+| Sign in                          | ✅ Google or a 6-digit code by email, one person per email address, rotating refresh tokens                                                                                          |
 | Households                       | ✅ Create and rename, single-use invitation links, roles (admin, member, guest), leave and remove, default split by weight                                                           |
 | Expenses                         | ✅ Split by weight, equally or with exact amounts; balances simplified to the fewest payments; settling up; edit and delete with conflict checks; former members kept in the history |
 | Expense categories               | ✅ Starter set per household, admins add, rename and delete; an optional own split per category; before/after confirmation when moving an expense changes shares; history filter     |
@@ -35,10 +35,10 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
-Fill in the Google Client ID in both `.env` files and a `JWT_ACCESS_SECRET` in the API one. Follow **[docs/setup-google-oauth.md](docs/setup-google-oauth.md)**; it takes about ten minutes.
+Fill in the Google Client ID in both `.env` files, and a `JWT_ACCESS_SECRET` and an `EMAIL_CODE_SECRET` in the API one. Follow **[docs/setup-google-oauth.md](docs/setup-google-oauth.md)**; it takes about ten minutes.
 
 ```bash
-pnpm db:up       # PostgreSQL 17 in Docker (databases hogar and hogar_test)
+pnpm db:up       # PostgreSQL 17 (databases hogar and hogar_test) and Mailpit (http://localhost:8025) in Docker
 pnpm db:migrate  # apply Prisma migrations
 pnpm dev         # web on http://localhost:5173, API on http://localhost:3000
 ```
@@ -62,7 +62,7 @@ Deploying (Vercel, Render and Neon): see [docs/deploy.md](docs/deploy.md).
 - **Joyful by design.** One vivid color used deliberately, friendly shapes and copy that lowers the tension of talking about money and chores. The reasoning, in English and Spanish, lives in Storybook (_Foundations_ and each component's docs page); the rules and review checklist are in [docs/design.md](docs/design.md).
 - **Accessible by default.** AA contrast is enforced by tests in both themes, every component is tested with axe, and color never carries meaning on its own.
 - **Fully internationalized.** No hardcoded copy (ESLint enforces it); the API returns error codes the web translates; a test keeps both languages in sync.
-- **Secure sessions.** Google ID token verified on the server, 15-minute access token kept in memory, hashed and rotating refresh tokens with reuse detection. See [docs/adr/0002-authentication.md](docs/adr/0002-authentication.md).
+- **Secure sessions.** Google ID token verified on the server, or a single-use email code stored as an HMAC with per-address limits; 15-minute access token kept in memory, hashed and rotating refresh tokens with reuse detection. See [docs/adr/0002-authentication.md](docs/adr/0002-authentication.md) and [docs/adr/0008-email-sign-in-codes.md](docs/adr/0008-email-sign-in-codes.md).
 
 ## Project structure
 

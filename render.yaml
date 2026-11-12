@@ -34,3 +34,11 @@ services:
       # Browser → Vercel rewrite → Render's proxy → API. See docs/deploy.md › Client IP.
       - key: TRUST_PROXY_HOPS
         value: "2"
+      # Email (ADR 0008). See docs/deploy.md › Email.
+      - key: EMAIL_CODE_SECRET
+        generateValue: true
+      - key: RESEND_API_KEY
+        sync: false
+      # A sender on Hogar's verified domain, e.g. Hogar <hola@example.com>
+      - key: EMAIL_FROM
+        sync: false

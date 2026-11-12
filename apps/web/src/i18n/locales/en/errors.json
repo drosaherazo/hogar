@@ -2,7 +2,8 @@
   "auth": {
     "google": {
       "invalid_token": "We couldn't verify your Google sign-in. Please try again.",
-      "email_not_verified": "Your Google account's email isn't verified yet. Verify it with Google and try again."
+      "email_not_verified": "Your Google account's email isn't verified yet. Verify it with Google and try again.",
+      "already_linked": "This email already signs in with another Google account. Use that one, or get a code by email."
     },
     "session": {
       "missing": "Your session has ended. Sign in again to continue.",
@@ -11,6 +12,17 @@
     },
     "token": {
       "invalid": "Your session has ended. Sign in again to continue."
+    },
+    "email": {
+      "invalid": "That doesn't look like an email address. Check it and try again.",
+      "send_failed": "We couldn't send the email right now. Try again in a moment."
+    },
+    "code": {
+      "format": "The code has 6 digits.",
+      "wrong": "That code isn't right. Check the email and try again.",
+      "expired": "This code doesn't work anymore. Ask for a new one and you're in.",
+      "too_soon": "Hang on a moment before asking for another code.",
+      "daily_limit": "You've asked for a lot of codes today. Try again tomorrow, or continue with Google."
     }
   },
   "household": {

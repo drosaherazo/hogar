@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "concurrently -n api,web -c auto \"pnpm --filter @hogar/api dev\" \"pnpm --filter @hogar/web dev\"",
-    "db:up": "docker compose up -d --wait db",
+    "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:migrate": "pnpm --filter @hogar/api db:migrate",
     "test": "pnpm -r test",

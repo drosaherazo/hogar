@@ -1,4 +1,4 @@
-import { canEditContent, type HouseholdView } from "@hogar/shared";
+import { canEditContent, isStarterName, type HouseholdView } from "@hogar/shared";
 import { Alert, Avatar, Button, Card, EmptyState, Spinner } from "@hogar/ui";
 import { ArrowDownLeft, ArrowUpRight, House, Plus, Settings } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
@@ -14,8 +14,11 @@ import { ActionLink } from "../../layout/ActionLink";
 import { AppShell } from "../../layout/AppShell";
 import styles from "./HomePage.module.css";
 
+/** What the greeting calls the person: their first name, or their whole starter name. */
 export function firstName(name: string): string {
-  return name.trim().split(/\s+/)[0] ?? name;
+  const trimmed = name.trim();
+  if (isStarterName(trimmed)) return trimmed;
+  return trimmed.split(/\s+/)[0] ?? name;
 }
 
 /** Home for signed-in people: their household, or how to get one. */

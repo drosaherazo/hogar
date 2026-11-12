@@ -1,11 +1,17 @@
 import { createApp } from "./app";
 import { createGoogleVerifier } from "./auth/googleVerifier";
 import { loadConfig } from "./config";
+import { createMailer } from "./email/mailer";
 import { createDatabase } from "./db";
 
 const config = loadConfig();
 const db = createDatabase(config.databaseUrl);
-const app = createApp({ config, db, google: createGoogleVerifier(config.googleClientId) });
+const app = createApp({
+  config,
+  db,
+  google: createGoogleVerifier(config.googleClientId),
+  mailer: createMailer(config.email.provider),
+});
 
 const server = app.listen(config.port, () => {
   console.log(`Hogar API listening on http://localhost:${config.port}`);
