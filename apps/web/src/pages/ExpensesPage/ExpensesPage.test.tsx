@@ -124,6 +124,49 @@ describe("ExpensesPage", () => {
   });
 });
 
+describe("ExpensesPage › categories", () => {
+  const rent = { id: "cat_rent", name: "Rent", emoji: "🏠" };
+
+  it("shows each expense's category under its description, and nothing for one without", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      handlers.activity({
+        items: [
+          expenseItem({ id: "e1", description: "March rent", category: rent }),
+          expenseItem({ id: "e2", description: "Coffee", category: null }),
+        ],
+        nextCursor: null,
+      }),
+    );
+    renderApp({ path: PATH });
+    const rentRow = await screen.findByRole("link", { name: /March rent/ });
+    expect(rentRow).toHaveTextContent("Rent");
+    expect(within(rentRow).getByText("🏠")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByRole("link", { name: /Coffee/ })).not.toHaveTextContent("Rent");
+  });
+
+  it("keeps a deleted expense's line as it was, without its category", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      handlers.activity({
+        items: [
+          expenseItem({
+            category: rent,
+            deleted: { by: brunoRef, at: "2026-11-11T09:00:00.000Z" },
+            viewerPart: { kind: "none", amountCents: 0 },
+          }),
+        ],
+        nextCursor: null,
+      }),
+    );
+    renderApp({ path: PATH });
+    const line = await screen.findByText('Bruno Díaz deleted "Groceries" (€42.80)');
+    expect(line.closest("li")).not.toHaveTextContent("Rent");
+  });
+});
+
 describe("ExpensesPage › fixing mistakes", () => {
   const deletion = (by = brunoRef) => ({ by, at: "2026-11-11T09:00:00.000Z" });
 

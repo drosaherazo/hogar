@@ -98,6 +98,10 @@
   overflow-wrap: anywhere;
 }
 
+.category {
+  justify-self: start;
+}
+
 .meta {
   display: flex;
   flex-wrap: wrap;

@@ -4,6 +4,8 @@ import {
   authResponseSchema,
   authUserSchema,
   balancesViewSchema,
+  categoryListSchema,
+  categoryResponseSchema,
   createdInvitationSchema,
   currentHouseholdSchema,
   expenseResponseSchema,
@@ -15,6 +17,8 @@ import {
   type AuthResponse,
   type AuthUser,
   type BalancesView,
+  type CategoryView,
+  type CreateCategoryInput,
   type CreatedInvitation,
   type CurrentHousehold,
   type ErrorCode,
@@ -27,6 +31,8 @@ import {
   type Role,
   type SettlementInput,
   type SettlementView,
+  type UpdateCategoryInput,
+  type UpdateCategorySplitInput,
   type UpdateExpenseInput,
   type UpdateSettlementInput,
   type UpdateSplitRequest,
@@ -163,6 +169,34 @@ export class ApiClient {
     return this.request("/me/removal-notice", { method: "DELETE" });
   }
 
+  // --- Categories ----------------------------------------------------------
+
+  async getCategories(): Promise<CategoryView[]> {
+    return (await this.request("/household/categories", { schema: categoryListSchema })).categories;
+  }
+
+  async createCategory(input: CreateCategoryInput): Promise<CategoryView> {
+    return (
+      await this.request("/household/categories", { method: "POST", body: input, schema: categoryResponseSchema })
+    ).category;
+  }
+
+  /** Renames a category or changes its emoji, from the version the person saw. */
+  async updateCategory(id: string, input: UpdateCategoryInput): Promise<CategoryView> {
+    const path = `/household/categories/${encodeURIComponent(id)}`;
+    return (await this.request(path, { method: "PATCH", body: input, schema: categoryResponseSchema })).category;
+  }
+
+  /** Ticks (with weights) or unticks a category's "use its own split" box. */
+  async updateCategorySplit(id: string, input: UpdateCategorySplitInput): Promise<CategoryView> {
+    const path = `/household/categories/${encodeURIComponent(id)}/split`;
+    return (await this.request(path, { method: "PUT", body: input, schema: categoryResponseSchema })).category;
+  }
+
+  deleteCategory(id: string, version: number): Promise<void> {
+    return this.request(`/household/categories/${encodeURIComponent(id)}?version=${version}`, { method: "DELETE" });
+  }
+
   // --- Invitations ---------------------------------------------------------
 
   async listInvitations(): Promise<InvitationView[]> {
@@ -195,9 +229,15 @@ export class ApiClient {
 
   // --- Expenses and history ---------------------------------------------------
 
-  /** One page of expenses and payments, newest first; pass the previous page's `nextCursor` for the next. */
-  getActivity(cursor?: string): Promise<ActivityPage> {
-    const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
+  /**
+   * One page of expenses and payments, newest first; pass the previous page's `nextCursor` for the
+   * next. With `category` (an id, or `none`), only the expenses in it, without payments.
+   */
+  getActivity(cursor?: string, category?: string): Promise<ActivityPage> {
+    const params = new URLSearchParams();
+    if (cursor) params.set("cursor", cursor);
+    if (category) params.set("category", category);
+    const query = params.size > 0 ? `?${params.toString()}` : "";
     return this.request(`/household/activity${query}`, { schema: activityPageSchema });
   }
 

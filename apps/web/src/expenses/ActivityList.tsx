@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { useDates, useMoney } from "../i18n/format";
 import styles from "./ActivityList.module.css";
+import { CategoryLabel } from "./CategoryLabel";
 import { usePersonLabel } from "./people";
 
 export interface ActivityListProps {
@@ -128,6 +129,7 @@ function ExpenseRow({ item, viewerId }: { item: Extract<ActivityItem, { kind: "e
       </span>
       <span className={styles.main}>
         <span className={styles.title}>{item.description}</span>
+        <CategoryLabel category={item.category} className={styles.category} />
         <span className={styles.meta}>
           <span>
             {item.paidBy.userId === viewerId

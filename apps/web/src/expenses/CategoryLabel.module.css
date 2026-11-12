@@ -1,0 +1,14 @@
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+  /* Names can be up to 30 characters: let them wrap on narrow screens instead of overflowing. */
+  white-space: normal;
+}
+
+.emoji {
+  flex: none;
+  line-height: 1;
+}

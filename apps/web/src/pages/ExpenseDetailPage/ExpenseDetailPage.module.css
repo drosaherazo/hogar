@@ -27,6 +27,10 @@
   gap: var(--space-1);
 }
 
+.category {
+  justify-self: start;
+}
+
 .title {
   margin: 0;
   font-size: var(--font-size-2xl);

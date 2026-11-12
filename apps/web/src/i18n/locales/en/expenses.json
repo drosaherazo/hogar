@@ -101,13 +101,20 @@
       "noDefault": "Nobody pays in the household's split yet. Choose people, or review the split.",
       "reviewSplit": "Review the split",
       "preview": "Each person's share",
-      "weightsSaved": "The household's split when it was added ({{shares}})"
+      "weightsSaved": "The split when it was added ({{shares}})",
+      "weightsCategory": "{{name}}'s split",
+      "noDefaultCategory": "Nobody pays in {{name}}'s split. Choose people, or review the category.",
+      "reviewCategory": "Review the category"
     },
     "save": "Save expense",
     "saving": "Saving the expense",
     "cancel": "Cancel",
     "editTitle": "Edit expense",
-    "backToExpense": "Back to the expense"
+    "backToExpense": "Back to the expense",
+    "category": {
+      "label": "Category",
+      "none": "No category"
+    }
   },
   "details": {
     "back": "Back to expenses",
@@ -118,7 +125,7 @@
     "recordedBy": "Added by {{name}} on {{date}}",
     "saved": "Expense saved.",
     "method": {
-      "WEIGHTS": "The household's split",
+      "WEIGHTS": "In proportion to the weights",
       "EQUAL_one": "Equally between {{count}} person",
       "EQUAL_other": "Equally between {{count}} people",
       "EXACT": "Exact amounts"
@@ -135,5 +142,29 @@
     "cancel": "Cancel",
     "done": "Expense deleted.",
     "close": "Close"
+  },
+  "categoryChange": {
+    "title": "The shares would change",
+    "intro": "Moving it to {{name}} changes who pays what:",
+    "introNone": "Leaving it without a category changes who pays what:",
+    "row": "{{name}}: {{before}} → {{after}}",
+    "legend": "What should happen to the shares?",
+    "apply": "Apply {{name}}'s split",
+    "applyHousehold": "Apply the household's split",
+    "keep": "Keep the current shares",
+    "noDefault": "{{name}}'s split has nobody paying, so it can't be applied.",
+    "confirm": "Save expense",
+    "close": "Close",
+    "cancel": "Back to the form"
+  },
+  "filter": {
+    "label": "Category",
+    "all": "All expenses",
+    "none": "No category",
+    "showing": "Showing: {{name}}",
+    "showingNone": "Showing: expenses without a category",
+    "clear": "Show everything",
+    "empty": "No expenses in {{name}} yet.",
+    "emptyNone": "No expenses without a category."
   }
 }
