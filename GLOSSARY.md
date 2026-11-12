@@ -13,7 +13,7 @@ What a person's household calls them ("Ana owes you €12.50"). It doesn't have 
 _Avoid_: username, display name, nickname
 
 **Starter name**:
-The playful name a new person gets when nobody has given one, an animal and a friendly adjective in their language ("Brave Otter", "Nutria Valiente").
+The playful name a new person gets when nobody has given one, an animal and a friendly adjective in their language ("Brave Otter", "Nutria Valiente"). It reads as one name, so the interface greets it in full ("Hi, Brave Otter"), not by its first word like other names.
 _Avoid_: random name, placeholder name
 
 **Household**:
