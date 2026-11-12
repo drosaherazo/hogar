@@ -207,7 +207,7 @@ describe("Expense categories", () => {
     cy.wait("@add");
     cy.contains("[role=status]", "Category saved.");
 
-    cy.contains("button", "Edit Utilities").click();
+    cy.get(`button[aria-label="Edit Utilities"]`).click();
     cy.get("[role=dialog]").within(() => {
       cy.contains("label", "Name").click();
       cy.focused().clear().type("Bills");
@@ -216,7 +216,7 @@ describe("Expense categories", () => {
     cy.wait("@rename");
     cy.contains("section", "Categories").should("contain", "Bills");
 
-    cy.contains("button", "Edit Leisure").click();
+    cy.get(`button[aria-label="Edit Leisure"]`).click();
     cy.get("[role=dialog]").contains("button", "Delete category").click();
     cy.contains("[role=dialog]", "Delete Leisure?").within(() => {
       cy.contains("12 expenses will be left without a category. Nobody's share will change.");
@@ -254,7 +254,7 @@ describe("Expense categories", () => {
     }).as("split");
 
     cy.visit("/household/settings");
-    cy.contains("button", "Edit Rent").click();
+    cy.get(`button[aria-label="Edit Rent"]`).click();
     cy.get("[role=dialog]").within(() => {
       cy.contains("The household's split: Ana García 75% and Bruno Díaz 25%");
       cy.contains("label", "Use its own split").click();

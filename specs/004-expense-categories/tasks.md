@@ -266,7 +266,7 @@ Fresh default shares are saved only when they match what the person saw. These t
 - [x] T076 [P] Run the `web-design-guidelines` skill on the changed files (`CategoriesSection.tsx`, `CategoryDialog.tsx`, `CategoryChangeDialog.tsx`, `CategoryLabel.tsx`, `ExpenseFormPage.tsx`, `ExpensesPage.tsx`, `Checkbox`) and fix findings that agree with `docs/design.md`; raise any conflict instead of ignoring it.
 - [x] T077 Verify the backfill by hand per [quickstart.md › 6](./quickstart.md#6--backfill-of-existing-households-once-before-merging): restore a `pg_dump` of pre-feature local data into a scratch database, run `prisma migrate deploy` against it, and check that every household has the five starter categories in its longest-standing admin's language and that every expense has `category_id` NULL with unchanged shares. Note the result in the PR description.
 - [ ] T078 Run the manual walkthrough in [quickstart.md](./quickstart.md) §1–§5 and the full design checklist (§7) in `en`/`es`, light/dark, keyboard only and with a screen reader: labels read the name without the emoji, and select options read "emoji, name" (R12).
-- [ ] T079 Final gate: `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm --filter @hogar/api build && pnpm build`, plus the Cypress suite. Everything green before opening the PR to `main`.
+- [x] T079 Final gate: `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm --filter @hogar/api build && pnpm build`, plus the Cypress suite. Everything green before opening the PR to `main`.
 
 ---
 
