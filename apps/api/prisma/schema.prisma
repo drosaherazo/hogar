@@ -260,21 +260,21 @@ model RefreshToken {
 }
 
 /// A sign-in code sent by email (ADR 0008). Only an HMAC of the code is stored. At most one code
-/// per address is live: a new one marks the others replaced. Rows also serve as the per-address
-/// rate-limit history, and rows older than 24 hours are deleted when someone asks for a code.
+/// per address is live: the newest one, so a new code replaces the others just by existing. Rows
+/// also serve as the per-address rate-limit history, and rows older than 24 hours are deleted when
+/// someone asks for a code.
 model SignInCode {
-  id         String    @id @default(cuid())
+  id        String    @id @default(cuid())
   /// Normalized (trimmed, lower-cased).
-  email      String
-  codeHash   String    @map("code_hash")
+  email     String
+  codeHash  String    @map("code_hash")
   /// The login page's language when the code was asked for; a new person gets it.
-  locale     String
-  expiresAt  DateTime  @map("expires_at")
+  locale    String
+  expiresAt DateTime  @map("expires_at")
   /// Every check counts, right or wrong; the code dies at 5.
-  attempts   Int       @default(0)
-  usedAt     DateTime? @map("used_at")
-  replacedAt DateTime? @map("replaced_at")
-  createdAt  DateTime  @map("created_at")
+  attempts  Int       @default(0)
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @map("created_at")
 
   @@index([email, createdAt])
   @@index([createdAt])

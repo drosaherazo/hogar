@@ -1,4 +1,4 @@
-import { emailAddressSchema, errorCodeFrom, resolveLocale, signInCodeSchema } from "@hogar/shared";
+import { emailAddressSchema, errorCodeFrom, normalizeEmail, resolveLocale, signInCodeSchema } from "@hogar/shared";
 import { Button, TextField } from "@hogar/ui";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
@@ -50,6 +50,17 @@ export function EmailSignIn() {
   const [codeError, setCodeError] = useState<string>();
   const [resendError, setResendError] = useState<string>();
   const [secondsLeft, startCountdown] = useCountdown();
+  // The API limits codes per address, so the countdown belongs to the address it was started for.
+  const [waitingAddress, setWaitingAddress] = useState("");
+  const startWaiting = (address: string, seconds: number) => {
+    setWaitingAddress(normalizeEmail(address));
+    startCountdown(seconds);
+  };
+  const mustWait = (address: string) => secondsLeft > 0 && normalizeEmail(address) === waitingAddress;
+  const waitLabel = () =>
+    t("login.code.resendIn", {
+      time: new Intl.NumberFormat(i18n.resolvedLanguage, { style: "unit", unit: "second" }).format(secondsLeft),
+    });
 
   const emailField = useRef<HTMLInputElement>(null);
   const codeField = useRef<HTMLInputElement>(null);
@@ -67,11 +78,11 @@ export function EmailSignIn() {
     mutationFn: (address: string) => client.requestEmailCode(address, resolveLocale(i18n.resolvedLanguage)),
     onSuccess: (_, address) => {
       setSentTo(address);
-      startCountdown(RESEND_AFTER_SECONDS);
+      startWaiting(address, RESEND_AFTER_SECONDS);
       setStep("code");
     },
-    onError: (error) => {
-      if (error instanceof ApiRequestError && error.retryAfterSeconds) startCountdown(error.retryAfterSeconds);
+    onError: (error, address) => {
+      if (error instanceof ApiRequestError && error.retryAfterSeconds) startWaiting(address, error.retryAfterSeconds);
     },
   });
 
@@ -132,6 +143,7 @@ export function EmailSignIn() {
   }
 
   if (step === "email") {
+    const waiting = mustWait(email);
     return (
       <form className={styles.emailForm} onSubmit={submitEmail} noValidate>
         <TextField
@@ -149,14 +161,21 @@ export function EmailSignIn() {
           }}
           error={emailError}
         />
-        <Button type="submit" fullWidth loading={send.isPending} loadingLabel={t("login.email.sending")}>
-          {t("login.email.submit")}
+        <Button
+          type="submit"
+          fullWidth
+          disabled={waiting}
+          loading={send.isPending}
+          loadingLabel={t("login.email.sending")}
+        >
+          {waiting ? waitLabel() : t("login.email.submit")}
         </Button>
         <p className={styles.privacy}>{t("login.email.privacy")}</p>
       </form>
     );
   }
 
+  const waiting = mustWait(sentTo);
   return (
     <section className={styles.codeStep} aria-labelledby="login-code-title">
       <h2 id="login-code-title" className={styles.codeTitle}>
@@ -188,17 +207,11 @@ export function EmailSignIn() {
           variant="secondary"
           fullWidth
           onClick={resend}
-          disabled={secondsLeft > 0}
+          disabled={waiting}
           loading={send.isPending}
           loadingLabel={t("login.email.sending")}
         >
-          {secondsLeft > 0
-            ? t("login.code.resendIn", {
-                time: new Intl.NumberFormat(i18n.resolvedLanguage, { style: "unit", unit: "second" }).format(
-                  secondsLeft,
-                ),
-              })
-            : t("login.code.resend")}
+          {waiting ? waitLabel() : t("login.code.resend")}
         </Button>
         {resendError && (
           <p className={styles.error} role="alert">

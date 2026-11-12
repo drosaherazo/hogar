@@ -26,7 +26,8 @@ export interface SignInCodesDeps {
  * Issues and checks sign-in codes. Codes are 6 random digits, stored only as an HMAC keyed with
  * the server secret (a plain hash of a million values is reversed instantly). Every rule is
  * enforced here, on the server: expiry, single use, attempts, replacement and rate limits.
- * `email` is always already normalized.
+ * Only the newest code for an address is live, so a newer code replaces the older ones just by
+ * existing. `email` is always already normalized.
  */
 export function createSignInCodes({ db, secret, now }: SignInCodesDeps) {
   // The address is part of the message, so equal codes for different people never hash alike.
@@ -34,7 +35,7 @@ export function createSignInCodes({ db, secret, now }: SignInCodesDeps) {
 
   return {
     /**
-     * Creates a new code for `email`, replacing any earlier one, or refuses with
+     * Creates a new code for `email`, or refuses with
      * `auth.code.too_soon` (with `Retry-After`) or `auth.code.daily_limit`.
      */
     async issue(email: string, locale: Locale): Promise<{ id: string; code: string }> {
@@ -66,10 +67,6 @@ export function createSignInCodes({ db, secret, now }: SignInCodesDeps) {
           );
         }
 
-        await tx.signInCode.updateMany({
-          where: { email, usedAt: null, replacedAt: null },
-          data: { replacedAt: at },
-        });
         const row = await tx.signInCode.create({
           data: {
             email,
@@ -84,7 +81,10 @@ export function createSignInCodes({ db, secret, now }: SignInCodesDeps) {
       });
     },
 
-    /** Forgets a code whose email could not be sent: no usable code is kept, and it doesn't count. */
+    /**
+     * Forgets a code whose email could not be sent, so it doesn't count against the limits and the
+     * code already in the person's inbox, if any, is the newest again and keeps working.
+     */
     async discard(id: string): Promise<void> {
       await db.signInCode.deleteMany({ where: { id } });
     },
@@ -99,15 +99,16 @@ export function createSignInCodes({ db, secret, now }: SignInCodesDeps) {
       const at = now();
       // Each check reserves one attempt before comparing, atomically, so parallel guesses can
       // never get more than MAX_ATTEMPTS tries between them.
+      // Every check counts, even one with an older code that no longer works: the cap is on tries,
+      // whatever was typed.
       const [reserved] = await db.$queryRaw<{ id: string; code_hash: string; attempts: number; locale: string }[]>`
         UPDATE "sign_in_codes" SET "attempts" = "attempts" + 1
         WHERE "id" = (
           SELECT "id" FROM "sign_in_codes"
-          WHERE "email" = ${email} AND "used_at" IS NULL AND "replaced_at" IS NULL
+          WHERE "email" = ${email}
           ORDER BY "created_at" DESC LIMIT 1
         )
-        AND "attempts" < ${MAX_ATTEMPTS} AND "expires_at" > ${at}
-        AND "used_at" IS NULL AND "replaced_at" IS NULL
+        AND "attempts" < ${MAX_ATTEMPTS} AND "expires_at" > ${at} AND "used_at" IS NULL
         RETURNING "id", "code_hash", "attempts", "locale"`;
       if (!reserved) throw unauthorized("auth.code.expired");
 
