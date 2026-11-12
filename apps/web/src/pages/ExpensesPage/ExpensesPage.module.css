@@ -39,3 +39,27 @@
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
 }
+
+.filter {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.filterSelect {
+  max-inline-size: var(--size-content-sm);
+}
+
+/* The filter in use, said in words, with a one-tap way back to everything. */
+.showing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.showingText {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
