@@ -277,6 +277,18 @@ describe("sign-in code protections", () => {
     expect((await requestCode(app, "lucia@example.com")).status).toBe(204);
   });
 
+  it("keeps the code already in the inbox working when a new one can't be sent", async () => {
+    const { app, mailer, clock } = createTestApp();
+    await requestCode(app, "lucia@example.com");
+    const code = codeFrom(mailer, "lucia@example.com");
+
+    clock.advance(MINUTE_MS);
+    mailer.failing = true;
+    expect((await requestCode(app, "lucia@example.com")).status).toBe(503);
+
+    expect((await signInWithCode(app, "lucia@example.com", code)).status).toBe(200);
+  });
+
   describe("rate limits per address", () => {
     it("allows one code every 60 seconds, saying how long to wait", async () => {
       const { app, clock } = createTestApp();
