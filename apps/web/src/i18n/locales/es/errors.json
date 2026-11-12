@@ -2,7 +2,8 @@
   "auth": {
     "google": {
       "invalid_token": "No hemos podido verificar tu inicio de sesión con Google. Inténtalo de nuevo.",
-      "email_not_verified": "El email de tu cuenta de Google aún no está verificado. Verifícalo con Google y vuelve a intentarlo."
+      "email_not_verified": "El email de tu cuenta de Google aún no está verificado. Verifícalo con Google y vuelve a intentarlo.",
+      "already_linked": "Este email ya entra con otra cuenta de Google. Usa esa o pide un código por email."
     },
     "session": {
       "missing": "Tu sesión ha terminado. Vuelve a iniciar sesión para continuar.",

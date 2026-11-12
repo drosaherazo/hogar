@@ -7,6 +7,7 @@ import { z } from "zod";
 export const ERROR_CODES = [
   "auth.google.invalid_token",
   "auth.google.email_not_verified",
+  "auth.google.already_linked",
   "auth.session.missing",
   "auth.session.expired",
   "auth.session.reused",

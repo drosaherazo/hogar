@@ -9,9 +9,10 @@ import {
 } from "@hogar/shared";
 import type { Database } from "../db";
 import type { User } from "../generated/prisma/client";
-import { unauthorized } from "../httpError";
 import type { Mailer } from "../email/mailer";
-import type { GoogleVerifier } from "./googleVerifier";
+import { isUniqueViolation } from "../household/householdService";
+import { conflict, unauthorized } from "../httpError";
+import type { GoogleIdentity, GoogleVerifier } from "./googleVerifier";
 import { generateSecretToken, hashSecretToken, type AccessTokenSigner } from "./tokens";
 
 /**
@@ -47,6 +48,16 @@ export function toAuthUser(user: User): AuthUser {
   };
 }
 
+/** Runs `create` again once if it lost a race on a unique column; the second run finds the winner's row. */
+async function retryOnceOnUniqueViolation<T>(create: () => Promise<T>): Promise<T> {
+  try {
+    return await create();
+  } catch (error) {
+    if (!isUniqueViolation(error)) throw error;
+    return create();
+  }
+}
+
 export function createAuthService({
   db,
   google,
@@ -73,6 +84,39 @@ export function createAuthService({
     await db.refreshToken.updateMany({ where: { familyId, revokedAt: null }, data: { revokedAt: now() } });
   }
 
+  /**
+   * One person per email address (ADR 0008): look the person up by Google `sub`, then by the
+   * verified email. At most one Google account is linked; a second one is refused, never swapped.
+   */
+  async function findOrCreateGoogleUser(identity: GoogleIdentity, acceptLanguage: string | undefined) {
+    const linked = await db.user.findUnique({ where: { googleId: identity.googleId } });
+    if (linked) return db.user.update({ where: { id: linked.id }, data: { avatarUrl: identity.avatarUrl } });
+
+    const email = normalizeEmail(identity.email);
+    const sameEmail = await db.user.findUnique({ where: { email } });
+    if (sameEmail) {
+      // Linking only succeeds while no Google account is linked, so two racing accounts can't both win.
+      const { count } = await db.user.updateMany({
+        where: { id: sameEmail.id, googleId: null },
+        data: { googleId: identity.googleId, avatarUrl: identity.avatarUrl },
+      });
+      if (count === 0) throw conflict("auth.google.already_linked");
+      return db.user.findUniqueOrThrow({ where: { id: sameEmail.id } });
+    }
+
+    // The locale is only guessed on sign-up; afterwards it's the person's own choice.
+    const locale = resolveLocale(identity.locale ?? acceptLanguage);
+    return db.user.create({
+      data: {
+        googleId: identity.googleId,
+        email,
+        name: identity.name ?? pickStarterName(locale),
+        avatarUrl: identity.avatarUrl,
+        locale,
+      },
+    });
+  }
+
   return {
     /**
      * Verifies the Google ID token, creates the person on first sign-in and starts a new session.
@@ -83,19 +127,8 @@ export function createAuthService({
       if (!identity) throw unauthorized("auth.google.invalid_token");
       if (!identity.emailVerified) throw unauthorized("auth.google.email_not_verified");
 
-      // The locale is only guessed on sign-up; afterwards it's the person's own choice.
-      const locale = resolveLocale(identity.locale ?? acceptLanguage);
-      const user = await db.user.upsert({
-        where: { googleId: identity.googleId },
-        create: {
-          googleId: identity.googleId,
-          email: normalizeEmail(identity.email),
-          name: identity.name ?? pickStarterName(locale),
-          avatarUrl: identity.avatarUrl,
-          locale,
-        },
-        update: { avatarUrl: identity.avatarUrl },
-      });
+      // A simultaneous first sign-in can win the race to create the row; the retry then finds it.
+      const user = await retryOnceOnUniqueViolation(() => findOrCreateGoogleUser(identity, acceptLanguage));
       return issueSession(user, randomUUID());
     },
 

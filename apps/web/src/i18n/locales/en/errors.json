@@ -2,7 +2,8 @@
   "auth": {
     "google": {
       "invalid_token": "We couldn't verify your Google sign-in. Please try again.",
-      "email_not_verified": "Your Google account's email isn't verified yet. Verify it with Google and try again."
+      "email_not_verified": "Your Google account's email isn't verified yet. Verify it with Google and try again.",
+      "already_linked": "This email already signs in with another Google account. Use that one, or get a code by email."
     },
     "session": {
       "missing": "Your session has ended. Sign in again to continue.",

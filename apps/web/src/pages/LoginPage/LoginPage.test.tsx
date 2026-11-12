@@ -33,6 +33,20 @@ describe("LoginPage", () => {
     );
   });
 
+  it.each([
+    ["en", "This email already signs in with another Google account. Use that one, or get a code by email."],
+    ["es", "Este email ya entra con otra cuenta de Google. Usa esa o pide un código por email."],
+  ] as const)(
+    "suggests a code when the address already signs in with another Google account (%s)",
+    async (locale, text) => {
+      installFakeGoogle();
+      server.use(handlers.googleLoginFails("auth.google.already_linked"));
+      renderApp({ path: "/login", locale });
+      await userEvent.click(await screen.findByRole("button", { name: "Continue with Google" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent(text);
+    },
+  );
+
   it("tells developers when the Google Client ID is missing", async () => {
     renderApp({ path: "/login", googleClientId: undefined });
     expect(await screen.findByRole("alert")).toHaveTextContent("VITE_GOOGLE_CLIENT_ID");
