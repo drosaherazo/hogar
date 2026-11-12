@@ -35,10 +35,10 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
-Fill in the Google Client ID in both `.env` files and a `JWT_ACCESS_SECRET` in the API one. Follow **[docs/setup-google-oauth.md](docs/setup-google-oauth.md)**; it takes about ten minutes.
+Fill in the Google Client ID in both `.env` files, and a `JWT_ACCESS_SECRET` and an `EMAIL_CODE_SECRET` in the API one. Follow **[docs/setup-google-oauth.md](docs/setup-google-oauth.md)**; it takes about ten minutes.
 
 ```bash
-pnpm db:up       # PostgreSQL 17 in Docker (databases hogar and hogar_test)
+pnpm db:up       # PostgreSQL 17 (databases hogar and hogar_test) and Mailpit (http://localhost:8025) in Docker
 pnpm db:migrate  # apply Prisma migrations
 pnpm dev         # web on http://localhost:5173, API on http://localhost:3000
 ```

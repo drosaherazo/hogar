@@ -10,6 +10,7 @@ import {
 import type { Database } from "../db";
 import type { User } from "../generated/prisma/client";
 import { unauthorized } from "../httpError";
+import type { Mailer } from "../email/mailer";
 import type { GoogleVerifier } from "./googleVerifier";
 import { generateSecretToken, hashSecretToken, type AccessTokenSigner } from "./tokens";
 
@@ -28,6 +29,9 @@ export interface Session extends AuthResponse {
 export interface AuthServiceDeps {
   db: Database;
   google: GoogleVerifier;
+  mailer: Mailer;
+  /** HMAC key for sign-in codes. */
+  codeSecret: string;
   signer: AccessTokenSigner;
   refreshTokenTtlDays: number;
   now?: (() => Date) | undefined;
