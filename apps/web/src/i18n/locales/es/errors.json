@@ -42,13 +42,30 @@
     "split": {
       "invalid": "Elige al menos a una persona para repartirlo.",
       "mismatch": "Los importes todavía no suman el total.",
-      "no_default": "Todavía nadie paga en el reparto del hogar. Elige personas o revisa antes el reparto."
+      "no_default": "Todavía nadie paga en el reparto del hogar. Elige personas o revisa antes el reparto.",
+      "changed": "El reparto ha cambiado mientras editabas. Estas son las partes nuevas."
     },
     "person": {
       "not_member": "Alguien de este gasto ya no forma parte del hogar. Revisa quién pagó y entre quién se reparte."
     },
     "not_found": "Ese gasto ya no está. Puede que alguien lo haya borrado.",
-    "changed": "Alguien cambió este gasto mientras lo editabas. Aquí tienes la versión más reciente."
+    "changed": "Alguien cambió este gasto mientras lo editabas. Aquí tienes la versión más reciente.",
+    "category": {
+      "not_found": "Esa categoría ya no está. Elige otra o déjalo sin categoría."
+    }
+  },
+  "category": {
+    "name": {
+      "required": "Ponle un nombre a la categoría para que todo el mundo la reconozca.",
+      "too_long": "Ese nombre es un poco largo. Que no pase de 30 caracteres.",
+      "taken": "Ya hay una categoría con ese nombre."
+    },
+    "emoji": {
+      "invalid": "Elige un solo emoji, o déjalo vacío."
+    },
+    "limit_reached": "Habéis llegado a 30 categorías. Borra una para añadir otra.",
+    "not_found": "Esa categoría ya no está. Puede que alguien la haya borrado.",
+    "changed": "Alguien cambió esta categoría mientras la editabas. Aquí tienes la versión más reciente."
   },
   "settlement": {
     "same_person": "Elige a dos personas distintas.",
