@@ -7,3 +7,4 @@ export * from "./household";
 export * from "./locale";
 export * from "./permissions";
 export * from "./split";
+export * from "./starterNames";
