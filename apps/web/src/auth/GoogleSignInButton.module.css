@@ -3,6 +3,12 @@
   display: flex;
   justify-content: center;
   min-block-size: var(--size-touch);
+  /*
+   * Google renders the button in a light-scheme iframe. When the iframe's color-scheme
+   * differs from the page's (our dark theme), browsers paint an opaque white backdrop
+   * behind it; matching the scheme keeps the iframe transparent around the pill.
+   */
+  color-scheme: light;
 }
 
 .notice {

@@ -4,10 +4,13 @@ import { useLocalePreference } from "../i18n";
 import { useTheme } from "../theme/theme";
 import styles from "./GoogleSignInButton.module.css";
 import { loadGoogleIdentity } from "./loadGoogleIdentity";
+import { lookFor, type GoogleLook } from "./googleButtonVariants.prototype";
 
 export interface GoogleSignInButtonProps {
   clientId: string | undefined;
   onCredential: (credential: string) => void;
+  /** PROTOTYPE: which look to render. */
+  look?: GoogleLook;
 }
 
 const BUTTON_WIDTH = 300;
@@ -16,7 +19,7 @@ const BUTTON_WIDTH = 300;
  * Google's official sign-in button (Google Identity Services).
  * It follows our theme and language, and hands us a signed ID token for the API to verify.
  */
-export function GoogleSignInButton({ clientId, onCredential }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ clientId, onCredential, look = lookFor("A") }: GoogleSignInButtonProps) {
   const { t } = useTranslation("auth");
   const { theme } = useTheme();
   const { locale } = useLocalePreference();
@@ -46,12 +49,12 @@ export function GoogleSignInButton({ clientId, onCredential }: GoogleSignInButto
         container.current.replaceChildren();
         id.renderButton(container.current, {
           type: "standard",
-          theme: theme === "dark" ? "filled_black" : "outline",
+          theme: look.theme(theme === "dark" ? "dark" : "light"),
           size: "large",
           text: "continue_with",
-          shape: "pill",
-          logo_alignment: "left",
-          width: BUTTON_WIDTH,
+          shape: look.shape,
+          logo_alignment: look.logoAlignment,
+          width: look.fullWidth ? Math.min(400, Math.max(200, container.current.clientWidth)) : BUTTON_WIDTH,
           locale,
         });
       },
@@ -60,7 +63,7 @@ export function GoogleSignInButton({ clientId, onCredential }: GoogleSignInButto
     return () => {
       active = false;
     };
-  }, [clientId, theme, locale]);
+  }, [clientId, theme, locale, look]);
 
   if (!clientId) {
     return (

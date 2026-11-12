@@ -3,7 +3,10 @@ import { useMutation } from "@tanstack/react-query";
 import { ListChecks, ShoppingBasket, Wallet } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router";
 import { errorKey } from "../../api/client";
+import { googleLooks, lookFor } from "../../auth/googleButtonVariants.prototype";
+import { PrototypeSwitcher } from "../../prototype/PrototypeSwitcher";
 import { useAuth } from "../../auth/AuthProvider";
 import { GoogleSignInButton } from "../../auth/GoogleSignInButton";
 import { HogarMark } from "../../layout/HogarMark";
@@ -24,6 +27,10 @@ export function LoginPage({ googleClientId }: LoginPageProps) {
   const { loginWithGoogle } = useAuth();
   const login = useMutation({ mutationFn: loginWithGoogle });
   const onCredential = useCallback((credential: string) => login.mutate(credential), [login]);
+  // PROTOTYPE: ?variant= picks the Google button look.
+  const [params] = useSearchParams();
+  const variant = params.get("variant") ?? "A";
+  const look = lookFor(variant);
 
   const benefits = [
     { icon: <Wallet />, text: t("login.benefits.expenses") },
@@ -61,7 +68,7 @@ export function LoginPage({ googleClientId }: LoginPageProps) {
                 <span aria-hidden="true">{t("login.signingIn")}</span>
               </div>
             ) : (
-              <GoogleSignInButton clientId={googleClientId} onCredential={onCredential} />
+              <GoogleSignInButton clientId={googleClientId} onCredential={onCredential} look={look} />
             )}
             {login.isError && (
               <p className={styles.error} role="alert">
@@ -81,6 +88,12 @@ export function LoginPage({ googleClientId }: LoginPageProps) {
       <footer className={styles.footer}>
         <PreferencesBar />
       </footer>
+      {import.meta.env.DEV && (
+        <PrototypeSwitcher
+          variants={Object.entries(googleLooks).map(([key, { name }]) => ({ key, name }))}
+          current={variant}
+        />
+      )}
     </div>
   );
 }
