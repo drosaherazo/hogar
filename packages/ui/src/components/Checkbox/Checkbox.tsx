@@ -11,7 +11,8 @@ export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement
 
 /**
  * A single on/off choice that takes effect when the form is saved, such as "use its own split".
- * A native checkbox, so keyboard, screen readers and forms work without extra code.
+ * A native checkbox, so keyboard, screen readers and forms work without extra code. The label
+ * wraps the box, so the whole row (box, gap and text) is one target with no dead zones.
  */
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
   { label, hint, className, ...rest },
@@ -22,16 +23,16 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
 
   return (
     <div className={clsx(styles.field, className)}>
-      <input
-        ref={ref}
-        id={id}
-        type="checkbox"
-        className={styles.input}
-        aria-describedby={hint ? hintId : undefined}
-        {...rest}
-      />
       <label htmlFor={id} className={styles.label}>
-        {label}
+        <input
+          ref={ref}
+          id={id}
+          type="checkbox"
+          className={styles.input}
+          aria-describedby={hint ? hintId : undefined}
+          {...rest}
+        />
+        <span className={styles.text}>{label}</span>
       </label>
       {hint && (
         <p id={hintId} className={styles.hint}>

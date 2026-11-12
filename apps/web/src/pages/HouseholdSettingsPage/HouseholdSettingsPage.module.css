@@ -25,7 +25,9 @@
   gap: var(--space-4);
 }
 
+/* Linked headings (#split, #categories) stop below the sticky app header instead of under it. */
 .sectionTitle {
+  scroll-margin-block-start: calc(var(--size-touch) + var(--space-3) * 2 + var(--space-4));
   margin: 0;
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
