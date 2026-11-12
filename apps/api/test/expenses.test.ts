@@ -11,6 +11,8 @@ import {
   homeWithGuest,
   inputOf,
   postExpense,
+  postExpenseAsIs,
+  previewSharesFor,
   putExpense,
   sharesByUser,
   TODAY,
@@ -327,7 +329,7 @@ describe("editing and deleting expenses", () => {
     });
     const res = await putExpense(app, ana, expense.id, {
       ...inputOf(expense),
-      split: { method: "WEIGHTS" },
+      split: { method: "WEIGHTS", previewShares: await previewSharesFor(ana, 4000) },
       version: 1,
     });
     expect(sharesByUser(expenseResponseSchema.parse(res.body).expense)).toEqual({
@@ -492,6 +494,116 @@ describe("GET /api/household/expenses/:id", () => {
     expect(sharesByUser(expenseResponseSchema.parse(res.body).expense)).toEqual({
       [ana.user.id]: 3210,
       [bruno.user.id]: 1070,
+    });
+  });
+});
+
+describe("previewed shares of a fresh default split (research R3)", () => {
+  const dinner = { description: "Dinner", amountCents: 90000, date: TODAY, split: { method: "WEIGHTS" } } as const;
+
+  it("saves a new expense when the previewed shares match", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const previewShares = await previewSharesFor(ana, 90000);
+    expect(previewShares).toEqual([
+      { userId: ana.user.id, amountCents: 67500 },
+      { userId: bruno.user.id, amountCents: 22500 },
+    ]);
+    const res = await postExpenseAsIs(app, ana, {
+      ...dinner,
+      paidById: ana.user.id,
+      split: { method: "WEIGHTS", previewShares },
+    });
+    expect(res.status).toBe(201);
+    expect(sharesByUser(expenseResponseSchema.parse(res.body).expense)).toEqual({
+      [ana.user.id]: 67500,
+      [bruno.user.id]: 22500,
+    });
+  });
+
+  it("refuses a new default-split expense without the previewed shares", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const res = await postExpenseAsIs(app, ana, { ...dinner, paidById: ana.user.id });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: { code: "request.invalid" } });
+  });
+
+  it("refuses shares previewed before the weights changed, and saves nothing", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const stale = await previewSharesFor(ana, 90000);
+    const weights = await request(app)
+      .put("/api/household/split")
+      .set("Authorization", ana.auth)
+      .send({
+        weights: [
+          { membershipId: ana.membershipId, weight: 1 },
+          { membershipId: bruno.membershipId, weight: 1 },
+        ],
+      });
+    expect(weights.status).toBe(200);
+
+    const res = await postExpenseAsIs(app, ana, {
+      ...dinner,
+      paidById: ana.user.id,
+      split: { method: "WEIGHTS", previewShares: stale },
+    });
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "expense.split.changed" } });
+    expect(await db.expense.count()).toBe(0);
+  });
+
+  it("checks the previewed shares when an edit switches to the default split", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const expense = await addExpense(app, ana, {
+      amountCents: 90000,
+      split: { method: "EQUAL", userIds: [ana.user.id, bruno.user.id] },
+    });
+    const switched = { ...inputOf(expense), version: 1 };
+
+    const missing = await putExpense(app, ana, expense.id, { ...switched, split: { method: "WEIGHTS" } });
+    expect(missing.status).toBe(400);
+    expect(missing.body).toEqual({ error: { code: "request.invalid" } });
+
+    const wrong = await putExpense(app, ana, expense.id, {
+      ...switched,
+      split: {
+        method: "WEIGHTS",
+        previewShares: [
+          { userId: ana.user.id, amountCents: 45000 },
+          { userId: bruno.user.id, amountCents: 45000 },
+        ],
+      },
+    });
+    expect(wrong.status).toBe(409);
+    expect(wrong.body).toEqual({ error: { code: "expense.split.changed" } });
+    const unchanged = await db.expense.findUniqueOrThrow({ where: { id: expense.id }, include: { shares: true } });
+    expect(unchanged.version).toBe(1);
+    expect(unchanged.splitMethod).toBe("EQUAL");
+
+    const ok = await putExpense(app, ana, expense.id, {
+      ...switched,
+      split: { method: "WEIGHTS", previewShares: await previewSharesFor(ana, 90000) },
+    });
+    expect(ok.status).toBe(200);
+    expect(sharesByUser(expenseResponseSchema.parse(ok.body).expense)).toEqual({
+      [ana.user.id]: 67500,
+      [bruno.user.id]: 22500,
+    });
+  });
+
+  it("keeps the saved shares when a default-split edit comes without previewed shares", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const expense = await addExpense(app, ana, { amountCents: 90000 });
+    await db.membership.update({ where: { id: bruno.membershipId }, data: { weight: 3 } });
+    const res = await putExpense(app, ana, expense.id, { ...inputOf(expense), description: "Rent", version: 1 });
+    expect(res.status).toBe(200);
+    expect(sharesByUser(expenseResponseSchema.parse(res.body).expense)).toEqual({
+      [ana.user.id]: 67500,
+      [bruno.user.id]: 22500,
     });
   });
 });

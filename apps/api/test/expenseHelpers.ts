@@ -1,5 +1,7 @@
 import {
   balancesViewSchema,
+  defaultWeights,
+  splitAmount,
   expenseResponseSchema,
   settlementResponseSchema,
   type BalancesView,
@@ -10,6 +12,7 @@ import {
   type SettlementView,
 } from "@hogar/shared";
 import request from "supertest";
+import { currentMembers } from "../src/expenses/people";
 import { addMember, createHousehold } from "./householdHelpers";
 import { bruno, carla, db, signIn, type createTestApp, type SignedIn } from "./testApp";
 
@@ -55,7 +58,48 @@ export async function homeWithGuest(app: App, options: { weights?: [number, numb
   return { ...home, carla: home.carla };
 }
 
-export function postExpense(app: App, who: SignedIn, input: Partial<ExpenseInput>) {
+export type PreviewShares = { userId: string; amountCents: number }[];
+
+/**
+ * The shares the form would show for a default split right now: the category's own weights or
+ * the household's, computed with the same shared functions the web uses. Empty when `who` has
+ * no household, the amount is invalid or nobody pays (the API then answers on its own).
+ */
+export async function previewSharesFor(
+  who: SignedIn,
+  amountCents: number,
+  categoryId: string | null = null,
+): Promise<PreviewShares> {
+  // Invalid amounts are left for the API to refuse.
+  if (!Number.isSafeInteger(amountCents) || amountCents <= 0) return [];
+  const membership = await db.membership.findUnique({ where: { userId: who.user.id } });
+  if (!membership) return [];
+  const members = await currentMembers(db, membership.householdId);
+  const category = categoryId
+    ? await db.expenseCategory.findUnique({ where: { id: categoryId }, include: { weights: true } })
+    : null;
+  const weights = defaultWeights(members, category);
+  const sharing = members
+    .map((member, index) => ({ userId: member.userId, weight: weights[index] ?? 0 }))
+    .filter((member) => member.weight > 0);
+  if (sharing.length === 0) return [];
+  const amounts = splitAmount(
+    amountCents,
+    sharing.map((member) => member.weight),
+  );
+  return sharing.map((member, index) => ({ userId: member.userId, amountCents: amounts[index] ?? 0 }));
+}
+
+/** Sends an expense exactly as given, without filling in the previewed shares. */
+export function postExpenseAsIs(app: App, who: SignedIn, body: ExpenseInput) {
+  return request(app).post("/api/household/expenses").set("Authorization", who.auth).send(body);
+}
+
+/**
+ * Records an expense (household split, paid by `who`, today, unless overridden). A default
+ * split without `previewShares` gets the ones the form would have shown, as the web does.
+ */
+export async function postExpense(app: App, who: SignedIn, input: Partial<ExpenseInput>) {
   const body: ExpenseInput = {
     description: "Groceries",
     amountCents: 4280,
@@ -64,7 +108,11 @@ export function postExpense(app: App, who: SignedIn, input: Partial<ExpenseInput
     split: { method: "WEIGHTS" },
     ...input,
   };
-  return request(app).post("/api/household/expenses").set("Authorization", who.auth).send(body);
+  if (body.split.method === "WEIGHTS" && !body.split.previewShares) {
+    const preview = await previewSharesFor(who, body.amountCents, body.categoryId ?? null);
+    if (preview.length > 0) body.split = { method: "WEIGHTS", previewShares: preview };
+  }
+  return postExpenseAsIs(app, who, body);
 }
 
 /** Records an expense through the API (household split, paid by `who`, today) and returns it. */
@@ -102,6 +150,7 @@ export function inputOf(expense: ExpenseView): ExpenseInput {
     amountCents: expense.amountCents,
     paidById: expense.paidBy.userId,
     date: expense.date,
+    categoryId: expense.category?.id ?? null,
     split:
       expense.split.method === "EQUAL"
         ? { method: "EQUAL", userIds: people }

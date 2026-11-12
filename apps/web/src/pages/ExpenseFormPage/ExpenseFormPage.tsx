@@ -13,6 +13,7 @@ import {
   type SplitMethod,
 } from "@hogar/shared";
 import { Alert, Amount, Avatar, Button, ChoiceGroup, Select, Spinner, TextField, useLocale } from "@hogar/ui";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CircleAlert } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -23,7 +24,7 @@ import { amountInputValue, parseAmount } from "../../expenses/money";
 import { avatarPropsFor, usePersonLabel } from "../../expenses/people";
 import { useCreateExpense, useExpense, useUpdateExpense } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
-import { useHousehold } from "../../household/useHousehold";
+import { householdKeys, useHousehold } from "../../household/useHousehold";
 import { localToday, useList, useMoney, usePercent } from "../../i18n/format";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell } from "../../layout/AppShell";
@@ -136,6 +137,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   const save = existing ? update : create;
   const previewId = useId();
   const personLabel = usePersonLabel();
+  const queryClient = useQueryClient();
 
   const { members } = household;
   const sharing = members.filter((member) => member.weight > 0);
@@ -180,16 +182,10 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   const cents = parseAmount(amountText);
   const amount = isValidAmount(cents) ? cents : null;
 
-  // The household's split: a live preview with the same function the API uses. A saved expense
-  // keeps its proportions (same amount, same shares; new amount, rescaled); otherwise today's weights.
-  function weightPreviewFor(total: number | null): { person: PersonRef; amountCents: number }[] | null {
-    if (total === null) return null;
-    if (savedShares) {
-      const saved = savedShares.map((share) => share.amountCents);
-      const amounts = total === existing?.amountCents ? saved : splitAmount(total, saved);
-      return savedShares.map((share, index) => ({ person: share.person, amountCents: amounts[index] ?? 0 }));
-    }
-    if (nobodyPays) return null;
+  // The default split with today's weights, computed with the same function the API uses. These
+  // are the shares the API checks before saving fresh default shares (research R3).
+  function freshSharesFor(total: number | null): { person: PersonRef; amountCents: number }[] | null {
+    if (total === null || nobodyPays) return null;
     const amounts = splitAmount(
       total,
       sharing.map((member) => member.weight),
@@ -198,6 +194,18 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
       person: { userId: member.userId, name: member.name, avatarUrl: member.avatarUrl, former: false },
       amountCents: amounts[index] ?? 0,
     }));
+  }
+
+  // A live preview of the default split. A saved expense keeps its proportions (same amount,
+  // same shares; new amount, rescaled); otherwise today's weights.
+  function weightPreviewFor(total: number | null): { person: PersonRef; amountCents: number }[] | null {
+    if (total === null) return null;
+    if (savedShares) {
+      const saved = savedShares.map((share) => share.amountCents);
+      const amounts = total === existing?.amountCents ? saved : splitAmount(total, saved);
+      return savedShares.map((share, index) => ({ person: share.person, amountCents: amounts[index] ?? 0 }));
+    }
+    return freshSharesFor(total);
   }
   const weightPreview = weightPreviewFor(amount);
 
@@ -232,7 +240,16 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
         ),
       };
     }
-    return { method: "WEIGHTS" };
+    // Fresh default shares (a new expense, or one switched to the default split) carry the
+    // previewed shares; an expense that keeps its saved shares sends none.
+    if (savedShares) return { method: "WEIGHTS" };
+    const preview = freshSharesFor(amount);
+    return preview
+      ? {
+          method: "WEIGHTS",
+          previewShares: preview.map((share) => ({ userId: share.person.userId, amountCents: share.amountCents })),
+        }
+      : { method: "WEIGHTS" };
   }
 
   const error = (field: Field) => {
@@ -256,6 +273,13 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
     }
     setErrors({});
     const done = (saved: ExpenseView) => void navigate(`/expenses/${saved.id}`, { state: { saved: true } });
+    // The weights changed since the preview: fetch them again, so the form shows the new shares
+    // next to the message and the person can save again.
+    const refreshSplit = (failure: Error) => {
+      if (failure instanceof ApiRequestError && failure.code === "expense.split.changed") {
+        void queryClient.invalidateQueries({ queryKey: householdKeys.current });
+      }
+    };
     if (existing) {
       update.mutate(
         { id: existing.id, input: { ...result.data, version: existing.version } },
@@ -263,11 +287,12 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
           onSuccess: done,
           onError: (failure) => {
             if (failure instanceof ApiRequestError && failure.code === "expense.changed") onConflict?.();
+            refreshSplit(failure);
           },
         },
       );
     } else {
-      create.mutate(result.data, { onSuccess: done });
+      create.mutate(result.data, { onSuccess: done, onError: refreshSplit });
     }
   }
 

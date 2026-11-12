@@ -11,6 +11,7 @@ import {
 } from "@hogar/shared";
 import type { Database } from "../db";
 import type { Prisma } from "../generated/prisma/client";
+import { toCategoryRef } from "../categories/categoryView";
 import { badRequest } from "../httpError";
 import { fromCalendarDate, toCalendarDate } from "./dates";
 import { currentMembers, orderPeople, personRefs, refOf } from "./people";
@@ -95,7 +96,7 @@ export function createLedgerService({ db }: LedgerServiceDeps) {
           where: { householdId, ...after(cursor) },
           orderBy: NEWEST_FIRST,
           take,
-          include: { shares: true },
+          include: { shares: true, category: { select: { id: true, name: true, emoji: true } } },
         }),
         db.settlement.findMany({ where: { householdId, ...after(cursor) }, orderBy: NEWEST_FIRST, take }),
       ]);
@@ -131,6 +132,7 @@ export function createLedgerService({ db }: LedgerServiceDeps) {
               date: toCalendarDate(row.date),
               paidBy: ref(row.paidById),
               viewerPart: row.deletedAt ? { kind: "none", amountCents: 0 } : viewerPart(row, viewerId),
+              category: toCategoryRef(row.category),
               deleted: deletion(row),
             }
           : {

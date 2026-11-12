@@ -4,6 +4,7 @@ import type {
   AuthResponse,
   AuthUser,
   BalancesView,
+  CategoryView,
   ErrorCode,
   ExpenseView,
   HouseholdView,
@@ -36,6 +37,7 @@ export const server = setupServer(
   http.post("*/api/auth/refresh", () => apiError(401, "auth.session.missing")),
   http.post("*/api/auth/logout", () => new HttpResponse(null, { status: 204 })),
   http.get("*/api/household/balances", () => HttpResponse.json(balancesView())),
+  http.get("*/api/household/categories", () => HttpResponse.json({ categories: starterCategories() })),
 );
 
 export function member(overrides: Partial<MemberView> & Pick<MemberView, "id" | "name">): MemberView {
@@ -101,8 +103,34 @@ export function expenseView(overrides: Partial<ExpenseView> = {}): ExpenseView {
     editedBy: null,
     editedAt: null,
     version: 1,
+    category: null,
     ...overrides,
   };
+}
+
+/** A category that follows the household's split; override to give it its own. */
+export function categoryView(overrides: Partial<CategoryView> & Pick<CategoryView, "id" | "name">): CategoryView {
+  return {
+    emoji: null,
+    position: 1,
+    ownSplit: false,
+    weights: null,
+    needsReview: false,
+    expenseCount: 0,
+    version: 1,
+    ...overrides,
+  };
+}
+
+/** The starter set in English, following the household's split. */
+export function starterCategories(): CategoryView[] {
+  return [
+    categoryView({ id: "cat_rent", name: "Rent", emoji: "🏠", position: 1 }),
+    categoryView({ id: "cat_groceries", name: "Groceries", emoji: "🛒", position: 2 }),
+    categoryView({ id: "cat_utilities", name: "Utilities", emoji: "💡", position: 3 }),
+    categoryView({ id: "cat_leisure", name: "Leisure", emoji: "🎉", position: 4 }),
+    categoryView({ id: "cat_other", name: "Other", emoji: "📦", position: 5 }),
+  ];
 }
 
 /** Everyone square unless overridden. */
@@ -165,6 +193,7 @@ export function expenseItem(overrides: Partial<ExpenseItem> = {}): ExpenseItem {
     date: "2026-11-10",
     paidBy: anaRef,
     viewerPart: { kind: "lent", amountCents: 1070 },
+    category: null,
     deleted: null,
     ...overrides,
   };
@@ -181,6 +210,8 @@ export const handlers = {
     }),
   expense: (expense: ExpenseView = expenseView()) =>
     http.get("*/api/household/expenses/:id", () => HttpResponse.json({ expense })),
+  categories: (categories: CategoryView[] = starterCategories()) =>
+    http.get("*/api/household/categories", () => HttpResponse.json({ categories })),
   balances: (view: BalancesView = anaIsOwed()) => http.get("*/api/household/balances", () => HttpResponse.json(view)),
   settlement: (settlement: SettlementView = settlementView()) =>
     http.get("*/api/household/settlements/:id", () => HttpResponse.json({ settlement })),

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { localToday } from "../../i18n/format";
 import { expectNoA11yViolations } from "../../test/axe";
 import { renderApp } from "../../test/renderApp";
-import { ana, apiError, expenseView, handlers, homeView, member, server } from "../../test/server";
+import { ana, anaRef, apiError, brunoRef, expenseView, handlers, homeView, member, server } from "../../test/server";
 
 const PATH = "/expenses/new";
 
@@ -59,8 +59,67 @@ describe("ExpenseFormPage (adding)", () => {
       amountCents: 4280,
       paidById: ana.id,
       date: localToday(),
-      split: { method: "WEIGHTS" },
+      split: {
+        method: "WEIGHTS",
+        previewShares: [
+          { userId: ana.id, amountCents: 3210 },
+          { userId: "user_m_bruno", amountCents: 1070 },
+        ],
+      },
+      categoryId: null,
     });
+  });
+
+  it("shows the new shares when the split changed before saving, and saves them on the next try", async () => {
+    const bodies: unknown[] = [];
+    let even = false;
+    server.use(
+      handlers.signedIn(),
+      http.get("*/api/household", () =>
+        HttpResponse.json({
+          household: even
+            ? homeView({
+                members: [
+                  member({ id: "m_ana", userId: ana.id, name: ana.name, role: "ADMIN", weight: 1, shareBps: 5000 }),
+                  member({ id: "m_bruno", name: "Bruno Díaz", weight: 1, shareBps: 5000 }),
+                ],
+              })
+            : homeView(),
+        }),
+      ),
+      http.post("*/api/household/expenses", async ({ request }) => {
+        bodies.push(await request.json());
+        if (bodies.length === 1) {
+          even = true;
+          return apiError(409, "expense.split.changed");
+        }
+        return HttpResponse.json({ expense: expenseView({ id: "new_one" }) }, { status: 201 });
+      }),
+      handlers.expense(expenseView({ id: "new_one" })),
+    );
+    renderApp({ path: PATH });
+    await userEvent.type(await screen.findByRole("textbox", { name: "What was it?" }), "Groceries");
+    await userEvent.type(screen.getByRole("textbox", { name: "Amount (€)" }), "42.80");
+    await userEvent.click(screen.getByRole("button", { name: "Save expense" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("The split changed while you were editing.");
+    const preview = screen.getByRole("list", { name: "Each person's share" });
+    expect(await within(preview).findAllByText("€21.40")).toHaveLength(2);
+    expect(screen.getByRole("textbox", { name: "What was it?" })).toHaveValue("Groceries");
+
+    await userEvent.click(screen.getByRole("button", { name: "Save expense" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Expense saved.");
+    expect(bodies[1]).toEqual(
+      expect.objectContaining({
+        split: {
+          method: "WEIGHTS",
+          previewShares: [
+            { userId: ana.id, amountCents: 2140 },
+            { userId: "user_m_bruno", amountCents: 2140 },
+          ],
+        },
+      }),
+    );
   });
 
   it("explains what's missing next to each field, without sending anything", async () => {
@@ -304,6 +363,45 @@ describe("ExpenseFormPage (editing)", () => {
     expect(router.state.location.pathname).toBe("/expenses/expense_1");
     expect(body).toEqual(
       expect.objectContaining({ description: "Big shop", amountCents: 4280, split: { method: "WEIGHTS" }, version: 1 }),
+    );
+  });
+
+  it("sends the previewed shares when switching an expense to the default split", async () => {
+    let body: unknown;
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      handlers.expense(
+        expenseView({
+          split: {
+            method: "EQUAL",
+            shares: [
+              { person: anaRef, amountCents: 2140 },
+              { person: brunoRef, amountCents: 2140 },
+            ],
+          },
+        }),
+      ),
+      http.put("*/api/household/expenses/:id", async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ expense: expenseView({ version: 2 }) });
+      }),
+    );
+    renderApp({ path: EDIT });
+    await userEvent.click(await screen.findByRole("radio", { name: "The household's split" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save expense" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Expense saved.");
+    expect(body).toEqual(
+      expect.objectContaining({
+        split: {
+          method: "WEIGHTS",
+          previewShares: [
+            { userId: ana.id, amountCents: 3210 },
+            { userId: "user_m_bruno", amountCents: 1070 },
+          ],
+        },
+      }),
     );
   });
 

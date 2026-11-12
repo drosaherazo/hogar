@@ -63,6 +63,7 @@ function expense(overrides: Partial<ExpenseView> = {}): ExpenseView {
     editedBy: null,
     editedAt: null,
     version: 1,
+    category: null,
     ...overrides,
   };
 }
@@ -76,6 +77,7 @@ function expenseItem(view: ExpenseView, viewerPart: { kind: "owes" | "lent" | "n
     date: view.date,
     paidBy: view.paidBy,
     viewerPart,
+    category: view.category,
     deleted: null,
   };
   return item;
@@ -125,7 +127,18 @@ describe("Expenses", () => {
       req.reply(saved ? page(expenseItem(expense(), { kind: "lent", amountCents: 1070 })) : page()),
     );
     cy.intercept("POST", "/api/household/expenses", (req) => {
-      expect(req.body).to.deep.include({ description: "Groceries", amountCents: 4280, split: { method: "WEIGHTS" } });
+      // The default split carries the shares the form showed, so the API can check them.
+      expect(req.body).to.deep.include({
+        description: "Groceries",
+        amountCents: 4280,
+        split: {
+          method: "WEIGHTS",
+          previewShares: [
+            { userId: ana.id, amountCents: 3210 },
+            { userId: "user_bruno", amountCents: 1070 },
+          ],
+        },
+      });
       saved = true;
       req.reply({ statusCode: 201, body: { expense: expense() } });
     }).as("create");
