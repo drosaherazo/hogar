@@ -43,6 +43,21 @@ pnpm db:migrate  # apply Prisma migrations and regenerate the client
 pnpm dev         # web on http://localhost:5173, API on http://localhost:3000
 ```
 
+### Signing in with a code locally
+
+Nothing leaves your machine: the API sends every email to Mailpit, so any address works.
+
+1. `pnpm db:up && pnpm dev`
+2. Open <http://localhost:5173/login>, type an address (say `lucia@example.com`) and press **Email me a code**.
+3. Open Mailpit at <http://localhost:8025>. The code is in the subject: "482913 is your Hogar code".
+4. Type it on the login page (spaces are fine). A new address gets a new person with a starter name, such as "Brave Otter".
+
+A code works for 10 minutes and 5 tries. Each address can ask for one code a minute, 5 an hour and 10 a day; to start over while testing, empty the table:
+
+```bash
+docker compose exec db psql -U hogar -d hogar -c "DELETE FROM sign_in_codes;"
+```
+
 ### After pulling
 
 ```bash
