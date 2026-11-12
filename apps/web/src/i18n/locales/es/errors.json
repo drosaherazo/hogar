@@ -12,6 +12,17 @@
     },
     "token": {
       "invalid": "Tu sesión ha terminado. Vuelve a iniciar sesión para continuar."
+    },
+    "email": {
+      "invalid": "Eso no parece un email. Revísalo y vuelve a intentarlo.",
+      "send_failed": "Ahora mismo no hemos podido enviar el email. Inténtalo de nuevo en un momento."
+    },
+    "code": {
+      "format": "El código tiene 6 dígitos.",
+      "wrong": "Ese código no es correcto. Revisa el email y vuelve a intentarlo.",
+      "expired": "Este código ya no funciona. Pide uno nuevo y listo.",
+      "too_soon": "Espera un momento antes de pedir otro código.",
+      "daily_limit": "Has pedido muchos códigos hoy. Vuelve a intentarlo mañana o entra con Google."
     }
   },
   "household": {

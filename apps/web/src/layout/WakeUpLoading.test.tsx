@@ -14,6 +14,7 @@ vi.mock("../auth/AuthProvider", () => ({
     state,
     retry,
     loginWithGoogle: vi.fn(),
+    signInWithEmailCode: vi.fn(),
     logout: vi.fn(),
   }),
 }));

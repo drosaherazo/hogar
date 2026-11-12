@@ -61,6 +61,21 @@ function pick<T>(list: readonly T[], random: () => number): T {
   return item;
 }
 
+/**
+ * True when `name` is a starter name in either language. A starter name is one name, so the
+ * interface greets "Brave Otter" in full instead of taking its first word as a first name.
+ */
+export function isStarterName(name: string): boolean {
+  const [first, second, ...rest] = name.trim().split(/\s+/);
+  if (!first || !second || rest.length > 0) return false;
+  const has = (list: readonly Record<Locale, string>[], locale: Locale, word: string) =>
+    list.some((entry) => entry[locale] === word);
+  return (
+    (has(STARTER_ADJECTIVES, "en", first) && has(STARTER_ANIMALS, "en", second)) ||
+    (has(STARTER_ANIMALS, "es", first) && has(STARTER_ADJECTIVES, "es", second))
+  );
+}
+
 /** A random starter name in `locale`. `random` returns a number in [0, 1), like `Math.random`. */
 export function pickStarterName(locale: Locale, random: () => number = Math.random): string {
   const animal = pick(STARTER_ANIMALS, random)[locale];

@@ -222,4 +222,25 @@ export const handlers = {
     http.get("*/api/household", () => HttpResponse.json({ household })),
   googleLogin: (user: AuthUser = ana) => http.post("*/api/auth/google", () => HttpResponse.json(session(user))),
   googleLoginFails: (code: ErrorCode) => http.post("*/api/auth/google", () => apiError(401, code)),
+  /** Accepts every code request; `onRequest` sees each body. */
+  emailCode: (onRequest: (body: unknown) => void = () => undefined) =>
+    http.post("*/api/auth/email/code", async ({ request }) => {
+      onRequest(await request.json());
+      return new HttpResponse(null, { status: 204 });
+    }),
+  emailCodeFails: (status: number, code: ErrorCode, retryAfterSeconds?: number) =>
+    http.post("*/api/auth/email/code", () =>
+      HttpResponse.json(
+        { error: { code } },
+        { status, headers: retryAfterSeconds === undefined ? {} : { "Retry-After": String(retryAfterSeconds) } },
+      ),
+    ),
+  /** Signs in with `code` only; any other code is wrong. */
+  emailSignIn: (code = "482913", user: AuthUser = ana) =>
+    http.post("*/api/auth/email/sign-in", async ({ request }) => {
+      const body = (await request.json()) as { code?: string };
+      return body.code === code ? HttpResponse.json(session(user)) : apiError(401, "auth.code.wrong");
+    }),
+  emailSignInFails: (status: number, code: ErrorCode) =>
+    http.post("*/api/auth/email/sign-in", () => apiError(status, code)),
 };

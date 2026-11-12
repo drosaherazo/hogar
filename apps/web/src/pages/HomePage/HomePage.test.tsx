@@ -12,6 +12,9 @@ describe("firstName", () => {
     ["Ana García", "Ana"],
     ["  María José López ", "María"],
     ["Ana", "Ana"],
+    // A starter name is one name: "Hi, Brave Otter", never "Hi, Brave".
+    ["Brave Otter", "Brave Otter"],
+    ["Nutria Valiente", "Nutria Valiente"],
   ])("%s → %s", (name, expected) => {
     expect(firstName(name)).toBe(expected);
   });

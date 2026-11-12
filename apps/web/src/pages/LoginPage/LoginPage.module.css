@@ -98,3 +98,56 @@
 .footer {
   padding-block-start: var(--space-6);
 }
+
+/* "or" between Google and email: a line on each side, the word in the middle. */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-block-start: var(--border-width) solid var(--color-border);
+}
+
+.emailForm {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.codeStep {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.codeTitle {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  text-align: center;
+}
+
+.sentTo {
+  margin: 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* The code reads like the email shows it: big digits that line up. */
+.codeField input {
+  font-size: var(--font-size-xl);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.codeActions {
+  display: grid;
+  gap: var(--space-2);
+}

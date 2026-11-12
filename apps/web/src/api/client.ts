@@ -21,6 +21,8 @@ import {
   type CreateCategoryInput,
   type CreatedInvitation,
   type CurrentHousehold,
+  type EmailCodeRequest,
+  type EmailSignInRequest,
   type ErrorCode,
   type ExpenseInput,
   type ExpenseView,
@@ -28,6 +30,7 @@ import {
   type InvitableRole,
   type InvitationPreview,
   type InvitationView,
+  type Locale,
   type Role,
   type SettlementInput,
   type SettlementView,
@@ -44,6 +47,8 @@ export class ApiRequestError extends Error {
   constructor(
     readonly code: ErrorCode | "network",
     readonly status: number,
+    /** From the `Retry-After` header: how long the server asks to wait before trying again. */
+    readonly retryAfterSeconds?: number,
   ) {
     super(code);
     this.name = "ApiRequestError";
@@ -91,6 +96,26 @@ export class ApiClient {
     const session = await this.request("/auth/google", {
       method: "POST",
       body: { credential },
+      schema: authResponseSchema,
+      authenticated: false,
+    });
+    this.accessToken = session.accessToken;
+    return session;
+  }
+
+  /** Emails a sign-in code. `locale` is the login page's language, used if the address is new. */
+  requestEmailCode(email: string, locale: Locale): Promise<void> {
+    return this.request("/auth/email/code", {
+      method: "POST",
+      body: { email, locale } satisfies EmailCodeRequest,
+      authenticated: false,
+    });
+  }
+
+  async signInWithEmailCode(email: string, code: string): Promise<AuthResponse> {
+    const session = await this.request("/auth/email/sign-in", {
+      method: "POST",
+      body: { email, code } satisfies EmailSignInRequest,
       schema: authResponseSchema,
       authenticated: false,
     });
@@ -332,9 +357,16 @@ export class ApiClient {
 }
 
 async function toError(response: Response): Promise<ApiRequestError> {
+  const retryAfter = Number(response.headers.get("Retry-After") ?? Number.NaN);
   try {
     const parsed = apiErrorSchema.safeParse(await response.json());
-    if (parsed.success) return new ApiRequestError(parsed.data.error.code, response.status);
+    if (parsed.success) {
+      return new ApiRequestError(
+        parsed.data.error.code,
+        response.status,
+        Number.isInteger(retryAfter) && retryAfter > 0 ? retryAfter : undefined,
+      );
+    }
   } catch {
     // Not JSON (a proxy error page, for example).
   }

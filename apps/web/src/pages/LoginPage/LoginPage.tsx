@@ -8,13 +8,17 @@ import { useAuth } from "../../auth/AuthProvider";
 import { GoogleSignInButton } from "../../auth/GoogleSignInButton";
 import { HogarMark } from "../../layout/HogarMark";
 import { PreferencesBar } from "../../layout/PreferencesBar";
+import { EmailSignIn } from "./EmailSignIn";
 import styles from "./LoginPage.module.css";
 
 export interface LoginPageProps {
   googleClientId: string | undefined;
 }
 
-/** Sign in with Google. Friendly and brief: what Hogar is, one button, and what we do with your data. */
+/**
+ * Sign in with Google or with a code by email. Friendly and brief: what Hogar is, the two ways in,
+ * and what we do with your data.
+ */
 export function LoginPage({ googleClientId }: LoginPageProps) {
   const { t } = useTranslation(["auth", "errors"]);
   const { loginWithGoogle } = useAuth();
@@ -66,6 +70,12 @@ export function LoginPage({ googleClientId }: LoginPageProps) {
             )}
             <p className={styles.privacy}>{t("login.privacy")}</p>
           </div>
+
+          <p className={styles.divider}>
+            <span>{t("login.or")}</span>
+          </p>
+
+          <EmailSignIn />
         </Card>
       </main>
       <footer className={styles.footer}>

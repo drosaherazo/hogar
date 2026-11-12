@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LOCALES } from "./locale";
-import { pickStarterName, STARTER_ADJECTIVES, STARTER_ANIMALS } from "./starterNames";
+import { isStarterName, pickStarterName, STARTER_ADJECTIVES, STARTER_ANIMALS } from "./starterNames";
 
 describe("starter-name lists", () => {
   it.each([
@@ -19,6 +19,20 @@ describe("starter-name lists", () => {
   it("uses only gender-invariant Spanish adjectives, so every animal agrees with every adjective", () => {
     // Gendered Spanish adjectives end in -o / -a (valiento ✗, valiente ✓); invariant ones don't.
     for (const adjective of STARTER_ADJECTIVES) expect(adjective.es).not.toMatch(/[oa]$/i);
+  });
+});
+
+describe("isStarterName", () => {
+  it("recognizes starter names in either language", () => {
+    expect(isStarterName("Brave Otter")).toBe(true);
+    expect(isStarterName("Nutria Valiente")).toBe(true);
+    expect(isStarterName(pickStarterName("es"))).toBe(true);
+  });
+
+  it("doesn't mistake real names or mixed orders for starter names", () => {
+    expect(isStarterName("Ana García")).toBe(false);
+    expect(isStarterName("Otter Brave")).toBe(false);
+    expect(isStarterName("Brave Otter Smith")).toBe(false);
   });
 });
 
