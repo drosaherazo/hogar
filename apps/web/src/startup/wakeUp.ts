@@ -2,7 +2,8 @@ import { ApiRequestError } from "../api/client";
 
 /**
  * Timings of the wake-up screen shown while the API wakes from sleep (a cold start takes
- * 30–50 seconds on the free plan). See specs/005-wake-up-loading/research.md (R4).
+ * 30–50 seconds on the free plan). Elapsed time always comes from `Date.now()`, never from counting
+ * ticks, so a tab that was in the background shows the right stage and tip when it comes back.
  */
 
 /** Answers faster than this never show the scene, so a warm start doesn't flash. */

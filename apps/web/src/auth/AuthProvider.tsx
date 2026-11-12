@@ -42,7 +42,7 @@ const isOnline = () => typeof navigator === "undefined" || navigator.onLine !== 
 
 /**
  * Keeps track of who is signed in. On start it silently restores the session from the refresh
- * cookie, waiting first for the API to wake up if it was asleep (see specs/005-wake-up-loading).
+ * cookie, waiting first for the API to wake up if it was asleep (ADR 0006).
  */
 export function AuthProvider({ client, children }: { client: ApiClient; children: ReactNode }) {
   const [state, setState] = useState<AuthState>(() => waiting(isOnline() ? "waking" : "offline", 0));

@@ -1,47 +1,119 @@
 # Hogar
 
-Web app to manage a shared home (couple, family or flatmates): expenses with splits and balances, chores and a shopping list, with real-time updates. Portfolio project for landing a fullstack job.
+Web app to manage a shared home (couple, family or flatmates): expenses with splits and balances, chores and a shopping list, with real-time updates. It is a portfolio project for landing a fullstack job, so code quality, tests, commit history and documentation matter as much as features.
 
-## Constitution
+This file holds the project rules. Rules marked MUST are non-negotiable. Change them only in their own PR with a version bump (MAJOR: a rule removed or redefined; MINOR: a new rule or section; PATCH: a clarification), plus an ADR when the change is a significant decision.
 
-The non-negotiable rules (product principles, domain rules, security, testing, i18n, design, stack constraints, scope and Git workflow) live in the **project constitution**, imported here so it is always in context:
+**Before exploring code,** read [GLOSSARY.md](GLOSSARY.md) and the ADRs in [docs/adr/](docs/adr/) that touch the area. Use the glossary's terms in issues, code and tests. If something you propose contradicts an ADR, say so explicitly instead of silently overriding it.
 
-@.specify/memory/constitution.md
+## How features are built
 
-This file only adds day-to-day guidance and must never contradict the constitution. To change a rule, amend the constitution with `/speckit-constitution` (semver bump, own PR).
+Features follow Matt Pocock's grill-driven flow ([mattpocock-skills](https://github.com/mattpocock/skills) plugin, installed per developer and not vendored in the repo):
 
-## Spec-Driven Development
+1. **Branch** from `main`: `feat/<name>`, `fix/<name>` or `chore/<name>`.
+2. **`/grill-with-docs`**: interview until there is a shared understanding. Resolved terms go to `GLOSSARY.md` and hard-to-reverse decisions to `docs/adr/`, as they happen.
+3. **`/prototype`** only when a question needs running code to answer.
+4. **`/to-spec`** publishes the spec as a GitHub issue; **`/to-tickets`** splits it into vertical-slice sub-issues with their blocking edges. Keep steps 2–4 in one context window.
+5. **`/implement`** one ticket per fresh context (or **`/implement-spec`** for the whole spec). Both drive **`/tdd`** and finish with **`/code-review`**.
+6. **PR** to `main` (**`/pr`** shapes the body) that closes its issues. Then **`/retro`** to improve the environment, not the code.
 
-Features are built with [GitHub Spec Kit](https://github.com/github/spec-kit) (v1.3.3, Claude skills in `.claude/skills/speckit-*`, scripts in PowerShell).
+Every spec MUST state in its Implementation Decisions how it meets the rules below, justify any exception there, and, if it adds UI, list its new i18n keys in both locales.
 
-1. Create the feature branch first (`git switch -c feat/<name>` from `main`); Spec Kit does not create branches.
-2. `/speckit-specify <what and why>` → writes `specs/NNN-<name>/spec.md` (user stories and acceptance criteria; no tech details).
-3. `/speckit-clarify` when anything is ambiguous.
-4. `/speckit-plan` → `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`, gated by the Constitution Check.
-5. `/speckit-tasks` → `tasks.md`; optionally `/speckit-analyze` to cross-check spec, plan and tasks.
-6. `/speckit-implement`, then `/speckit-converge` until it reports converged.
+## I. Small, polished and deployed
 
-Unsure which step comes next? `/sdd-help` explains every speckit skill and inspects the active feature to suggest the next command.
+- Every feature MUST be finished end to end (API, web, tests, i18n, docs) and deployable before the next one starts. Something small, polished and deployed beats something big and half-done.
+- Specs MUST stay within the current phase's scope (see _Scope_). Out-of-scope ideas are recorded as future work, not implemented.
+- Prefer the simplest design that meets the acceptance criteria; any extra package, layer or abstraction MUST be justified in the spec.
 
-Specs replace the old idea of a single `docs/product.md`. Do not edit the vendored files in `.specify/templates`, `.specify/scripts` or `.claude/skills/speckit-*` by hand (they are excluded from Prettier and get replaced on upgrade); customize through presets or the constitution instead. Upgrading: `uv tool install --force --python 3.13 specify-cli --from git+https://github.com/github/spec-kit.git@<tag>`, then `specify init --here --force --non-interactive --integration claude --script ps` and review the diff.
+**Why:** recruiters and reviewers judge finished, working software and the care behind it, not the length of a feature list.
 
-## React performance
+## II. Domain integrity (non-negotiable)
 
-The vendored `vercel-react-best-practices` skill (from `vercel-labs/agent-skills`, MIT; refresh by re-copying its `skills/react-best-practices` folder) applies to React code in `apps/web` and `packages/ui`, with three adjustments: both are client-only Vite code, so skip the Next.js/SSR rules (`server-*`, `async-api-routes`, `rendering-hydration-*`); use `React.lazy` instead of `next/dynamic`; and data fetching uses TanStack Query, not SWR. The constitution and `docs/design.md` win on any conflict.
+- **Money is integer cents (`Int`).** `float` and `Decimal` are never used in logic; amounts are formatted only when displayed. Currency is always EUR.
+- **Percentages are basis points:** 10000 = 100 %.
+- **Splits always add up:** the sum of the shares is exactly the total; leftover cents go deterministically to the first members.
+- **Balances are never stored:** they are computed from `ExpenseShare` and `Settlement`.
+- **A user belongs to a single household**, enforced by a unique `Membership.userId`.
+- **Default split by weight:** each `Membership` has an integer `weight` (0–100) and a household's default split is proportional to those weights, converted to exact cents with the rule above. There is no household type: one model covers couples, families and flatmates (ADR 0003).
+- **Category splits extend the default:** an expense category MAY opt in to its own weight (0–100) per member, which replaces the household's weights as the default split for expenses in that category. Only `ADMIN` manages categories and their weights (ADR 0005).
+- **Shares are fixed when saved:** changing weights, categories or members never changes an existing expense; its shares change only when someone edits that expense and sees the new shares before saving.
+- Split, balance and debt-simplification logic lives in `packages/shared` so web and API compute the same results.
 
-## UI/UX design
+**Why:** the app exists to reduce tension around money; a single cent of drift or a disagreeing balance destroys that trust.
 
-The vendored `ui-ux-pro-max` skill (from `nextlevelbuilder/ui-ux-pro-max-skill`, MIT; refresh by re-copying its `.claude/skills/ui-ux-pro-max` folder) helps with UI decisions and reviews in `apps/web` and `packages/ui`. Its search script needs Python 3 and no dependencies; run it from the repo root as `python .claude/skills/ui-ux-pro-max/scripts/search.py "<query>" --domain <domain>`, because the `${CLAUDE_PLUGIN_ROOT}` path in its `SKILL.md` only works for plugin installs. Adjustments: use `--stack react`; ignore Tailwind, shadcn and Next.js suggestions (styles are CSS Modules with semantic tokens); and never use its palettes or fonts in place of the brand tokens. Its output feeds the `docs/design.md` checklist rather than replacing it. The constitution and `docs/design.md` win on any conflict.
+## III. Server-side security
 
-## Design review
+- Every endpoint MUST check household membership and role on the server. The frontend only hides buttons; that is never a security measure.
+- **Roles:** `ADMIN` (everything, including managing members), `MEMBER` (create and edit content), `GUEST` (read only). A household is never left without an admin.
+- Passwords, refresh tokens and invitation tokens are never stored in plain text; they are hashed.
+- Authentication follows ADR 0002: a Google Identity Services ID token verified by the API, a 15-minute JWT kept in memory on the web, and a rotating, hashed refresh token in an httpOnly cookie scoped to `/api/auth`.
+- All API input MUST be validated with the Zod schemas from `packages/shared`, the same ones the forms use.
 
-The vendored `web-design-guidelines` skill (from `vercel-labs/agent-skills`, MIT; refresh by re-copying its `skills/web-design-guidelines` folder) audits UI code in `apps/web` and `packages/ui` against Vercel's Web Interface Guidelines. It fetches those rules live from `vercel-labs/web-interface-guidelines` on every run, so they can change upstream without a repo change. Its findings add to the `docs/design.md` checklist and never replace it; the constitution and `docs/design.md` (semantic tokens only, no hardcoded copy, joyful, approachable tone) win on any conflict.
+**Why:** a shared home mixes people with different levels of trust (flatmates, guests); access rules must hold no matter which client calls the API.
 
-## Deploy
+## IV. Tested by default
 
-Vercel rewrites `/api/*` to the API on Render (bundled with esbuild) so the browser sees one origin; Postgres on Neon. See `docs/deploy.md`.
+- All domain logic (splits, balances, debt simplification, permissions) MUST have unit tests, including edge cases (rounding, single member, zero amounts, removed members).
+- Every endpoint MUST have Supertest tests, including role permission tests: what happens when a `GUEST` or someone from another household tries it.
+- Every `packages/ui` component MUST have a test (including axe) and a Storybook story.
+- Main user flows MUST have Cypress E2E tests; a second real-time user is simulated with API calls inside the test.
+- A task is not done if format, lint, typecheck or tests fail.
 
-Package-specific guidance loads on demand from `apps/web/CLAUDE.md` (i18n) and `packages/ui/CLAUDE.md` (components and Storybook).
+**Why:** tests are both the safety net for money logic and the clearest evidence of engineering quality in a portfolio.
+
+## V. Fully internationalized
+
+- Supported locales are `en` and `es`; detection order is stored preference → `navigator.languages` → fallback `en`, with `<html lang>` kept in sync.
+- There is no hardcoded user-facing copy: every string goes through i18n, with semantic, dot-separated keys per feature namespace. `en` is the source of truth and keys are typed, so a missing key is a type error.
+- Zod schemas and the API return **error codes**, never sentences; the web translates them. The server renders no user-facing text; if it ever does (e.g. invitation emails), it is localized with `User.locale`, falling back to `Accept-Language`.
+- `packages/ui` contains no copy: every visible or accessible string comes in through props.
+- Money, dates and numbers are always formatted with `Intl` and the active locale.
+- The parity test keeps `en` and `es` identical in keys with no empty values.
+
+**Why:** bilingual from day one keeps copy out of logic and makes the app usable by the people it is built for.
+
+## VI. Joyful and accessible design
+
+- Before any change that touches the interface, read [docs/design.md](docs/design.md) and run its checklist before calling the task done. Conflicts with the guide are raised, not ignored.
+- The goal is **joyful and approachable**: a young, energetic interface with one vivid brand color used deliberately, while the interface and its copy still lower tension around money and chores ("Ana owes you €12.50" / "Ana te debe 12,50 €").
+- Styles use only semantic tokens (`--color-*`, `--space-*`…), never primitives or raw values.
+- Everything works in light and dark themes with AA contrast; color never carries meaning on its own. The brand palette applies everywhere, Storybook included.
+- Semantic HTML, visible focus and ARIA roles where needed.
+- Every component documents, in bilingual Storybook docs, why it is designed that way and how it helps the person using it.
+
+**Why:** money and chores are emotionally loaded topics; a joyful, approachable and inclusive interface makes them feel lighter and is the product's main differentiator.
+
+## Technology and architecture
+
+- **Monorepo:** pnpm workspaces (no Turborepo or Nx): `apps/web`, `apps/api`, `packages/ui`, `packages/shared`, `docs/`.
+- **Allowed dependencies:** `web → ui, shared` and `api → shared`. `ui` never imports from `shared` or the apps, and `web` never imports from `api`.
+- **Web:** React, Vite, React Router, TanStack Query, react-i18next. A client-only SPA: no SSR, `React.lazy` for code splitting. **Styles:** CSS Modules with tokens and `clsx` variants; no Tailwind, no CSS-in-JS.
+- **Design system:** custom components in `packages/ui`, each in its own folder with `Component.tsx`, `.module.css`, `.test.tsx`, `.stories.tsx` and a bilingual `.mdx` docs page.
+- **API:** Node, Express, TypeScript, REST. **Data:** PostgreSQL with Prisma 7.
+- **Real time:** Socket.io with one room per household; events typed in `packages/shared`.
+- **TypeScript:** strict everywhere, pinned to 6.0 until typescript-eslint supports 7.x; no `any` unless justified in a comment.
+- **Testing:** Vitest + Testing Library, Supertest, Cypress.
+- **Infra:** Docker Compose locally, GitHub Actions CI, Vercel (web and Storybook), Render (API), Neon (Postgres). Vercel rewrites `/api/*` to Render so the browser sees one origin; see [docs/deploy.md](docs/deploy.md).
+- **Language:** code, identifiers, comments, docs, issues, test names and commit messages are in English.
+
+Package guidance loads on demand from `apps/web/CLAUDE.md` (i18n) and `packages/ui/CLAUDE.md` (components and Storybook).
+
+## Scope
+
+- **Current phase, MVP (v1):** auth and roles, household with shareable-link invitations, expenses with splits and balances, expense categories (with an optional own split and a list filter), chores with an assignee, shopping list, and real time.
+- **Out of the MVP:** invitation emails, recurring expenses and recurring chores (v1.1), budgets and charts, including totals and charts per category (v1.2).
+- **Out of scope:** multiple households per user, a shared pot, real payments, multiple currencies, native mobile app, and gamification. They are not implemented unless explicitly requested and these rules are amended.
+
+## Git workflow
+
+- One branch per feature and a PR to `main`. CI (format, lint, typecheck, tests with Postgres, builds, Cypress) MUST pass before merging. Once merged, the branch MUST be deleted on GitHub (`git push origin --delete <branch>`) and locally (`git branch -d <branch>`, then `git fetch --prune`).
+- Small Conventional Commits in English (`feat(api): add expense split endpoint`). No AI attribution: no `Co-Authored-By` trailers and no "Generated with" footers.
+
+## Agent skills
+
+- **Issue tracker:** GitHub Issues on this repo, through the `gh` CLI. Specs are issues; tickets are sub-issues with native "blocked by" dependencies. External PRs are not treated as requests.
+- **Triage labels:** the defaults, `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human` and `wontfix`.
+- **Domain docs:** single context: `GLOSSARY.md` at the root and ADRs in `docs/adr/`. If either is missing a term or decision, `/domain-modeling` adds it lazily; don't create them upfront.
 
 ## Commands
 
@@ -51,3 +123,5 @@ Standard scripts live in the root `package.json`. Non-obvious bits:
 - E2E: `pnpm --filter @hogar/web e2e` (own Vite on :5174, API and Google stubbed). If Cypress says "bad option: --smoke-test", unset `ELECTRON_RUN_AS_NODE`.
 - Env files: copy `apps/api/.env.example` and `apps/web/.env.example` to `.env`; Google setup in `docs/setup-google-oauth.md`.
 - Deploy: `docs/deploy.md` (`render.yaml`, `apps/web/vercel.json`, `packages/ui/vercel.json`). API production build: `pnpm --filter @hogar/api build`.
+
+**Version**: 4.0.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-12

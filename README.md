@@ -6,14 +6,14 @@
 
 ## Status
 
-| Area                             | State                                                                                                                                                                                                                           |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Design system (`packages/ui`)    | ✅ Tokens, light/dark themes, 14 components, bilingual Storybook                                                                                                                                                                |
-| Sign in with Google              | ✅ API + web, rotating refresh tokens                                                                                                                                                                                           |
-| Households                       | ✅ Create and rename, single-use invitation links, roles (admin, member, guest), leave and remove, default split by weight ([spec](specs/001-households/spec.md))                                                               |
-| Expenses                         | ✅ Split by weight, equally or with exact amounts; balances simplified to the fewest payments; settling up; edit and delete with conflict checks; former members kept in the history ([spec](specs/002-expenses/spec.md))       |
-| Expense categories               | ✅ Starter set per household, admins add, rename and delete; an optional own split per category; before/after confirmation when moving an expense changes shares; history filter ([spec](specs/004-expense-categories/spec.md)) |
-| Chores, shopping list, real time | 🔜 Next (MVP)                                                                                                                                                                                                                   |
+| Area                             | State                                                                                                                                                                                |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Design system (`packages/ui`)    | ✅ Tokens, light/dark themes, 14 components, bilingual Storybook                                                                                                                     |
+| Sign in with Google              | ✅ API + web, rotating refresh tokens                                                                                                                                                |
+| Households                       | ✅ Create and rename, single-use invitation links, roles (admin, member, guest), leave and remove, default split by weight                                                           |
+| Expenses                         | ✅ Split by weight, equally or with exact amounts; balances simplified to the fewest payments; settling up; edit and delete with conflict checks; former members kept in the history |
+| Expense categories               | ✅ Starter set per household, admins add, rename and delete; an optional own split per category; before/after confirmation when moving an expense changes shares; history filter     |
+| Chores, shopping list, real time | 🔜 Next (MVP)                                                                                                                                                                        |
 
 ## Stack
 
@@ -58,11 +58,11 @@ Deploying (Vercel, Render and Neon): see [docs/deploy.md](docs/deploy.md).
 
 ## How it's built
 
-- **Spec-driven.** Features go through [GitHub Spec Kit](https://github.com/github/spec-kit): a spec with user stories and acceptance criteria, a technical plan checked against the [project constitution](.specify/memory/constitution.md), a task list, and then the code. Specs live in `specs/` next to the code they produced.
+- **Grill-driven.** Each feature starts with an interview that sharpens the idea against the [project rules](CLAUDE.md), the [glossary](GLOSSARY.md) and the [architecture decisions](docs/adr/). It then becomes a spec issue on GitHub, split into small vertical-slice tickets that are built test-first and reviewed before each PR. Features built before November 2026 used [GitHub Spec Kit](https://github.com/github/spec-kit); their specs remain in the Git history.
 - **Joyful by design.** One vivid color used deliberately, friendly shapes and copy that lowers the tension of talking about money and chores. The reasoning, in English and Spanish, lives in Storybook (_Foundations_ and each component's docs page); the rules and review checklist are in [docs/design.md](docs/design.md).
 - **Accessible by default.** AA contrast is enforced by tests in both themes, every component is tested with axe, and color never carries meaning on its own.
 - **Fully internationalized.** No hardcoded copy (ESLint enforces it); the API returns error codes the web translates; a test keeps both languages in sync.
-- **Secure sessions.** Google ID token verified on the server, 15-minute access token kept in memory, hashed and rotating refresh tokens with reuse detection. See [docs/decisions/0002-authentication.md](docs/decisions/0002-authentication.md).
+- **Secure sessions.** Google ID token verified on the server, 15-minute access token kept in memory, hashed and rotating refresh tokens with reuse detection. See [docs/adr/0002-authentication.md](docs/adr/0002-authentication.md).
 
 ## Project structure
 
@@ -73,9 +73,10 @@ apps/
 packages/
   ui/       design system + Storybook
   shared/   Zod schemas, types, error codes
-docs/       design guide, decisions, setup guides
-specs/      feature specs, plans and tasks (Spec Kit)
-.specify/   constitution, templates and scripts (Spec Kit)
+docs/       design guide, setup and deploy guides
+  adr/      architecture decision records
+CLAUDE.md   project rules and workflow
+GLOSSARY.md the domain's shared language
 ```
 
 ## License

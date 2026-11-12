@@ -3,7 +3,7 @@ import { ana, session } from "../support/e2e";
 
 /**
  * Before/after screenshots of the key screens in both themes, for the palette ADR
- * (docs/decisions/0004-vibrant-palette.md). Not an E2E test: it lives outside cypress/e2e so CI
+ * (docs/adr/0004-vibrant-palette.md). Not an E2E test: it lives outside cypress/e2e so CI
  * never runs it. Run it with `pnpm --filter @hogar/web capture`.
  */
 

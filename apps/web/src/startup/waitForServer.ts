@@ -14,7 +14,7 @@ const abortError = () => new DOMException("The wait was cancelled", "AbortError"
 
 /**
  * Polls the API's health check until it answers, so the session is only restored once the
- * server is awake (see specs/005-wake-up-loading/research.md, R1). Any failure means "still
+ * server is awake (see docs/adr/0006-wake-the-api-before-refreshing.md). Any failure means "still
  * waking"; only aborting `signal` stops it, rejecting with an AbortError.
  */
 export async function waitForServer({
