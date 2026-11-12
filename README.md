@@ -43,6 +43,22 @@ pnpm db:migrate  # apply Prisma migrations and regenerate the client
 pnpm dev         # web on http://localhost:5173, API on http://localhost:3000
 ```
 
+### After pulling
+
+```bash
+pnpm install                        # new dependencies; also regenerates the Prisma client
+pnpm db:up                          # starts any service added to docker-compose.yml
+pnpm --filter @hogar/api db:deploy  # applies new migrations without creating any
+```
+
+Then compare `apps/api/.env.example` and `apps/web/.env.example` with your `.env` files and add any new variable.
+
+Postgres runs `docker/postgres-init.sql` only when its volume is first created, so a database added there later (such as `hogar_shadow`) has to be created by hand on an existing setup:
+
+```bash
+docker compose exec db psql -U hogar -d postgres -c "CREATE DATABASE hogar_shadow OWNER hogar;"
+```
+
 ## Scripts
 
 | Command                                           | What it does                                                                             |
