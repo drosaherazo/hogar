@@ -1,0 +1,166 @@
+.screen {
+  display: grid;
+  place-items: center;
+  min-block-size: 100dvh;
+  padding: var(--space-8) var(--space-4);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  inline-size: 100%;
+  max-inline-size: var(--size-content-sm);
+  text-align: center;
+}
+
+.text {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.status {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+.description {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.tip {
+  display: grid;
+  gap: var(--space-1);
+  inline-size: 100%;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-sunken);
+  animation: fade-in var(--duration-base) var(--easing-gentle) both;
+}
+
+.tipLabel {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-text);
+}
+
+.tipText {
+  margin: 0;
+}
+
+.action {
+  display: flex;
+  justify-content: center;
+}
+
+/* Illustration */
+
+.illustration {
+  inline-size: min(100%, calc(var(--size-avatar-lg) * 3));
+  block-size: auto;
+  overflow: visible;
+}
+
+.house {
+  fill: var(--color-accent);
+}
+
+.window,
+.door {
+  fill: var(--color-accent-hover);
+}
+
+.light {
+  fill: var(--color-brand-tint);
+}
+
+.ground {
+  stroke: var(--color-border-strong);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.puff {
+  fill: var(--color-border-strong);
+}
+
+/* Resting: a sleeping house, lights off and no smoke. */
+.resting .light {
+  opacity: 0.15;
+}
+
+.resting .puff {
+  opacity: 0;
+}
+
+/*
+ * Waking: windows light up one after another and gently dim again; smoke drifts up.
+ * Under reduced motion, base.css runs each animation once, instantly: lights end on, smoke gone.
+ */
+.animated .light {
+  animation: light-up var(--duration-ambient) var(--easing-gentle) infinite alternate both;
+}
+
+.animated .light2 {
+  animation-delay: calc(var(--duration-ambient) / 3);
+}
+
+.animated .light3 {
+  animation-delay: calc(var(--duration-ambient) * 2 / 3);
+}
+
+.animated .puff {
+  animation: drift var(--duration-ambient) var(--easing-gentle) infinite both;
+}
+
+.animated .puff:nth-child(2) {
+  animation-delay: calc(var(--duration-ambient) / 3);
+}
+
+.animated .puff:nth-child(3) {
+  animation-delay: calc(var(--duration-ambient) * 2 / 3);
+}
+
+@keyframes light-up {
+  0% {
+    opacity: 0.15;
+  }
+
+  60%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes drift {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+
+  30% {
+    opacity: 0.8;
+  }
+
+  100% {
+    opacity: 0;
+    translate: 0 calc(var(--space-3) * -1);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}

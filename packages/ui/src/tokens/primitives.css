@@ -126,6 +126,8 @@
   --duration-fast: 120ms;
   --duration-base: 200ms;
   --duration-slow: 320ms;
+  /* Slow ambient loops only (the wake-up scene); always with --easing-gentle */
+  --duration-ambient: 2400ms;
   --easing-standard: cubic-bezier(0.2, 0, 0, 1);
   --easing-gentle: cubic-bezier(0.33, 1, 0.68, 1);
 }

@@ -1,0 +1,77 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as WakeUpScreenStories from "./WakeUpScreen.stories";
+
+<Meta of={WakeUpScreenStories} />
+
+<Lang locale="en">
+
+# Wake-up screen
+
+<Canvas of={WakeUpScreenStories.Waking} />
+
+## What it is and when to use it
+The full page Hogar shows while it waits for its server to wake up. The free server naps when nobody's around, so the first visit after a while can take up to a minute. Use it only for that startup wait. Loading inside a page keeps using `Spinner`.
+
+## Why it's designed this way
+- **A little house that lights up** in the brand fuchsia: windows come on one by one and the chimney smokes, so it's obvious the app is alive and getting ready.
+- **Honest stages, not a fake progress bar:** the heading moves from "Knocking on your home's door…" to "Turning on the lights…" to "Almost there…". Nobody can measure a cold start precisely, so we don't pretend to.
+- **A short tip** in a sunken box, changing every few seconds, so the wait teaches something useful about Hogar.
+- **A way forward:** if it takes too long, the house rests and the screen offers "Try again" instead of spinning forever.
+- **Centered and narrow** (`--size-content-sm`), like a note on the fridge.
+
+## How it helps the person
+- **An explained wait feels shorter:** knowing why it's slow and roughly how long it takes lowers the urge to reload or give up.
+- **Trust:** the person never wonders whether the app is broken, and is never sent to the login page because the server was asleep.
+- **Evidence-backed:** explaining a wait and showing that progress is happening is a well-known way to reduce perceived waiting time. The tips and the playful copy are design intent.
+
+## Accessibility
+- The status is the page's `h1`, inside a polite `role="status"` region: screen readers hear each stage once. The description and tips sit outside it, so rotating tips are never read out on their own.
+- `aria-busy` is set on `main` while waking. The illustration is decorative and hidden.
+- With "reduce motion" on, the house becomes a still picture with every window lit and tips swap without fading.
+- "Try again" is the only focusable element, so one Tab reaches it. Focus is never moved by a timer.
+
+## Variants
+`mood="waking"` (animated, busy) while waiting; `mood="resting"` (still, lights off) for "taking longer than usual" and "offline".
+
+<Canvas of={WakeUpScreenStories.Slow} />
+<Canvas of={WakeUpScreenStories.Offline} />
+<Canvas of={WakeUpScreenStories.WakingSpanish} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Pantalla de despertar
+
+<Canvas of={WakeUpScreenStories.Waking} />
+
+## Qué es y cuándo usarlo
+La página completa que muestra Hogar mientras espera a que su servidor despierte. El servidor gratuito se echa la siesta cuando no hay nadie, así que la primera visita después de un rato puede tardar hasta un minuto. Úsala solo para esa espera de arranque. Las cargas dentro de una página siguen usando `Spinner`.
+
+## Por qué está diseñado así
+- **Una casita que se ilumina** en el fucsia de la marca: las ventanas se encienden una a una y sale humo de la chimenea, así que se ve que la app está viva y preparándose.
+- **Etapas honestas, no una barra de progreso inventada:** el título pasa de "Llamando a la puerta de tu hogar…" a "Encendiendo las luces…" y a "Ya casi está…". Nadie puede medir con precisión un arranque en frío, así que no lo fingimos.
+- **Un consejo breve** en una caja hundida, que cambia cada pocos segundos, para que la espera enseñe algo útil sobre Hogar.
+- **Una salida:** si tarda demasiado, la casa descansa y la pantalla ofrece "Intentarlo de nuevo" en vez de girar para siempre.
+- **Centrada y estrecha** (`--size-content-sm`), como una nota en la nevera.
+
+## Cómo ayuda a la persona
+- **Una espera explicada se hace más corta:** saber por qué tarda y cuánto suele tardar quita las ganas de recargar o abandonar.
+- **Confianza:** la persona nunca se pregunta si la app se ha roto, y nunca acaba en la pantalla de inicio de sesión porque el servidor estaba dormido.
+- **Respaldado:** explicar una espera y mostrar que avanza es una forma conocida de reducir el tiempo de espera percibido. Los consejos y el tono juguetón son intención de diseño.
+
+## Accesibilidad
+- El estado es el `h1` de la página, dentro de una región `role="status"` educada: los lectores de pantalla oyen cada etapa una vez. La descripción y los consejos quedan fuera, así que los consejos que rotan nunca se leen solos.
+- `main` lleva `aria-busy` mientras despierta. La ilustración es decorativa y está oculta.
+- Con "reducir movimiento" activado, la casa se queda como una imagen fija con todas las ventanas encendidas y los consejos cambian sin fundido.
+- "Intentarlo de nuevo" es el único elemento enfocable, así que se llega con un solo Tab. Ningún temporizador mueve el foco.
+
+## Variantes
+`mood="waking"` (animada, ocupada) mientras espera; `mood="resting"` (quieta, luces apagadas) para "está tardando más de lo normal" y "sin conexión".
+
+<Canvas of={WakeUpScreenStories.Slow} />
+<Canvas of={WakeUpScreenStories.Offline} />
+<Canvas of={WakeUpScreenStories.WakingSpanish} />
+
+</Lang>
