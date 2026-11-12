@@ -155,7 +155,7 @@ export function createInvitationService({ db, households, now = () => new Date()
             throw gone("invitation.used");
           }
 
-          await tx.membership.create({
+          const membership = await tx.membership.create({
             data: {
               householdId: invitation.householdId,
               userId,
@@ -163,6 +163,19 @@ export function createInvitationService({ db, households, now = () => new Date()
               weight: defaultWeightFor(invitation.role),
               joinedAt: now(),
             },
+          });
+          // In every category with its own split, they start with their joining weight, and
+          // admins are asked to review it (membersChangedAt below raises the notice, research R5).
+          const ownSplit = await tx.expenseCategory.findMany({
+            where: { householdId: invitation.householdId, ownSplit: true },
+            select: { id: true },
+          });
+          await tx.categoryWeight.createMany({
+            data: ownSplit.map((category) => ({
+              categoryId: category.id,
+              membershipId: membership.id,
+              weight: defaultWeightFor(invitation.role),
+            })),
           });
           await tx.household.update({ where: { id: invitation.householdId }, data: { membersChangedAt: now() } });
           await clearRemovalNotice(tx, userId);

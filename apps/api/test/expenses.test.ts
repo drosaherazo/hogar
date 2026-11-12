@@ -1,6 +1,7 @@
 import { activityPageSchema, expenseResponseSchema } from "@hogar/shared";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
+import { addCategory, categoryNamed, giveOwnSplit, listCategories } from "./categoryHelpers";
 import { createHousehold } from "./householdHelpers";
 import {
   addExpense,
@@ -605,5 +606,305 @@ describe("previewed shares of a fresh default split (research R3)", () => {
       [ana.user.id]: 67500,
       [bruno.user.id]: 22500,
     });
+  });
+});
+
+describe("categories on expenses", () => {
+  it("saves an expense with a category for members and admins, and shows it", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const groceries = await categoryNamed(app, ana, "Comida");
+    for (const who of [ana, bruno]) {
+      const expense = await addExpense(app, who, { categoryId: groceries.id });
+      expect(expense.category).toEqual({ id: groceries.id, name: "Comida", emoji: "🛒" });
+      const read = await request(app).get(`/api/household/expenses/${expense.id}`).set("Authorization", who.auth);
+      expect(expenseResponseSchema.parse(read.body).expense.category).toEqual(expense.category);
+    }
+  });
+
+  it("saves an expense without a category, split exactly as before", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const expense = await addExpense(app, ana, { amountCents: 4280 });
+    expect(expense.category).toBeNull();
+    expect(sharesByUser(expense)).toEqual({ [ana.user.id]: 3210, [bruno.user.id]: 1070 });
+  });
+
+  it("refuses guests", async () => {
+    const { app } = createTestApp();
+    const { ana, carla } = await homeWithGuest(app);
+    const groceries = await categoryNamed(app, ana, "Comida");
+    const res = await postExpense(app, carla, {
+      categoryId: groceries.id,
+      split: { method: "EQUAL", userIds: [ana.user.id] },
+    });
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: { code: "household.read_only" } });
+  });
+
+  it("refuses a category of another household, or one that no longer exists", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const outsider = await signIn(app, dani);
+    await createHousehold(app, outsider, "Dani's flat");
+    const theirs = await categoryNamed(app, outsider, "Alquiler");
+    for (const categoryId of [theirs.id, "missing-category"]) {
+      const res = await postExpense(app, ana, { categoryId });
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ error: { code: "expense.category.not_found" } });
+    }
+  });
+
+  it("changes only the category of an equal or exact expense", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const [rent, groceries] = await listCategories(app, ana);
+    const equal = await addExpense(app, ana, {
+      amountCents: 1001,
+      split: { method: "EQUAL", userIds: [ana.user.id, bruno.user.id] },
+    });
+    const exact = await addExpense(app, ana, {
+      amountCents: 1000,
+      split: {
+        method: "EXACT",
+        shares: [
+          { userId: ana.user.id, amountCents: 100 },
+          { userId: bruno.user.id, amountCents: 900 },
+        ],
+      },
+    });
+    for (const expense of [equal, exact]) {
+      let version = expense.version;
+      for (const categoryId of [rent?.id ?? null, groceries?.id ?? null, null]) {
+        const res = await putExpense(app, ana, expense.id, { ...inputOf(expense), categoryId, version });
+        expect(res.status).toBe(200);
+        const saved = expenseResponseSchema.parse(res.body).expense;
+        expect(saved.category?.id ?? null).toBe(categoryId);
+        expect(sharesByUser(saved)).toEqual(sharesByUser(expense));
+        version = saved.version;
+      }
+    }
+  });
+});
+
+describe("a category's own split as the default", () => {
+  async function homeWithOwnRent(app: Parameters<typeof homeWith>[0]) {
+    const home = await homeWith(app);
+    const rent = await giveOwnSplit(app, home.ana, await categoryNamed(app, home.ana, "Alquiler"), {
+      [home.ana.membershipId]: 1,
+      [home.bruno.membershipId]: 1,
+    });
+    const leisure = await categoryNamed(app, home.ana, "Ocio");
+    return { ...home, rent, leisure };
+  }
+
+  it("splits by the category's weights, and by the household's otherwise", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, rent, leisure } = await homeWithOwnRent(app);
+    const inRent = await addExpense(app, bruno, { amountCents: 90000, categoryId: rent.id });
+    expect(sharesByUser(inRent)).toEqual({ [ana.user.id]: 45000, [bruno.user.id]: 45000 });
+    for (const categoryId of [leisure.id, null]) {
+      const other = await addExpense(app, bruno, { amountCents: 90000, categoryId });
+      expect(sharesByUser(other)).toEqual({ [ana.user.id]: 67500, [bruno.user.id]: 22500 });
+    }
+  });
+
+  it("refuses shares previewed with the household's split for a category with its own", async () => {
+    const { app } = createTestApp();
+    const { ana, rent } = await homeWithOwnRent(app);
+    const res = await postExpense(app, ana, {
+      amountCents: 90000,
+      categoryId: rent.id,
+      split: { method: "WEIGHTS", previewShares: await previewSharesFor(ana, 90000) },
+    });
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "expense.split.changed" } });
+  });
+
+  it("follows the category when an edit switches to the default split", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, rent } = await homeWithOwnRent(app);
+    const expense = await addExpense(app, ana, {
+      amountCents: 90000,
+      categoryId: rent.id,
+      split: { method: "EQUAL", userIds: [ana.user.id] },
+    });
+    const res = await putExpense(app, ana, expense.id, {
+      ...inputOf(expense),
+      split: { method: "WEIGHTS", previewShares: await previewSharesFor(ana, 90000, rent.id) },
+      version: 1,
+    });
+    expect(res.status).toBe(200);
+    expect(sharesByUser(expenseResponseSchema.parse(res.body).expense)).toEqual({
+      [ana.user.id]: 45000,
+      [bruno.user.id]: 45000,
+    });
+  });
+
+  it("keeps following the household for categories without their own split when its weights change", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, rent, leisure } = await homeWithOwnRent(app);
+    const before = await addExpense(app, ana, { amountCents: 90000, categoryId: leisure.id });
+    const changed = await request(app)
+      .put("/api/household/split")
+      .set("Authorization", ana.auth)
+      .send({
+        weights: [
+          { membershipId: ana.membershipId, weight: 2 },
+          { membershipId: bruno.membershipId, weight: 1 },
+        ],
+      });
+    expect(changed.status).toBe(200);
+
+    expect(sharesByUser(await addExpense(app, ana, { amountCents: 90000, categoryId: leisure.id }))).toEqual({
+      [ana.user.id]: 60000,
+      [bruno.user.id]: 30000,
+    });
+    expect(sharesByUser(await addExpense(app, ana, { amountCents: 90000, categoryId: rent.id }))).toEqual({
+      [ana.user.id]: 45000,
+      [bruno.user.id]: 45000,
+    });
+    const reread = await request(app).get(`/api/household/expenses/${before.id}`).set("Authorization", ana.auth);
+    expect(sharesByUser(expenseResponseSchema.parse(reread.body).expense)).toEqual(sharesByUser(before));
+  });
+
+  it("lets someone with weight 0 in the household pay in a category, and the other way round", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, carla } = await homeWithGuest(app);
+    const rent = await giveOwnSplit(app, ana, await categoryNamed(app, ana, "Alquiler"), {
+      [ana.membershipId]: 0,
+      [bruno.membershipId]: 1,
+      [carla.membershipId]: 1,
+    });
+    const expense = await addExpense(app, bruno, { amountCents: 1001, categoryId: rent.id });
+    expect(sharesByUser(expense)).toEqual({ [bruno.user.id]: 501, [carla.user.id]: 500 });
+  });
+
+  it("has no default split when nobody pays in the category any more", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, carla } = await homeWithGuest(app);
+    const rent = await giveOwnSplit(app, ana, await categoryNamed(app, ana, "Alquiler"), {
+      [ana.membershipId]: 0,
+      [bruno.membershipId]: 1,
+      [carla.membershipId]: 0,
+    });
+    // Bruno, the only one who paid in it, leaves.
+    await db.membership.delete({ where: { id: bruno.membershipId } });
+    const res = await postExpense(app, ana, {
+      amountCents: 1000,
+      categoryId: rent.id,
+      split: { method: "WEIGHTS", previewShares: [{ userId: ana.user.id, amountCents: 1000 }] },
+    });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: { code: "expense.split.no_default" } });
+  });
+
+  it("adds up exactly with amounts that don't divide evenly", async () => {
+    const { app } = createTestApp();
+    const { ana, rent } = await homeWithOwnRent(app);
+    for (const amountCents of [1, 3, 1001, 99999]) {
+      const expense = await addExpense(app, ana, { amountCents, categoryId: rent.id });
+      expect(expense.split.shares.reduce((sum, share) => sum + share.amountCents, 0)).toBe(amountCents);
+    }
+  });
+});
+
+describe("moving an expense to another category", () => {
+  async function rentAt900(app: Parameters<typeof homeWith>[0]) {
+    const home = await homeWith(app);
+    const rent = await giveOwnSplit(app, home.ana, await categoryNamed(app, home.ana, "Alquiler"), {
+      [home.ana.membershipId]: 1,
+      [home.bruno.membershipId]: 1,
+    });
+    const leisure = await categoryNamed(app, home.ana, "Ocio");
+    const expense = await addExpense(app, home.bruno, { amountCents: 90000, categoryId: leisure.id });
+    return { ...home, rent, leisure, expense };
+  }
+
+  it("applies the new category's split when the previewed shares come with it", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, rent, expense } = await rentAt900(app);
+    const res = await putExpense(app, bruno, expense.id, {
+      ...inputOf(expense),
+      categoryId: rent.id,
+      split: { method: "WEIGHTS", previewShares: await previewSharesFor(bruno, 90000, rent.id) },
+      version: 1,
+    });
+    expect(res.status).toBe(200);
+    const saved = expenseResponseSchema.parse(res.body).expense;
+    expect(sharesByUser(saved)).toEqual({ [ana.user.id]: 45000, [bruno.user.id]: 45000 });
+    expect(saved.category?.id).toBe(rent.id);
+    expect(saved.editedBy?.userId).toBe(bruno.user.id);
+    expect(balanceByUser(await balancesOf(app, ana))).toEqual({ [ana.user.id]: -45000, [bruno.user.id]: 45000 });
+  });
+
+  it("saves nothing when the split changed after the preview", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, rent, leisure, expense } = await rentAt900(app);
+    const preview = await previewSharesFor(bruno, 90000, rent.id);
+    await giveOwnSplit(app, ana, rent, { [ana.membershipId]: 2, [bruno.membershipId]: 1 });
+    const res = await putExpense(app, bruno, expense.id, {
+      ...inputOf(expense),
+      categoryId: rent.id,
+      split: { method: "WEIGHTS", previewShares: preview },
+      version: 1,
+    });
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "expense.split.changed" } });
+    const row = await db.expense.findUniqueOrThrow({ where: { id: expense.id }, include: { shares: true } });
+    expect(row.categoryId).toBe(leisure.id);
+    expect(row.version).toBe(1);
+    expect(Object.fromEntries(row.shares.map((share) => [share.userId, share.amountCents]))).toEqual(
+      sharesByUser(expense),
+    );
+  });
+
+  it("keeps the current shares without previewed shares, rescaling them if the amount changes", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, rent, expense } = await rentAt900(app);
+    const moved = await putExpense(app, ana, expense.id, { ...inputOf(expense), categoryId: rent.id, version: 1 });
+    const kept = expenseResponseSchema.parse(moved.body).expense;
+    expect(kept.category?.id).toBe(rent.id);
+    expect(sharesByUser(kept)).toEqual({ [ana.user.id]: 67500, [bruno.user.id]: 22500 });
+
+    const resized = await putExpense(app, ana, expense.id, { ...inputOf(kept), amountCents: 100000, version: 2 });
+    expect(sharesByUser(expenseResponseSchema.parse(resized.body).expense)).toEqual({
+      [ana.user.id]: 75000,
+      [bruno.user.id]: 25000,
+    });
+  });
+
+  it("uses the household's weights when moved to no category", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, rent } = await rentAt900(app);
+    const inRent = await addExpense(app, ana, { amountCents: 90000, categoryId: rent.id });
+    const res = await putExpense(app, ana, inRent.id, {
+      ...inputOf(inRent),
+      categoryId: null,
+      split: { method: "WEIGHTS", previewShares: await previewSharesFor(ana, 90000) },
+      version: 1,
+    });
+    expect(sharesByUser(expenseResponseSchema.parse(res.body).expense)).toEqual({
+      [ana.user.id]: 67500,
+      [bruno.user.id]: 22500,
+    });
+  });
+
+  it("can't apply a category's split when nobody pays in it", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, expense } = await rentAt900(app);
+    const dog = await giveOwnSplit(app, ana, await addCategory(app, ana, "Perro", "🐶"), {
+      [ana.membershipId]: 0,
+      [bruno.membershipId]: 1,
+    });
+    await db.categoryWeight.updateMany({ where: { categoryId: dog.id }, data: { weight: 0 } });
+    const res = await putExpense(app, ana, expense.id, {
+      ...inputOf(expense),
+      categoryId: dog.id,
+      split: { method: "WEIGHTS", previewShares: [{ userId: ana.user.id, amountCents: 90000 }] },
+      version: 1,
+    });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: { code: "expense.split.no_default" } });
   });
 });
