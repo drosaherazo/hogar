@@ -38,21 +38,22 @@ cp apps/web/.env.example apps/web/.env
 Fill in the Google Client ID in both `.env` files, and a `JWT_ACCESS_SECRET` and an `EMAIL_CODE_SECRET` in the API one. Follow **[docs/setup-google-oauth.md](docs/setup-google-oauth.md)**; it takes about ten minutes.
 
 ```bash
-pnpm db:up       # PostgreSQL 17 (databases hogar and hogar_test) and Mailpit (http://localhost:8025) in Docker
-pnpm db:migrate  # apply Prisma migrations
+pnpm db:up       # PostgreSQL 17 (databases hogar, hogar_test and hogar_shadow) and Mailpit (http://localhost:8025) in Docker
+pnpm db:migrate  # apply Prisma migrations and regenerate the client
 pnpm dev         # web on http://localhost:5173, API on http://localhost:3000
 ```
 
 ## Scripts
 
-| Command                                           | What it does                                                            |
-| ------------------------------------------------- | ----------------------------------------------------------------------- |
-| `pnpm dev`                                        | Web and API in watch mode (Vite proxies `/api` to the API)              |
-| `pnpm lint` / `pnpm typecheck` / `pnpm test`      | Checks across every package                                             |
-| `pnpm --filter @hogar/web e2e`                    | Cypress flows against a separate Vite instance (API and Google stubbed) |
-| `pnpm storybook`                                  | Design system docs on http://localhost:6006                             |
-| `pnpm db:up` / `pnpm db:down` / `pnpm db:migrate` | Database lifecycle                                                      |
-| `pnpm format`                                     | Prettier                                                                |
+| Command                                           | What it does                                                                             |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `pnpm dev`                                        | Web and API in watch mode (Vite proxies `/api` to the API)                               |
+| `pnpm lint` / `pnpm typecheck` / `pnpm test`      | Checks across every package                                                              |
+| `pnpm --filter @hogar/web e2e`                    | Cypress flows against a separate Vite instance (API and Google stubbed)                  |
+| `pnpm storybook`                                  | Design system docs on http://localhost:6006                                              |
+| `pnpm db:up` / `pnpm db:down` / `pnpm db:migrate` | Database lifecycle                                                                       |
+| `pnpm db:check`                                   | Fails if a migration is empty or the migrations don't match `schema.prisma` (CI runs it) |
+| `pnpm format`                                     | Prettier                                                                                 |
 
 Deploying (Vercel, Render and Neon): see [docs/deploy.md](docs/deploy.md).
 
