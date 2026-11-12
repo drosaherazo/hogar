@@ -52,11 +52,11 @@ export function EmailSignIn() {
   const [secondsLeft, startCountdown] = useCountdown();
   // The API limits codes per address, so the countdown belongs to the address it was started for.
   const [waitingAddress, setWaitingAddress] = useState("");
-  const waitFor = (address: string, seconds: number) => {
-    setWaitingAddress(address);
+  const startWaiting = (address: string, seconds: number) => {
+    setWaitingAddress(normalizeEmail(address));
     startCountdown(seconds);
   };
-  const waitingFor = (address: string) => secondsLeft > 0 && normalizeEmail(address) === waitingAddress;
+  const mustWait = (address: string) => secondsLeft > 0 && normalizeEmail(address) === waitingAddress;
   const waitLabel = () =>
     t("login.code.resendIn", {
       time: new Intl.NumberFormat(i18n.resolvedLanguage, { style: "unit", unit: "second" }).format(secondsLeft),
@@ -78,11 +78,11 @@ export function EmailSignIn() {
     mutationFn: (address: string) => client.requestEmailCode(address, resolveLocale(i18n.resolvedLanguage)),
     onSuccess: (_, address) => {
       setSentTo(address);
-      waitFor(address, RESEND_AFTER_SECONDS);
+      startWaiting(address, RESEND_AFTER_SECONDS);
       setStep("code");
     },
     onError: (error, address) => {
-      if (error instanceof ApiRequestError && error.retryAfterSeconds) waitFor(address, error.retryAfterSeconds);
+      if (error instanceof ApiRequestError && error.retryAfterSeconds) startWaiting(address, error.retryAfterSeconds);
     },
   });
 
@@ -143,6 +143,7 @@ export function EmailSignIn() {
   }
 
   if (step === "email") {
+    const waiting = mustWait(email);
     return (
       <form className={styles.emailForm} onSubmit={submitEmail} noValidate>
         <TextField
@@ -163,17 +164,18 @@ export function EmailSignIn() {
         <Button
           type="submit"
           fullWidth
-          disabled={waitingFor(email)}
+          disabled={waiting}
           loading={send.isPending}
           loadingLabel={t("login.email.sending")}
         >
-          {waitingFor(email) ? waitLabel() : t("login.email.submit")}
+          {waiting ? waitLabel() : t("login.email.submit")}
         </Button>
         <p className={styles.privacy}>{t("login.email.privacy")}</p>
       </form>
     );
   }
 
+  const waiting = mustWait(sentTo);
   return (
     <section className={styles.codeStep} aria-labelledby="login-code-title">
       <h2 id="login-code-title" className={styles.codeTitle}>
@@ -205,11 +207,11 @@ export function EmailSignIn() {
           variant="secondary"
           fullWidth
           onClick={resend}
-          disabled={waitingFor(sentTo)}
+          disabled={waiting}
           loading={send.isPending}
           loadingLabel={t("login.email.sending")}
         >
-          {waitingFor(sentTo) ? waitLabel() : t("login.code.resend")}
+          {waiting ? waitLabel() : t("login.code.resend")}
         </Button>
         {resendError && (
           <p className={styles.error} role="alert">

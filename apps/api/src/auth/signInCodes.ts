@@ -99,6 +99,8 @@ export function createSignInCodes({ db, secret, now }: SignInCodesDeps) {
       const at = now();
       // Each check reserves one attempt before comparing, atomically, so parallel guesses can
       // never get more than MAX_ATTEMPTS tries between them.
+      // Every check counts, even one with an older code that no longer works: the cap is on tries,
+      // whatever was typed.
       const [reserved] = await db.$queryRaw<{ id: string; code_hash: string; attempts: number; locale: string }[]>`
         UPDATE "sign_in_codes" SET "attempts" = "attempts" + 1
         WHERE "id" = (
