@@ -111,7 +111,7 @@ export async function signIn(app: ReturnType<typeof createTestApp>["app"], ident
 
 beforeEach(async () => {
   await db.$executeRawUnsafe(
-    'TRUNCATE TABLE "expense_shares", "expenses", "settlements", "invitations", "memberships", "households", "refresh_tokens", "users" CASCADE',
+    'TRUNCATE TABLE "expense_shares", "category_weights", "expenses", "expense_categories", "settlements", "invitations", "memberships", "households", "refresh_tokens", "users" CASCADE',
   );
 });
 
