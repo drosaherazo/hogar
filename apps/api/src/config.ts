@@ -1,11 +1,19 @@
 import { z } from "zod";
 import type { MailProvider } from "./email/mailer";
+import { isPreviewOriginPattern } from "./auth/originMatcher";
 
 const envSchema = z.object({
   DATABASE_URL: z.url(),
   GOOGLE_CLIENT_ID: z.string().min(1, "Set GOOGLE_CLIENT_ID (see docs/setup-google-oauth.md)"),
   JWT_ACCESS_SECRET: z.string().min(32, "JWT_ACCESS_SECRET must be at least 32 characters"),
   WEB_ORIGIN: z.url(),
+  WEB_PREVIEW_ORIGIN: z
+    .string()
+    .refine(
+      isPreviewOriginPattern,
+      "use an https:// origin with one * between fixed text, e.g. https://hogar-*-<scope>.vercel.app",
+    )
+    .optional(),
   PORT: z.coerce.number().int().positive().default(3000),
   COOKIE_SECURE: z.stringbool().default(false),
   TRUST_PROXY_HOPS: z.coerce.number().int().nonnegative().default(0),
@@ -40,6 +48,8 @@ export interface Config {
   googleClientId: string;
   jwtAccessSecret: string;
   webOrigin: string;
+  /** On `dev` only: the project's Vercel preview origins, as a pattern with one `*` (ADR 0010). */
+  webPreviewOrigin?: string;
   port: number;
   cookieSecure: boolean;
   /** Reverse proxies in front of the API; Express reads the client IP (for rate limiting) past them. */
@@ -68,6 +78,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     googleClientId: values.GOOGLE_CLIENT_ID,
     jwtAccessSecret: values.JWT_ACCESS_SECRET,
     webOrigin: new URL(values.WEB_ORIGIN).origin,
+    ...(values.WEB_PREVIEW_ORIGIN && { webPreviewOrigin: values.WEB_PREVIEW_ORIGIN }),
     port: values.PORT,
     cookieSecure: values.COOKIE_SECURE,
     trustProxyHops: values.TRUST_PROXY_HOPS,

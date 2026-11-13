@@ -35,3 +35,31 @@ describe("loadConfig: email", () => {
     expect(() => loadConfig({ ...base, EMAIL_CODE_SECRET: secret })).toThrow(/EMAIL_CODE_SECRET/);
   });
 });
+
+describe("loadConfig: preview origins (ADR 0010)", () => {
+  it("leaves the preview pattern unset by default, so only WEB_ORIGIN is trusted", () => {
+    expect(loadConfig(base).webPreviewOrigin).toBeUndefined();
+  });
+
+  it("loads a pattern with one wildcard", () => {
+    const pattern = "https://hogar-*-drosa-projects.vercel.app";
+    expect(loadConfig({ ...base, WEB_PREVIEW_ORIGIN: pattern }).webPreviewOrigin).toBe(pattern);
+  });
+
+  it.each([
+    ["no wildcard", "https://hogar-drosa-projects.vercel.app"],
+    ["two wildcards", "https://hogar-*-*.vercel.app"],
+    ["plain http", "http://hogar-*-drosa-projects.vercel.app"],
+    ["a path", "https://hogar-*-drosa-projects.vercel.app/api"],
+    ["a trailing slash", "https://hogar-*-drosa-projects.vercel.app/"],
+    ["a query", "https://hogar-*-drosa-projects.vercel.app?x=1"],
+    ["a fragment", "https://hogar-*-drosa-projects.vercel.app#x"],
+    ["a wildcard that is a whole host label", "https://*.vercel.app"],
+    ["a wildcard that is the whole host", "https://*"],
+    ["no fixed text after the wildcard in its label", "https://hogar-*.vercel.app"],
+    ["no fixed text before the wildcard in its label", "https://*-drosa-projects.vercel.app"],
+    ["not a URL", "hogar-*"],
+  ])("refuses to start with %s", (_case, pattern) => {
+    expect(() => loadConfig({ ...base, WEB_PREVIEW_ORIGIN: pattern })).toThrow(/WEB_PREVIEW_ORIGIN/);
+  });
+});

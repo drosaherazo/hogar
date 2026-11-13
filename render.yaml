@@ -1,5 +1,6 @@
 # Render Blueprint for the API. The database lives on Neon; the web app and Storybook on Vercel.
-# Step-by-step setup: docs/deploy.md.
+# Two services: production (`main`) and the disposable `dev` environment (`dev` branch, ADR 0010).
+# Keep their build and start commands identical. Step-by-step setup: docs/deploy.md.
 services:
   - type: web
     name: hogar-api
@@ -26,7 +27,7 @@ services:
         sync: false
       - key: JWT_ACCESS_SECRET
         generateValue: true
-      # Public URL of the web app on Vercel, e.g. https://hogar.vercel.app
+      # https://hogar.therandomcollection.co
       - key: WEB_ORIGIN
         sync: false
       - key: COOKIE_SECURE
@@ -40,5 +41,47 @@ services:
       - key: RESEND_API_KEY
         sync: false
       # A sender on Hogar's verified domain, e.g. Hogar <hola@example.com>
+      - key: EMAIL_FROM
+        sync: false
+
+  # The `dev` environment (ADR 0010): force-push any branch onto `dev` to deploy it here.
+  - type: web
+    name: hogar-api-dev
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: dev
+    # No CI wait: a prototype that fails lint can still be tried; its own PR runs CI.
+    autoDeployTrigger: commit
+    buildCommand: >-
+      pnpm install --frozen-lockfile --filter "@hogar/api..." &&
+      pnpm --filter @hogar/api build &&
+      pnpm --filter @hogar/api db:deploy
+    startCommand: pnpm --filter @hogar/api start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      # The separate Neon project `hogar-dev`: direct connection, with sslmode=require.
+      - key: DATABASE_URL
+        sync: false
+      # The same Client ID as production, with dev's origin authorized in Google.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      # Generated per service, so tokens never work across environments.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: WEB_ORIGIN
+        value: https://dev.hogar.therandomcollection.co
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: TRUST_PROXY_HOPS
+        value: "2"
+      - key: EMAIL_CODE_SECRET
+        generateValue: true
+      # dev's own Resend key, revocable without touching production.
+      - key: RESEND_API_KEY
+        sync: false
+      # A sender marked dev, e.g. Hogar dev <dev@therandomcollection.co>
       - key: EMAIL_FROM
         sync: false

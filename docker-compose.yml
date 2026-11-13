@@ -1,3 +1,6 @@
+# One project name for every worktree, so they all share the same Postgres and Mailpit.
+name: hogarapp
+
 services:
   db:
     image: postgres:17-alpine
