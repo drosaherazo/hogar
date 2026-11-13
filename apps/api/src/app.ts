@@ -26,7 +26,7 @@ import { createInvitationService } from "./household/invitationService";
 import { createMeRouter } from "./me/meRouter";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { requireSameOrigin } from "./middleware/requireSameOrigin";
-import { createOriginMatcher } from "./middleware/originMatcher";
+import { createOriginMatcher } from "./auth/originMatcher";
 
 export interface AppDeps {
   config: Config;

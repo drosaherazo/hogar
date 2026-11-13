@@ -1,12 +1,6 @@
 import { z } from "zod";
 import type { MailProvider } from "./email/mailer";
-
-/** An `https://` origin with exactly one `*` and nothing after the host (ADR 0010). */
-function isPreviewOriginPattern(pattern: string) {
-  if (!pattern.startsWith("https://") || pattern.split("*").length !== 2) return false;
-  const example = pattern.replace("*", "x");
-  return URL.canParse(example) && new URL(example).origin === example;
-}
+import { isPreviewOriginPattern } from "./auth/originMatcher";
 
 const envSchema = z.object({
   DATABASE_URL: z.url(),
@@ -17,7 +11,7 @@ const envSchema = z.object({
     .string()
     .refine(
       isPreviewOriginPattern,
-      "use an https:// origin with exactly one *, e.g. https://hogar-*-<scope>.vercel.app",
+      "use an https:// origin with one * between fixed text, e.g. https://hogar-*-<scope>.vercel.app",
     )
     .optional(),
   PORT: z.coerce.number().int().positive().default(3000),

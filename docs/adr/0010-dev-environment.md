@@ -22,7 +22,7 @@ Vercel's preview deployments (one URL per branch) couldn't get past sign-in. Goo
 
 ### Previews
 
-- On `dev` only, the API also accepts the origins of the project's previews through an optional **`WEB_PREVIEW_ORIGIN`** with a single `*`, for example `https://hogar-*-<scope>.vercel.app`. The `*` matches only `[a-z0-9-]+`, the match is anchored at both ends and is `https` only, and config validation rejects a malformed pattern. Without the variable (production, local) only `WEB_ORIGIN` is accepted, exactly as before. It is a wildcard rather than a regex because a regex in an env file is easy to leave unanchored or unescaped, and that mistake is invisible in review.
+- On `dev` only, the API also accepts the origins of the project's previews through an optional **`WEB_PREVIEW_ORIGIN`** with a single `*`, for example `https://hogar-*-<scope>.vercel.app`. The `*` matches only `[a-z0-9-]+`, the match is anchored at both ends and is `https` only, and config validation rejects a malformed pattern, including one with no fixed text on either side of the `*` inside its label (so `https://*.vercel.app` can't trust every site on Vercel). Without the variable (production, local) only `WEB_ORIGIN` is accepted, exactly as before. It is a wildcard rather than a regex because a regex in an env file is easy to leave unanchored or unescaped, and that mistake is invisible in review.
 - Previews sign in with an email code; Google works on `dev`'s fixed URL and in production. The `dev` API runs the `dev` branch, so previews suit web-only changes; changes that touch the API are tried by pushing them to `dev`.
 
 ### Data and services
@@ -46,5 +46,6 @@ Vercel's preview deployments (one URL per branch) couldn't get past sign-in. Goo
 - `dev` is a single slot: two branches with API changes can't be tried at the same time. Previews ease this for web-only changes.
 - After pushing a branch whose migrations differ from what `dev` ran before, the database must be reset by hand, or the API may fail on schema mismatches.
 - Free-plan quotas are shared: both Render services draw from the workspace's 750 hours a month (both sleep when idle), and `dev` and production share Resend's 100 emails a day.
+- The pattern checks a suffix, not ownership of the Vercel scope: someone could create a scope ending in ours (`evil-<scope>`) and their preview `https://hogar-x-evil-<scope>.vercel.app` would match. This is accepted because it only reaches `dev`, which holds no real data, and because `vercel.app` is on the Public Suffix List, so such a page is cross-site and the browser never sends it the `SameSite=Lax` refresh cookie.
 - If the Socket.io prototype shows that WebSockets don't get through Vercel's rewrite, each environment gets an `api.` subdomain (`api.hogar…`, `api.dev.hogar…`, free on Render) and the socket's origin check reuses `WEB_ORIGIN` and `WEB_PREVIEW_ORIGIN`. Until then the browser keeps a single origin.
 - Letting other people try `dev` on their own devices would require revisiting Vercel's protection, which on the free plan only admits the owner.

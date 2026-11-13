@@ -53,6 +53,11 @@ describe("loadConfig: preview origins (ADR 0010)", () => {
     ["a path", "https://hogar-*-drosa-projects.vercel.app/api"],
     ["a trailing slash", "https://hogar-*-drosa-projects.vercel.app/"],
     ["a query", "https://hogar-*-drosa-projects.vercel.app?x=1"],
+    ["a fragment", "https://hogar-*-drosa-projects.vercel.app#x"],
+    ["a wildcard that is a whole host label", "https://*.vercel.app"],
+    ["a wildcard that is the whole host", "https://*"],
+    ["no fixed text after the wildcard in its label", "https://hogar-*.vercel.app"],
+    ["no fixed text before the wildcard in its label", "https://*-drosa-projects.vercel.app"],
     ["not a URL", "hogar-*"],
   ])("refuses to start with %s", (_case, pattern) => {
     expect(() => loadConfig({ ...base, WEB_PREVIEW_ORIGIN: pattern })).toThrow(/WEB_PREVIEW_ORIGIN/);
