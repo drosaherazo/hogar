@@ -4,13 +4,15 @@ import vercelConfig from "../../vercel.json";
 // ADR 0010: only production's host may reach the production API; every other host
 // (dev and every preview) reaches the dev API, so a preview never touches real data.
 const PRODUCTION_HOST = "hogar.therandomcollection.co";
-const PRODUCTION_API = "https://hogar-api-m5va.onrender.com/";
+const PRODUCTION_API_HOST = "hogar-api-m5va.onrender.com";
 const DEV_API = "https://hogar-api-dev.onrender.com/";
 
 type Rewrite = { source: string; destination: string; has?: { type: string; value?: string }[] };
 
 const rewrites: Rewrite[] = vercelConfig.rewrites;
-const reachesProduction = (rewrite: Rewrite) => rewrite.destination.startsWith(PRODUCTION_API);
+// Compared by parsed hostname, so no scheme or letter case slips a production rewrite past the guard.
+const reachesProduction = (rewrite: Rewrite) =>
+  new URL(rewrite.destination, "https://relative.invalid").hostname === PRODUCTION_API_HOST;
 const isOnlyForProductionHost = (rewrite: Rewrite) =>
   rewrite.has?.length === 1 && rewrite.has[0]?.type === "host" && rewrite.has[0].value === PRODUCTION_HOST;
 

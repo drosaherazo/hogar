@@ -90,7 +90,7 @@ Locally nothing is sent: `pnpm db:up` starts [Mailpit](https://mailpit.axllent.o
 | Email    | Resend on the same domain, with its own API key and a sender marked `dev`                     |
 | Google   | the same OAuth client, with `dev`'s origin authorized                                         |
 
-Production data, sessions and tokens never reach `dev`: it has its own database and its own generated `JWT_ACCESS_SECRET` and `EMAIL_CODE_SECRET`. Vercel's Standard Protection stays on, so only the owner's Vercel account can open it.
+Production data, sessions and tokens never reach `dev`: it has its own database and its own generated `JWT_ACCESS_SECRET` and `EMAIL_CODE_SECRET`. Vercel's Standard Protection stays on, so only the owner's Vercel account can open it: sign in to Vercel on every phone you test with.
 
 ### Trying a branch
 
