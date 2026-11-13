@@ -103,7 +103,16 @@ Vercel and Render both deploy that commit within a few minutes, without waiting 
 - **Single slot.** `dev` runs one branch at a time: two branches that change the API can't be tried at once. Previews, which also reach the `dev` API, suit web-only changes.
 - **Migrations.** The build applies the pushed branch's pending migrations. A branch whose migrations differ from what `dev` ran before needs a fresh database, or the API may fail on schema mismatches.
 - **Shared free-plan quotas.** Both Render services draw from the workspace's 750 hours a month (both sleep when idle), and `dev` and production share Resend's 100 emails a day.
+- **Previews.** Every Vercel preview of the project reaches the `dev` API too, so web-only changes of several branches can be tried in parallel (see _Previews_ below).
 - **Two people, one inbox.** Sign in on a second phone with a `+` address (`you+second@gmail.com`) to try two members and real-time updates.
+
+### Previews
+
+Vercel builds a preview of every pushed branch (`https://hogar-git-<branch>-drosaherazos-projects.vercel.app`) and of every commit (`https://hogar-<hash>-drosaherazos-projects.vercel.app`). Their `/api/*` goes to the `dev` API, never to production.
+
+- **Sign-in code only.** Google doesn't accept wildcard origins, so previews can't use Google sign-in. They sign in with a code: `hogar-api-dev` trusts them through `WEB_PREVIEW_ORIGIN` in `render.yaml`, `https://hogar-*-drosaherazos-projects.vercel.app`, where the `*` only matches letters, digits and dashes (ADR 0010). Production has no `WEB_PREVIEW_ORIGIN`, so it rejects every preview's origin with `request.forbidden_origin`. If the Vercel project or scope is ever renamed, update the variable. Vercel shortens a branch URL longer than 63 characters; if that preview is rejected, use its commit URL, which always fits.
+- **Whatever API is on `dev`.** A preview runs its own branch's web against the API and database of whatever branch was last pushed to `dev`. That is fine for web-only changes; a branch that also changes the API must be pushed to `dev` first.
+- **Behind Vercel's login.** Like `dev`, previews keep Standard Protection: sign in to Vercel on the device first.
 
 ### Setting it up
 
@@ -134,4 +143,7 @@ The auth rate limit is per client IP. Behind proxies, Express takes the client I
 - Sign in with Google on <https://dev.hogar.therandomcollection.co>.
 - Sign in with a code: the email comes from the `dev` sender.
 - A new person starts without a household: the database is `hogar-dev`'s, not production's.
+- On a branch preview, sign in with a code: it works, and the person and household are the ones from `dev`.
+- On that preview, the `/api/*` requests in the browser's dev tools return `dev`'s data, not production's (for example, the same household as on <https://dev.hogar.therandomcollection.co>).
+- Production rejects the preview's origin: `curl -i -X POST https://hogar.therandomcollection.co/api/auth/email/code -H "Origin: https://hogar-abc123-drosaherazos-projects.vercel.app"` answers `403` with `request.forbidden_origin`.
 - Production still signs in as before.
