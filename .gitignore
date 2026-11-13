@@ -10,3 +10,4 @@ coverage/
 !apps/web/.env.e2e
 **/cypress/screenshots/
 **/cypress/videos/
+.scratch/

@@ -123,6 +123,7 @@ Standard scripts live in the root `package.json`. Non-obvious bits:
 - Database: `pnpm db:up` (Docker; needs WSL on Windows). API tests need Postgres with a `hogar_test` database.
 - E2E: `pnpm --filter @hogar/web e2e` (own Vite on :5174, API and Google stubbed).
 - Env files: copy `apps/api/.env.example` and `apps/web/.env.example` to `.env`; Google setup in `docs/setup-google-oauth.md`.
+- New worktree: `pnpm install` and copy `apps/api/.env` and `apps/web/.env` from the main folder; `pnpm db:up` reuses the shared containers.
 - Deploy: `docs/deploy.md` (`render.yaml`, `apps/web/vercel.json`, `packages/ui/vercel.json`). API production build: `pnpm --filter @hogar/api build`.
 
-**Version**: 5.0.1 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-12
+**Version**: 5.0.2 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-13
