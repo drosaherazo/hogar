@@ -1,6 +1,6 @@
 # 0002 · Authentication: Google ID token, in-memory access token, rotating refresh token
 
-- **Status:** accepted; extended by ADR 0008 (email sign-in codes; Google no longer overwrites name and email)
+- **Status:** accepted; extended by ADR 0008 (email sign-in codes; Google no longer overwrites name and email) and ADR 0010 (`dev` also accepts preview origins)
 - **Date:** 2026-10-26
 
 ## Context
