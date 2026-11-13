@@ -65,6 +65,9 @@ Restart `pnpm dev` after editing `.env` files.
 
 ## Going to production
 
-- Add the production web origin (for example `https://hogar.vercel.app`) to **Authorized JavaScript origins**.
+- Add the deployed web origins to **Authorized JavaScript origins** of the same client:
+  - `https://hogar.therandomcollection.co` (production)
+  - `https://dev.hogar.therandomcollection.co` (the `dev` environment, ADR 0010)
+- Vercel previews get a new URL each time and Google accepts no wildcard origins, so previews sign in with a code only.
 - The rest of the production setup (`WEB_ORIGIN`, `COOKIE_SECURE`) is in [deploy.md](deploy.md).
 - Publish the app in **Audience** so anyone with a Google account can sign in (basic scopes don't require Google's verification review).
