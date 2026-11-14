@@ -107,7 +107,7 @@ Package guidance loads on demand from `apps/web/CLAUDE.md` (i18n) and `packages/
 
 ## Git workflow
 
-- One branch per feature and a PR to `main`. CI (format, lint, typecheck, tests with Postgres, builds, Cypress) MUST pass before merging. Once merged, the branch MUST be deleted on GitHub (`git push origin --delete <branch>`) and locally (`git branch -d <branch>`, then `git fetch --prune`).
+- One branch per feature and a PR to `main`. CI (format, lint, typecheck, tests with Postgres, builds, Cypress) MUST pass before merging. Once merged, GitHub deletes the branch on its own (the repository setting "Automatically delete head branches"); delete it locally with `git branch -d <branch>`, then `git fetch --prune`.
 - Small Conventional Commits in English (`feat(api): add expense split endpoint`). No AI attribution: no `Co-Authored-By` trailers and no "Generated with" footers.
 
 ## Agent skills
@@ -126,4 +126,4 @@ Standard scripts live in the root `package.json`. Non-obvious bits:
 - New worktree: `pnpm install` and copy `apps/api/.env` and `apps/web/.env` from the main folder; `pnpm db:up` reuses the shared containers.
 - Deploy: `docs/deploy.md` (`render.yaml`, `apps/web/vercel.json`, `packages/ui/vercel.json`). API production build: `pnpm --filter @hogar/api build`.
 
-**Version**: 5.0.2 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-13
+**Version**: 5.0.3 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-14
