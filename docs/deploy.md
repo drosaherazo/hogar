@@ -69,7 +69,7 @@ Vercel preview deployments get a different URL each time, and Google doesn't acc
 
 The API sends sign-in codes by email (ADR 0008). Render's free web services block outbound SMTP, so it uses [Resend](https://resend.com)'s HTTP API. The free plan sends 100 emails a day; past that, people see "we couldn't send the email" (`auth.email.send_failed`), and moving to a paid plan or another provider only touches the adapter in `apps/api/src/email/mailer.ts`.
 
-1. **Buy a domain** (about €10–15 a year at any registrar). It is the only paid dependency. Hogar uses `therandomcollection.co` for the web app (`hogar.` and `dev.hogar.`) and for the email sender.
+1. **Buy a domain** (about €10–15 a year at any registrar). It is the only paid dependency. Hogar uses `therandomcollection.co` for the web app (`hogar.` and `dev.hogar.`) and verifies `hogar.therandomcollection.co` in Resend for the email sender, so every sender address must end in `@hogar.therandomcollection.co`.
 2. In Resend, **Domains › Add domain**, region **EU (Ireland)**. Resend lists DNS records: the **SPF** (`TXT` and `MX` on a `send` subdomain) and **DKIM** (`TXT` `resend._domainkey`) records. Add them at the registrar exactly as shown, plus a DMARC record (`TXT` `_dmarc`, value `v=DMARC1; p=none;`) so inboxes trust the mail.
 3. Wait until Resend shows the domain as **Verified** (minutes to a few hours).
 4. **API Keys › Create API key** with _Sending access_ for that domain only.
@@ -127,7 +127,7 @@ The dashboard steps only you can do are guided by a wizard; they are, in order:
 1. **Neon:** a new project `hogar-dev` (Postgres 17, Frankfurt). Copy the direct connection string (pooling off).
 2. **Render:** sync the Blueprint, which creates `hogar-api-dev`. Fill `DATABASE_URL` (the `hogar-dev` string), `GOOGLE_CLIENT_ID` (the same Client ID), `RESEND_API_KEY` and `EMAIL_FROM`. If Render gives the service a suffixed URL, update the `dev` rewrite in `apps/web/vercel.json` and its test.
 3. **Vercel › Settings › Domains:** add `dev.hogar.therandomcollection.co` and assign it to the `dev` branch; at the registrar, add the `CNAME` Vercel shows. Check `VITE_GOOGLE_CLIENT_ID` is set for Preview, and that the old `hogar-virid-nine.vercel.app` redirects (308) to production.
-4. **Resend › API Keys:** a new key named `hogar-dev` with _Sending access_ to the domain, and a sender such as `Hogar dev <dev@therandomcollection.co>`.
+4. **Resend › API Keys:** a new key named `hogar-dev` with _Sending access_ to `hogar.therandomcollection.co`, and a sender such as `Hogar dev <dev@hogar.therandomcollection.co>`.
 5. **Google:** add `https://dev.hogar.therandomcollection.co` to the client's Authorized JavaScript origins.
 
 ## Client IP

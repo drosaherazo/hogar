@@ -85,6 +85,6 @@ services:
       # dev's own Resend key, revocable without touching production.
       - key: RESEND_API_KEY
         sync: false
-      # A sender marked dev, e.g. Hogar dev <dev@therandomcollection.co>
+      # A sender marked dev, e.g. Hogar dev <dev@hogar.therandomcollection.co>
       - key: EMAIL_FROM
         sync: false
