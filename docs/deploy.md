@@ -100,6 +100,12 @@ git push origin <branch>:dev --force
 
 Vercel and Render both deploy that commit within a few minutes, without waiting for CI, so a prototype that fails lint can still be tried; the branch's own PR runs CI. The `dev` branch is never merged, and anything on it can be overwritten at any time.
 
+Vercel doesn't deploy `dev` again for a commit it has already deployed: pushing `main` itself, or re-pushing what `dev` already has, leaves `dev.hogar…` unchanged (or answering `DEPLOYMENT_NOT_FOUND` if it was never deployed). To deploy `main` there, push an empty commit on top of it:
+
+```bash
+git push origin "$(git commit-tree 'origin/main^{tree}' -p origin/main -m 'chore: deploy dev')":refs/heads/dev --force
+```
+
 - **Single slot.** `dev` runs one branch at a time: two branches that change the API can't be tried at once. Previews, which also reach the `dev` API, suit web-only changes.
 - **Migrations.** The build applies the pushed branch's pending migrations. A branch whose migrations differ from what `dev` ran before needs a fresh database, or the API may fail on schema mismatches.
 - **Shared free-plan quotas.** Both Render services draw from the workspace's 750 hours a month (both sleep when idle), and `dev` and production share Resend's 100 emails a day.
