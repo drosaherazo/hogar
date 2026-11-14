@@ -107,7 +107,7 @@ git push origin "$(git commit-tree 'origin/main^{tree}' -p origin/main -m 'chore
 ```
 
 - **Single slot.** `dev` runs one branch at a time: two branches that change the API can't be tried at once. Previews, which also reach the `dev` API, suit web-only changes.
-- **Migrations.** The build applies the pushed branch's pending migrations. A branch whose migrations differ from what `dev` ran before needs a fresh database, or the API may fail on schema mismatches.
+- **Migrations.** The build applies the pushed branch's pending migrations. A branch whose migrations differ from what `dev` ran before needs a fresh database, or the API may fail on schema mismatches (see _Resetting the database_ below).
 - **Shared free-plan quotas.** Both Render services draw from the workspace's 750 hours a month (both sleep when idle), and `dev` and production share Resend's 100 emails a day.
 - **Previews.** Every Vercel preview of the project reaches the `dev` API too, so web-only changes of several branches can be tried in parallel (see _Previews_ below).
 - **Two people, one inbox.** Sign in on a second phone with a `+` address (`you+second@gmail.com`) to try two members and real-time updates.
@@ -120,11 +120,24 @@ Vercel builds a preview of every pushed branch (`https://hogar-git-<branch>-dros
 - **Whatever API is on `dev`.** A preview runs its own branch's web against the API and database of whatever branch was last pushed to `dev`. That is fine for web-only changes; a branch that also changes the API must be pushed to `dev` first.
 - **Behind Vercel's login.** Like `dev`, previews keep Standard Protection: sign in to Vercel on the device first.
 
+### Resetting the database
+
+The **Reset dev database** workflow empties `hogar-dev` and reapplies the migrations of whatever is on the `dev` branch. It never runs on its own and has no seed. Run it:
+
+- after pushing a branch whose migrations differ from what `dev` ran before (the API then fails on schema mismatches), or
+- whenever you want a blank slate: every person, household and expense on `dev` is deleted.
+
+```bash
+gh workflow run reset-dev-database.yml
+```
+
+Or from GitHub: **Actions › Reset dev database › Run workflow**. It reads the `DEV_DATABASE_URL` repository secret (the `hogar-dev` direct connection string) and touches no other database. Push the branch to `dev` first, so the reset applies that branch's migrations; signing in afterwards creates a new person.
+
 ### Setting it up
 
 The dashboard steps only you can do are guided by a wizard; they are, in order:
 
-1. **Neon:** a new project `hogar-dev` (Postgres 17, Frankfurt). Copy the direct connection string (pooling off).
+1. **Neon:** a new project `hogar-dev` (Postgres 17, Frankfurt). Copy the direct connection string (pooling off). The wizard also saves it as the `DEV_DATABASE_URL` repository secret, which the reset workflow uses.
 2. **Render:** sync the Blueprint, which creates `hogar-api-dev`. Fill `DATABASE_URL` (the `hogar-dev` string), `GOOGLE_CLIENT_ID` (the same Client ID), `RESEND_API_KEY` and `EMAIL_FROM`. If Render gives the service a suffixed URL, update the `dev` rewrite in `apps/web/vercel.json` and its test.
 3. **Vercel › Settings › Domains:** add `dev.hogar.therandomcollection.co` and assign it to the `dev` branch; at the registrar, add the `CNAME` Vercel shows. Check `VITE_GOOGLE_CLIENT_ID` is set for Preview, and that the old `hogar-virid-nine.vercel.app` redirects (308) to production.
 4. **Resend › API Keys:** a new key named `hogar-dev` with _Sending access_ to `hogar.therandomcollection.co`, and a sender such as `Hogar dev <dev@hogar.therandomcollection.co>`.
