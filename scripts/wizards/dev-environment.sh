@@ -247,7 +247,18 @@ step "Create. Then Connect → turn Connection pooling OFF."
 step "Copy the connection string (ends in ?sslmode=require). Keep it for stage 5."
 note "Migrations need the direct connection; the hostname must not contain -pooler."
 ask_secret DEV_DATABASE_URL "Paste it here (hidden), for the Reset dev database workflow:"
-set_secret DEV_DATABASE_URL "$DEV_DATABASE_URL"
+dev_db_host="${DEV_DATABASE_URL#*@}"; dev_db_host="${dev_db_host%%[/:?]*}"
+expected_db_host=$(sed -nE 's/^ *DEV_DATABASE_HOST: *//p' .github/workflows/reset-dev-database.yml)
+if [[ "$DEV_DATABASE_URL" != postgresql://* || "$dev_db_host" == *-pooler* ]]; then
+  warn "That isn't a direct connection string (postgresql://…, host without -pooler); not saved."
+  SKIPPED+=("GitHub secret DEV_DATABASE_URL (hogar-dev's direct connection string)")
+else
+  set_secret DEV_DATABASE_URL "$DEV_DATABASE_URL"
+  if [[ "$dev_db_host" != "$expected_db_host" ]]; then
+    warn "Its host, $dev_db_host, isn't the one the reset workflow expects ($expected_db_host)."
+    SKIPPED+=("set DEV_DATABASE_HOST in .github/workflows/reset-dev-database.yml to $dev_db_host")
+  fi
+fi
 pause
 
 # ── 4 ─────────────────────────────────────────────────────────────────────
