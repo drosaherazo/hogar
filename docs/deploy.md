@@ -131,7 +131,7 @@ The **Reset dev database** workflow empties `hogar-dev` and reapplies the migrat
 gh workflow run reset-dev-database.yml
 ```
 
-Or from GitHub: **Actions › Reset dev database › Run workflow**. It reads the `DEV_DATABASE_URL` repository secret (the `hogar-dev` direct connection string) and touches no other database. Push the branch to `dev` first, so the reset applies that branch's migrations; signing in afterwards creates a new person.
+Or from GitHub: **Actions › Reset dev database › Run workflow**. It reads the `DEV_DATABASE_URL` repository secret (the `hogar-dev` direct connection string) and refuses to run unless its host is `DEV_DATABASE_HOST`, written in the workflow, so a production string in the secret resets nothing. If the `hogar-dev` project is ever recreated, update the secret and `DEV_DATABASE_HOST` together. Push the branch to `dev` first, so the reset applies that branch's migrations; signing in afterwards creates a new person.
 
 ### Setting it up
 

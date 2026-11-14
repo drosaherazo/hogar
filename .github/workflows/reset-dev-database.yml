@@ -32,9 +32,18 @@ jobs:
         working-directory: apps/api
         env:
           DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+          # The direct (non-pooled) host of the hogar-dev Neon project. Not secret: the password is.
+          # Recreating that project changes it; update it here and in the secret together.
+          DEV_DATABASE_HOST: ep-misty-scene-b9i4cn8b.c-7.eu-central-1.aws.neon.tech
         run: |
           if [ -z "$DATABASE_URL" ]; then
             echo "::error::The DEV_DATABASE_URL secret is missing; see docs/deploy.md."
+            exit 1
+          fi
+          host="${DATABASE_URL#*@}"
+          host="${host%%[/:?]*}"
+          if [ "$host" != "$DEV_DATABASE_HOST" ]; then
+            echo "::error::DEV_DATABASE_URL doesn't point at $DEV_DATABASE_HOST, hogar-dev's direct host. Nothing was reset; see docs/deploy.md."
             exit 1
           fi
           pnpm exec prisma migrate reset --force
