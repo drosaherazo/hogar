@@ -135,7 +135,7 @@ Or from GitHub: **Actions › Reset dev database › Run workflow**. It reads th
 
 ### Setting it up
 
-The dashboard steps only you can do are guided by a wizard; they are, in order:
+The dashboard steps only you can do are guided by a wizard: run `bash scripts/wizards/dev-environment.sh` from the repository root (Git Bash on Windows). It opens each page, saves the `DEV_DATABASE_URL` secret through `gh`, and checks what it can. The steps are, in order:
 
 1. **Neon:** a new project `hogar-dev` (Postgres 17, Frankfurt). Copy the direct connection string (pooling off). The wizard also saves it as the `DEV_DATABASE_URL` repository secret, which the reset workflow uses.
 2. **Render:** sync the Blueprint, which creates `hogar-api-dev`. Fill `DATABASE_URL` (the `hogar-dev` string), `GOOGLE_CLIENT_ID` (the same Client ID), `RESEND_API_KEY` and `EMAIL_FROM`. If Render gives the service a suffixed URL, update the `dev` rewrite in `apps/web/vercel.json` and its test.
