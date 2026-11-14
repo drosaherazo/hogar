@@ -1,0 +1,40 @@
+name: Reset dev database
+
+# Empties the dev database and reapplies the migrations on the `dev` branch (ADR 0010).
+# Manual only: run it from the Actions tab or with `gh workflow run reset-dev-database.yml`.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reset-dev-database
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    name: Reset the dev database
+    runs-on: ubuntu-latest
+    env:
+      CYPRESS_INSTALL_BINARY: 0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @hogar/api...
+      - name: Reset and reapply migrations
+        working-directory: apps/api
+        env:
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::The DEV_DATABASE_URL secret is missing; see docs/deploy.md."
+            exit 1
+          fi
+          pnpm exec prisma migrate reset --force
