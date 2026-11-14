@@ -1,0 +1,36 @@
+name: No AI attribution
+
+# CLAUDE.md › Git workflow: no Co-Authored-By trailers and no "Generated with" footers.
+# Its own workflow so that editing a PR body re-runs only this check.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  attribution:
+    name: No AI attribution in commits or PR body
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check commit messages and PR body
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          pattern='Co-Authored-By: *(Claude|.*noreply@anthropic\.com)|Generated with \[?Claude Code'
+          status=0
+          if git log --format='%H%n%B' "$BASE..$HEAD" | grep -iEn "$pattern"; then
+            echo "::error::A commit message carries AI attribution. Reword it (git rebase) without the trailer."
+            status=1
+          fi
+          if printf '%s' "$PR_BODY" | grep -iEn "$pattern"; then
+            echo "::error::The PR body carries AI attribution. Edit the body to remove it."
+            status=1
+          fi
+          exit $status

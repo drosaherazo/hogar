@@ -98,7 +98,7 @@ Production data, sessions and tokens never reach `dev`: it has its own database 
 git push origin <branch>:dev --force
 ```
 
-Vercel and Render both deploy that commit within a few minutes, without waiting for CI, so a prototype that fails lint can still be tried; the branch's own PR runs CI. The `dev` branch is never merged, and anything on it can be overwritten at any time.
+Vercel and Render both deploy that commit within a few minutes, without waiting for CI, so a prototype that fails lint can still be tried; the branch's own PR runs CI. The `dev` branch is never merged, and anything on it can be overwritten at any time. Render reads `render.yaml` itself from `main`, so a change to a service's configuration (a new variable, a new command) reaches `hogar-api-dev` only once it is merged; to try one earlier, set it by hand in the service's **Environment**.
 
 Vercel doesn't deploy `dev` again for a commit it has already deployed: pushing `main` itself, or re-pushing what `dev` already has, leaves `dev.hogar…` unchanged (or answering `DEPLOYMENT_NOT_FOUND` if it was never deployed). To deploy `main` there, push an empty commit on top of it:
 
