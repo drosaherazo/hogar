@@ -3,6 +3,9 @@
 -- AlterTable
 ALTER TABLE "households" ADD COLUMN "currency" TEXT NOT NULL DEFAULT 'EUR';
 ALTER TABLE "households" ALTER COLUMN "currency" DROP DEFAULT;
+-- Always an ISO 4217 code. Which codes are listed stays in packages/shared, so adding a currency
+-- is one list entry and a test, never a migration.
+ALTER TABLE "households" ADD CONSTRAINT "households_currency_format" CHECK ("currency" ~ '^[A-Z]{3}$');
 
 -- The maximum amount is now 1,000,000,000 minor units in every currency (a year of rent in
 -- Colombian pesos is about 30,000,000), mirroring MAX_AMOUNT_UNITS in packages/shared.

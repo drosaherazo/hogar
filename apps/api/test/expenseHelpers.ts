@@ -34,7 +34,7 @@ export async function homeWith(
 ) {
   const [anaWeight, brunoWeight] = options.weights ?? [3, 1];
   const anaSession = await signIn(app);
-  const household: HouseholdView = await createHousehold(app, anaSession, undefined, options.currency);
+  const household: HouseholdView = await createHousehold(app, anaSession, "Casa Ana", options.currency);
   const ana: Member = { ...anaSession, membershipId: household.myMembershipId };
   await db.membership.update({ where: { id: ana.membershipId }, data: { weight: anaWeight } });
 
