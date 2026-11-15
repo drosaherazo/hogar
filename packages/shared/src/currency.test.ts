@@ -220,6 +220,7 @@ describe("suggestCurrency", () => {
     [["hi-IN"], "INR"],
     [["es-PA"], "PAB"],
     [["en-ZW"], "ZWG"],
+    [["en-LS"], "ZAR"],
     [["zh-Hant-TW"], "TWD"],
   ])("suggests from the device region (%j → %s)", (languages, code) => {
     expect(suggestCurrency(languages)).toBe(code);
@@ -244,9 +245,11 @@ describe("regionsUsing", () => {
     expect(regionsUsing("KWD")).toEqual(["KW"]);
   });
 
-  it("counts a region with several currencies only for the first one CLDR lists", () => {
-    // Panama has balboas and US dollars; CLDR lists balboas first.
+  it("counts a region with several currencies for every one of them", () => {
     expect(regionsUsing("PAB")).toEqual(["PA"]);
-    expect(regionsUsing("USD")).not.toContain("PA");
+    expect(regionsUsing("USD")).toEqual(expect.arrayContaining(["PA", "ZW"]));
+    expect(regionsUsing("ZWG")).toEqual(["ZW"]);
+    expect(regionsUsing("LSL")).toEqual(["LS"]);
+    expect(regionsUsing("ZAR")).toEqual(expect.arrayContaining(["ZA", "LS", "NA"]));
   });
 });

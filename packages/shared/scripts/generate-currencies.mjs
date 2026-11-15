@@ -34,7 +34,9 @@ const { currencies, regions } = buildCurrencyTable(currencyData, previousCurrenc
 const currencyLines = Object.entries(currencies).map(
   ([code, { decimals, retired }]) => `  ${code}: { decimals: ${decimals}${retired ? ", retired: true" : ""} },`,
 );
-const regionLines = Object.entries(regions).map(([region, code]) => `  ${region}: "${code}",`);
+const regionLines = Object.entries(regions).map(
+  ([region, codes]) => `  ${region}: [${codes.map((code) => `"${code}"`).join(", ")}],`,
+);
 
 writeFileSync(
   target,
@@ -53,8 +55,11 @@ export const CURRENCIES = {
 ${currencyLines.join("\n")}
 } as const;
 
-/** Region (ISO 3166 alpha-2) → the currency to suggest there: the first one in force, in CLDR's order. */
-export const CURRENCY_BY_REGION = {
+/**
+ * Region (ISO 3166 alpha-2) → every currency in force and legal tender there, in CLDR's order.
+ * The first is the one suggested there; all of them are found by searching the region's name.
+ */
+export const CURRENCIES_BY_REGION = {
 ${regionLines.join("\n")}
 } as const;
 `,

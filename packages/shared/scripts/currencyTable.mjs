@@ -49,8 +49,9 @@ const sortedByKey = (record) => Object.fromEntries(Object.entries(record).sort((
  * @param currencyData CLDR's `supplemental.currencyData` (`fractions` and `region`).
  * @param previous The table generated last time: a code in it that CLDR no longer lists is kept,
  *   as retired, so no household's currency ever disappears.
- * @returns `currencies` (code → decimals, plus `retired`) and `regions` (region → the currency to
- *   suggest there), both sorted by key so diffs stay small.
+ * @returns `currencies` (code → decimals, plus `retired`) and `regions` (region → every currency
+ *   in force there, in CLDR's order; the first is the one to suggest), both sorted by key so diffs
+ *   stay small.
  */
 export function buildCurrencyTable(currencyData, previous) {
   const { fractions, region } = currencyData;
@@ -59,7 +60,7 @@ export function buildCurrencyTable(currencyData, previous) {
   for (const [regionCode, list] of Object.entries(region)) {
     const current = entriesOf(list).filter(([, entry]) => inForce(entry));
     for (const [code] of current) currencies[code] ??= { decimals: decimalsOf(code, fractions) };
-    if (current.length > 0) regions[regionCode] = current[0][0];
+    if (current.length > 0) regions[regionCode] = current.map(([code]) => code);
   }
   for (const [code, { decimals }] of Object.entries(previous)) {
     const now = currencies[code];

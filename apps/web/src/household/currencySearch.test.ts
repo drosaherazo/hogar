@@ -43,6 +43,21 @@ describe("createCurrencySearch", () => {
     ]);
   });
 
+  it("finds every currency in force in a country, not only the one suggested there", () => {
+    expect(english("panama")).toEqual([
+      { code: "PAB", name: "Panamanian Balboa" },
+      { code: "USD", name: "US Dollar", country: "Panama" },
+    ]);
+    expect(english("zimbabwe")).toEqual([
+      { code: "USD", name: "US Dollar", country: "Zimbabwe" },
+      { code: "ZWG", name: "Zimbabwean Gold" },
+    ]);
+    expect(spanish("lesoto")).toEqual([
+      { code: "LSL", name: "loti lesotense", country: "Lesoto" },
+      { code: "ZAR", name: "rand sudafricano", country: "Lesoto" },
+    ]);
+  });
+
   it("says nothing about countries when the name or code already matched", () => {
     expect(english("kuwait")).toEqual([{ code: "KWD", name: "Kuwaiti Dinar" }]);
     expect(english("euro")).toContainEqual({ code: "EUR", name: "Euro" });

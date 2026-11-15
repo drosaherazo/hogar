@@ -16,7 +16,7 @@ Unicode CLDR, the data behind `Intl` in every browser, records for each currency
 - **Decimals: `cashDigits` when CLDR has it, otherwise `digits`.** Exceptions where everyday use still differs live in the generator, each with its reason: ARS, KHR, NGN, CDF, MWK and SSP with 0 (minor units nobody uses, which also raises their one-amount cap a hundredfold) and SEK, NOK and CZK with 2 (card and shelf prices like "29,90" are everyday use even though cash rounds to whole units). Currencies with 3 decimals (KWD, BHD, JOD, OMR, TND, LYD) are supported, so a currency has 0, 2 or 3 decimals.
 - **Generated, not read at runtime:** `cldr-core` is a dev dependency of `packages/shared`; a `.mjs` script writes a static table that is committed with the CLDR version in its header. Updating is bumping `cldr-core`, running the script and reviewing the diff. Web and API never load CLDR itself.
 - **A listed code is never removed.** When CLDR withdraws a currency, the generator marks it retired: households already using it keep working and their amounts display as before, but it is no longer offered when creating a household or changing its currency; if CLDR lists it again, it is offered again. A test fails if a code disappears from the table, and the generator refuses to change the decimals of a listed code, which would rescale stored amounts (an exception keeps them instead).
-- **Suggestion from the device region uses CLDR's region → currency data.** Where a region has several currencies in force (Panama: PAB and USD), the first one CLDR lists is suggested; unknown regions still get EUR.
+- **Suggestion from the device region uses CLDR's region → currency data.** Where a region has several currencies in force (Panama: PAB and USD), the first one CLDR lists is suggested; unknown regions still get EUR. Searching by a country finds every currency in force and legal tender there ("Panamá" → PAB and USD).
 - **One maximum stays for every currency:** 1,000,000,000 minor units per amount, so schemas validate without knowing the currency. For very low-value currencies this caps one amount low (IRR, about US$1,000 at market rate); a larger expense can be split in two.
 
 ## Considered options
@@ -32,5 +32,5 @@ Unicode CLDR, the data behind `Intl` in every browser, records for each currency
 
 - ADR 0011's hand-curated list is superseded; its other decisions (one currency per household, fixed after the first money record, practical decimals, writes carrying the currency seen, formatting by language plus region, one maximum) stand.
 - The constitution's rule II says the list is generated from CLDR.
-- Choosing among ~155 currencies needs a searchable `Combobox` (by name, ISO code or country) in `packages/ui`, built on `react-aria` (ADR 0013).
+- Choosing among 153 currencies needs a searchable `Combobox` (by name, ISO code or country) in `packages/ui`, built on `react-aria` (ADR 0013).
 - Adding or fixing a currency means regenerating or adding a documented exception, never editing the table by hand.
