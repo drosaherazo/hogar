@@ -1,6 +1,7 @@
 import { authResponseSchema, STARTER_ADJECTIVES, STARTER_ANIMALS } from "@hogar/shared";
-import request from "supertest";
+import type { Response } from "supertest";
 import { describe, expect, it } from "vitest";
+import { request } from "./request";
 import { ana, createTestApp, db, signIn, WEB_ORIGIN, type RecordingMailer } from "./testApp";
 
 type App = ReturnType<typeof createTestApp>["app"];
@@ -26,7 +27,7 @@ function codeFrom(mailer: RecordingMailer, email: string): string {
 /** A 6-digit code that is not `code`. */
 const wrongCode = (code: string) => String((Number(code) + 1) % 1_000_000).padStart(6, "0");
 
-function refreshCookieFrom(res: request.Response): string {
+function refreshCookieFrom(res: Response): string {
   const cookie = ([] as string[]).concat(res.headers["set-cookie"] ?? []).find((c) => c.startsWith("hogar_refresh="));
   if (!cookie) throw new Error("No refresh cookie in response");
   return cookie.split(";")[0] ?? "";

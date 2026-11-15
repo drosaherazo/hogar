@@ -1,4 +1,3 @@
-import request from "supertest";
 import { describe, expect, it } from "vitest";
 import {
   addExpense,
@@ -11,6 +10,7 @@ import {
   putSettlement,
   TODAY,
 } from "./expenseHelpers";
+import { request } from "./request";
 import { createTestApp, db } from "./testApp";
 
 /**

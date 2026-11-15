@@ -1,7 +1,7 @@
 import { authResponseSchema, authUserSchema } from "@hogar/shared";
-import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { createAccessTokenSigner } from "../src/auth/tokens";
+import { request } from "./request";
 import { ana, config, createTestApp, db, WEB_ORIGIN } from "./testApp";
 
 async function loginAsAna(app: ReturnType<typeof createTestApp>["app"]) {

@@ -1,5 +1,4 @@
 import { categoryResponseSchema, expenseResponseSchema, STARTER_CATEGORIES } from "@hogar/shared";
-import request from "supertest";
 import { describe, expect, it } from "vitest";
 import {
   addCategory,
@@ -22,6 +21,7 @@ import {
   homeWithGuest,
   sharesByUser,
 } from "./expenseHelpers";
+import { request } from "./request";
 import { createHousehold } from "./householdHelpers";
 import { carla, createTestApp, dani, db, signIn } from "./testApp";
 

@@ -1,12 +1,13 @@
 import { authResponseSchema, STARTER_ADJECTIVES, STARTER_ANIMALS } from "@hogar/shared";
-import request from "supertest";
+import type { Response } from "supertest";
 import { describe, expect, it } from "vitest";
 import { createAccessTokenSigner, hashSecretToken } from "../src/auth/tokens";
+import { request } from "./request";
 import { ana, config, createTestApp, db, WEB_ORIGIN } from "./testApp";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function refreshCookieFrom(res: request.Response): string {
+function refreshCookieFrom(res: Response): string {
   const cookies = ([] as string[]).concat(res.headers["set-cookie"] ?? []);
   const cookie = cookies.find((value) => value.startsWith("hogar_refresh="));
   if (!cookie) throw new Error("No refresh cookie in response");

@@ -1,5 +1,5 @@
-import request from "supertest";
 import { describe, expect, it } from "vitest";
+import { request } from "./request";
 import { createTestApp, WEB_ORIGIN } from "./testApp";
 
 // ADR 0010: on `dev`, the API also accepts the origins of the project's Vercel previews.
