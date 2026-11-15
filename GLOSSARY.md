@@ -65,6 +65,10 @@ How one expense was divided: by the **household split**, **equally** among chose
 The one currency all of a household's money is in. Every expense, share, payment and balance in a household uses it; money in two currencies never mixes. An admin can change it only until the household records its first expense or payment; from then on it is fixed.
 _Avoid_: money type, coin
 
+**Retired currency**:
+A currency that is no longer in use anywhere. A household that already has it keeps it and works as before, but nobody can choose it for a new household or switch to it.
+_Avoid_: old currency, deprecated currency
+
 **Expense**:
 Money one person paid for the household, with a description, an amount, a date and how it is split. A deleted expense keeps its trace in the history but no longer counts.
 _Avoid_: purchase, transaction, bill

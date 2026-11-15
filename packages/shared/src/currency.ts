@@ -1,51 +1,51 @@
 import { z } from "zod";
 import type { ErrorCode } from "./errors";
+import { CURRENCIES, CURRENCY_BY_REGION } from "./generated/currencies";
 import type { Locale } from "./locale";
 
 /**
- * The currencies a household can use (ADR 0011), each with the decimals people actually use.
- * That starts from ISO 4217 but departs from it where everyday use differs: nobody pays in
- * Colombian or Argentine centavos, so COP and ARS are kept, split and shown in whole pesos.
- * Amounts are always whole numbers of the currency's minor unit (a cent, or a peso for COP).
+ * The currencies a household can use (ADRs 0011, 0014): every currency in force and legal tender
+ * somewhere, generated from Unicode CLDR with the decimals people actually use (CLDR's cash
+ * decimals, so Colombian pesos and yen have none; Kuwaiti dinars have three). Amounts are always
+ * whole numbers of the currency's minor unit (a cent, a fils, or a peso for COP).
  */
-const DECIMALS = {
-  EUR: 2,
-  USD: 2,
-  GBP: 2,
-  CHF: 2,
-  MXN: 2,
-  BRL: 2,
-  PEN: 2,
-  COP: 0,
-  CLP: 0,
-  ARS: 0,
-} as const;
+export type CurrencyCode = keyof typeof CURRENCIES;
+/** Every listed code, retired ones included: what stored households and money records may hold. */
+export const CURRENCY_CODES = Object.keys(CURRENCIES) as CurrencyCode[];
 
-export type CurrencyCode = keyof typeof DECIMALS;
-export const CURRENCY_CODES = Object.keys(DECIMALS) as CurrencyCode[];
+/** A currency no longer in force anywhere: households that have it keep it, nobody can pick it. */
+export function isRetired(code: CurrencyCode): boolean {
+  return "retired" in CURRENCIES[code];
+}
+
+/** The codes offered when creating a household or changing its currency. */
+export const OFFERED_CURRENCY_CODES = CURRENCY_CODES.filter((code) => !isRetired(code));
 
 export interface Currency {
   code: CurrencyCode;
   /** Digits after the decimal separator: how many minor units make a major one (2 → 100). */
-  decimals: 0 | 2;
+  decimals: 0 | 2 | 3;
 }
 
-/** A listed currency code, exactly as written in ISO 4217 ("COP"). */
-export const currencyCodeSchema = z.enum(CURRENCY_CODES as [CurrencyCode, ...CurrencyCode[]], {
-  error: "money.currency.invalid" satisfies ErrorCode,
-});
+const invalid = { error: "money.currency.invalid" satisfies ErrorCode };
+
+/** A listed currency code, exactly as written in ISO 4217 ("COP"), retired ones included. */
+export const currencyCodeSchema = z.enum(CURRENCY_CODES as [CurrencyCode, ...CurrencyCode[]], invalid);
+
+/** A currency someone can choose now: listed and not retired. */
+export const offeredCurrencyCodeSchema = z.enum(OFFERED_CURRENCY_CODES as [CurrencyCode, ...CurrencyCode[]], invalid);
 
 export function currency(code: CurrencyCode): Currency {
-  return { code, decimals: DECIMALS[code] };
+  return { code, decimals: CURRENCIES[code].decimals };
 }
 
 /**
- * Whole units, digits only, with an optional decimal part of one or two digits after a comma or a
- * point. Either separator works in both languages; thousands separators don't, because "1.200"
- * would mean different things to different people. Up to nine whole digits, which is already
- * beyond any amount the API accepts.
+ * Whole units, digits only, with an optional decimal part of up to the currency's decimals after a
+ * comma or a point. Either separator works in both languages; thousands separators don't, because
+ * "1.200" would mean different things to different people. Up to nine whole digits, which is
+ * already beyond any amount the API accepts.
  */
-const WITH_DECIMALS = /^(\d{1,9})(?:[.,](\d{1,2}))?$/;
+const WITH_DECIMALS = { 2: /^(\d{1,9})(?:[.,](\d{1,2}))?$/, 3: /^(\d{1,9})(?:[.,](\d{1,3}))?$/ };
 
 /**
  * Whole units only. With no decimal part possible, a point or a comma can only group thousands
@@ -64,7 +64,7 @@ export function parseAmount(text: string, currency: Currency): number | null {
   if (currency.decimals === 0) {
     return WITHOUT_DECIMALS.test(trimmed) ? Number(trimmed.replace(/[.,]/g, "")) : null;
   }
-  const match = WITH_DECIMALS.exec(trimmed);
+  const match = WITH_DECIMALS[currency.decimals].exec(trimmed);
   if (!match) return null;
   const [, whole = "0", decimals = ""] = match;
   return Number(whole) * 10 ** currency.decimals + Number(decimals.padEnd(currency.decimals, "0"));
@@ -82,32 +82,6 @@ export function amountInputValue(units: number, currency: Currency, language: Lo
   return `${Math.trunc(units / scale)}${language === "es" ? "," : "."}${decimals}`;
 }
 
-const EURO_REGIONS = [
-  // Euro area members (Bulgaria joined in 2026)…
-  ["AT", "BE", "BG", "CY", "DE", "EE", "ES", "FI", "FR", "GR", "HR", "IE", "IT", "LT", "LU", "LV", "MT", "NL"],
-  ["PT", "SI", "SK"],
-  // …and places that use the euro without being members.
-  ["AD", "MC", "ME", "SM", "VA", "XK"],
-].flat();
-
-/** Region (ISO 3166 alpha-2) → the listed currency people there spend. */
-const CURRENCY_BY_REGION: Readonly<Record<string, CurrencyCode>> = {
-  ...Object.fromEntries(EURO_REGIONS.map((region) => [region, "EUR"])),
-  US: "USD",
-  EC: "USD",
-  SV: "USD",
-  PR: "USD",
-  GB: "GBP",
-  CH: "CHF",
-  LI: "CHF",
-  MX: "MXN",
-  BR: "BRL",
-  PE: "PEN",
-  CO: "COP",
-  CL: "CLP",
-  AR: "ARS",
-};
-
 /**
  * The currency to suggest when someone creates a household: the first device language whose
  * region is known (`["es", "es-CO"]` → COP), or euros when none is.
@@ -115,8 +89,22 @@ const CURRENCY_BY_REGION: Readonly<Record<string, CurrencyCode>> = {
 export function suggestCurrency(languages: readonly string[]): CurrencyCode {
   for (const language of languages) {
     const region = /^[a-z]{2,3}(?:-[a-z]{4})?-([a-z]{2})\b/i.exec(language)?.[1]?.toUpperCase();
-    const code = region ? CURRENCY_BY_REGION[region] : undefined;
+    const code = region ? (CURRENCY_BY_REGION as Readonly<Record<string, CurrencyCode>>)[region] : undefined;
     if (code) return code;
   }
   return "EUR";
+}
+
+const REGIONS_BY_CURRENCY = new Map<CurrencyCode, string[]>();
+for (const [region, code] of Object.entries(CURRENCY_BY_REGION) as [string, CurrencyCode][]) {
+  REGIONS_BY_CURRENCY.set(code, [...(REGIONS_BY_CURRENCY.get(code) ?? []), region]);
+}
+
+/**
+ * The regions (ISO 3166 alpha-2) whose currency this is: the region → currency map reversed, so a
+ * region with several currencies counts only for the one suggested there. Lets people find a
+ * currency by country.
+ */
+export function regionsUsing(code: CurrencyCode): readonly string[] {
+  return REGIONS_BY_CURRENCY.get(code) ?? [];
 }

@@ -128,7 +128,7 @@ describe("the currency on an expense", () => {
   it("is required, and only a listed one", () => {
     const { currency: _, ...withoutCurrency } = groceries;
     expect(codeOf(expenseInputSchema.safeParse(withoutCurrency))).toBe("money.currency.invalid");
-    expect(codeOf(expenseInputSchema.safeParse({ ...groceries, currency: "JPY" }))).toBe("money.currency.invalid");
+    expect(codeOf(expenseInputSchema.safeParse({ ...groceries, currency: "XAU" }))).toBe("money.currency.invalid");
     expect(expenseInputSchema.parse({ ...groceries, currency: "COP" }).currency).toBe("COP");
   });
 });
@@ -170,7 +170,7 @@ describe("settlementInputSchema", () => {
   it("requires the currency the person saw the amount in", () => {
     const { currency: _, ...withoutCurrency } = payment;
     expect(codeOf(settlementInputSchema.safeParse(withoutCurrency))).toBe("money.currency.invalid");
-    expect(codeOf(settlementInputSchema.safeParse({ ...payment, currency: "JPY" }))).toBe("money.currency.invalid");
+    expect(codeOf(settlementInputSchema.safeParse({ ...payment, currency: "XAU" }))).toBe("money.currency.invalid");
   });
 
   it("validates the amount and the date", () => {

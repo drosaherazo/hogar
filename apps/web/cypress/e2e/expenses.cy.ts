@@ -201,7 +201,7 @@ describe("Expenses", () => {
     cy.contains("button", "Crear un hogar").click();
     cy.get("[role=dialog]").within(() => {
       cy.contains("label", "Moneda").click();
-      cy.focused().find("option:selected").should("have.text", "peso colombiano");
+      cy.focused().should("have.value", "peso colombiano");
       cy.contains("label", "Nombre del hogar").click();
       cy.focused().type("Casa Bogotá");
       cy.contains("button", "Crear hogar").click();

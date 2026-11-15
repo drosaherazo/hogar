@@ -7,6 +7,7 @@ import { Amount, formatAmount, type AmountCurrency } from "./Amount";
 const EUR: AmountCurrency = { code: "EUR", decimals: 2 };
 const USD: AmountCurrency = { code: "USD", decimals: 2 };
 const COP: AmountCurrency = { code: "COP", decimals: 0 };
+const KWD: AmountCurrency = { code: "KWD", decimals: 3 };
 
 // Intl separates "€" and "COP" with a no-break space; written here as \u00a0 so the expectations are exact.
 describe("formatAmount", () => {
@@ -30,6 +31,11 @@ describe("formatAmount", () => {
   it("formats whole pesos, never with decimals", () => {
     expect(formatAmount(10_000, COP, "en")).toBe("COP\u00a010,000");
     expect(formatAmount(10_000, COP, "es")).toBe("10.000\u00a0COP");
+  });
+
+  it("keeps every fils, with three decimals", () => {
+    expect(formatAmount(1250, KWD, "en")).toBe("KWD\u00a01.250");
+    expect(formatAmount(5, KWD, "es")).toBe("0,005\u00a0KWD");
   });
 });
 
