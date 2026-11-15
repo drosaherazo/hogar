@@ -33,6 +33,10 @@
   transition: border-color var(--duration-fast) var(--easing-standard);
 }
 
+.select:active:not(:disabled) {
+  background-color: var(--color-surface-sunken);
+}
+
 .select:focus-visible {
   outline: var(--focus-ring-width) solid var(--color-focus);
   outline-offset: var(--border-width);

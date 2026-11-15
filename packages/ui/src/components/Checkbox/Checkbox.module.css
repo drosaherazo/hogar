@@ -15,6 +15,10 @@
   cursor: pointer;
 }
 
+.label:active:not(:has(.input:disabled)) .input {
+  transform: scale(0.92);
+}
+
 /* The native box, tinted with the accent; its check mark carries the meaning. */
 .input {
   flex: none;

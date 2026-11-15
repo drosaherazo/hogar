@@ -17,6 +17,7 @@ import {
   useUpdateCategory,
   useUpdateCategorySplit,
 } from "../../expenses/useCategories";
+import { moveToNextField } from "../../forms/moveToNextField";
 import { sharesForDrafts, WeightsEditor } from "../../household/WeightsEditor";
 import { useList, usePercent } from "../../i18n/format";
 import styles from "./CategoryDialog.module.css";
@@ -178,7 +179,13 @@ export function CategoryDialog({ household, category, onClose, onDone }: Categor
         </>
       }
     >
-      <form id="category-form" className={styles.form} onSubmit={(event) => void submit(event)} noValidate>
+      <form
+        id="category-form"
+        className={styles.form}
+        onSubmit={(event) => void submit(event)}
+        onKeyDown={moveToNextField}
+        noValidate
+      >
         {failure !== null && <Alert tone="danger">{t(errorKey(failure))}</Alert>}
         <TextField
           ref={nameField}
@@ -186,6 +193,7 @@ export function CategoryDialog({ household, category, onClose, onDone }: Categor
           value={name}
           maxLength={30}
           autoComplete="off"
+          enterKeyHint="next"
           onChange={(event) => setName(event.target.value)}
           error={fieldError("name")}
         />
@@ -194,6 +202,7 @@ export function CategoryDialog({ household, category, onClose, onDone }: Categor
           hint={t("settings.categories.dialog.emojiHint")}
           value={emoji}
           autoComplete="off"
+          enterKeyHint="done"
           className={styles.emoji}
           onChange={(event) => setEmoji(event.target.value)}
           error={fieldError("emoji")}

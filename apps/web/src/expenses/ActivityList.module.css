@@ -50,7 +50,8 @@
   transition: background-color var(--duration-fast) var(--easing-standard);
 }
 
-.link:hover {
+.link:hover,
+.link:active {
   background-color: var(--color-surface-sunken);
 }
 

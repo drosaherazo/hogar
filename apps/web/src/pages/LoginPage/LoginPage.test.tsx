@@ -111,6 +111,23 @@ describe("LoginPage: signing in with a code", () => {
     expect(router.state.location.pathname).toBe("/");
   });
 
+  it("brings up the email keyboard with autofill, and each enter key says what it does", async () => {
+    installFakeGoogle();
+    server.use(handlers.emailCode(), handlers.emailSignIn("482913"));
+    renderApp({ path: "/login" });
+
+    const emailField = await screen.findByRole("textbox", { name: "Email" });
+    expect(emailField).toHaveAttribute("type", "email");
+    expect(emailField).toHaveAttribute("autocomplete", "email");
+    expect(emailField).toHaveAttribute("enterkeyhint", "send");
+    await userEvent.type(emailField, "lucia@example.com{Enter}");
+
+    const codeField = await screen.findByRole("textbox", { name: "Code" });
+    expect(codeField).toHaveAttribute("enterkeyhint", "go");
+    await userEvent.type(codeField, "482913{Enter}");
+    expect(await screen.findByRole("heading", { level: 1, name: "Hi, Ana" })).toBeInTheDocument();
+  });
+
   it("explains a badly formed address next to the field without sending anything", async () => {
     installFakeGoogle();
     const requests: unknown[] = [];
