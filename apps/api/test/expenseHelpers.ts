@@ -62,6 +62,22 @@ export async function homeWithGuest(app: App, options: { weights?: [number, numb
   return { ...home, carla: home.carla };
 }
 
+/**
+ * Bodies as tests write them: the currency the form would send is filled in with the household's
+ * own unless a test sets it, so only currency tests need to think about it.
+ */
+type WithCurrency<T> = Omit<T, "currency"> & { currency?: CurrencyCode | undefined };
+
+/** The currency of `who`'s household, what a form shows; EUR for someone without one. */
+async function currencyOf(who: SignedIn): Promise<CurrencyCode> {
+  const membership = await db.membership.findUnique({ where: { userId: who.user.id }, include: { household: true } });
+  return (membership?.household.currency as CurrencyCode | undefined) ?? "EUR";
+}
+
+async function withCurrency<T extends { currency?: CurrencyCode | undefined }>(who: SignedIn, body: T) {
+  return { ...body, currency: body.currency ?? (await currencyOf(who)) };
+}
+
 export type PreviewShares = { userId: string; amountCents: number }[];
 
 /**
@@ -94,17 +110,20 @@ export async function previewSharesFor(
   return sharing.map((member, index) => ({ userId: member.userId, amountCents: amounts[index] ?? 0 }));
 }
 
-/** Sends an expense exactly as given, without filling in the previewed shares. */
-export function postExpenseAsIs(app: App, who: SignedIn, body: ExpenseInput) {
-  return request(app).post("/api/household/expenses").set("Authorization", who.auth).send(body);
+/** Sends an expense as given, without filling in the previewed shares (only the currency). */
+export async function postExpenseAsIs(app: App, who: SignedIn, body: WithCurrency<ExpenseInput>) {
+  return request(app)
+    .post("/api/household/expenses")
+    .set("Authorization", who.auth)
+    .send(await withCurrency(who, body));
 }
 
 /**
  * Records an expense (household split, paid by `who`, today, unless overridden). A default
  * split without `previewShares` gets the ones the form would have shown, as the web does.
  */
-export async function postExpense(app: App, who: SignedIn, input: Partial<ExpenseInput>) {
-  const body: ExpenseInput = {
+export async function postExpense(app: App, who: SignedIn, input: Partial<WithCurrency<ExpenseInput>>) {
+  const body: WithCurrency<ExpenseInput> = {
     description: "Groceries",
     amountCents: 4280,
     paidById: who.user.id,
@@ -120,18 +139,22 @@ export async function postExpense(app: App, who: SignedIn, input: Partial<Expens
 }
 
 /** Records an expense through the API (household split, paid by `who`, today) and returns it. */
-export async function addExpense(app: App, who: SignedIn, input: Partial<ExpenseInput> = {}): Promise<ExpenseView> {
+export async function addExpense(
+  app: App,
+  who: SignedIn,
+  input: Partial<WithCurrency<ExpenseInput>> = {},
+): Promise<ExpenseView> {
   const res = await postExpense(app, who, input);
   if (res.status !== 201) throw new Error(`addExpense failed: ${res.status} ${JSON.stringify(res.body)}`);
   return expenseResponseSchema.parse(res.body).expense;
 }
 
-export function postSettlement(
+export async function postSettlement(
   app: App,
   who: SignedIn,
-  input: Partial<SettlementInput> & Pick<SettlementInput, "fromUserId" | "toUserId">,
+  input: Partial<WithCurrency<SettlementInput>> & Pick<SettlementInput, "fromUserId" | "toUserId">,
 ) {
-  const body: SettlementInput = { amountCents: 1000, date: TODAY, ...input };
+  const body = await withCurrency(who, { amountCents: 1000, date: TODAY, ...input });
   return request(app).post("/api/household/settlements").set("Authorization", who.auth).send(body);
 }
 
@@ -139,7 +162,7 @@ export function postSettlement(
 export async function addSettlement(
   app: App,
   who: SignedIn,
-  input: Partial<SettlementInput> & Pick<SettlementInput, "fromUserId" | "toUserId">,
+  input: Partial<WithCurrency<SettlementInput>> & Pick<SettlementInput, "fromUserId" | "toUserId">,
 ): Promise<SettlementView> {
   const res = await postSettlement(app, who, input);
   if (res.status !== 201) throw new Error(`addSettlement failed: ${res.status} ${JSON.stringify(res.body)}`);
@@ -147,7 +170,7 @@ export async function addSettlement(
 }
 
 /** The input that would save `expense` as it is: the starting point for an edit. */
-export function inputOf(expense: ExpenseView): ExpenseInput {
+export function inputOf(expense: ExpenseView): WithCurrency<ExpenseInput> {
   const people = expense.split.shares.map((share) => share.person.userId);
   return {
     description: expense.description,
@@ -170,8 +193,16 @@ export function inputOf(expense: ExpenseView): ExpenseInput {
   };
 }
 
-export function putExpense(app: App, who: SignedIn, id: string, body: ExpenseInput & { version: number }) {
-  return request(app).put(`/api/household/expenses/${id}`).set("Authorization", who.auth).send(body);
+export async function putExpense(
+  app: App,
+  who: SignedIn,
+  id: string,
+  body: WithCurrency<ExpenseInput> & { version: number },
+) {
+  return request(app)
+    .put(`/api/household/expenses/${id}`)
+    .set("Authorization", who.auth)
+    .send(await withCurrency(who, body));
 }
 
 export function deleteExpense(app: App, who: SignedIn, id: string, version?: number) {
@@ -179,8 +210,16 @@ export function deleteExpense(app: App, who: SignedIn, id: string, version?: num
   return request(app).delete(`/api/household/expenses/${id}`).query(query).set("Authorization", who.auth);
 }
 
-export function putSettlement(app: App, who: SignedIn, id: string, body: SettlementInput & { version: number }) {
-  return request(app).put(`/api/household/settlements/${id}`).set("Authorization", who.auth).send(body);
+export async function putSettlement(
+  app: App,
+  who: SignedIn,
+  id: string,
+  body: WithCurrency<SettlementInput> & { version: number },
+) {
+  return request(app)
+    .put(`/api/household/settlements/${id}`)
+    .set("Authorization", who.auth)
+    .send(await withCurrency(who, body));
 }
 
 export function deleteSettlement(app: App, who: SignedIn, id: string, version?: number) {

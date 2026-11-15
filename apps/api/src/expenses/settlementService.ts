@@ -1,7 +1,7 @@
 import type { SettlementInput, SettlementView, UpdateSettlementInput } from "@hogar/shared";
 import type { Database } from "../db";
 import type { Membership, Settlement } from "../generated/prisma/client";
-import { lockHousehold } from "../household/householdService";
+import { assertHouseholdCurrency, lockHousehold } from "../household/householdService";
 import { badRequest, conflict, notFound } from "../httpError";
 import { assertNotFuture, fromCalendarDate, toCalendarDate } from "./dates";
 import {
@@ -80,6 +80,7 @@ export function createSettlementService({ db, now = () => new Date() }: Settleme
         await lockHousehold(tx, actor.householdId);
         const members = await currentMembers(tx, actor.householdId);
         assertStillEditor(members, actor);
+        await assertHouseholdCurrency(tx, actor.householdId, input.currency);
         await assertInHousehold(tx, actor.householdId, members, input.fromUserId);
         await assertInHousehold(tx, actor.householdId, members, input.toUserId);
         const row = await tx.settlement.create({
@@ -104,6 +105,7 @@ export function createSettlementService({ db, now = () => new Date() }: Settleme
         await lockHousehold(tx, actor.householdId);
         const members = await currentMembers(tx, actor.householdId);
         assertStillEditor(members, actor);
+        await assertHouseholdCurrency(tx, actor.householdId, input.currency);
         const existing = await current(tx, actor.householdId, settlementId, input.version);
         // The people already in this payment may stay, even if they've left since.
         const keep = new Set([existing.fromUserId, existing.toUserId]);

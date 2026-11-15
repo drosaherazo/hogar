@@ -2,6 +2,7 @@ import {
   checkAdminInvariant,
   resolveLocale,
   type CreateHouseholdRequest,
+  type CurrencyCode,
   type CurrentHousehold,
   type HouseholdView,
   type MembershipChange,
@@ -21,6 +22,16 @@ import { HOUSEHOLD_VIEW_INCLUDE, toHouseholdView } from "./householdView";
  */
 export async function lockHousehold(tx: Prisma.TransactionClient, householdId: string) {
   await tx.$queryRaw`SELECT id FROM households WHERE id = ${householdId} FOR UPDATE`;
+}
+
+/**
+ * Refuses money sent in a currency other than the household's (ADR 0011). Call it after
+ * `lockHousehold`: the currency can't change until the transaction ends, and a change that
+ * committed first is the one read here.
+ */
+export async function assertHouseholdCurrency(tx: Prisma.TransactionClient, householdId: string, shown: CurrencyCode) {
+  const { currency } = await tx.household.findUniqueOrThrow({ where: { id: householdId }, select: { currency: true } });
+  if (currency !== shown) throw conflict("money.currency.mismatch");
 }
 
 /**
@@ -118,9 +129,12 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
      */
     async update(householdId: string, viewerUserId: string, changes: UpdateHouseholdRequest): Promise<HouseholdView> {
       await db.$transaction(async (tx) => {
-        const [current] = await tx.$queryRaw<{ currency: string }[]>`
-          SELECT currency FROM households WHERE id = ${householdId} FOR UPDATE`;
-        if (changes.currency !== undefined && changes.currency !== current?.currency) {
+        await lockHousehold(tx, householdId);
+        const current = await tx.household.findUniqueOrThrow({
+          where: { id: householdId },
+          select: { currency: true },
+        });
+        if (changes.currency !== undefined && changes.currency !== current.currency) {
           const records =
             (await tx.expense.count({ where: { householdId } })) +
             (await tx.settlement.count({ where: { householdId } }));
