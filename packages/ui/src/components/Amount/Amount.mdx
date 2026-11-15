@@ -16,7 +16,7 @@ An amount in the household's currency, written the way each language writes mone
 
 ## Why it's designed this way
 - **Money arrives as whole minor units** (cents, or pesos for a currency without decimals) and becomes a figure only here, for display. Nothing in Hogar calculates with decimals, so a cent can't drift.
-- **The currency comes from the app,** with the decimals people actually use: Colombian pesos show no centavos, because nobody pays in them, so the shares on screen always add up to the total.
+- **The currency comes from the app,** with the decimals people actually use: Colombian pesos show no centavos, because nobody pays in them, and Kuwaiti dinars show three (fils), so the shares on screen always add up to the total.
 - **Formatted with `Intl` and the formatting locale:** the symbol, its position, the decimal comma and the thousands separator follow the person's language plus their device region when it speaks that language, never a hand-built string. A Colombian sees "$ 85.000", someone in Spain "85.000 COP" for the same pesos, and an English speaker "COP 85,000", never a bare "$" that could read as dollars.
 - **Tabular numbers:** every digit is the same width, so amounts in a column line up and are easy to compare.
 - **No sign, no color:** whether someone owes or is owed is said in words by the text around it, so the figure never has to carry that meaning alone.
@@ -33,6 +33,7 @@ An amount in the household's currency, written the way each language writes mone
 
 ## Variants
 <Canvas of={AmountStories.WholePesos} />
+<Canvas of={AmountStories.ThreeDecimals} />
 <Canvas of={AmountStories.InASentence} />
 <Canvas of={AmountStories.LinedUp} />
 
@@ -50,7 +51,7 @@ Un importe en la moneda del hogar, escrito como cada idioma escribe el dinero: �
 
 ## Por qué está diseñado así
 - **El dinero llega en unidades mínimas enteras** (céntimos, o pesos en una moneda sin decimales) y solo aquí se convierte en cifra, para mostrarlo. En Hogar nada calcula con decimales, así que no se pierde ni un céntimo.
-- **La moneda la decide la app,** con los decimales que la gente usa de verdad: los pesos colombianos no muestran centavos, porque nadie paga con ellos, así las partes en pantalla siempre suman el total.
+- **La moneda la decide la app,** con los decimales que la gente usa de verdad: los pesos colombianos no muestran centavos, porque nadie paga con ellos, y los dinares kuwaitíes muestran tres (fils), así las partes en pantalla siempre suman el total.
 - **Formateado con `Intl` y el locale de formato:** el símbolo, su posición, la coma decimal y el separador de miles siguen el idioma de la persona más la región de su dispositivo cuando habla ese idioma, nunca una cadena montada a mano. Una persona en Colombia ve "$ 85.000", alguien en España "85.000 COP" para los mismos pesos, y quien usa inglés "COP 85,000", nunca un "$" solo que pueda leerse como dólares.
 - **Números tabulares:** todas las cifras tienen el mismo ancho, así los importes de una columna se alinean y se comparan fácilmente.
 - **Sin signo ni color:** si alguien debe o le deben lo dice con palabras el texto de alrededor, así la cifra nunca tiene que llevar ese significado sola.
@@ -67,6 +68,7 @@ Un importe en la moneda del hogar, escrito como cada idioma escribe el dinero: �
 
 ## Variantes
 <Canvas of={AmountStories.WholePesos} />
+<Canvas of={AmountStories.ThreeDecimals} />
 <Canvas of={AmountStories.InASentence} />
 <Canvas of={AmountStories.LinedUp} />
 

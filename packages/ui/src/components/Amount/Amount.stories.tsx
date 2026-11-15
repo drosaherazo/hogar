@@ -5,6 +5,7 @@ import { Amount, type AmountCurrency } from "./Amount";
 
 const EUR: AmountCurrency = { code: "EUR", decimals: 2 };
 const COP: AmountCurrency = { code: "COP", decimals: 0 };
+const KWD: AmountCurrency = { code: "KWD", decimals: 3 };
 
 const meta = {
   title: "Components/Amount",
@@ -21,6 +22,9 @@ export const Default: Story = {};
 
 /** Colombian pesos have no decimals in everyday use: COP 85,000 in English, 85.000 COP in Spanish. */
 export const WholePesos: Story = { args: { units: 85_000, currency: COP } };
+
+/** Kuwaiti dinars have three decimals (fils): KWD 1.250 in English, 1,250 KWD in Spanish. */
+export const ThreeDecimals: Story = { args: { units: 1250, currency: KWD } };
 
 /**
  * The same pesos on a device in Colombia: the formatting locale adds the device region to the
