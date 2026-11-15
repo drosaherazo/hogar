@@ -9,9 +9,19 @@
  * this list, never an edit of the generated table.
  */
 export const DECIMAL_EXCEPTIONS = {
-  // Centavos are unused under Argentina's inflation; with two decimals the single maximum would
-  // also cap one amount far too low.
-  ARS: 0,
+  // Minor units unused in practice: nobody prices or pays in them. With two decimals the single
+  // maximum (1,000,000,000 minor units) would also cap one amount a hundred times lower.
+  ARS: 0, // centavos, under Argentina's inflation
+  KHR: 0, // Cambodian riel: no sen in circulation
+  NGN: 0, // Nigerian kobo
+  CDF: 0, // Congolese centimes
+  MWK: 0, // Malawian tambala
+  SSP: 0, // South Sudanese piasters
+  // Cash rounds to whole units (CLDR's cash decimals are 0), but card payments and shelf prices
+  // like "29,90" are everyday use, so a shared expense must keep them.
+  SEK: 2, // Swedish öre
+  NOK: 2, // Norwegian øre
+  CZK: 2, // Czech haléře
 };
 
 /** The decimals the app's parsing, splitting and formatting handle. */

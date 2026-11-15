@@ -25,25 +25,32 @@ describe("buildCurrencyTable", () => {
     const { currencies } = buildCurrencyTable(
       cldr({
         fractions: {
-          SEK: { _rounding: "0", _digits: "2", _cashRounding: "0", _cashDigits: "0" },
+          CRC: { _rounding: "0", _digits: "2", _cashRounding: "0", _cashDigits: "0" },
           JPY: { _rounding: "0", _digits: "0" },
           KWD: { _rounding: "0", _digits: "3" },
         },
-        region: { SE: [{ SEK: {} }], JP: [{ JPY: {} }], KW: [{ KWD: {} }], US: [{ USD: {} }] },
+        region: { CR: [{ CRC: {} }], JP: [{ JPY: {} }], KW: [{ KWD: {} }], US: [{ USD: {} }] },
       }),
       {},
     );
     expect(currencies).toEqual({
       JPY: { decimals: 0 },
       KWD: { decimals: 3 },
-      SEK: { decimals: 0 },
+      CRC: { decimals: 0 },
       USD: { decimals: 2 },
     });
   });
 
-  it("keeps Argentine pesos whole, the documented exception to CLDR", () => {
-    const { currencies } = buildCurrencyTable(cldr({ region: { AR: [{ ARS: { _from: "1992-01-01" } }] } }), {});
-    expect(currencies.ARS).toEqual({ decimals: 0 });
+  it("applies the documented exceptions where everyday use differs from CLDR", () => {
+    const { currencies } = buildCurrencyTable(
+      cldr({
+        fractions: { SEK: { _rounding: "0", _digits: "2", _cashRounding: "0", _cashDigits: "0" } },
+        region: { AR: [{ ARS: {} }], NG: [{ NGN: {} }], SE: [{ SEK: {} }] },
+      }),
+      {},
+    );
+    // Whole pesos and naira (minor units unused); Swedish öre kept for card and shelf prices.
+    expect(currencies).toEqual({ ARS: { decimals: 0 }, NGN: { decimals: 0 }, SEK: { decimals: 2 } });
   });
 
   it("refuses to write a currency with decimals the app can't handle", () => {
@@ -67,12 +74,12 @@ describe("buildCurrencyTable", () => {
     expect(() =>
       buildCurrencyTable(
         cldr({
-          fractions: { SEK: { _rounding: "0", _digits: "2", _cashDigits: "0" } },
-          region: { SE: [{ SEK: {} }] },
+          fractions: { CRC: { _rounding: "0", _digits: "2", _cashDigits: "0" } },
+          region: { CR: [{ CRC: {} }] },
         }),
-        { SEK: { decimals: 2 } },
+        { CRC: { decimals: 2 } },
       ),
-    ).toThrow(/SEK.*2.*0/);
+    ).toThrow(/CRC.*2.*0/);
   });
 
   it("brings a retired code back when CLDR lists it again", () => {

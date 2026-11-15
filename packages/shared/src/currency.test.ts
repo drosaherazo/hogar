@@ -35,9 +35,12 @@ const EVER_LISTED = `
 
 describe("the currency table generated from CLDR", () => {
   it("records the decimals people actually use: CLDR's cash decimals, then ISO, then documented exceptions", () => {
-    const picked = ["EUR", "USD", "GBP", "MXN", "BRL", "JPY", "KRW", "COP", "CLP", "ARS", "HUF", "SEK", "CZK"] as const;
+    const picked = ["EUR", "USD", "GBP", "MXN", "BRL", "JPY", "KRW", "COP", "CLP", "HUF", "CRC"] as const;
+    const exceptions = ["ARS", "KHR", "NGN", "CDF", "MWK", "SSP", "SEK", "NOK", "CZK"] as const;
     const threes = ["KWD", "BHD", "JOD", "OMR", "TND", "LYD"] as const;
-    expect(Object.fromEntries([...picked, ...threes].map((code) => [code, currency(code).decimals]))).toEqual({
+    expect(
+      Object.fromEntries([...picked, ...exceptions, ...threes].map((code) => [code, currency(code).decimals])),
+    ).toEqual({
       EUR: 2,
       USD: 2,
       GBP: 2,
@@ -47,12 +50,20 @@ describe("the currency table generated from CLDR", () => {
       KRW: 0,
       COP: 0,
       CLP: 0,
-      // ISO says 2; nobody uses centavos (exception in the generator).
-      ARS: 0,
       HUF: 0,
-      // CLDR's cash decimals: no öre or haléř coins in circulation.
-      SEK: 0,
-      CZK: 0,
+      // CLDR's cash decimals: no céntimos in circulation.
+      CRC: 0,
+      // Exceptions in the generator: minor units nobody uses…
+      ARS: 0,
+      KHR: 0,
+      NGN: 0,
+      CDF: 0,
+      MWK: 0,
+      SSP: 0,
+      // …and ones card and shelf prices still use although cash rounds them away.
+      SEK: 2,
+      NOK: 2,
+      CZK: 2,
       KWD: 3,
       BHD: 3,
       JOD: 3,
