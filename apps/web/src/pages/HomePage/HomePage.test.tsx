@@ -177,6 +177,28 @@ describe("HomePage", () => {
       expect(await screen.findByRole("button", { name: "Crear un hogar" })).toBeEnabled();
     });
 
+    it("shows a currency the API refused under the currency, not the name", async () => {
+      deviceLanguages("en-GB");
+      server.use(
+        handlers.signedIn(),
+        handlers.noHousehold(),
+        http.post("*/api/household", () => apiError(400, "money.currency.invalid")),
+      );
+      renderApp({ path: "/" });
+
+      await userEvent.click(await screen.findByRole("button", { name: "Create a household" }));
+      const dialog = await screen.findByRole("dialog");
+      const name = within(dialog).getByRole("textbox", { name: "Household name" });
+      const currency = within(dialog).getByRole("combobox", { name: "Currency" });
+      await userEvent.type(name, "Casa Ana");
+      await userEvent.click(within(dialog).getByRole("button", { name: "Create household" }));
+
+      await waitFor(() => expect(currency).toHaveAttribute("aria-invalid", "true"));
+      expect(currency).toHaveAccessibleDescription(expect.stringContaining("Choose a currency from the list."));
+      expect(currency).toHaveFocus();
+      expect(name).not.toHaveAttribute("aria-invalid");
+    });
+
     it("has no accessibility violations", async () => {
       server.use(handlers.signedIn(), handlers.noHousehold());
       const { container } = renderApp({ path: "/" });
