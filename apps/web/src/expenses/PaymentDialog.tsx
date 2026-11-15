@@ -17,7 +17,6 @@ import { useTranslation } from "react-i18next";
 import { errorKey } from "../api/client";
 import { useCurrentUser } from "../auth/guards";
 import { localToday, useCurrency, useDates, useMoney } from "../i18n/format";
-
 import styles from "./PaymentDialog.module.css";
 import { avatarPropsFor, usePersonLabel } from "./people";
 import { useCreateSettlement, useDeleteSettlement, useSettlement, useUpdateSettlement } from "./useExpenses";

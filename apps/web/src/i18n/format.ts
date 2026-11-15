@@ -21,8 +21,8 @@ export function usePercent() {
 /** Minor units in the household's currency, for sentences ("You owe {{amount}}"); standalone figures use `Money`. */
 export function useMoney() {
   const locale = useLocale();
-  const money = useCurrency();
-  return useMemo(() => (units: number) => formatAmount(units, money, locale), [locale, money]);
+  const currency = useCurrency();
+  return useMemo(() => (units: number) => formatAmount(units, currency, locale), [locale, currency]);
 }
 
 /** "Ana 75 % y Bruno 25 %": a list joined the way the active language joins lists. */

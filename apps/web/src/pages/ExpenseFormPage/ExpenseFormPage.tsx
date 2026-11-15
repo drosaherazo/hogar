@@ -259,7 +259,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
         )
       : null;
 
-  // Exact amounts: empty fields count as €0.00; anything unreadable blocks saving.
+  // Exact amounts: empty fields count as zero; anything unreadable blocks saving.
   const exactCents = people.map((person) => {
     const text = exactTexts[person.userId]?.trim() ?? "";
     return text === "" ? 0 : parseAmount(text, currency);

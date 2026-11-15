@@ -1,6 +1,5 @@
 import type { ActivityItem } from "@hogar/shared";
 import { Button } from "@hogar/ui";
-import { Money } from "./Money";
 import clsx from "clsx";
 import { HandCoins, ReceiptText, Trash2 } from "lucide-react";
 import { useId } from "react";
@@ -9,6 +8,7 @@ import { Link } from "react-router";
 import { useDates, useMoney } from "../i18n/format";
 import styles from "./ActivityList.module.css";
 import { CategoryLabel } from "./CategoryLabel";
+import { Money } from "./Money";
 import { usePersonLabel } from "./people";
 
 export interface ActivityListProps {

@@ -1,12 +1,12 @@
 import { canEditContent, type ExpenseView, type MemberView } from "@hogar/shared";
 import { Alert, Avatar, Badge, Button, Card, Dialog, Spinner } from "@hogar/ui";
-import { Money } from "../../expenses/Money";
 import { ArrowLeft, Check, Pencil, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router";
 import { errorKey } from "../../api/client";
 import { CategoryLabel } from "../../expenses/CategoryLabel";
+import { Money } from "../../expenses/Money";
 import { avatarPropsFor } from "../../expenses/people";
 import { useDeleteExpense, useExpense } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";

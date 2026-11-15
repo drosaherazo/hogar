@@ -19,6 +19,7 @@ describe("formatAmount", () => {
     expect(formatAmount(1, EUR, "en")).toBe("€0.01");
     expect(formatAmount(1000, EUR, "es")).toBe("10,00\u00a0€");
     expect(formatAmount(10_000_000, EUR, "en")).toBe("€100,000.00");
+    expect(formatAmount(10_000_000, EUR, "es")).toBe("100.000,00 €");
   });
 
   it("formats other two-decimal currencies", () => {
@@ -47,9 +48,11 @@ describe("Amount", () => {
     render(
       <LocaleProvider locale="es">
         <Amount units={85_000} currency={COP} />
+        <Amount units={4280} currency={USD} />
       </LocaleProvider>,
     );
     expect(screen.getByText("85.000 COP")).toBeInTheDocument();
+    expect(screen.getByText("42,80 US$")).toBeInTheDocument();
   });
 
   it("falls back to English outside a provider", () => {
@@ -62,10 +65,10 @@ describe("Amount", () => {
     expect(screen.getByText("€10.70")).toHaveClass("amount");
   });
 
-  it("has no accessibility violations", async () => {
+  it.each([EUR, USD, COP])("has no accessibility violations in $code", async (currency) => {
     const { container } = render(
       <p>
-        Bruno owes you <Amount units={1070} currency={COP} />
+        Bruno owes you <Amount units={1070} currency={currency} />
       </p>,
     );
     await expectNoA11yViolations(container);
