@@ -50,5 +50,12 @@
       "title": "Parece que no tienes conexión",
       "description": "Seguiremos en cuanto vuelvas a tener conexión."
     }
+  },
+  "update": {
+    "action": "Actualizar",
+    "required": {
+      "title": "Hogar se ha actualizado",
+      "description": "Actualiza para seguir. Lo que no hayas guardado no se puede conservar."
+    }
   }
 }

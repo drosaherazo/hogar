@@ -121,3 +121,20 @@ _Avoid_: OTP, PIN, magic code
 **Wake-up screen**:
 What people see while the server wakes from sleep: a short sequence of friendly stages and tips, then an offer to try again if it takes too long.
 _Avoid_: loading screen, spinner, splash
+
+## Using the app
+
+**Installed app**:
+Hogar opened from the home screen or the desktop, in its own window instead of a browser tab. It is the only way Hogar keeps a household's data on the device.
+_Avoid_: native app, mobile app
+
+**Offline view**:
+What the installed app shows without a connection: the last data it loaded, at most seven days old, with when it is from, and nothing that can be changed until the connection is back.
+_Avoid_: offline mode, cache
+
+**Update notice**:
+The quiet message saying a new version of Hogar is ready, which the person can accept now or leave for the next time they open the app.
+
+**Required update**:
+The screen that can't be skipped when the version a person is running no longer works with the server; it explains that unsaved changes can't be kept and offers to update.
+_Avoid_: forced reload, outdated screen

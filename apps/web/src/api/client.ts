@@ -1,4 +1,6 @@
 import {
+  API_VERSION,
+  API_VERSION_HEADER,
   activityPageSchema,
   apiErrorSchema,
   authResponseSchema,
@@ -78,6 +80,8 @@ export class ApiClient {
   private refreshing: Promise<AuthResponse> | null = null;
 
   private readonly sessionExpiredListeners = new Set<() => void>();
+  private outdated = false;
+  private readonly outdatedListeners = new Set<() => void>();
 
   constructor(
     private readonly baseUrl = "/api",
@@ -88,6 +92,20 @@ export class ApiClient {
   onSessionExpired(listener: () => void): () => void {
     this.sessionExpiredListeners.add(listener);
     return () => this.sessionExpiredListeners.delete(listener);
+  }
+
+  /**
+   * Runs `listener` the first time the API answers `client.outdated`: this build is too old for the
+   * server, and the app must show the required update screen.
+   */
+  onOutdated(listener: () => void): () => void {
+    this.outdatedListeners.add(listener);
+    return () => this.outdatedListeners.delete(listener);
+  }
+
+  /** Whether the API has said this build is too old for it. It never goes back to false. */
+  get isOutdated() {
+    return this.outdated;
   }
 
   get hasAccessToken() {
@@ -329,7 +347,10 @@ export class ApiClient {
 
   async request<T = void>(path: string, options: RequestOptions<T> = {}, isRetry = false): Promise<T> {
     const { method = "GET", body, schema, authenticated = true, signal } = options;
-    const headers: Record<string, string> = { Accept: "application/json" };
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      [API_VERSION_HEADER]: String(API_VERSION),
+    };
     if (body !== undefined) headers["Content-Type"] = "application/json";
     if (authenticated && this.accessToken) headers["Authorization"] = `Bearer ${this.accessToken}`;
 
@@ -356,11 +377,21 @@ export class ApiClient {
       return this.request(path, options, true);
     }
 
-    if (!response.ok) throw await toError(response);
+    if (!response.ok) {
+      const error = await toError(response);
+      if (error.code === "client.outdated") this.reportOutdated();
+      throw error;
+    }
     if (!schema || response.status === 204) return undefined as T;
     const parsed = schema.safeParse(await response.json());
     if (!parsed.success) throw new ApiRequestError("server.unexpected", response.status);
     return parsed.data;
+  }
+
+  private reportOutdated() {
+    if (this.outdated) return;
+    this.outdated = true;
+    this.outdatedListeners.forEach((listener) => listener());
   }
 }
 

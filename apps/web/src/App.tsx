@@ -18,6 +18,7 @@ import { HomePage } from "./pages/HomePage/HomePage";
 import { HouseholdSettingsPage } from "./pages/HouseholdSettingsPage/HouseholdSettingsPage";
 import { InvitePage } from "./pages/InvitePage/InvitePage";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
+import { RequiredUpdateGate } from "./update/RequiredUpdate";
 
 export interface AppConfig {
   googleClientId: string | undefined;
@@ -74,11 +75,13 @@ export function AppProviders({ i18n, client, children }: AppProvidersProps) {
   return (
     <I18nextProvider i18n={i18n}>
       <UiLocale>
-        <QueryClientProvider client={queryClient}>
-          <ApiClientProvider client={client}>
-            <AuthProvider client={client}>{children}</AuthProvider>
-          </ApiClientProvider>
-        </QueryClientProvider>
+        <RequiredUpdateGate client={client}>
+          <QueryClientProvider client={queryClient}>
+            <ApiClientProvider client={client}>
+              <AuthProvider client={client}>{children}</AuthProvider>
+            </ApiClientProvider>
+          </QueryClientProvider>
+        </RequiredUpdateGate>
       </UiLocale>
     </I18nextProvider>
   );

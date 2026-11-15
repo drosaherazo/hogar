@@ -1,6 +1,6 @@
 import { authResponseSchema } from "@hogar/shared";
-import request from "supertest";
 import { describe, expect, it } from "vitest";
+import { request } from "./request";
 import { ana, createTestApp, db, WEB_ORIGIN } from "./testApp";
 
 type App = ReturnType<typeof createTestApp>["app"];

@@ -1,3 +1,4 @@
+export * from "./apiVersion";
 export * from "./auth";
 export * from "./balances";
 export * from "./categories";

@@ -1,11 +1,11 @@
 import { authResponseSchema, type AuthUser } from "@hogar/shared";
-import request from "supertest";
 import { afterAll, beforeEach } from "vitest";
 import { createApp } from "../src/app";
 import type { GoogleIdentity, GoogleVerifier } from "../src/auth/googleVerifier";
 import type { EmailMessage, Mailer } from "../src/email/mailer";
 import type { Config } from "../src/config";
 import { createDatabase } from "../src/db";
+import { request } from "./request";
 
 try {
   process.loadEnvFile();

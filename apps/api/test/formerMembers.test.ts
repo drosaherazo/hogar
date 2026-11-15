@@ -1,5 +1,4 @@
 import { activityPageSchema, createdInvitationSchema } from "@hogar/shared";
-import request from "supertest";
 import { describe, expect, it } from "vitest";
 import {
   addExpense,
@@ -15,6 +14,7 @@ import {
   putSettlement,
   TODAY,
 } from "./expenseHelpers";
+import { request } from "./request";
 import { createTestApp, type SignedIn } from "./testApp";
 
 type App = ReturnType<typeof createTestApp>["app"];

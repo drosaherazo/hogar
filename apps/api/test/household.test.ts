@@ -1,6 +1,6 @@
 import { currentHouseholdSchema, householdResponseSchema } from "@hogar/shared";
-import request from "supertest";
 import { describe, expect, it } from "vitest";
+import { request } from "./request";
 import { addExpense, addSettlement, deleteExpense, homeWith } from "./expenseHelpers";
 import { addMember, createHousehold, householdRow } from "./householdHelpers";
 import { bruno, carla, createTestApp, db, signIn } from "./testApp";
