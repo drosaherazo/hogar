@@ -5,7 +5,7 @@ export type { Locale, LocaleProviderProps } from "./locale/LocaleProvider";
 export { Alert } from "./components/Alert/Alert";
 export type { AlertProps } from "./components/Alert/Alert";
 export { Amount, formatAmount } from "./components/Amount/Amount";
-export type { AmountProps } from "./components/Amount/Amount";
+export type { AmountCurrency, AmountProps } from "./components/Amount/Amount";
 export { Avatar, initialsOf } from "./components/Avatar/Avatar";
 export type { AvatarProps, MemberColorIndex } from "./components/Avatar/Avatar";
 export { Badge } from "./components/Badge/Badge";

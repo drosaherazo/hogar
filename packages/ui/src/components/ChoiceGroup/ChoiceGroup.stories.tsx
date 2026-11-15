@@ -80,7 +80,11 @@ export const Multiple: Story = {
         onChange={setValue}
         options={["Ana García", "Bruno Díaz", "Carla Ruiz"].map((name) => {
           const id = name.split(" ")[0]?.toLowerCase() ?? name;
-          return { value: id, label: name, trailing: value.includes(id) ? <Amount cents={share} /> : undefined };
+          return {
+            value: id,
+            label: name,
+            trailing: value.includes(id) ? <Amount units={share} currency={{ code: "EUR", decimals: 2 }} /> : undefined,
+          };
         })}
       />
     );

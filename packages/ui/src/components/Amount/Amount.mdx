@@ -12,10 +12,11 @@ import * as AmountStories from "./Amount.stories";
 <Controls of={AmountStories.Default} />
 
 ## What it is and when to use it
-A euro amount, written the way each language writes money: €42.80 in English, 42,80 € in Spanish. Use it wherever an amount stands on its own, such as a list of expenses or a share. Inside a translated sentence ("Bruno owes you €10.70"), the app uses `formatAmount`, the same formatting as a function.
+An amount in the household's currency, written the way each language writes money: €42.80 in English, 42,80 € in Spanish, 85.000 COP for Colombian pesos. Use it wherever an amount stands on its own, such as a list of expenses or a share. Inside a translated sentence ("Bruno owes you €10.70"), the app uses `formatAmount`, the same formatting as a function.
 
 ## Why it's designed this way
-- **Money arrives as whole cents** and becomes euros only here, for display. Nothing in Hogar calculates with decimals, so a cent can't drift.
+- **Money arrives as whole minor units** (cents, or pesos for a currency without decimals) and becomes a figure only here, for display. Nothing in Hogar calculates with decimals, so a cent can't drift.
+- **The currency comes from the app,** with the decimals people actually use: Colombian pesos show no centavos, because nobody pays in them, so the shares on screen always add up to the total.
 - **Formatted with `Intl` and the active locale:** the symbol, its position, the decimal comma and the thousands separator follow the person's language, never a hand-built string.
 - **Tabular numbers:** every digit is the same width, so amounts in a column line up and are easy to compare.
 - **No sign, no color:** whether someone owes or is owed is said in words by the text around it, so the figure never has to carry that meaning alone.
@@ -31,6 +32,7 @@ A euro amount, written the way each language writes money: €42.80 in English, 
 - No copy of its own: the surrounding words come from the app.
 
 ## Variants
+<Canvas of={AmountStories.WholePesos} />
 <Canvas of={AmountStories.InASentence} />
 <Canvas of={AmountStories.LinedUp} />
 
@@ -44,10 +46,11 @@ A euro amount, written the way each language writes money: €42.80 in English, 
 <Controls of={AmountStories.Default} />
 
 ## Qué es y cuándo usarlo
-Un importe en euros, escrito como cada idioma escribe el dinero: €42.80 en inglés, 42,80 € en español. Úsalo donde un importe aparezca solo, como una lista de gastos o una parte. Dentro de una frase traducida ("Bruno te debe 10,70 €"), la app usa `formatAmount`, el mismo formato como función.
+Un importe en la moneda del hogar, escrito como cada idioma escribe el dinero: €42.80 en inglés, 42,80 € en español, 85.000 COP para pesos colombianos. Úsalo donde un importe aparezca solo, como una lista de gastos o una parte. Dentro de una frase traducida ("Bruno te debe 10,70 €"), la app usa `formatAmount`, el mismo formato como función.
 
 ## Por qué está diseñado así
-- **El dinero llega en céntimos enteros** y solo aquí se convierte en euros, para mostrarlo. En Hogar nada calcula con decimales, así que no se pierde ni un céntimo.
+- **El dinero llega en unidades mínimas enteras** (céntimos, o pesos en una moneda sin decimales) y solo aquí se convierte en cifra, para mostrarlo. En Hogar nada calcula con decimales, así que no se pierde ni un céntimo.
+- **La moneda la decide la app,** con los decimales que la gente usa de verdad: los pesos colombianos no muestran centavos, porque nadie paga con ellos, así las partes en pantalla siempre suman el total.
 - **Formateado con `Intl` y el idioma activo:** el símbolo, su posición, la coma decimal y el separador de miles siguen el idioma de la persona, nunca una cadena montada a mano.
 - **Números tabulares:** todas las cifras tienen el mismo ancho, así los importes de una columna se alinean y se comparan fácilmente.
 - **Sin signo ni color:** si alguien debe o le deben lo dice con palabras el texto de alrededor, así la cifra nunca tiene que llevar ese significado sola.
@@ -63,6 +66,7 @@ Un importe en euros, escrito como cada idioma escribe el dinero: €42.80 en ing
 - Sin textos propios: las palabras de alrededor vienen de la app.
 
 ## Variantes
+<Canvas of={AmountStories.WholePesos} />
 <Canvas of={AmountStories.InASentence} />
 <Canvas of={AmountStories.LinedUp} />
 
