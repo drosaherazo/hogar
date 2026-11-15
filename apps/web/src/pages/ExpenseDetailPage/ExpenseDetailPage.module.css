@@ -31,9 +31,10 @@
   justify-self: start;
 }
 
+/* The total stays a step larger than the description at every width. */
 .title {
   margin: 0;
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
   overflow-wrap: anywhere;
@@ -41,7 +42,8 @@
 
 /*
  * Key figure: bold is allowed here. On phones it is a step smaller so "1.284.000 COP" fits on one
- * line; at 200 % text it may still break as a last resort rather than widen the page.
+ * line; at 200 % text it may still break as a last resort rather than widen the page. The child
+ * selector outranks `Amount`'s own `white-space: nowrap`, whatever order the stylesheets load in.
  */
 .header > .total {
   font-size: var(--font-size-2xl);
@@ -51,6 +53,10 @@
 }
 
 @media (min-width: 48rem) {
+  .title {
+    font-size: var(--font-size-2xl);
+  }
+
   .header > .total {
     font-size: var(--font-size-3xl);
   }
