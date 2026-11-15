@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useLocale, type Locale } from "../../locale/LocaleProvider";
+import { useFormattingLocale } from "../../locale/LocaleProvider";
 import styles from "./Amount.module.css";
 
 /**
@@ -16,11 +16,11 @@ const formatters = new Map<string, Intl.NumberFormat>();
 
 /**
  * Formats a whole number of minor units (cents, or pesos for a currency without decimals) for a
- * locale ("€42.80" / "42,80 €" / "10.000 COP"). Money is kept in minor units everywhere and only
+ * formatting locale, a BCP 47 tag ("€42.80" in `en`, "42,80 €" in `es`, "$ 10.000" pesos in `es-CO`). Money is kept in minor units everywhere and only
  * turned into a figure here, for display. Use it to put amounts inside translated sentences; use
  * `Amount` for standalone figures.
  */
-export function formatAmount(units: number, currency: AmountCurrency, locale: Locale): string {
+export function formatAmount(units: number, currency: AmountCurrency, locale: string): string {
   const key = `${locale}|${currency.code}|${currency.decimals}`;
   let formatter = formatters.get(key);
   if (!formatter) {
@@ -45,8 +45,8 @@ export interface AmountProps {
   className?: string | undefined;
 }
 
-/** An amount of money in the active locale, with tabular numbers so figures line up in lists. */
+/** An amount of money in the active formatting locale, with tabular numbers so figures line up in lists. */
 export function Amount({ units, currency, className }: AmountProps) {
-  const locale = useLocale();
+  const locale = useFormattingLocale();
   return <span className={clsx(styles.amount, className)}>{formatAmount(units, currency, locale)}</span>;
 }

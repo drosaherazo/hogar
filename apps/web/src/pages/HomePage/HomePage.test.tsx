@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it, vi } from "vitest";
@@ -236,6 +236,24 @@ describe("HomePage", () => {
       expect(within(money).getByRole("link", { name: "See expenses" })).toHaveAttribute("href", "/expenses");
       expect(within(money).getByRole("link", { name: "See balances" })).toHaveAttribute("href", "/balances");
       expect(within(money).getByRole("link", { name: "Add expense" })).toHaveAttribute("href", "/expenses/new");
+    });
+
+    it("writes money the way the device's region does, and follows a language change at once", async () => {
+      deviceLanguages("es-CO", "en");
+      const pesos = { ...shared, currency: "COP" as const };
+      server.use(
+        handlers.signedIn(),
+        handlers.household(pesos),
+        handlers.balances(balancesView({ myBalanceCents: 85_000 })),
+      );
+      const { i18n } = renderApp({ path: "/", locale: "es" });
+      const money = await screen.findByRole("region", { name: "Gastos" });
+      expect(await within(money).findByText("Te deben $ 85.000 en total")).toBeInTheDocument();
+
+      await act(() => i18n.changeLanguage("en"));
+      expect(within(money).getByText("You're owed COP 85,000 in total")).toBeInTheDocument();
+      // The page speaks the language; only formatting carries the region.
+      expect(document.documentElement.lang).toBe("en");
     });
 
     describe("the money card, the page's brand moment", () => {

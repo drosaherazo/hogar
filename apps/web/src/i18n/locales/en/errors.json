@@ -35,7 +35,10 @@
     "forbidden": "Only the household's admins can do that.",
     "read_only": "Guests can see everything here, but only members and admins can make changes.",
     "last_admin": "Make someone else an admin first, so the household is never left without one.",
-    "member_not_found": "That person is no longer part of the household."
+    "member_not_found": "That person is no longer part of the household.",
+    "currency": {
+      "locked": "This household already has expenses or payments, so its currency can't change."
+    }
   },
   "money": {
     "amount": {
@@ -46,7 +49,8 @@
       "future": "That date hasn't happened yet. Choose today or an earlier day."
     },
     "currency": {
-      "invalid": "Choose a currency from the list."
+      "invalid": "Choose a currency from the list.",
+      "mismatch": "The household's currency changed. Check the amount and save again."
     }
   },
   "expense": {

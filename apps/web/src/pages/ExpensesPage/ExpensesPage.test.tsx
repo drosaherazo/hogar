@@ -217,7 +217,7 @@ describe("ExpensesPage › fixing mistakes", () => {
     await userEvent.click(within(form).getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Edit payment" })).not.toBeInTheDocument());
-    expect(body).toEqual(expect.objectContaining({ amountCents: 500, version: 1 }));
+    expect(body).toEqual(expect.objectContaining({ amountCents: 500, currency: "EUR", version: 1 }));
   });
 
   it("lets editors delete a payment after confirming", async () => {

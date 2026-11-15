@@ -16,6 +16,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { errorKey } from "../api/client";
 import { useCurrentUser } from "../auth/guards";
+import { useReloadOnCurrencyMismatch } from "../household/useHousehold";
 import { localToday, useAmountField, useCurrency, useDates, useMoney } from "../i18n/format";
 import styles from "./PaymentDialog.module.css";
 import { avatarPropsFor, usePersonLabel } from "./people";
@@ -104,6 +105,7 @@ export function RecordPaymentDialog({
   const create = useCreateSettlement();
   const update = useUpdateSettlement();
   const save = editing ? update : create;
+  const onSaveError = useReloadOnCurrencyMismatch();
   const formId = useId();
   const firstField = useRef<HTMLSelectElement>(null);
 
@@ -156,6 +158,7 @@ export function RecordPaymentDialog({
       fromUserId,
       toUserId,
       amountCents: parseAmount(amountText, currency) ?? Number.NaN,
+      currency: currency.code,
       date,
     });
     if (!result.success) {
@@ -175,9 +178,12 @@ export function RecordPaymentDialog({
       onRecorded();
     };
     if (editing) {
-      update.mutate({ id: editing.id, input: { ...result.data, version: editing.version } }, { onSuccess: done });
+      update.mutate(
+        { id: editing.id, input: { ...result.data, version: editing.version } },
+        { onSuccess: done, onError: onSaveError },
+      );
     } else {
-      create.mutate(result.data, { onSuccess: done });
+      create.mutate(result.data, { onSuccess: done, onError: onSaveError });
     }
   }
 

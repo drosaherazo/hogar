@@ -40,6 +40,15 @@
       "saved": "Nombre guardado.",
       "readOnly": "Solo los administradores pueden cambiar el nombre."
     },
+    "currency": {
+      "title": "Moneda",
+      "label": "Moneda del hogar",
+      "save": "Guardar moneda",
+      "saving": "Guardando la moneda",
+      "saved": "Moneda guardada.",
+      "locked": "La moneda queda fija en cuanto el hogar tiene gastos o pagos.",
+      "readOnly": "Solo los admins pueden cambiar la moneda."
+    },
     "split": {
       "title": "Reparto",
       "description": "Cómo se dividen los gastos compartidos por defecto: cuanto mayor es el peso de alguien, mayor es su parte. Cada gasto se puede repartir de otra forma.",

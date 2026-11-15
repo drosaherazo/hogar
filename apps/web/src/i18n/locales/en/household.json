@@ -40,6 +40,15 @@
       "saved": "Name saved.",
       "readOnly": "Only admins can change the name."
     },
+    "currency": {
+      "title": "Currency",
+      "label": "Household currency",
+      "save": "Save currency",
+      "saving": "Saving the currency",
+      "saved": "Currency saved.",
+      "locked": "The currency is fixed once the household has expenses or payments.",
+      "readOnly": "Only admins can change the currency."
+    },
     "split": {
       "title": "Split",
       "description": "How shared costs are divided by default: the higher someone's weight, the bigger their share. Each expense can still be split differently.",

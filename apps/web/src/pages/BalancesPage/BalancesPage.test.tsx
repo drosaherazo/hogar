@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
@@ -8,6 +8,7 @@ import { renderApp } from "../../test/renderApp";
 import {
   anaIsOwed,
   anaRef,
+  apiError,
   balancesView,
   brunoRef,
   handlers,
@@ -143,8 +144,41 @@ describe("BalancesPage › recording payments", () => {
       fromUserId: brunoRef.userId,
       toUserId: anaRef.userId,
       amountCents: 770,
+      currency: "EUR",
       date: localToday(),
     });
+  });
+
+  it("refuses a payment when the household's currency changed meanwhile, then reloads it", async () => {
+    let currency: "EUR" | "USD" = "EUR";
+    const sent: unknown[] = [];
+    server.use(
+      handlers.signedIn(),
+      http.get("*/api/household", () => HttpResponse.json({ household: homeView({ currency }) })),
+      http.get("*/api/household/balances", () => HttpResponse.json(anaIsOwed())),
+      http.post("*/api/household/settlements", async ({ request }) => {
+        const body = (await request.json()) as { currency: string };
+        sent.push(body);
+        if (body.currency !== "USD") {
+          currency = "USD";
+          return apiError(409, "money.currency.mismatch");
+        }
+        return HttpResponse.json({ settlement: settlementView() }, { status: 201 });
+      }),
+    );
+    renderApp({ path: PATH });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Record this payment" }));
+    const dialog = await screen.findByRole("dialog", { name: "Record a payment" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Record payment" }));
+
+    expect(
+      await within(dialog).findByText("The household's currency changed. Check the amount and save again."),
+    ).toBeInTheDocument();
+    expect(await within(dialog).findByRole("textbox", { name: "Amount ($)" })).toHaveValue("7.70");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Record payment" }));
+    await waitFor(() => expect(sent).toHaveLength(2));
+    expect(sent[1]).toEqual(expect.objectContaining({ amountCents: 770, currency: "USD" }));
   });
 
   it("explains that paying more than what's owed reverses who owes whom", async () => {

@@ -47,8 +47,16 @@ export function defaultWeightFor(role: Role): number {
 export const createHouseholdRequestSchema = z.object({ name: householdNameSchema, currency: currencyCodeSchema });
 export type CreateHouseholdRequest = z.infer<typeof createHouseholdRequestSchema>;
 
-export const renameHouseholdRequestSchema = z.object({ name: householdNameSchema });
-export type RenameHouseholdRequest = z.infer<typeof renameHouseholdRequestSchema>;
+/**
+ * What an admin changes in a household: its name, its currency, or both. The currency can only
+ * change while the household has no expense or payment (`household.currency.locked`, ADR 0011).
+ */
+export const updateHouseholdRequestSchema = z
+  .object({ name: householdNameSchema.optional(), currency: currencyCodeSchema.optional() })
+  .refine((request) => request.name !== undefined || request.currency !== undefined, {
+    message: code("request.invalid"),
+  });
+export type UpdateHouseholdRequest = z.infer<typeof updateHouseholdRequestSchema>;
 
 export const createInvitationRequestSchema = z.object({ role: invitableRoleSchema });
 export type CreateInvitationRequest = z.infer<typeof createInvitationRequestSchema>;
@@ -94,6 +102,8 @@ export const householdViewSchema = z.object({
   name: z.string().min(1),
   /** Every amount in the household is in whole minor units of this currency. */
   currency: currencyCodeSchema,
+  /** True once the household has recorded an expense or payment, deleted ones included: the currency is then fixed. */
+  currencyLocked: z.boolean(),
   myMembershipId: z.string().min(1),
   myRole: roleSchema,
   /** Ordered by when people joined; this order also decides who gets leftover cents. */

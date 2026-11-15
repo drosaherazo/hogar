@@ -10,7 +10,7 @@ import {
 import { toCategoryRef } from "../categories/categoryView";
 import type { Database } from "../db";
 import type { Membership, Prisma } from "../generated/prisma/client";
-import { lockHousehold } from "../household/householdService";
+import { assertHouseholdCurrency, lockHousehold } from "../household/householdService";
 import { badRequest, conflict, notFound } from "../httpError";
 import { assertNotFuture, fromCalendarDate, toCalendarDate } from "./dates";
 import {
@@ -251,6 +251,7 @@ export function createExpenseService({ db, now = () => new Date() }: ExpenseServ
         await lockHousehold(tx, actor.householdId);
         const members = await currentMembers(tx, actor.householdId);
         assertStillEditor(members, actor);
+        await assertHouseholdCurrency(tx, actor.householdId, input.currency);
         const category = await categoryOf(tx, actor.householdId, input.categoryId);
         const split = computeSplit(input, contextFor(members), category);
         assertPreview(split, input);
@@ -284,6 +285,7 @@ export function createExpenseService({ db, now = () => new Date() }: ExpenseServ
         await lockHousehold(tx, actor.householdId);
         const members = await currentMembers(tx, actor.householdId);
         assertStillEditor(members, actor);
+        await assertHouseholdCurrency(tx, actor.householdId, input.currency);
         const existing = await current(tx, actor.householdId, expenseId, input.version);
         const category = await categoryOf(tx, actor.householdId, input.categoryId);
         const split = computeEditedSplit(input, existing, contextFor(members, existing), category);

@@ -59,6 +59,7 @@ export function householdView(overrides: Partial<HouseholdView> = {}): Household
     id: "household_1",
     name: "Casa Ana",
     currency: "EUR",
+    currencyLocked: false,
     myMembershipId: "m_ana",
     myRole: "ADMIN",
     members: [member({ id: "m_ana", userId: ana.id, name: ana.name, role: "ADMIN", weight: 1, shareBps: 10000 })],

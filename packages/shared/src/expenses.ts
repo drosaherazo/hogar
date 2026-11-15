@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { categoryRefSchema } from "./categories";
+import { currencyCodeSchema } from "./currency";
 import type { ErrorCode } from "./errors";
 
 /** Zod messages are error codes the web translates, never sentences. */
@@ -105,9 +106,17 @@ export type ExpenseSplitInput = z.infer<typeof expenseSplitInputSchema>;
 // Requests
 // ---------------------------------------------------------------------------
 
+/**
+ * The currency the form showed the amount in. The API refuses it with `money.currency.mismatch`
+ * when the household's currency changed meanwhile, so an amount is never stored in a currency the
+ * person didn't see (ADR 0011).
+ */
+const shownCurrency = currencyCodeSchema;
+
 const expenseFields = {
   description: expenseDescriptionSchema,
   amountCents: moneyCentsSchema,
+  currency: shownCurrency,
   paidById: userIdSchema,
   date: calendarDateSchema,
   split: expenseSplitInputSchema,
@@ -141,6 +150,7 @@ const settlementFields = {
   fromUserId: userIdSchema,
   toUserId: userIdSchema,
   amountCents: moneyCentsSchema,
+  currency: shownCurrency,
   date: calendarDateSchema,
 };
 

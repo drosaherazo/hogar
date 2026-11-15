@@ -1,5 +1,5 @@
 import { amountInputValue, currency, MAX_AMOUNT_UNITS, MIN_AMOUNT_UNITS, type Currency } from "@hogar/shared";
-import { formatAmount, useLocale } from "@hogar/ui";
+import { formatAmount, useFormattingLocale, useLocale } from "@hogar/ui";
 import { useMemo } from "react";
 import { useHousehold } from "../household/useHousehold";
 
@@ -18,24 +18,27 @@ export function useCurrency(): Currency {
  * limits for `errors:money.amount.invalid` (pass `limits` to any error translation).
  */
 export function useAmountField() {
-  const locale = useLocale();
+  const language = useLocale();
+  const locale = useFormattingLocale();
   const money = useMoney();
   const currency = useCurrency();
   return useMemo(() => {
     const parts = new Intl.NumberFormat(locale, { style: "currency", currency: currency.code }).formatToParts(0);
-    // Pesos are written in thousands, cents as a small purchase: both read like a real amount.
-    const example = amountInputValue(currency.decimals === 0 ? 85_000 : 4280, currency, locale);
+    // The symbol is how money is shown (formatting locale: "$" in es-CO); the example is how it's
+    // typed, which parseAmount reads per language, so it uses the language. Pesos are written in
+    // thousands, cents as a small purchase: both read like a real amount.
+    const example = amountInputValue(currency.decimals === 0 ? 85_000 : 4280, currency, language);
     return {
       symbol: parts.find((part) => part.type === "currency")?.value ?? currency.code,
       example,
       limits: { min: money(MIN_AMOUNT_UNITS), max: money(MAX_AMOUNT_UNITS) },
     };
-  }, [locale, money, currency]);
+  }, [language, locale, money, currency]);
 }
 
-/** Whole-number percentage of shared costs, in the active language ("75%" / "75 %"). */
+/** Whole-number percentage of shared costs, in the formatting locale ("75%" / "75 %"). */
 export function usePercent() {
-  const locale = useLocale();
+  const locale = useFormattingLocale();
   return useMemo(() => {
     const format = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 });
     return (bps: number) => format.format(bps / 10000);
@@ -44,14 +47,14 @@ export function usePercent() {
 
 /** Minor units in the household's currency, for sentences ("You owe {{amount}}"); standalone figures use `Money`. */
 export function useMoney() {
-  const locale = useLocale();
+  const locale = useFormattingLocale();
   const currency = useCurrency();
   return useMemo(() => (units: number) => formatAmount(units, currency, locale), [locale, currency]);
 }
 
 /** "Ana 75 % y Bruno 25 %": a list joined the way the active language joins lists. */
 export function useList() {
-  const locale = useLocale();
+  const locale = useFormattingLocale();
   return useMemo(() => {
     const format = new Intl.ListFormat(locale, { type: "conjunction" });
     return (items: readonly string[]) => format.format(items);
@@ -62,11 +65,11 @@ export function useList() {
 const fromDay = (day: string) => new Date(`${day}T00:00:00.000Z`);
 
 /**
- * Calendar days in the active language. They are formatted in UTC, the zone they're stored in,
+ * Calendar days in the formatting locale (the active language plus the device region). They are formatted in UTC, the zone they're stored in,
  * so a day never shifts to the one before or after on someone's device.
  */
 export function useDates() {
-  const locale = useLocale();
+  const locale = useFormattingLocale();
   return useMemo(() => {
     const short = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" });
     const medium = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" });

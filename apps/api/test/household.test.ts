@@ -1,6 +1,7 @@
 import { currentHouseholdSchema, householdResponseSchema } from "@hogar/shared";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
+import { addExpense, addSettlement, deleteExpense, homeWith } from "./expenseHelpers";
 import { addMember, createHousehold, householdRow } from "./householdHelpers";
 import { bruno, carla, createTestApp, db, signIn } from "./testApp";
 
@@ -181,5 +182,126 @@ describe("PATCH /api/household", () => {
     const res = await request(app).patch("/api/household").set("Authorization", ana.auth).send({ name: "" });
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ error: { code: "household.name.required" } });
+  });
+});
+
+describe("PATCH /api/household with a currency", () => {
+  const changeCurrency = (app: ReturnType<typeof createTestApp>["app"], auth: string, body: object) =>
+    request(app).patch("/api/household").set("Authorization", auth).send(body);
+
+  it("lets an admin change the currency while the household has no money, which everyone then reads", async () => {
+    const { app } = createTestApp();
+    const home = await homeWith(app);
+
+    const res = await changeCurrency(app, home.ana.auth, { currency: "COP" });
+    expect(res.status).toBe(200);
+    const household = householdResponseSchema.parse(res.body).household;
+    expect(household).toMatchObject({ currency: "COP", currencyLocked: false, name: "Casa Ana" });
+
+    const seen = await request(app).get("/api/household").set("Authorization", home.bruno.auth);
+    expect(householdResponseSchema.parse(seen.body).household.currency).toBe("COP");
+  });
+
+  it("renames and changes the currency in one request", async () => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    await createHousehold(app, ana);
+    const res = await changeCurrency(app, ana.auth, { name: "Casa Bogotá", currency: "COP" });
+    expect(householdResponseSchema.parse(res.body).household).toMatchObject({ name: "Casa Bogotá", currency: "COP" });
+  });
+
+  it("says the currency can change in a new household", async () => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    expect((await createHousehold(app, ana)).currencyLocked).toBe(false);
+  });
+
+  it.each([
+    [
+      "an expense",
+      async (app: ReturnType<typeof createTestApp>["app"], home: Awaited<ReturnType<typeof homeWith>>) => {
+        await addExpense(app, home.ana);
+      },
+    ],
+    [
+      "a payment",
+      async (app: ReturnType<typeof createTestApp>["app"], home: Awaited<ReturnType<typeof homeWith>>) => {
+        await addSettlement(app, home.bruno, { fromUserId: home.bruno.user.id, toUserId: home.ana.user.id });
+      },
+    ],
+    [
+      "a deleted expense",
+      async (app: ReturnType<typeof createTestApp>["app"], home: Awaited<ReturnType<typeof homeWith>>) => {
+        const expense = await addExpense(app, home.ana);
+        expect((await deleteExpense(app, home.ana, expense.id, expense.version)).status).toBe(204);
+      },
+    ],
+  ])("fixes the currency once the household has %s", async (_, record) => {
+    const { app } = createTestApp();
+    const home = await homeWith(app);
+    await record(app, home);
+
+    const seen = await request(app).get("/api/household").set("Authorization", home.ana.auth);
+    expect(householdResponseSchema.parse(seen.body).household.currencyLocked).toBe(true);
+
+    const res = await changeCurrency(app, home.ana.auth, { name: "Casa nueva", currency: "COP" });
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "household.currency.locked" } });
+    // Nothing changes, not even the name sent with it.
+    expect(await householdRow(home.household.id)).toMatchObject({ currency: "EUR", name: "Casa Ana" });
+  });
+
+  it("still renames a household whose currency is fixed, when the currency sent is the same", async () => {
+    const { app } = createTestApp();
+    const home = await homeWith(app);
+    await addExpense(app, home.ana);
+    const res = await changeCurrency(app, home.ana.auth, { name: "Casa nueva", currency: "EUR" });
+    expect(res.status).toBe(200);
+    expect(householdResponseSchema.parse(res.body).household).toMatchObject({ name: "Casa nueva", currency: "EUR" });
+  });
+
+  it.each(["MEMBER", "GUEST"] as const)("refuses a %s", async (role) => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    const household = await createHousehold(app, ana);
+    const other = await addMember(app, household.id, bruno, role);
+    const res = await changeCurrency(app, other.auth, { currency: "COP" });
+
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: { code: "household.forbidden" } });
+    expect((await householdRow(household.id))?.currency).toBe("EUR");
+  });
+
+  it("only ever changes the caller's own household", async () => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    const anas = await createHousehold(app, ana);
+    const carlaSession = await signIn(app, carla);
+    await createHousehold(app, carlaSession, "Piso Carla");
+
+    const res = await changeCurrency(app, carlaSession.auth, { currency: "COP" });
+    expect(res.status).toBe(200);
+    expect((await householdRow(anas.id))?.currency).toBe("EUR");
+  });
+
+  it("refuses someone without a household", async () => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    const res = await changeCurrency(app, ana.auth, { currency: "COP" });
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: { code: "household.not_member" } });
+  });
+
+  it.each([
+    ["a currency outside the list", { currency: "JPY" }, "money.currency.invalid"],
+    ["nothing to change", {}, "request.invalid"],
+  ])("refuses %s", async (_, body, code) => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    const household = await createHousehold(app, ana);
+    const res = await changeCurrency(app, ana.auth, body);
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: { code } });
+    expect((await householdRow(household.id))?.currency).toBe("EUR");
   });
 });

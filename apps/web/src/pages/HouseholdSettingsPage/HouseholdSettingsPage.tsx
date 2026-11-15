@@ -11,10 +11,11 @@ import styles from "./HouseholdSettingsPage.module.css";
 import { InvitationsSection } from "./InvitationsSection";
 import { MembersSection } from "./MembersSection";
 import { CategoriesSection } from "./CategoriesSection";
+import { CurrencySection } from "./CurrencySection";
 import { NameSection } from "./NameSection";
 import { SplitSection } from "./SplitSection";
 
-/** Household settings: name, members (and invitations) and the split. */
+/** Household settings: name, currency, members (and invitations), the split and categories. */
 export function HouseholdSettingsPage() {
   const { t } = useTranslation(["household", "common"]);
   const household = useHousehold();
@@ -45,6 +46,7 @@ function Sections({ household }: { household: HouseholdView }) {
   return (
     <div className={styles.sections}>
       <NameSection household={household} />
+      <CurrencySection household={household} />
       <MembersSection household={household} />
       {isAdmin && <InvitationsSection />}
       <SplitSection household={household} />

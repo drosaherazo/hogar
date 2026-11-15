@@ -1,16 +1,16 @@
 import {
-  CURRENCY_CODES,
   createHouseholdRequestSchema,
   currencyCodeSchema,
   suggestCurrency,
   type CurrencyCode,
   type ErrorCode,
 } from "@hogar/shared";
-import { Button, Dialog, Select, TextField, useLocale } from "@hogar/ui";
-import { useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { Button, Dialog, Select, TextField } from "@hogar/ui";
+import { useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiRequestError } from "../api/client";
 import styles from "./CreateHouseholdDialog.module.css";
+import { useCurrencyOptions } from "./useCurrencyOptions";
 import { useCreateHousehold } from "./useHousehold";
 
 export interface CreateHouseholdDialogProps {
@@ -40,16 +40,10 @@ export function CreateHouseholdDialog({ open, onOpenChange }: CreateHouseholdDia
   const nameField = useRef<HTMLInputElement>(null);
   const currencyField = useRef<HTMLSelectElement>(null);
   const create = useCreateHousehold();
-  const locale = useLocale();
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState<CurrencyCode>(suggestedCurrency);
   const [errors, setErrors] = useState<FieldErrors>({});
-  const currencyOptions = useMemo(() => {
-    const names = new Intl.DisplayNames(locale, { type: "currency" });
-    return CURRENCY_CODES.map((code) => ({ value: code, label: names.of(code) ?? code })).sort((a, b) =>
-      a.label.localeCompare(b.label, locale),
-    );
-  }, [locale]);
+  const currencyOptions = useCurrencyOptions();
 
   function changeOpen(next: boolean) {
     if (!next) {

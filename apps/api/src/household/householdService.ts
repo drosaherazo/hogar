@@ -2,16 +2,18 @@ import {
   checkAdminInvariant,
   resolveLocale,
   type CreateHouseholdRequest,
+  type CurrencyCode,
   type CurrentHousehold,
   type HouseholdView,
   type MembershipChange,
   type Role,
+  type UpdateHouseholdRequest,
 } from "@hogar/shared";
 import type { Database } from "../db";
 import { Prisma, type Membership } from "../generated/prisma/client";
 import { seedStarterCategories } from "../categories/starterCategories";
 import { badRequest, conflict, forbidden, notFound } from "../httpError";
-import { HOUSEHOLD_VIEW_INCLUDE, toHouseholdView } from "./householdView";
+import { CURRENCY_LOCK_COUNTS, HOUSEHOLD_VIEW_INCLUDE, isCurrencyLocked, toHouseholdView } from "./householdView";
 
 /**
  * Serializes membership changes within one household: the transaction holds a row lock on the
@@ -20,6 +22,16 @@ import { HOUSEHOLD_VIEW_INCLUDE, toHouseholdView } from "./householdView";
  */
 export async function lockHousehold(tx: Prisma.TransactionClient, householdId: string) {
   await tx.$queryRaw`SELECT id FROM households WHERE id = ${householdId} FOR UPDATE`;
+}
+
+/**
+ * Refuses money sent in a currency other than the household's (ADR 0011). Call it after
+ * `lockHousehold`: the currency can't change until the transaction ends, and a change that
+ * committed first is the one read here.
+ */
+export async function assertHouseholdCurrency(tx: Prisma.TransactionClient, householdId: string, shown: CurrencyCode) {
+  const { currency } = await tx.household.findUniqueOrThrow({ where: { id: householdId }, select: { currency: true } });
+  if (currency !== shown) throw conflict("money.currency.mismatch");
 }
 
 /**
@@ -109,8 +121,29 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
       }
     },
 
-    async rename(householdId: string, viewerUserId: string, name: string): Promise<HouseholdView> {
-      await db.household.update({ where: { id: householdId }, data: { name } });
+    /**
+     * An admin renames the household or changes its currency. The currency only changes while the
+     * household has never recorded an expense or payment (ADR 0011): the row is locked first, so a
+     * money record saved at the same time either lands before (and the change is refused) or reads
+     * the new currency (and is refused itself, `money.currency.mismatch`).
+     */
+    async update(householdId: string, viewerUserId: string, changes: UpdateHouseholdRequest): Promise<HouseholdView> {
+      await db.$transaction(async (tx) => {
+        await lockHousehold(tx, householdId);
+        const current = await tx.household.findUniqueOrThrow({
+          where: { id: householdId },
+          select: { currency: true, _count: { select: CURRENCY_LOCK_COUNTS } },
+        });
+        const changesCurrency = changes.currency !== undefined && changes.currency !== current.currency;
+        if (changesCurrency && isCurrencyLocked(current._count)) throw conflict("household.currency.locked");
+        await tx.household.update({
+          where: { id: householdId },
+          data: {
+            ...(changes.name !== undefined && { name: changes.name }),
+            ...(changes.currency !== undefined && { currency: changes.currency }),
+          },
+        });
+      });
       return view(householdId, viewerUserId);
     },
 
