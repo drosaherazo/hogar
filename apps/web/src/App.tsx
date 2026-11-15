@@ -11,6 +11,7 @@ import { ApiClient } from "./api/client";
 import { AuthProvider } from "./auth/AuthProvider";
 import { RedirectIfAuthenticated, RequireAuth } from "./auth/guards";
 import { currentLocale } from "./i18n";
+import { createOfflineCache, runsInstalled, type OfflineCacheOptions } from "./offline/offlineCache";
 import { BalancesPage } from "./pages/BalancesPage/BalancesPage";
 import { ExpenseDetailPage } from "./pages/ExpenseDetailPage/ExpenseDetailPage";
 import { ExpenseFormPage } from "./pages/ExpenseFormPage/ExpenseFormPage";
@@ -18,12 +19,6 @@ import { ExpensesPage } from "./pages/ExpensesPage/ExpensesPage";
 import { HomePage } from "./pages/HomePage/HomePage";
 import { HouseholdSettingsPage } from "./pages/HouseholdSettingsPage/HouseholdSettingsPage";
 import { InvitePage } from "./pages/InvitePage/InvitePage";
-import {
-  createOfflineCache,
-  OFFLINE_MAX_AGE_MS,
-  runsInstalled,
-  type OfflineCacheOptions,
-} from "./offline/offlineCache";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
 import { RequiredUpdateGate } from "./update/RequiredUpdate";
 
@@ -79,13 +74,10 @@ export interface AppProvidersProps {
 
 export function AppProviders({ i18n, client, offline, children }: AppProvidersProps) {
   const [{ queryClient, offlineCache }] = useState(() => {
-    const installed = offline.isInstalled();
-    // Kept data must outlive its screens in memory too, or it would be dropped before being kept.
-    const queries = { retry: 1, refetchOnWindowFocus: false, ...(installed && { gcTime: OFFLINE_MAX_AGE_MS }) };
-    const queryClient = new QueryClient({ defaultOptions: { queries } });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
     return { queryClient, offlineCache: createOfflineCache(offline, queryClient) };
   });
-  const data = (
+  const session = (
     <ApiClientProvider client={client}>
       <AuthProvider client={client} offline={offlineCache}>
         {children}
@@ -98,10 +90,10 @@ export function AppProviders({ i18n, client, offline, children }: AppProvidersPr
         <RequiredUpdateGate client={client}>
           {offlineCache.persistOptions ? (
             <PersistQueryClientProvider client={queryClient} persistOptions={offlineCache.persistOptions}>
-              {data}
+              {session}
             </PersistQueryClientProvider>
           ) : (
-            <QueryClientProvider client={queryClient}>{data}</QueryClientProvider>
+            <QueryClientProvider client={queryClient}>{session}</QueryClientProvider>
           )}
         </RequiredUpdateGate>
       </UiLocale>
@@ -109,13 +101,13 @@ export function AppProviders({ i18n, client, offline, children }: AppProvidersPr
   );
 }
 
-const device: OfflineCacheOptions = { storage: () => window.localStorage, isInstalled: runsInstalled };
+const thisDevice: OfflineCacheOptions = { storage: () => window.localStorage, isInstalled: runsInstalled };
 
 export function App({ i18n, config }: { i18n: I18n; config: AppConfig }) {
   const [client] = useState(() => new ApiClient());
   const [router] = useState(() => createBrowserRouter(createRoutes(config)));
   return (
-    <AppProviders i18n={i18n} client={client} offline={device}>
+    <AppProviders i18n={i18n} client={client} offline={thisDevice}>
       <RouterProvider router={router} />
     </AppProviders>
   );

@@ -20,6 +20,9 @@ const householdNeverAnswers = () => http.get("*/api/household", () => new Promis
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Longer than the persister waits before saving, so anything it would save has been saved. */
+const afterSaving = () => new Promise((resolve) => setTimeout(resolve, 1200));
+
 /** First launch of the installed app: Ana signs in and sees her household, which gets kept. */
 async function firstLaunch(storage: MemoryStorage) {
   server.use(handlers.signedIn(), handlers.household(homeView()));
@@ -39,7 +42,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("Offline cache: what the installed app keeps", () => {
+describe("What the installed app keeps", () => {
   it("keeps the household's data in the installed app and shows it on the next launch", async () => {
     const storage = new MemoryStorage();
     (await firstLaunch(storage)).unmount();
@@ -54,11 +57,11 @@ describe("Offline cache: what the installed app keeps", () => {
     server.use(handlers.signedIn(), handlers.household(homeView()));
     renderApp({ path: "/", storage, installed: false });
     await screen.findByText("Casa Ana");
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await afterSaving();
     expect(storage.length).toBe(0);
   });
 
-  it("keeps the person's public profile, and never a token or anything else from the session", async () => {
+  it("keeps the person's name, language and avatar, and never a token or anything else from the session", async () => {
     const storage = new MemoryStorage();
     await firstLaunch(storage);
     const kept = storage.contents();
@@ -90,11 +93,26 @@ describe("Offline cache: what the installed app keeps", () => {
     setOnline(false);
     renderApp({ path: "/", storage, installed: true });
     await screen.findByRole("heading", { level: 1 });
+    await afterSaving();
     expect(storage.contents()).toBe(kept);
   });
 });
 
-describe("Offline cache: when it's erased", () => {
+describe("When the installed app keeps what it has", () => {
+  it("when the server refuses for a reason other than the session, such as an outdated version", async () => {
+    const storage = new MemoryStorage();
+    (await firstLaunch(storage)).unmount();
+    const kept = storage.contents();
+
+    server.use(http.post("*/api/auth/refresh", () => apiError(426, "client.outdated")));
+    renderApp({ path: "/", storage, installed: true });
+    await screen.findByRole("heading", { level: 1, name: "Hogar has been updated" });
+    await afterSaving();
+    expect(storage.contents()).toBe(kept);
+  });
+});
+
+describe("When what the installed app keeps is erased", () => {
   it("on sign-out", async () => {
     const storage = new MemoryStorage();
     await firstLaunch(storage);
@@ -115,6 +133,33 @@ describe("Offline cache: when it's erased", () => {
     renderApp({ path: "/", storage, installed: true });
     await screen.findByRole("button", { name: "Email me a code" });
     expect(storage.contents()).not.toMatch(/Casa Ana|Ana García/);
+  });
+
+  it("when the session ends while the app is in use", async () => {
+    const storage = new MemoryStorage();
+    await firstLaunch(storage);
+    server.use(
+      http.get("*/api/household/activity", () => apiError(401, "auth.token.invalid")),
+      http.post("*/api/auth/refresh", () => apiError(401, "auth.session.expired")),
+    );
+    await userEvent.click(screen.getByRole("link", { name: "Expenses" }));
+    await screen.findByRole("button", { name: "Email me a code" });
+    await waitFor(() => expect(storage.contents()).not.toMatch(/Casa Ana|Ana García/));
+  });
+
+  it("when nobody is recorded as its owner", async () => {
+    const storage = new MemoryStorage();
+    (await firstLaunch(storage)).unmount();
+    const ownerKey = [...Array(storage.length).keys()]
+      .map((index) => storage.key(index))
+      .find((key) => key?.includes("person"));
+    storage.removeItem(ownerKey ?? "");
+
+    server.use(handlers.signedIn(), householdNeverAnswers());
+    renderApp({ path: "/", storage, installed: true });
+    await screen.findByRole("heading", { level: 1, name: "Hi, Ana" });
+    expect(screen.queryByText("Casa Ana")).not.toBeInTheDocument();
+    expect(storage.contents()).not.toContain("Casa Ana");
   });
 
   it("when the removal notice appears", async () => {

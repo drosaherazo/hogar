@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vite
 import { ApiRequestError, type ApiClient } from "../api/client";
 import { createI18n } from "../i18n";
 import { createOfflineCache } from "../offline/offlineCache";
-import { MemoryStorage } from "../test/memoryStorage";
+import { browserTab } from "../test/memoryStorage";
 import { ana, session } from "../test/server";
 import { AuthProvider, useAuth, type AuthContextValue } from "./AuthProvider";
 
@@ -44,7 +44,7 @@ function Probe({ onValue }: { onValue: (value: AuthContextValue) => void }) {
 
 function renderProvider(client: FakeClient) {
   const queryClient = new QueryClient();
-  const offline = createOfflineCache({ storage: () => new MemoryStorage(), isInstalled: () => false }, queryClient);
+  const offline = createOfflineCache(browserTab(), queryClient);
   return render(
     <I18nextProvider i18n={createI18n({ lng: "en" })}>
       <QueryClientProvider client={queryClient}>

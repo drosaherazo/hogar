@@ -2,7 +2,7 @@ import type { AuthUser } from "@hogar/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import type { ApiClient } from "../api/client";
+import { ApiRequestError, type ApiClient } from "../api/client";
 import { hasStoredLanguage } from "../i18n";
 import type { OfflineCache } from "../offline/offlineCache";
 import { pause, waitForServer } from "../startup/waitForServer";
@@ -117,7 +117,7 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
     const restore = async (
       signal: AbortSignal,
       giveUp: { arm: () => void; disarm: () => void },
-    ): Promise<AuthUser | null> => {
+    ): Promise<AuthUser | ApiRequestError | null> => {
       for (let first = true; ; first = false) {
         giveUp.arm();
         // After a refresh that failed while the server was settling, breathe before asking again.
@@ -128,7 +128,7 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
         try {
           return (await client.refresh()).user;
         } catch (error) {
-          if (!isWakingError(error)) return null;
+          if (!isWakingError(error)) return error instanceof ApiRequestError ? error : null;
         }
       }
     };
@@ -166,7 +166,7 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
       };
 
       restore(current.signal, giveUp).then(
-        async (user) => {
+        async (outcome) => {
           if (current.signal.aborted) return;
           clearTimeout(giveUpTimer);
           const delay = settleDelay(Date.now() - startedAt, attempt);
@@ -174,9 +174,12 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
           if (disposed || current.signal.aborted) return;
           finished = true;
           controller = null;
-          // No session: the server says it expired or was revoked, so nothing kept may stay.
-          if (user) signInRef.current(user);
-          else signOutRef.current();
+          if (outcome instanceof ApiRequestError) {
+            // A 401 means the session expired or was revoked: nothing kept may stay (ADR 0015).
+            if (outcome.status === 401) signOutRef.current();
+            else setState(ANONYMOUS);
+          } else if (outcome) signInRef.current(outcome);
+          else setState(ANONYMOUS);
         },
         () => undefined, // Aborted: whoever aborted has already shown the next state.
       );

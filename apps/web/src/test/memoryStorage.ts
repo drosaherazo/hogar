@@ -1,3 +1,5 @@
+import type { OfflineCacheOptions } from "../offline/offlineCache";
+
 /** An in-memory `Storage`, so tests can launch the app twice on the "same device" and read what it kept. */
 export class MemoryStorage implements Storage {
   private readonly items = new Map<string, string>();
@@ -30,4 +32,9 @@ export class MemoryStorage implements Storage {
   contents() {
     return [...this.items].map(([key, value]) => `${key}=${value}`).join("\n");
   }
+}
+
+/** Hogar in a browser tab, which keeps nothing on the device. */
+export function browserTab(): OfflineCacheOptions {
+  return { storage: () => new MemoryStorage(), isInstalled: () => false };
 }
