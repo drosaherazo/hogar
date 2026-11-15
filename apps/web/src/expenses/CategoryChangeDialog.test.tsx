@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ApiClient } from "../api/client";
 import { AppProviders } from "../App";
 import { createI18n } from "../i18n";
+import { MemoryStorage } from "../test/memoryStorage";
 import { expectNoA11yViolations } from "../test/axe";
 import { handlers, homeView, server } from "../test/server";
 import { CategoryChangeDialog, type CategoryChangeDialogProps } from "./CategoryChangeDialog";
@@ -19,7 +20,11 @@ function renderDialog(props: Partial<CategoryChangeDialogProps> = {}) {
   // Amounts are in the household's currency, euros here.
   server.use(handlers.signedIn(), handlers.household(homeView()));
   render(
-    <AppProviders i18n={i18n} client={new ApiClient("http://localhost/api")}>
+    <AppProviders
+      i18n={i18n}
+      client={new ApiClient("http://localhost/api")}
+      offline={{ storage: () => new MemoryStorage(), isInstalled: () => false }}
+    >
       <CategoryChangeDialog
         open
         onOpenChange={() => undefined}

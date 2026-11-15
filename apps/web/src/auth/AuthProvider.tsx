@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useTranslation } from "react-i18next";
 import type { ApiClient } from "../api/client";
 import { hasStoredLanguage } from "../i18n";
+import type { OfflineCache } from "../offline/offlineCache";
 import { pause, waitForServer } from "../startup/waitForServer";
 import { GIVE_UP_AFTER_MS, isWakingError, settleDelay } from "../startup/wakeUp";
 
@@ -42,37 +43,50 @@ const RETRY_AFTER_REFRESH_MS = 2000;
 
 const isOnline = () => typeof navigator === "undefined" || navigator.onLine !== false;
 
+export interface AuthProviderProps {
+  client: ApiClient;
+  /** What the installed app keeps on the device: erased whenever the session ends or changes hands. */
+  offline: OfflineCache;
+  children: ReactNode;
+}
+
 /**
  * Keeps track of who is signed in. On start it silently restores the session from the refresh
  * cookie, waiting first for the API to wake up if it was asleep (ADR 0006).
  */
-export function AuthProvider({ client, children }: { client: ApiClient; children: ReactNode }) {
+export function AuthProvider({ client, offline, children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>(() => waiting(isOnline() ? "waking" : "offline", 0));
   const { i18n } = useTranslation();
   const queryClient = useQueryClient();
   const retryRef = useRef<() => void>(() => undefined);
 
-  // Whoever signs in next on this browser must never see the previous person's household.
+  // Whoever signs in next on this browser must never see the previous person's household, and a
+  // lost device whose session ended must stop showing it (ADR 0015).
   const signOutLocally = useCallback(() => {
     queryClient.clear();
+    offline.erase();
     setState(ANONYMOUS);
-  }, [queryClient]);
+  }, [queryClient, offline]);
 
   const signIn = useCallback(
     (user: AuthUser) => {
       // Until the person picks a language, follow the one stored in their account.
       if (!hasStoredLanguage() && i18n.resolvedLanguage !== user.locale) void i18n.changeLanguage(user.locale);
+      // Kept data is shown only once the session says it belongs to this person.
+      offline.confirmPerson(user);
       setState({ status: "authenticated", user });
       return user;
     },
-    [i18n],
+    [i18n, offline],
   );
 
-  // The startup reads the latest signIn without restarting when its identity changes.
+  // The startup reads the latest signIn and signOutLocally without restarting when they change.
   const signInRef = useRef(signIn);
+  const signOutRef = useRef(signOutLocally);
   useEffect(() => {
     signInRef.current = signIn;
-  }, [signIn]);
+    signOutRef.current = signOutLocally;
+  }, [signIn, signOutLocally]);
 
   useEffect(() => client.onSessionExpired(signOutLocally), [client, signOutLocally]);
 
@@ -160,8 +174,9 @@ export function AuthProvider({ client, children }: { client: ApiClient; children
           if (disposed || current.signal.aborted) return;
           finished = true;
           controller = null;
+          // No session: the server says it expired or was revoked, so nothing kept may stay.
           if (user) signInRef.current(user);
-          else setState(ANONYMOUS);
+          else signOutRef.current();
         },
         () => undefined, // Aborted: whoever aborted has already shown the next state.
       );
