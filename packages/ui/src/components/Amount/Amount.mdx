@@ -28,7 +28,7 @@ An amount in the household's currency, written the way each language writes mone
 
 ## Accessibility
 - Plain text, so screen readers read the amount with its currency in the page's language.
-- `white-space: nowrap` keeps the number and the symbol together.
+- `white-space: nowrap` keeps the number and the symbol together. A big standalone figure that must wrap anyway (text at 200 % on a phone) may break only after a digit group or before the currency ("1.284." / "000 COP"), never inside a group, so no line reads as a different number.
 - No copy of its own: the surrounding words come from the app.
 
 ## Variants
@@ -63,7 +63,7 @@ Un importe en la moneda del hogar, escrito como cada idioma escribe el dinero: �
 
 ## Accesibilidad
 - Texto normal, así los lectores de pantalla leen el importe con su moneda en el idioma de la página.
-- `white-space: nowrap` mantiene juntos el número y el símbolo.
+- `white-space: nowrap` mantiene juntos el número y el símbolo. Una cifra grande y suelta que aun así deba partirse (texto al 200 % en un móvil) solo se corta tras un grupo de dígitos o antes de la moneda ("1.284." / "000 COP"), nunca dentro de un grupo, para que ninguna línea parezca otra cifra.
 - Sin textos propios: las palabras de alrededor vienen de la app.
 
 ## Variantes
