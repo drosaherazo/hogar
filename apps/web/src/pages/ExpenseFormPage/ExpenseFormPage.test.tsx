@@ -67,7 +67,44 @@ describe("ExpenseFormPage (adding)", () => {
     expect(rows[0]).toHaveTextContent(/Ana García63\.750\sCOP/);
     expect(rows[1]).toHaveTextContent(/Bruno Díaz21\.250\sCOP/);
     await userEvent.click(screen.getByRole("button", { name: "Guardar gasto" }));
-    await waitFor(() => expect(body).toEqual(expect.objectContaining({ amountCents: 85_000 })));
+    await waitFor(() => expect(body).toEqual(expect.objectContaining({ amountCents: 85_000, currency: "COP" })));
+  });
+
+  it("refuses to save when the household's currency changed meanwhile, then reloads it to check and save again", async () => {
+    let currency: "EUR" | "COP" = "EUR";
+    const bodies: unknown[] = [];
+    server.use(
+      handlers.signedIn(),
+      http.get("*/api/household", () => HttpResponse.json({ household: homeView({ currency }) })),
+      http.post("*/api/household/expenses", async ({ request }) => {
+        const body = (await request.json()) as { currency: string };
+        bodies.push(body);
+        if (body.currency !== "COP") {
+          // An admin switched the household to pesos while the form was open.
+          currency = "COP";
+          return apiError(409, "money.currency.mismatch");
+        }
+        return HttpResponse.json({ expense: expenseView({ id: "new_one" }) }, { status: 201 });
+      }),
+      handlers.expense(expenseView({ id: "new_one" })),
+    );
+    const { router } = renderApp({ path: PATH });
+    await userEvent.type(await screen.findByRole("textbox", { name: "What was it?" }), "Market");
+    await userEvent.type(screen.getByRole("textbox", { name: "Amount (€)" }), "85000");
+    await userEvent.click(screen.getByRole("button", { name: "Save expense" }));
+
+    expect(
+      await screen.findByText("The household's currency changed. Check the amount and save again."),
+    ).toBeInTheDocument();
+    const amount = await screen.findByRole("textbox", { name: "Amount (COP)" });
+    expect(amount).toHaveValue("85000");
+    await userEvent.click(screen.getByRole("button", { name: "Save expense" }));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/expenses/new_one"));
+    expect(bodies).toEqual([
+      expect.objectContaining({ amountCents: 8_500_000, currency: "EUR" }),
+      expect.objectContaining({ amountCents: 85_000, currency: "COP" }),
+    ]);
   });
 
   it("states the amount limits in the household's currency", async () => {
@@ -105,6 +142,7 @@ describe("ExpenseFormPage (adding)", () => {
     expect(body).toEqual({
       description: "Compra",
       amountCents: 4280,
+      currency: "EUR",
       paidById: ana.id,
       date: localToday(),
       split: {
@@ -410,7 +448,13 @@ describe("ExpenseFormPage (editing)", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("Expense saved.");
     expect(router.state.location.pathname).toBe("/expenses/expense_1");
     expect(body).toEqual(
-      expect.objectContaining({ description: "Big shop", amountCents: 4280, split: { method: "WEIGHTS" }, version: 1 }),
+      expect.objectContaining({
+        description: "Big shop",
+        amountCents: 4280,
+        currency: "EUR",
+        split: { method: "WEIGHTS" },
+        version: 1,
+      }),
     );
   });
 

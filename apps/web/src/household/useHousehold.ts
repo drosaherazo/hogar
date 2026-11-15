@@ -9,6 +9,7 @@ import type {
 } from "@hogar/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "../api/ApiClientContext";
+import { ApiRequestError } from "../api/client";
 import { expenseKeys } from "../expenses/useExpenses";
 
 export const householdKeys = {
@@ -48,6 +49,20 @@ export function useCreateHousehold() {
 export function useRenameHousehold() {
   const client = useApiClient();
   return useHouseholdMutation((name: string) => client.renameHousehold(name));
+}
+
+/**
+ * What money forms do when a save is refused with `money.currency.mismatch` (ADR 0011): the
+ * household's currency changed while the form was open, so reload it. The amount field then reads
+ * and labels the typed amount in the new currency, for the person to check and save again.
+ */
+export function useReloadOnCurrencyMismatch() {
+  const queryClient = useQueryClient();
+  return (error: Error) => {
+    if (error instanceof ApiRequestError && error.code === "money.currency.mismatch") {
+      void queryClient.invalidateQueries({ queryKey: householdKeys.current });
+    }
+  };
 }
 
 export function useChangeCurrency() {

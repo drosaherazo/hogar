@@ -32,7 +32,7 @@ import { avatarPropsFor, usePersonLabel } from "../../expenses/people";
 import { categoryKeys, useCategories } from "../../expenses/useCategories";
 import { useCreateExpense, useExpense, useUpdateExpense } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
-import { householdKeys, useHousehold } from "../../household/useHousehold";
+import { householdKeys, useHousehold, useReloadOnCurrencyMismatch } from "../../household/useHousehold";
 import { localToday, useAmountField, useCurrency, useList, useMoney, usePercent } from "../../i18n/format";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell } from "../../layout/AppShell";
@@ -154,6 +154,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   const create = useCreateExpense();
   const update = useUpdateExpense();
   const save = existing ? update : create;
+  const reloadOnCurrencyMismatch = useReloadOnCurrencyMismatch();
   const previewId = useId();
   const personLabel = usePersonLabel();
   const queryClient = useQueryClient();
@@ -329,6 +330,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   function send(input: ExpenseInput) {
     const done = (saved: ExpenseView) => void navigate(`/expenses/${saved.id}`, { state: { saved: true } });
     const onError = (failure: Error) => {
+      reloadOnCurrencyMismatch(failure);
       if (!(failure instanceof ApiRequestError)) return;
       if (failure.code === "expense.changed") onConflict?.();
       if (failure.code === "expense.split.changed") {
@@ -357,6 +359,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
     const result = expenseInputSchema.safeParse({
       description,
       amountCents: cents ?? Number.NaN,
+      currency: currency.code,
       paidById,
       date,
       split: splitInput(),

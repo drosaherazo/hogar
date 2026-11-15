@@ -49,7 +49,8 @@
       "future": "Esa fecha aún no ha llegado. Elige hoy o un día anterior."
     },
     "currency": {
-      "invalid": "Elige una moneda de la lista."
+      "invalid": "Elige una moneda de la lista.",
+      "mismatch": "La moneda del hogar cambió. Revisa el importe y vuelve a guardar."
     }
   },
   "expense": {
