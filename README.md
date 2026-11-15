@@ -20,7 +20,7 @@
 - **Monorepo:** pnpm workspaces
 - **Web (`apps/web`):** React, Vite, React Router, TanStack Query, react-i18next (English and Spanish)
 - **API (`apps/api`):** Node, Express 5, Prisma 7, PostgreSQL
-- **Design system (`packages/ui`):** CSS Modules, design tokens, Radix primitives, Storybook
+- **Design system (`packages/ui`):** CSS Modules, design tokens, react-aria primitives, Storybook
 - **Shared (`packages/shared`):** Zod schemas, types and error codes used by web and API
 - **Testing:** Vitest, Testing Library, axe, MSW, Supertest, Cypress
 - **TypeScript 6.0**, strict everywhere

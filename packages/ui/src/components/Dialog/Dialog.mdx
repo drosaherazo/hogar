@@ -29,9 +29,9 @@ A window over the page for a decision that needs full attention: confirming some
 - **Evidence-backed:** focus trapping, Escape to close and focus returning to where you were are WAI-ARIA dialog practices that keep keyboard and screen reader users oriented. The friendliness of the styling is design intent.
 
 ## Accessibility
-- Built on Radix Dialog: `role="dialog"`, `aria-modal`, named by the title and described by the description.
+- Built on react-aria: `role="dialog"`, named by the title and described by the description; while it is open the rest of the page is hidden from screen readers.
 - On open, focus goes to the first action (the safe choice, such as "Cancel"), or to `initialFocus` when given (a form's first field). It stays trapped while open and returns to the button that opened it on close.
-- Escape and a labelled close button (`closeLabel`, required) close it.
+- Escape, a click outside and a labelled close button (`closeLabel`, required) close it.
 
 ## Variants
 <Canvas of={DialogStories.WithForm} />
@@ -63,9 +63,9 @@ Una ventana sobre la página para una decisión que necesita toda la atención: 
 - **Respaldado:** atrapar el foco, cerrar con Escape y devolver el foco a donde estabas son prácticas WAI-ARIA para diálogos que orientan a quien usa teclado o lector de pantalla. La amabilidad del estilo es intención de diseño.
 
 ## Accesibilidad
-- Basado en Radix Dialog: `role="dialog"`, `aria-modal`, nombrado por el título y descrito por la descripción.
+- Basado en react-aria: `role="dialog"`, nombrado por el título y descrito por la descripción; mientras está abierto, el resto de la página queda oculto para los lectores de pantalla.
 - Al abrir, el foco va a la primera acción (la opción segura, como "Cancelar"), o a `initialFocus` si se indica (el primer campo de un formulario). Queda atrapado mientras está abierto y vuelve al botón que lo abrió al cerrar.
-- Se cierra con Escape y con un botón de cierre etiquetado (`closeLabel`, obligatorio).
+- Se cierra con Escape, con un clic fuera y con un botón de cierre etiquetado (`closeLabel`, obligatorio).
 
 ## Variantes
 <Canvas of={DialogStories.WithForm} />

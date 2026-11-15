@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -77,6 +77,19 @@ describe("Dialog", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Leave household" }));
     await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("closes when the person clicks outside it", async () => {
+    const onOpenChange = vi.fn();
+    render(<Example onOpenChange={onOpenChange} />);
+    await userEvent.click(screen.getByRole("button", { name: "Leave household" }));
+    // user-event refuses to click the page behind a modal (it ignores the pointer), so fire the
+    // press outside by hand.
+    fireEvent.pointerDown(document.body, { button: 0, pointerId: 1 });
+    fireEvent.pointerUp(document.body, { button: 0, pointerId: 1 });
+    fireEvent.click(document.body);
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 

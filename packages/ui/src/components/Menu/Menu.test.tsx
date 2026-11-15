@@ -53,6 +53,22 @@ describe("Menu", () => {
     expect(await screen.findByRole("menuitemradio", { name: "Dark" })).toHaveAttribute("aria-checked", "true");
   });
 
+  it("ignores a disabled item", async () => {
+    const onArchive = vi.fn();
+    render(
+      <Menu trigger={<button type="button">Options</button>}>
+        <MenuItem onSelect={onArchive} disabled>
+          Archive
+        </MenuItem>
+      </Menu>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Options" }));
+    const item = await screen.findByRole("menuitem", { name: "Archive" });
+    expect(item).toHaveAttribute("aria-disabled", "true");
+    await userEvent.click(item);
+    expect(onArchive).not.toHaveBeenCalled();
+  });
+
   it("has no accessibility violations when open", async () => {
     render(<AccountMenu />);
     await userEvent.click(screen.getByRole("button", { name: "Account" }));

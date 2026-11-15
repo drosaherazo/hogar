@@ -1,6 +1,8 @@
 .content {
   z-index: 10;
   min-inline-size: 14rem;
+  /* react-aria caps the height to the space left in the viewport; scroll inside it. */
+  overflow-y: auto;
   padding: var(--space-2);
   background-color: var(--color-surface);
   color: var(--color-text);
@@ -8,8 +10,12 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   font-family: var(--font-family-base);
-  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
+  transform-origin: var(--trigger-anchor-point);
   animation: appear var(--duration-base) var(--easing-gentle);
+}
+
+.menu {
+  outline: none;
 }
 
 .label {
@@ -32,11 +38,11 @@
   user-select: none;
 }
 
-.item[data-highlighted] {
+.item[data-focused] {
   background-color: var(--color-surface-sunken);
 }
 
-.item:focus-visible {
+.item[data-focus-visible] {
   outline: var(--focus-ring-width) solid var(--color-focus);
   outline-offset: calc(var(--focus-ring-width) * -1);
 }

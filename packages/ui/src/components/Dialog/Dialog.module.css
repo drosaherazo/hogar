@@ -96,9 +96,10 @@
   gap: var(--space-3);
 }
 
+/* Fades only the backdrop color, so the dialog inside keeps its own rise. */
 @keyframes fade {
   from {
-    opacity: 0;
+    background-color: transparent;
   }
 }
 
