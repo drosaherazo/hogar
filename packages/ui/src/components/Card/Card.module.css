@@ -10,8 +10,15 @@
   padding: var(--space-5);
 }
 
+/* Narrower sides on phones, where every pixel of the line goes to the content (and doubles at 200 % text). */
 .padLg {
-  padding: var(--space-8) var(--space-6);
+  padding: var(--space-6) var(--space-4);
+}
+
+@media (min-width: 48rem) {
+  .padLg {
+    padding: var(--space-8) var(--space-6);
+  }
 }
 
 .elevated {
