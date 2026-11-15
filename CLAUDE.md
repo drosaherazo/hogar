@@ -30,7 +30,7 @@ Every spec MUST state in its Implementation Decisions how it meets the rules bel
 ## II. Domain integrity (non-negotiable)
 
 - **Money is integer minor units (`Int`).** `float` and `Decimal` are never used in logic; amounts are formatted only when displayed.
-- **One currency per household:** chosen from the list in `packages/shared` generated from Unicode CLDR: every currency in force and legal tender in some region, in the decimals people actually use (COP has none, from CLDR's cash decimals; ARS has none as a documented exception), so stored, split and displayed units match. Money in two currencies never mixes, and the currency is fixed once the household records its first expense or payment (ADR 0011).
+- **One currency per household:** chosen from the list in `packages/shared` generated from Unicode CLDR: every currency in force and legal tender in some region, in the decimals people actually use (COP has none, from CLDR's cash decimals; ARS has none as a documented exception), so stored, split and displayed units match. Money in two currencies never mixes, and the currency is fixed once the household records its first expense or payment (ADRs 0011, 0014).
 - **Percentages are basis points:** 10000 = 100 %.
 - **Splits always add up:** the sum of the shares is exactly the total; leftover units go deterministically to the first members.
 - **Balances are never stored:** they are computed from `ExpenseShare` and `Settlement`.
