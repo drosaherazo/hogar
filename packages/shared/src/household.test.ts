@@ -5,7 +5,7 @@ import {
   createInvitationRequestSchema,
   householdNameSchema,
   invitationTokenRequestSchema,
-  renameHouseholdRequestSchema,
+  updateHouseholdRequestSchema,
   updateSplitRequestSchema,
   weightSchema,
 } from "./household";
@@ -21,10 +21,24 @@ describe("householdNameSchema", () => {
     expect(errorCodeFrom(householdNameSchema.safeParse("    ").error)).toBe("household.name.required");
     expect(errorCodeFrom(householdNameSchema.safeParse("a".repeat(51)).error)).toBe("household.name.too_long");
   });
+});
 
-  it("is what the rename request validates", () => {
-    expect(renameHouseholdRequestSchema.safeParse({ name: "Piso Lavapiés" }).success).toBe(true);
-    expect(renameHouseholdRequestSchema.safeParse({}).success).toBe(false);
+describe("updateHouseholdRequestSchema", () => {
+  it("takes a new name, a new currency or both", () => {
+    expect(updateHouseholdRequestSchema.parse({ name: " Piso Lavapiés " })).toEqual({ name: "Piso Lavapiés" });
+    expect(updateHouseholdRequestSchema.parse({ currency: "COP" })).toEqual({ currency: "COP" });
+    expect(updateHouseholdRequestSchema.parse({ name: "Casa", currency: "USD" })).toEqual({
+      name: "Casa",
+      currency: "USD",
+    });
+  });
+
+  it.each([
+    [{}, "request.invalid"],
+    [{ name: "" }, "household.name.required"],
+    [{ currency: "JPY" }, "money.currency.invalid"],
+  ])("refuses %j with %s", (body, code) => {
+    expect(errorCodeFrom(updateHouseholdRequestSchema.safeParse(body).error)).toBe(code);
   });
 });
 

@@ -27,6 +27,7 @@ export const ERROR_CODES = [
   "household.read_only",
   "household.last_admin",
   "household.member_not_found",
+  "household.currency.locked",
   "invitation.not_found",
   "invitation.expired",
   "invitation.used",
