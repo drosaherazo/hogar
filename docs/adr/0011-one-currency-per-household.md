@@ -1,6 +1,6 @@
 # 0011 · One currency per household, in the units people actually use
 
-- **Status:** accepted
+- **Status:** accepted; its hand-curated list superseded by [0014](./0014-currency-list-from-cldr.md)
 - **Date:** 2026-11-15
 
 ## Context
