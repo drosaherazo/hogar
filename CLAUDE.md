@@ -29,9 +29,10 @@ Every spec MUST state in its Implementation Decisions how it meets the rules bel
 
 ## II. Domain integrity (non-negotiable)
 
-- **Money is integer cents (`Int`).** `float` and `Decimal` are never used in logic; amounts are formatted only when displayed. Currency is always EUR.
+- **Money is integer minor units (`Int`).** `float` and `Decimal` are never used in logic; amounts are formatted only when displayed.
+- **One currency per household:** chosen from a curated list in `packages/shared` that records the decimals people actually use (COP has none), so stored, split and displayed units match. Money in two currencies never mixes, and the currency is fixed once the household records its first expense or payment (ADR 0011).
 - **Percentages are basis points:** 10000 = 100 %.
-- **Splits always add up:** the sum of the shares is exactly the total; leftover cents go deterministically to the first members.
+- **Splits always add up:** the sum of the shares is exactly the total; leftover units go deterministically to the first members.
 - **Balances are never stored:** they are computed from `ExpenseShare` and `Settlement`.
 - **A user belongs to a single household**, enforced by a unique `Membership.userId`.
 - **Default split by weight:** each `Membership` has an integer `weight` (0–100) and a household's default split is proportional to those weights, converted to exact cents with the rule above. There is no household type: one model covers couples, families and flatmates (ADR 0003).
@@ -68,7 +69,7 @@ Every spec MUST state in its Implementation Decisions how it meets the rules bel
 - There is no hardcoded user-facing copy: every string goes through i18n, with semantic, dot-separated keys per feature namespace. `en` is the source of truth and keys are typed, so a missing key is a type error.
 - Zod schemas and the API return **error codes**, never sentences; the web translates them. The server renders no user-facing text except emails (such as the sign-in code), which are localized with `User.locale`, or with the language the requesting page is showing when there is no person yet (ADR 0008).
 - `packages/ui` contains no copy: every visible or accessible string comes in through props.
-- Money, dates and numbers are always formatted with `Intl` and the active locale.
+- Money, dates and numbers are always formatted with `Intl` and the active locale: the active language plus the device region when they match (`es` + `es-CO` → `es-CO`), so separators and currency symbols look the way each person writes them.
 - The parity test keeps `en` and `es` identical in keys with no empty values.
 
 **Why:** bilingual from day one keeps copy out of logic and makes the app usable by the people it is built for.
@@ -103,7 +104,7 @@ Package guidance loads on demand from `apps/web/CLAUDE.md` (i18n) and `packages/
 
 - **Current phase, MVP (v1):** auth (Google or an email sign-in code) and roles, household with shareable-link invitations, expenses with splits and balances, expense categories (with an optional own split and a list filter), chores with an assignee, shopping list, and real time.
 - **Out of the MVP:** invitation emails, recurring expenses and recurring chores (v1.1), budgets and charts, including totals and charts per category (v1.2).
-- **Out of scope:** multiple households per user, a shared pot, real payments, multiple currencies, native mobile app, and gamification. They are not implemented unless explicitly requested and these rules are amended.
+- **Out of scope:** multiple households per user, a shared pot, real payments, multiple currencies within a household (and conversion between them), native mobile app, and gamification. They are not implemented unless explicitly requested and these rules are amended.
 
 ## Git workflow
 
@@ -126,4 +127,4 @@ Standard scripts live in the root `package.json`. Non-obvious bits:
 - New worktree: `pnpm install` and copy `apps/api/.env` and `apps/web/.env` from the main folder; `pnpm db:up` reuses the shared containers.
 - Deploy: `docs/deploy.md` (`render.yaml`, `apps/web/vercel.json`, `packages/ui/vercel.json`). API production build: `pnpm --filter @hogar/api build`.
 
-**Version**: 5.0.3 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-14
+**Version**: 6.0.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-15
