@@ -5,9 +5,9 @@ import {
   invitationPreviewSchema,
   type InvitableRole,
 } from "@hogar/shared";
-import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { hashSecretToken } from "../src/auth/tokens";
+import { request } from "./request";
 import { addMember, createHousehold, householdRow } from "./householdHelpers";
 import { bruno, carla, createTestApp, dani, db, signIn, type SignedIn } from "./testApp";
 

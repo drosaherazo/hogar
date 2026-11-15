@@ -1,5 +1,5 @@
-import request from "supertest";
 import { describe, expect, it } from "vitest";
+import { request } from "./request";
 import { createHousehold } from "./householdHelpers";
 import { addExpense, balanceByUser, balancesOf, homeWith, homeWithGuest } from "./expenseHelpers";
 import { createTestApp, dani, db, signIn } from "./testApp";

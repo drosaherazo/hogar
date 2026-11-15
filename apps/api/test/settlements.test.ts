@@ -1,6 +1,6 @@
 import { activityPageSchema, settlementResponseSchema } from "@hogar/shared";
-import request from "supertest";
 import { describe, expect, it } from "vitest";
+import { request } from "./request";
 import { createHousehold } from "./householdHelpers";
 import {
   addExpense,

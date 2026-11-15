@@ -1,5 +1,5 @@
-import request from "supertest";
 import { describe, expect, it } from "vitest";
+import { request } from "./request";
 import { createTestApp, WEB_ORIGIN } from "./testApp";
 
 function refreshFrom(app: ReturnType<typeof createTestApp>["app"], forwardedFor: string) {

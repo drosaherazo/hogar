@@ -12,8 +12,8 @@ import {
   type SettlementInput,
   type SettlementView,
 } from "@hogar/shared";
-import request from "supertest";
 import { currentMembers } from "../src/expenses/people";
+import { request } from "./request";
 import { addMember, createHousehold } from "./householdHelpers";
 import { bruno, carla, db, signIn, type createTestApp, type SignedIn } from "./testApp";
 

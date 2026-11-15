@@ -5,8 +5,8 @@ import {
   type CategoryView,
   type InvitableRole,
 } from "@hogar/shared";
-import request from "supertest";
 import type { GoogleIdentity } from "../src/auth/googleVerifier";
+import { request } from "./request";
 import { signIn, type createTestApp, type SignedIn } from "./testApp";
 
 type App = ReturnType<typeof createTestApp>["app"];

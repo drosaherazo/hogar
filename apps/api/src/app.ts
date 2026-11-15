@@ -25,6 +25,7 @@ import { createHouseholdInvitationsRouter, createInvitationsRouter } from "./hou
 import { createInvitationService } from "./household/invitationService";
 import { createMeRouter } from "./me/meRouter";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
+import { requireApiVersion } from "./middleware/requireApiVersion";
 import { requireSameOrigin } from "./middleware/requireSameOrigin";
 import { createOriginMatcher } from "./auth/originMatcher";
 
@@ -76,6 +77,9 @@ export function createApp({ config, db, google, mailer, authRateLimit = 100, inv
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok" });
   });
+
+  // Everything after the health check needs a web recent enough for this API.
+  app.use(requireApiVersion);
 
   app.use(
     "/api/auth",

@@ -5,7 +5,7 @@ import {
   type HouseholdView,
   type Role,
 } from "@hogar/shared";
-import request from "supertest";
+import { request } from "./request";
 import { type createTestApp, db, signIn, type SignedIn } from "./testApp";
 import type { GoogleIdentity } from "../src/auth/googleVerifier";
 

@@ -62,6 +62,7 @@ export const ERROR_CODES = [
   "settlement.person.not_found",
   "settlement.not_found",
   "settlement.changed",
+  "client.outdated",
   "request.invalid",
   "request.forbidden_origin",
   "request.rate_limited",

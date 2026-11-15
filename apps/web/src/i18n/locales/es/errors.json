@@ -116,5 +116,8 @@
   "server": {
     "unexpected": "Algo ha fallado por nuestra parte. Inténtalo de nuevo en un momento."
   },
-  "network": "No hemos podido conectar con Hogar. Revisa tu conexión y vuelve a intentarlo."
+  "network": "No hemos podido conectar con Hogar. Revisa tu conexión y vuelve a intentarlo.",
+  "client": {
+    "outdated": "Esta versión de Hogar está desactualizada. Actualiza para seguir."
+  }
 }
