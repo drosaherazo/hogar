@@ -30,7 +30,7 @@ Every spec MUST state in its Implementation Decisions how it meets the rules bel
 ## II. Domain integrity (non-negotiable)
 
 - **Money is integer minor units (`Int`).** `float` and `Decimal` are never used in logic; amounts are formatted only when displayed.
-- **One currency per household:** chosen from a curated list in `packages/shared` that records the decimals people actually use (COP has none), so stored, split and displayed units match. Money in two currencies never mixes, and the currency is fixed once the household records its first expense or payment (ADR 0011).
+- **One currency per household:** chosen from the list in `packages/shared` generated from Unicode CLDR: every currency in force and legal tender in some region, in the decimals people actually use (COP has none, from CLDR's cash decimals; ARS has none as a documented exception), so stored, split and displayed units match. Money in two currencies never mixes, and the currency is fixed once the household records its first expense or payment (ADR 0011).
 - **Percentages are basis points:** 10000 = 100 %.
 - **Splits always add up:** the sum of the shares is exactly the total; leftover units go deterministically to the first members.
 - **Balances are never stored:** they are computed from `ExpenseShare` and `Settlement`.
@@ -87,6 +87,7 @@ Every spec MUST state in its Implementation Decisions how it meets the rules bel
 
 ## Technology and architecture
 
+- **One way per concern:** each concern (accessible primitives, styles, data fetching, validation…) MUST use a single library or pattern across the codebase. Adopting a new one means migrating every existing use in its own `chore` PR, never leaving two side by side (ADR 0012).
 - **Monorepo:** pnpm workspaces (no Turborepo or Nx): `apps/web`, `apps/api`, `packages/ui`, `packages/shared`, `docs/`.
 - **Allowed dependencies:** `web → ui, shared` and `api → shared`. `ui` never imports from `shared` or the apps, and `web` never imports from `api`.
 - **Web:** React, Vite, React Router, TanStack Query, react-i18next. A client-only SPA: no SSR, `React.lazy` for code splitting. **Styles:** CSS Modules with tokens and `clsx` variants; no Tailwind, no CSS-in-JS.
@@ -127,4 +128,4 @@ Standard scripts live in the root `package.json`. Non-obvious bits:
 - New worktree: `pnpm install` and copy `apps/api/.env` and `apps/web/.env` from the main folder; `pnpm db:up` reuses the shared containers.
 - Deploy: `docs/deploy.md` (`render.yaml`, `apps/web/vercel.json`, `packages/ui/vercel.json`). API production build: `pnpm --filter @hogar/api build`.
 
-**Version**: 6.0.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-15
+**Version**: 6.1.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-15
