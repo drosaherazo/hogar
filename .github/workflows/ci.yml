@@ -16,6 +16,15 @@ env:
   NODE_VERSION: 24
 
 jobs:
+  adr-numbers:
+    name: ADR numbers are unique
+    runs-on: ubuntu-latest
+    steps:
+      # A pull_request run checks out the PR merged into main, so an ADR number
+      # taken on main since the branch started shows up here as a duplicate.
+      - uses: actions/checkout@v4
+      - run: bash scripts/check-adr-numbers.sh
+
   checks:
     name: Lint, typecheck and tests
     runs-on: ubuntu-latest
