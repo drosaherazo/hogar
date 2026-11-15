@@ -1,11 +1,12 @@
 import { canEditContent, type ExpenseView, type MemberView } from "@hogar/shared";
-import { Alert, Amount, Avatar, Badge, Button, Card, Dialog, Spinner } from "@hogar/ui";
+import { Alert, Avatar, Badge, Button, Card, Dialog, Spinner } from "@hogar/ui";
 import { ArrowLeft, Check, Pencil, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router";
 import { errorKey } from "../../api/client";
 import { CategoryLabel } from "../../expenses/CategoryLabel";
+import { Money } from "../../expenses/Money";
 import { avatarPropsFor } from "../../expenses/people";
 import { useDeleteExpense, useExpense } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
@@ -119,7 +120,7 @@ function Details({ expense, members, canEdit }: { expense: ExpenseView; members:
           {expense.description}
         </h1>
         <CategoryLabel category={expense.category} className={styles.category} />
-        <Amount cents={expense.amountCents} className={styles.total} />
+        <Money units={expense.amountCents} className={styles.total} />
       </div>
 
       <dl className={styles.facts}>
@@ -157,7 +158,7 @@ function Details({ expense, members, canEdit }: { expense: ExpenseView; members:
                 {share.person.name}
                 {share.person.former && <Badge>{t("balances.former")}</Badge>}
               </span>
-              <Amount cents={share.amountCents} />
+              <Money units={share.amountCents} />
             </li>
           ))}
         </ul>

@@ -1,8 +1,10 @@
 import {
+  amountInputValue,
   canEditContent,
   defaultWeights,
   expenseInputSchema,
   MAX_AMOUNT_CENTS,
+  parseAmount,
   SPLIT_METHODS,
   splitAmount,
   weightsToBasisPoints,
@@ -14,7 +16,7 @@ import {
   type PersonRef,
   type SplitMethod,
 } from "@hogar/shared";
-import { Alert, Amount, Avatar, Button, ChoiceGroup, Select, Spinner, TextField, useLocale } from "@hogar/ui";
+import { Alert, Avatar, Button, ChoiceGroup, Select, Spinner, TextField, useLocale } from "@hogar/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CircleAlert } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
@@ -24,13 +26,13 @@ import { ApiRequestError, errorKey } from "../../api/client";
 import { useCurrentUser } from "../../auth/guards";
 import { CategoryChangeDialog, type CategoryChangeChoice } from "../../expenses/CategoryChangeDialog";
 import { categoryText } from "../../expenses/CategoryLabel";
-import { amountInputValue, parseAmount } from "../../expenses/money";
+import { Money } from "../../expenses/Money";
 import { avatarPropsFor, usePersonLabel } from "../../expenses/people";
 import { categoryKeys, useCategories } from "../../expenses/useCategories";
 import { useCreateExpense, useExpense, useUpdateExpense } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
 import { householdKeys, useHousehold } from "../../household/useHousehold";
-import { localToday, useList, useMoney, usePercent } from "../../i18n/format";
+import { localToday, useCurrency, useList, useMoney, usePercent } from "../../i18n/format";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell } from "../../layout/AppShell";
 import styles from "./ExpenseFormPage.module.css";
@@ -146,6 +148,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   const percent = usePercent();
   const list = useList();
   const money = useMoney();
+  const currency = useCurrency();
   const create = useCreateExpense();
   const update = useUpdateExpense();
   const save = existing ? update : create;
@@ -190,7 +193,9 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   const savedShares = existing?.split.method === "WEIGHTS" ? existing.split.shares : null;
 
   const [description, setDescription] = useState(existing?.description ?? "");
-  const [amountText, setAmountText] = useState(existing ? amountInputValue(existing.amountCents, locale) : "");
+  const [amountText, setAmountText] = useState(
+    existing ? amountInputValue(existing.amountCents, currency, locale) : "",
+  );
   const [paidById, setPaidById] = useState(existing?.paidBy.userId ?? user.id);
   const [date, setDate] = useState(existing?.date ?? localToday());
   const [method, setMethod] = useState<SplitMethod>(existing?.split.method ?? (nobodyPays ? "EQUAL" : "WEIGHTS"));
@@ -202,7 +207,10 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   const [exactTexts, setExactTexts] = useState<Record<string, string>>(() =>
     existing?.split.method === "EXACT"
       ? Object.fromEntries(
-          existing.split.shares.map((share) => [share.person.userId, amountInputValue(share.amountCents, locale)]),
+          existing.split.shares.map((share) => [
+            share.person.userId,
+            amountInputValue(share.amountCents, currency, locale),
+          ]),
         )
       : {},
   );
@@ -211,7 +219,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   const [pendingInput, setPendingInput] = useState<ExpenseInput | null>(null);
   const [changeError, setChangeError] = useState<string | undefined>();
 
-  const cents = parseAmount(amountText);
+  const cents = parseAmount(amountText, currency);
   const amount = isValidAmount(cents) ? cents : null;
 
   // The default split with today's weights, computed with the same function the API uses. These
@@ -251,10 +259,10 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
         )
       : null;
 
-  // Exact amounts: empty fields count as €0.00; anything unreadable blocks saving.
+  // Exact amounts: empty fields count as zero; anything unreadable blocks saving.
   const exactCents = people.map((person) => {
     const text = exactTexts[person.userId]?.trim() ?? "";
-    return text === "" ? 0 : parseAmount(text);
+    return text === "" ? 0 : parseAmount(text, currency);
   });
   const exactReadable = exactCents.every((value) => value !== null);
   const remaining =
@@ -490,7 +498,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
               <li key={person.userId} className={styles.share}>
                 <Avatar size="sm" decorative {...avatarPropsFor(person, members)} />
                 <span className={styles.shareName}>{person.name}</span>
-                <Amount cents={amountCents} />
+                <Money units={amountCents} />
               </li>
             ))}
           </ul>
@@ -510,7 +518,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
               return {
                 value: person.userId,
                 label: personLabel(person),
-                trailing: equalShares && index >= 0 ? <Amount cents={equalShares[index] ?? 0} /> : undefined,
+                trailing: equalShares && index >= 0 ? <Money units={equalShares[index] ?? 0} /> : undefined,
               };
             })}
           />

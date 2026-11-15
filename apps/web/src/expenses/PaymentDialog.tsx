@@ -1,5 +1,7 @@
 import {
+  amountInputValue,
   canEditContent,
+  parseAmount,
   settlementInputSchema,
   suggestSettlements,
   type BalancesView,
@@ -14,8 +16,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { errorKey } from "../api/client";
 import { useCurrentUser } from "../auth/guards";
-import { localToday, useDates, useMoney } from "../i18n/format";
-import { amountInputValue, parseAmount } from "./money";
+import { localToday, useCurrency, useDates, useMoney } from "../i18n/format";
 import styles from "./PaymentDialog.module.css";
 import { avatarPropsFor, usePersonLabel } from "./people";
 import { useCreateSettlement, useDeleteSettlement, useSettlement, useUpdateSettlement } from "./useExpenses";
@@ -98,6 +99,7 @@ export function RecordPaymentDialog({
   const user = useCurrentUser();
   const locale = useLocale();
   const money = useMoney();
+  const currency = useCurrency();
   const create = useCreateSettlement();
   const update = useUpdateSettlement();
   const save = editing ? update : create;
@@ -115,7 +117,7 @@ export function RecordPaymentDialog({
   const [fromUserId, setFromUserId] = useState(start?.fromUserId ?? user.id);
   const [toUserId, setToUserId] = useState(start?.toUserId ?? firstOther);
   const [amountText, setAmountText] = useState(
-    start?.amountCents === undefined ? "" : amountInputValue(start.amountCents, locale),
+    start?.amountCents === undefined ? "" : amountInputValue(start.amountCents, currency, locale),
   );
   const [date, setDate] = useState(editing?.date ?? localToday());
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -124,7 +126,7 @@ export function RecordPaymentDialog({
   const owedNow =
     suggestSettlements(base).find((entry) => entry.fromUserId === fromUserId && entry.toUserId === toUserId)
       ?.amountCents ?? 0;
-  const cents = parseAmount(amountText);
+  const cents = parseAmount(amountText, currency);
   // Right after a former member's last debt is settled, the refetched balances drop them while
   // they're still selected here; previewing a payment to or from someone outside `base` would
   // unbalance it, so there's no reversal note until both people are back in the list.
@@ -152,7 +154,7 @@ export function RecordPaymentDialog({
     const result = settlementInputSchema.safeParse({
       fromUserId,
       toUserId,
-      amountCents: parseAmount(amountText) ?? Number.NaN,
+      amountCents: parseAmount(amountText, currency) ?? Number.NaN,
       date,
     });
     if (!result.success) {
