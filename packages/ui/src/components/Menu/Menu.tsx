@@ -1,6 +1,24 @@
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import clsx from "clsx";
-import type { ReactNode } from "react";
+import {
+  isValidElement,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type DOMAttributes,
+  type ReactElement,
+  type ReactNode,
+} from "react";
+import {
+  Header,
+  Menu as AriaMenu,
+  MenuItem as AriaMenuItem,
+  MenuSection,
+  MenuTrigger,
+  Popover,
+  Pressable,
+  Separator,
+  type Selection,
+} from "react-aria-components";
 import styles from "./Menu.module.css";
 
 export interface MenuProps {
@@ -11,19 +29,32 @@ export interface MenuProps {
 }
 
 /**
- * A list of actions that opens from a button. Built on Radix, so it handles keyboard navigation,
- * focus return and screen reader roles; we only add the Hogar look.
+ * A list of actions that opens from a button. Built on react-aria, so it handles keyboard
+ * navigation, focus return and screen reader roles; we only add the Hogar look.
  */
 export function Menu({ trigger, children, align = "end" }: MenuProps) {
+  const triggerRef = useRef<HTMLElement>(null);
+  const [open, setOpen] = useState(false);
+  const wasOpen = useRef(false);
+
+  // react-aria returns focus to the trigger a frame after the menu closes. Do it as soon as the
+  // menu is gone instead, so focus never rests on the page in between. A dialog opened from an
+  // item still takes focus afterwards, since its effects run after this one.
+  useLayoutEffect(() => {
+    if (wasOpen.current && !open) triggerRef.current?.focus();
+    wasOpen.current = open;
+  }, [open]);
+
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content className={styles.content} align={align} sideOffset={8}>
-          {children}
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+    <MenuTrigger isOpen={open} onOpenChange={setOpen}>
+      {/* The app passes its own button (a plain one or our Button); Pressable wires it up. */}
+      {isValidElement(trigger) && (
+        <Pressable ref={triggerRef}>{trigger as ReactElement<DOMAttributes<Element>, string>}</Pressable>
+      )}
+      <Popover className={clsx(styles.content)} placement={`bottom ${align}`} offset={8}>
+        <AriaMenu className={clsx(styles.menu)}>{children}</AriaMenu>
+      </Popover>
+    </MenuTrigger>
   );
 }
 
@@ -37,10 +68,11 @@ export interface MenuItemProps {
 
 export function MenuItem({ children, onSelect, icon, disabled, className }: MenuItemProps) {
   return (
-    <DropdownMenu.Item
+    <AriaMenuItem
       className={clsx(styles.item, className)}
-      disabled={disabled ?? false}
-      {...(onSelect ? { onSelect } : {})}
+      isDisabled={disabled ?? false}
+      {...(typeof children === "string" ? { textValue: children } : {})}
+      {...(onSelect ? { onAction: onSelect } : {})}
     >
       {icon && (
         <span className={styles.itemIcon} aria-hidden="true">
@@ -48,7 +80,7 @@ export function MenuItem({ children, onSelect, icon, disabled, className }: Menu
         </span>
       )}
       {children}
-    </DropdownMenu.Item>
+    </AriaMenuItem>
   );
 }
 
@@ -62,28 +94,38 @@ export interface MenuRadioGroupProps<T extends string> {
 
 /** A set of mutually exclusive options inside a menu, like the theme or the language. */
 export function MenuRadioGroup<T extends string>({ label, value, onValueChange, options }: MenuRadioGroupProps<T>) {
+  const select = (selection: Selection) => {
+    // Single selection that can't be emptied: the set always holds exactly one option.
+    const [next] = selection === "all" ? [] : selection;
+    if (next !== undefined) onValueChange(String(next) as T);
+  };
+
   return (
-    <DropdownMenu.Group>
-      <DropdownMenu.Label className={styles.label}>{label}</DropdownMenu.Label>
-      <DropdownMenu.RadioGroup value={value} onValueChange={(next) => onValueChange(next as T)}>
-        {options.map((option) => (
-          <DropdownMenu.RadioItem key={option.value} value={option.value} className={styles.item}>
-            {option.icon && (
-              <span className={styles.itemIcon} aria-hidden="true">
-                {option.icon}
-              </span>
-            )}
-            {option.label}
-            <DropdownMenu.ItemIndicator className={styles.indicator} aria-hidden="true">
-              <span className={styles.dot} />
-            </DropdownMenu.ItemIndicator>
-          </DropdownMenu.RadioItem>
-        ))}
-      </DropdownMenu.RadioGroup>
-    </DropdownMenu.Group>
+    <MenuSection selectionMode="single" disallowEmptySelection selectedKeys={[value]} onSelectionChange={select}>
+      <Header className={clsx(styles.label)}>{label}</Header>
+      {options.map((option) => (
+        <AriaMenuItem key={option.value} id={option.value} textValue={option.label} className={clsx(styles.item)}>
+          {({ isSelected }) => (
+            <>
+              {option.icon && (
+                <span className={styles.itemIcon} aria-hidden="true">
+                  {option.icon}
+                </span>
+              )}
+              {option.label}
+              {isSelected && (
+                <span className={styles.indicator} aria-hidden="true">
+                  <span className={styles.dot} />
+                </span>
+              )}
+            </>
+          )}
+        </AriaMenuItem>
+      ))}
+    </MenuSection>
   );
 }
 
 export function MenuSeparator() {
-  return <DropdownMenu.Separator className={styles.separator} />;
+  return <Separator className={clsx(styles.separator)} />;
 }
