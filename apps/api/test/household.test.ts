@@ -102,9 +102,19 @@ describe("POST /api/household", () => {
     expect(householdResponseSchema.parse(res.body).household.currency).toBe("COP");
   });
 
+  it.each(["JPY", "KWD", "INR", "XOF"] as const)(
+    "creates a household in %s, any currency in force somewhere",
+    async (code) => {
+      const { app } = createTestApp();
+      const ana = await signIn(app);
+      const created = await createHousehold(app, ana, "Casa", code);
+      expect(created.currency).toBe(code);
+    },
+  );
+
   it.each([
     ["without a currency", {}],
-    ["with a currency outside the list", { currency: "JPY" }],
+    ["with a currency outside the list", { currency: "XAU" }],
     ["with a currency that isn't text", { currency: 978 }],
   ])("refuses a household %s", async (_, extra) => {
     const { app } = createTestApp();
@@ -202,6 +212,14 @@ describe("PATCH /api/household with a currency", () => {
     expect(householdResponseSchema.parse(seen.body).household.currency).toBe("COP");
   });
 
+  it("changes to a currency with three decimals", async () => {
+    const { app } = createTestApp();
+    const home = await homeWith(app);
+    const res = await changeCurrency(app, home.ana.auth, { currency: "KWD" });
+    expect(res.status).toBe(200);
+    expect(householdResponseSchema.parse(res.body).household.currency).toBe("KWD");
+  });
+
   it("renames and changes the currency in one request", async () => {
     const { app } = createTestApp();
     const ana = await signIn(app);
@@ -293,7 +311,7 @@ describe("PATCH /api/household with a currency", () => {
   });
 
   it.each([
-    ["a currency outside the list", { currency: "JPY" }, "money.currency.invalid"],
+    ["a currency outside the list", { currency: "XAU" }, "money.currency.invalid"],
     ["nothing to change", {}, "request.invalid"],
   ])("refuses %s", async (_, body, code) => {
     const { app } = createTestApp();
