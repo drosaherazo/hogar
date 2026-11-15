@@ -49,7 +49,7 @@ interface FakeClock {
  * Replies reach the app in real time while its clock is fake: moving the clock before the app has
  * handled a reply would skip the timer it is about to schedule.
  */
-function timerScheduled(delayMs: number) {
+function waitForTimer(delayMs: number) {
   cy.window().should((win) => {
     const { clock } = win.setTimeout as typeof win.setTimeout & { clock?: FakeClock };
     const timers = Object.values(clock?.timers ?? {});
@@ -80,7 +80,7 @@ describe("Waking up the server", () => {
     // and scheduled the next one.
     const settle = () => {
       cy.wait("@health");
-      timerScheduled(2000);
+      waitForTimer(2000);
     };
     const nextCheck = () => {
       cy.tick(2000);
@@ -129,8 +129,7 @@ describe("Waking up the server", () => {
     sleepingServer(0);
     cy.contains("button", "Try again").click();
     // The scene stays at least 500 ms before leaving for the sign-in page.
-    cy.wait(["@health", "@refresh"]);
-    timerScheduled(500);
+    waitForTimer(500);
     cy.tick(500);
     cy.location("pathname").should("eq", "/login");
     cy.findHeading("Welcome to Hogar");
