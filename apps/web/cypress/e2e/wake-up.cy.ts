@@ -39,6 +39,27 @@ function sleepingServer(wakeAfter: number) {
   }).as("health");
 }
 
+/** The parts of the fake clock (`@sinonjs/fake-timers`) that `cy.clock()` installs on the page's timers. */
+interface FakeClock {
+  timers?: Record<string, { type: string; delay?: number }>;
+}
+
+/**
+ * Waits until the app has scheduled a one-off timer of `delayMs`, so the next `cy.tick` fires it.
+ * Replies reach the app in real time while its clock is fake: moving the clock before the app has
+ * handled a reply would skip the timer it is about to schedule.
+ */
+function waitForTimer(delayMs: number) {
+  cy.window().should((win) => {
+    const { clock } = win.setTimeout as typeof win.setTimeout & { clock?: FakeClock };
+    const timers = Object.values(clock?.timers ?? {});
+    expect(
+      timers.some((timer) => timer.type === "Timeout" && timer.delay === delayMs),
+      `a ${delayMs} ms timer is scheduled`,
+    ).to.equal(true);
+  });
+}
+
 describe("Waking up the server", () => {
   it("keeps a signed-in member on their page through a long wake-up", () => {
     // The server sleeps until the test wakes it at 16 s. (Counting calls would be off by one in
@@ -55,9 +76,12 @@ describe("Waking up the server", () => {
     cy.intercept("GET", "/api/household", { body: { household, removedFrom: null } });
     cy.intercept("GET", "/api/household/balances", square);
 
-    // Replies arrive in real time, so the fake clock moves one retry (2 s) at a time. The short real
-    // pause lets the app handle the reply and schedule its next retry before the clock moves again.
-    const settle = () => cy.wait("@health").wait(100);
+    // The fake clock moves one retry (2 s) at a time, once the app has handled the failed check
+    // and scheduled the next one.
+    const settle = () => {
+      cy.wait("@health");
+      waitForTimer(2000);
+    };
     const nextCheck = () => {
       cy.tick(2000);
       settle();
@@ -104,7 +128,9 @@ describe("Waking up the server", () => {
 
     sleepingServer(0);
     cy.contains("button", "Try again").click();
-    cy.tick(1000);
+    // The scene stays at least 500 ms before leaving for the sign-in page.
+    waitForTimer(500);
+    cy.tick(500);
     cy.location("pathname").should("eq", "/login");
     cy.findHeading("Welcome to Hogar");
   });
