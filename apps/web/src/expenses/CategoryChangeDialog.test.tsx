@@ -1,9 +1,11 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { I18nextProvider } from "react-i18next";
 import { describe, expect, it, vi } from "vitest";
+import { ApiClient } from "../api/client";
+import { AppProviders } from "../App";
 import { createI18n } from "../i18n";
 import { expectNoA11yViolations } from "../test/axe";
+import { handlers, homeView, server } from "../test/server";
 import { CategoryChangeDialog, type CategoryChangeDialogProps } from "./CategoryChangeDialog";
 
 const rows = [
@@ -14,8 +16,10 @@ const rows = [
 function renderDialog(props: Partial<CategoryChangeDialogProps> = {}) {
   const onConfirm = vi.fn();
   const i18n = createI18n({ lng: "en" });
+  // Amounts are in the household's currency, euros here.
+  server.use(handlers.signedIn(), handlers.household(homeView()));
   render(
-    <I18nextProvider i18n={i18n}>
+    <AppProviders i18n={i18n} client={new ApiClient("http://localhost/api")}>
       <CategoryChangeDialog
         open
         onOpenChange={() => undefined}
@@ -26,7 +30,7 @@ function renderDialog(props: Partial<CategoryChangeDialogProps> = {}) {
         onConfirm={onConfirm}
         {...props}
       />
-    </I18nextProvider>,
+    </AppProviders>,
   );
   return { onConfirm, dialog: screen.getByRole("dialog", { name: "The shares would change" }) };
 }

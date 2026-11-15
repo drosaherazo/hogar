@@ -46,6 +46,43 @@ describe("ExpenseFormPage (adding)", () => {
     expect(rows[1]).toHaveTextContent("Bruno Díaz€10.70");
   });
 
+  it("in a household in Colombian pesos, labels the amount with its symbol and reads '85.000' as 85000 pesos", async () => {
+    let body: unknown;
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView({ currency: "COP" })),
+      http.post("*/api/household/expenses", async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ expense: expenseView({ id: "new_one" }) }, { status: 201 });
+      }),
+      handlers.expense(expenseView({ id: "new_one" })),
+    );
+    renderApp({ path: PATH, locale: "es" });
+    await userEvent.type(await screen.findByRole("textbox", { name: "¿Qué fue?" }), "Mercado");
+    const amount = screen.getByRole("textbox", { name: "Importe (COP)" });
+    expect(amount).toHaveAccessibleDescription("Por ejemplo, 85000.");
+    await userEvent.type(amount, "85.000");
+
+    const rows = within(screen.getByRole("list", { name: "La parte de cada persona" })).getAllByRole("listitem");
+    expect(rows[0]).toHaveTextContent(/Ana García63\.750\sCOP/);
+    expect(rows[1]).toHaveTextContent(/Bruno Díaz21\.250\sCOP/);
+    await userEvent.click(screen.getByRole("button", { name: "Guardar gasto" }));
+    await waitFor(() => expect(body).toEqual(expect.objectContaining({ amountCents: 85_000 })));
+  });
+
+  it("states the amount limits in the household's currency", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView({ currency: "COP" })));
+    renderApp({ path: PATH });
+    await userEvent.type(await screen.findByRole("textbox", { name: "What was it?" }), "Rent");
+    const amount = screen.getByRole("textbox", { name: "Amount (COP)" });
+    await userEvent.type(amount, "1000000001");
+    await userEvent.click(screen.getByRole("button", { name: "Save expense" }));
+
+    expect(amount).toHaveAccessibleDescription(
+      expect.stringMatching(/Enter an amount from COP\s1 to COP\s1,000,000,000\./),
+    );
+  });
+
   it("reads amounts typed the Spanish way and opens the new expense", async () => {
     let body: unknown;
     server.use(

@@ -1,5 +1,5 @@
 import type { HouseholdView, InvitationPreview, MemberView } from "@hogar/shared";
-import { ana, session } from "../support/e2e";
+import { ana, browserLanguages, session } from "../support/e2e";
 
 const anaMember: MemberView = {
   id: "m_ana",
@@ -24,6 +24,7 @@ function household(overrides: Partial<HouseholdView> = {}): HouseholdView {
   return {
     id: "household_1",
     name: "Casa Ana",
+    currency: "EUR",
     myMembershipId: "m_ana",
     myRole: "ADMIN",
     members: [anaMember],
@@ -59,11 +60,12 @@ describe("Households", () => {
 
   it("creates a household from the empty home", () => {
     cy.intercept("POST", "/api/household", (req) => {
-      expect(req.body).to.deep.equal({ name: "Casa Ana" });
+      expect(req.body).to.deep.equal({ name: "Casa Ana", currency: "EUR" });
       req.reply({ statusCode: 201, body: { household: household() } });
     }).as("create");
 
-    cy.visit("/");
+    // A Spanish browser suggests euros.
+    cy.visit("/", { onBeforeLoad: (win) => browserLanguages(win, "en-ES", "en") });
     cy.contains("You're not part of a household yet");
     cy.contains("button", "Create a household").click();
     cy.get("[role=dialog]").within(() => {

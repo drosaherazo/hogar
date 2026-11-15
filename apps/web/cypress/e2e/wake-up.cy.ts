@@ -4,6 +4,7 @@ import { ana, session } from "../support/e2e";
 const household: HouseholdView = {
   id: "household_1",
   name: "Casa Ana",
+  currency: "EUR",
   myMembershipId: "m_ana",
   myRole: "ADMIN",
   members: [

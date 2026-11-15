@@ -16,7 +16,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { errorKey } from "../api/client";
 import { useCurrentUser } from "../auth/guards";
-import { localToday, useCurrency, useDates, useMoney } from "../i18n/format";
+import { localToday, useAmountField, useCurrency, useDates, useMoney } from "../i18n/format";
 import styles from "./PaymentDialog.module.css";
 import { avatarPropsFor, usePersonLabel } from "./people";
 import { useCreateSettlement, useDeleteSettlement, useSettlement, useUpdateSettlement } from "./useExpenses";
@@ -100,6 +100,7 @@ export function RecordPaymentDialog({
   const locale = useLocale();
   const money = useMoney();
   const currency = useCurrency();
+  const amountField = useAmountField();
   const create = useCreateSettlement();
   const update = useUpdateSettlement();
   const save = editing ? update : create;
@@ -145,7 +146,7 @@ export function RecordPaymentDialog({
 
   const error = (field: Field) => {
     const code = errors[field];
-    return code ? t(`errors:${code}`) : undefined;
+    return code ? t(`errors:${code}`, amountField.limits) : undefined;
   };
   const options = people.map((person) => ({ value: person.userId, label: personLabel(person) }));
 
@@ -205,7 +206,7 @@ export function RecordPaymentDialog({
       }
     >
       <form id={formId} className={styles.form} onSubmit={submit} noValidate>
-        {save.isError && <Alert tone="danger">{t(errorKey(save.error))}</Alert>}
+        {save.isError && <Alert tone="danger">{t(errorKey(save.error), amountField.limits)}</Alert>}
         <Select
           ref={firstField}
           label={t("payment.from")}
@@ -222,7 +223,7 @@ export function RecordPaymentDialog({
           error={error("to")}
         />
         <TextField
-          label={t("payment.amount")}
+          label={t("payment.amount", { symbol: amountField.symbol })}
           inputMode="decimal"
           autoComplete="off"
           value={amountText}

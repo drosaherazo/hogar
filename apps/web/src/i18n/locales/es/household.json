@@ -24,6 +24,8 @@
     "description": "Ponle un nombre que todos en casa reconozcan. Puedes cambiarlo más adelante.",
     "nameLabel": "Nombre del hogar",
     "nameHint": "Hasta 50 caracteres.",
+    "currencyLabel": "Moneda",
+    "currencyHint": "Todo tu hogar usará esta moneda. Puedes cambiarla hasta el primer gasto o pago.",
     "submit": "Crear hogar",
     "submitting": "Creando tu hogar"
   },
