@@ -1,6 +1,7 @@
-import * as RadixDialog from "@radix-ui/react-dialog";
+import clsx from "clsx";
 import { X } from "lucide-react";
-import { useRef, type ReactNode, type RefObject } from "react";
+import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
+import { Dialog as AriaDialog, Heading, Modal, ModalOverlay } from "react-aria-components";
 import styles from "./Dialog.module.css";
 
 export interface DialogProps {
@@ -26,8 +27,9 @@ export interface DialogProps {
 }
 
 /**
- * A modal for confirmations and short forms. Built on Radix: it traps focus, closes with
- * Escape, hides the page from screen readers while open and returns focus afterwards.
+ * A modal for confirmations and short forms. Built on react-aria: it traps focus, closes with
+ * Escape or a click outside, hides the page from screen readers while open and returns focus
+ * afterwards to whatever had it before, such as the button that opened it.
  */
 export function Dialog({
   open,
@@ -39,53 +41,80 @@ export function Dialog({
   actions,
   initialFocus,
 }: DialogProps) {
-  // Dialogs here are opened from ordinary buttons, not a Radix Trigger, so Radix wouldn't know
-  // where to send focus on close. Remember what had focus and go back to it.
-  const returnFocusTo = useRef<HTMLElement | null>(null);
-  const footer = useRef<HTMLElement>(null);
+  const descriptionId = useId();
 
   return (
-    <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
-      <RadixDialog.Portal>
-        <RadixDialog.Overlay className={styles.overlay} />
-        <RadixDialog.Content
-          className={styles.content}
-          onOpenAutoFocus={(event) => {
-            returnFocusTo.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-            // Radix would focus the first focusable element, the close (×) button. Prefer the
-            // requested element, else the first action (the safe choice).
-            const target = initialFocus?.current ?? footer.current?.querySelector<HTMLElement>("button:not(:disabled)");
-            if (target) {
-              event.preventDefault();
-              target.focus();
+    <ModalOverlay isOpen={open} onOpenChange={onOpenChange} isDismissable className={clsx(styles.overlay)}>
+      <Modal>
+        <AriaDialog className={clsx(styles.content)} {...(description ? { "aria-describedby": descriptionId } : {})}>
+          <DialogContent
+            title={title}
+            description={
+              description && (
+                <p id={descriptionId} className={styles.description}>
+                  {description}
+                </p>
+              )
             }
-          }}
-          onCloseAutoFocus={(event) => {
-            const target = returnFocusTo.current;
-            if (target?.isConnected) {
-              event.preventDefault();
-              target.focus();
-            }
-          }}
-          {...(description ? {} : { "aria-describedby": undefined })}
-        >
-          <header className={styles.header}>
-            <RadixDialog.Title className={styles.title}>{title}</RadixDialog.Title>
-            <RadixDialog.Close className={styles.close} aria-label={closeLabel}>
-              <X aria-hidden="true" />
-            </RadixDialog.Close>
-          </header>
-          {description && (
-            <RadixDialog.Description className={styles.description}>{description}</RadixDialog.Description>
-          )}
-          {children && <div className={styles.body}>{children}</div>}
-          {actions && (
-            <footer ref={footer} className={styles.actions}>
-              {actions}
-            </footer>
-          )}
-        </RadixDialog.Content>
-      </RadixDialog.Portal>
-    </RadixDialog.Root>
+            closeLabel={closeLabel}
+            onClose={() => onOpenChange(false)}
+            actions={actions}
+            initialFocus={initialFocus}
+          >
+            {children}
+          </DialogContent>
+        </AriaDialog>
+      </Modal>
+    </ModalOverlay>
+  );
+}
+
+interface DialogContentProps {
+  title: string;
+  description: ReactNode;
+  closeLabel: string;
+  onClose: () => void;
+  children: ReactNode;
+  actions: ReactNode;
+  initialFocus: RefObject<HTMLElement | null> | undefined;
+}
+
+function DialogContent({
+  title,
+  description,
+  closeLabel,
+  onClose,
+  children,
+  actions,
+  initialFocus,
+}: DialogContentProps) {
+  const footer = useRef<HTMLElement>(null);
+
+  // react-aria focuses the dialog itself on open unless something inside already has focus.
+  // Effects run children first, so this one wins: the requested element, else the first action
+  // (the safe choice), else react-aria's fallback.
+  useEffect(() => {
+    const target = initialFocus?.current ?? footer.current?.querySelector<HTMLElement>("button:not(:disabled)");
+    target?.focus();
+  }, [initialFocus]);
+
+  return (
+    <>
+      <header className={styles.header}>
+        <Heading slot="title" className={clsx(styles.title)}>
+          {title}
+        </Heading>
+        <button type="button" className={styles.close} aria-label={closeLabel} onClick={onClose}>
+          <X aria-hidden="true" />
+        </button>
+      </header>
+      {description}
+      {children && <div className={styles.body}>{children}</div>}
+      {actions && (
+        <footer ref={footer} className={styles.actions}>
+          {actions}
+        </footer>
+      )}
+    </>
   );
 }
