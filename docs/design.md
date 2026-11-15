@@ -68,6 +68,21 @@ Rules:
 - Shadows only with `--shadow-sm|md|lg` (soft, plum-tinted in light, black in dark).
 - Mobile-first: design at 375 px first.
 
+## Small screens
+
+Most people use Hogar on a phone, often with one hand. 375 px is the design width; 320 px is the guaranteed minimum.
+
+1. **Reflow at 320 px** (WCAG 2.2 1.4.10): no horizontal scrolling and no clipped text, checked in `es`. `small-screens.cy.ts` fails CI if a main page scrolls sideways.
+2. **Text at 200 %** stays readable and usable: no fixed heights on containers with text.
+3. **Inputs at 16 px text** or more (`--font-size-md`), so iOS doesn't zoom on focus.
+4. **The right keyboard:** `inputMode="decimal"` for amounts (`numeric` when the household's currency has no decimals), `type="email"` and `autoComplete="email"` for addresses, `enterKeyHint` in forms.
+5. **Touch targets** at least 44 px (`--size-touch`), with at least `--space-2` between adjacent ones.
+6. **Safe areas:** nothing fixed (tab bar, floating button, sheets) sits under the notch or the home indicator; pad it with `env(safe-area-inset-*)`.
+7. **No hover dependency:** no meaning or action appears only on hover, and pressed states are visible on touch.
+8. **One breakpoint, `48rem`**, written mobile-first: `@media (min-width: 48rem)`, in `rem` so it follows the person's zoom. A new breakpoint must be justified here.
+
+Screenshots of every screen and dialog at 320 and 375 px, in both languages and themes: `pnpm --filter @hogar/web capture:small-screens` (not committed).
+
 ## Motion
 
 - Durations only with `--duration-fast` (hover, press), `--duration-base` (menus, toasts, theme) and `--duration-slow` (dialogs, sheets).
@@ -128,6 +143,14 @@ Before calling done any task that touches the interface:
 - [ ] Layout holds with the longer language (no clipped or overflowing text).
 - [ ] Money, dates and numbers formatted with `Intl` and the formatting locale (language plus device region).
 - [ ] Visible focus, full keyboard use and touch targets ≥ 44 px.
+- [ ] No horizontal scrolling or clipped text at 320 px in `es`.
+- [ ] Usable with text at 200 %; no fixed heights on containers with text.
+- [ ] Inputs use 16 px text or more.
+- [ ] Amount, email and form fields bring up the right keyboard and enter key.
+- [ ] Adjacent touch targets at least `--space-2` apart.
+- [ ] Nothing fixed sits under a notch or home indicator.
+- [ ] Nothing depends on hover; pressed states visible on touch.
+- [ ] The only width media query is `@media (min-width: 48rem)`.
 - [ ] Animations use duration tokens and respect reduced motion.
 - [ ] Component documented with "why" and "how it helps the person", in `en` and `es`.
 - [ ] Storybook pages and stories switch correctly with the Locale toolbar.
