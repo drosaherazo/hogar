@@ -42,7 +42,8 @@
   transition: background-color var(--duration-fast) var(--easing-standard);
 }
 
-.navLink:hover {
+.navLink:hover,
+.navLink:active {
   background-color: var(--color-surface-sunken);
   color: var(--color-text);
 }

@@ -7,6 +7,8 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Controls draw their own pressed state with tokens, instead of the browser's grey flash. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {

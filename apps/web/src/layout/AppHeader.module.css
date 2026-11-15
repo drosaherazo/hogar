@@ -40,6 +40,7 @@
 }
 
 .accountButton:hover,
+.accountButton:active,
 .accountButton[data-state="open"] {
   background-color: var(--color-surface-sunken);
 }

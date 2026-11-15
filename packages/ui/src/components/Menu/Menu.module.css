@@ -38,7 +38,8 @@
   user-select: none;
 }
 
-.item[data-focused] {
+.item[data-focused],
+.item[data-pressed] {
   background-color: var(--color-surface-sunken);
 }
 

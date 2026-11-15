@@ -122,7 +122,8 @@
   outline: none;
 }
 
-.option[data-focused] {
+.option[data-focused],
+.option[data-pressed] {
   background-color: var(--color-surface-sunken);
 }
 

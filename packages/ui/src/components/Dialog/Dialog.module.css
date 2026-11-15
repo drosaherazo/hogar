@@ -69,7 +69,8 @@
   block-size: var(--size-icon-md);
 }
 
-.close:hover {
+.close:hover,
+.close:active {
   background-color: var(--color-surface-sunken);
 }
 

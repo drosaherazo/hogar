@@ -34,7 +34,9 @@
   color: var(--color-accent-contrast);
 }
 
-.primary:hover:not(:disabled) {
+/* Hover and press look the same, so a tap on a phone gets the feedback a mouse gets. */
+.primary:hover:not(:disabled),
+.primary:active:not(:disabled) {
   background-color: var(--color-accent-hover);
 }
 
@@ -44,7 +46,8 @@
   color: var(--color-text);
 }
 
-.secondary:hover:not(:disabled) {
+.secondary:hover:not(:disabled),
+.secondary:active:not(:disabled) {
   background-color: var(--color-surface-sunken);
 }
 
@@ -53,7 +56,8 @@
   color: var(--color-accent-text);
 }
 
-.ghost:hover:not(:disabled) {
+.ghost:hover:not(:disabled),
+.ghost:active:not(:disabled) {
   background-color: var(--color-surface-sunken);
 }
 
