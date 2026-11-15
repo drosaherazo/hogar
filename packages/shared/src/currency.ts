@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { ErrorCode } from "./errors";
-import { CURRENCIES, CURRENCY_BY_REGION } from "./generated/currencies";
+import { CURRENCIES, CURRENCIES_BY_REGION } from "./generated/currencies";
 import type { Locale } from "./locale";
 
 /**
@@ -84,26 +84,34 @@ export function amountInputValue(units: number, currency: Currency, language: Lo
 
 /**
  * The currency to suggest when someone creates a household: the first device language whose
- * region is known (`["es", "es-CO"]` → COP), or euros when none is.
+ * region is known (`["es", "es-CO"]` → COP), or euros when none is. Where a region has several
+ * currencies in force, the first one CLDR lists is suggested (Panama → PAB).
  */
 export function suggestCurrency(languages: readonly string[]): CurrencyCode {
   for (const language of languages) {
     const region = /^[a-z]{2,3}(?:-[a-z]{4})?-([a-z]{2})\b/i.exec(language)?.[1]?.toUpperCase();
-    const code = region ? (CURRENCY_BY_REGION as Readonly<Record<string, CurrencyCode>>)[region] : undefined;
+    const code = region ? currenciesIn(region)[0] : undefined;
     if (code) return code;
   }
   return "EUR";
 }
 
+/** Every currency in force in a region (ISO 3166 alpha-2), in CLDR's order; empty when it has none. */
+function currenciesIn(region: string): readonly CurrencyCode[] {
+  return (CURRENCIES_BY_REGION as Readonly<Record<string, readonly CurrencyCode[]>>)[region] ?? [];
+}
+
 const REGIONS_BY_CURRENCY = new Map<CurrencyCode, string[]>();
-for (const [region, code] of Object.entries(CURRENCY_BY_REGION) as [string, CurrencyCode][]) {
-  REGIONS_BY_CURRENCY.set(code, [...(REGIONS_BY_CURRENCY.get(code) ?? []), region]);
+for (const region of Object.keys(CURRENCIES_BY_REGION)) {
+  for (const code of currenciesIn(region)) {
+    REGIONS_BY_CURRENCY.set(code, [...(REGIONS_BY_CURRENCY.get(code) ?? []), region]);
+  }
 }
 
 /**
- * The regions (ISO 3166 alpha-2) whose currency this is: the region → currency map reversed, so a
- * region with several currencies counts only for the one suggested there. Lets people find a
- * currency by country.
+ * The regions (ISO 3166 alpha-2) where this currency is in force and legal tender, including those
+ * where it shares the place with another (US dollars in Panama), so people can find a currency by
+ * any country that uses it.
  */
 export function regionsUsing(code: CurrencyCode): readonly string[] {
   return REGIONS_BY_CURRENCY.get(code) ?? [];

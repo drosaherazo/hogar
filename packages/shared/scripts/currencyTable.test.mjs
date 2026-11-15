@@ -89,7 +89,7 @@ describe("buildCurrencyTable", () => {
     expect(currencies).toEqual({ ABC: { decimals: 2 } });
   });
 
-  it("maps each region to the first currency in force there, in CLDR's order, and skips regions with none", () => {
+  it("maps each region to every currency in force there, in CLDR's order (the first is the suggestion), and skips regions with none", () => {
     const { regions } = buildCurrencyTable(
       cldr({
         region: {
@@ -101,6 +101,6 @@ describe("buildCurrencyTable", () => {
       }),
       {},
     );
-    expect(regions).toEqual({ CO: "COP", PA: "PAB", ZW: "ZWG" });
+    expect(regions).toEqual({ CO: ["COP"], PA: ["PAB", "USD"], ZW: ["ZWG", "USD"] });
   });
 });
