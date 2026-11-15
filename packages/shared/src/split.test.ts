@@ -182,3 +182,9 @@ describe("defaultWeights", () => {
     expect(splitAmount(100, weights)).toEqual([34, 33, 33]);
   });
 });
+
+describe("splitAmount in a currency without decimals", () => {
+  it("splits $10.000 COP among three as whole pesos, leftovers to the first members", () => {
+    expect(splitAmount(10_000, [1, 1, 1])).toEqual([3334, 3333, 3333]);
+  });
+});
