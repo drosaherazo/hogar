@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { currencyCodeSchema } from "./currency";
+import { currencyCodeSchema, offeredCurrencyCodeSchema } from "./currency";
 import type { ErrorCode } from "./errors";
 
 /** Zod messages are error codes the web translates, never sentences. */
@@ -43,16 +43,23 @@ export function defaultWeightFor(role: Role): number {
 // Requests
 // ---------------------------------------------------------------------------
 
-/** A household is created with its currency (ADR 0011): every amount in it is in that currency. */
-export const createHouseholdRequestSchema = z.object({ name: householdNameSchema, currency: currencyCodeSchema });
+/**
+ * A household is created with its currency (ADR 0011): every amount in it is in that currency. It
+ * must be one people can pick now, not a retired one (ADR 0014).
+ */
+export const createHouseholdRequestSchema = z.object({
+  name: householdNameSchema,
+  currency: offeredCurrencyCodeSchema,
+});
 export type CreateHouseholdRequest = z.infer<typeof createHouseholdRequestSchema>;
 
 /**
  * What an admin changes in a household: its name, its currency, or both. The currency can only
- * change while the household has no expense or payment (`household.currency.locked`, ADR 0011).
+ * change while the household has no expense or payment (`household.currency.locked`, ADR 0011), and
+ * never to a retired one (ADR 0014).
  */
 export const updateHouseholdRequestSchema = z
-  .object({ name: householdNameSchema.optional(), currency: currencyCodeSchema.optional() })
+  .object({ name: householdNameSchema.optional(), currency: offeredCurrencyCodeSchema.optional() })
   .refine((request) => request.name !== undefined || request.currency !== undefined, {
     message: code("request.invalid"),
   });

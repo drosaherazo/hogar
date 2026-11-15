@@ -36,7 +36,7 @@ describe("updateHouseholdRequestSchema", () => {
   it.each([
     [{}, "request.invalid"],
     [{ name: "" }, "household.name.required"],
-    [{ currency: "JPY" }, "money.currency.invalid"],
+    [{ currency: "XAU" }, "money.currency.invalid"],
   ])("refuses %j with %s", (body, code) => {
     expect(errorCodeFrom(updateHouseholdRequestSchema.safeParse(body).error)).toBe(code);
   });
@@ -52,7 +52,7 @@ describe("createHouseholdRequestSchema", () => {
 
   it.each([
     ["no currency", {}],
-    ["an unlisted currency", { currency: "JPY" }],
+    ["an unlisted currency", { currency: "XAU" }],
     ["a lowercase code", { currency: "cop" }],
   ])("refuses %s with money.currency.invalid", (_, extra) => {
     expect(errorCodeFrom(createHouseholdRequestSchema.safeParse({ name: "Casa", ...extra }).error)).toBe(
