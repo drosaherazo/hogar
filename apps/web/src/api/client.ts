@@ -20,6 +20,7 @@ import {
   type CategoryView,
   type CreateCategoryInput,
   type CreatedInvitation,
+  type CurrencyCode,
   type CurrentHousehold,
   type EmailCodeRequest,
   type EmailSignInRequest,
@@ -175,6 +176,12 @@ export class ApiClient {
 
   async renameHousehold(name: string): Promise<HouseholdView> {
     return (await this.request("/household", { method: "PATCH", body: { name }, schema: householdResponseSchema }))
+      .household;
+  }
+
+  /** Refused with `household.currency.locked` once the household has recorded money (ADR 0011). */
+  async changeCurrency(currency: CurrencyCode): Promise<HouseholdView> {
+    return (await this.request("/household", { method: "PATCH", body: { currency }, schema: householdResponseSchema }))
       .household;
   }
 

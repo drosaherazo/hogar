@@ -1,5 +1,6 @@
 import type {
   CreateHouseholdRequest,
+  CurrencyCode,
   CurrentHousehold,
   HouseholdView,
   InvitableRole,
@@ -47,6 +48,11 @@ export function useCreateHousehold() {
 export function useRenameHousehold() {
   const client = useApiClient();
   return useHouseholdMutation((name: string) => client.renameHousehold(name));
+}
+
+export function useChangeCurrency() {
+  const client = useApiClient();
+  return useHouseholdMutation((currency: CurrencyCode) => client.changeCurrency(currency));
 }
 
 export function useChangeRole() {

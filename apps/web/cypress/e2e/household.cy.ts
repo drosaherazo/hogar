@@ -25,6 +25,7 @@ function household(overrides: Partial<HouseholdView> = {}): HouseholdView {
     id: "household_1",
     name: "Casa Ana",
     currency: "EUR",
+    currencyLocked: false,
     myMembershipId: "m_ana",
     myRole: "ADMIN",
     members: [anaMember],

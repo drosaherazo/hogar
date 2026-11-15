@@ -35,7 +35,10 @@
     "forbidden": "Solo los administradores del hogar pueden hacer eso.",
     "read_only": "Las personas invitadas pueden verlo todo, pero solo los miembros y administradores pueden hacer cambios.",
     "last_admin": "Haz administrador a otra persona primero, para que el hogar nunca se quede sin uno.",
-    "member_not_found": "Esa persona ya no forma parte del hogar."
+    "member_not_found": "Esa persona ya no forma parte del hogar.",
+    "currency": {
+      "locked": "Este hogar ya tiene gastos o pagos, así que su moneda no puede cambiar."
+    }
   },
   "money": {
     "amount": {
