@@ -94,3 +94,17 @@ export function suggestCurrency(languages: readonly string[]): CurrencyCode {
   }
   return "EUR";
 }
+
+const REGIONS_BY_CURRENCY = new Map<CurrencyCode, string[]>();
+for (const [region, code] of Object.entries(CURRENCY_BY_REGION) as [string, CurrencyCode][]) {
+  REGIONS_BY_CURRENCY.set(code, [...(REGIONS_BY_CURRENCY.get(code) ?? []), region]);
+}
+
+/**
+ * The regions (ISO 3166 alpha-2) whose currency this is: the region → currency map reversed, so a
+ * region with several currencies counts only for the one suggested there. Lets people find a
+ * currency by country.
+ */
+export function regionsUsing(code: CurrencyCode): readonly string[] {
+  return REGIONS_BY_CURRENCY.get(code) ?? [];
+}

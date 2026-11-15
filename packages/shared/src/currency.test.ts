@@ -8,6 +8,7 @@ import {
   OFFERED_CURRENCY_CODES,
   offeredCurrencyCodeSchema,
   parseAmount,
+  regionsUsing,
   suggestCurrency,
 } from "./currency";
 import { MAX_AMOUNT_UNITS } from "./expenses";
@@ -222,5 +223,19 @@ describe("suggestCurrency", () => {
     expect(suggestCurrency(["es-419"])).toBe("EUR");
     expect(suggestCurrency(["es", "en"])).toBe("EUR");
     expect(suggestCurrency([])).toBe("EUR");
+  });
+});
+
+describe("regionsUsing", () => {
+  it("lists the regions where a currency is the one people spend, from CLDR", () => {
+    expect(regionsUsing("USD")).toEqual(expect.arrayContaining(["US", "EC", "SV", "PR"]));
+    expect(regionsUsing("EUR")).toEqual(expect.arrayContaining(["ES", "FR", "DE", "AD", "XK"]));
+    expect(regionsUsing("KWD")).toEqual(["KW"]);
+  });
+
+  it("counts a region with several currencies only for the first one CLDR lists", () => {
+    // Panama has balboas and US dollars; CLDR lists balboas first.
+    expect(regionsUsing("PAB")).toEqual(["PA"]);
+    expect(regionsUsing("USD")).not.toContain("PA");
   });
 });
