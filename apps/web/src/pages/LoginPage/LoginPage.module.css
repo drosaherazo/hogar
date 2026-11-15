@@ -5,14 +5,18 @@
   padding: var(--space-6) var(--space-4) var(--space-4);
 }
 
+/* One column that never grows past the screen: the email field shrinks to fit instead. */
 .main {
   display: grid;
   flex: 1;
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
 }
 
+/* Its column stays inside the card, so a long word in the title can't push the form past its edge. */
 .card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
   inline-size: 100%;
   max-inline-size: var(--size-content-sm);
@@ -30,6 +34,8 @@
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
+  /* "bienvenida" alone is wider than the card at 200 % text: break it rather than spill out. */
+  overflow-wrap: anywhere;
 }
 
 .tagline {
@@ -40,6 +46,7 @@
 
 .benefits {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   margin: 0;
   padding: var(--space-4);
@@ -52,6 +59,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  overflow-wrap: anywhere;
 }
 
 .benefitIcon {

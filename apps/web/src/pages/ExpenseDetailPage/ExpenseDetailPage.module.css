@@ -31,18 +31,35 @@
   justify-self: start;
 }
 
+/* The total stays a step larger than the description at every width. */
 .title {
   margin: 0;
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
   overflow-wrap: anywhere;
 }
 
-/* Key figure: bold is allowed here. */
-.total {
-  font-size: var(--font-size-3xl);
+/*
+ * Key figure: bold is allowed here. On phones it is a step smaller so "1.284.000 COP" fits on one
+ * line; at 200 % text it may still wrap, between digit groups only (see `Amount`), rather than
+ * widen the page. The child selector outranks `Amount`'s own `white-space: nowrap`, whatever
+ * order the stylesheets load in.
+ */
+.header > .total {
+  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
+  white-space: normal;
+}
+
+@media (min-width: 48rem) {
+  .title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .header > .total {
+    font-size: var(--font-size-3xl);
+  }
 }
 
 .facts {
@@ -90,16 +107,20 @@
   list-style: none;
 }
 
+/* When the amount doesn't fit beside the name (a long name, text at 200 %), it moves to its own line, at the end. */
 .share {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2) var(--space-3);
 }
 
+/* Its longest word decides when the amount must move down; past that, words break. */
 .shareName {
-  flex: 1;
+  flex: 1 1 min-content;
   min-inline-size: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .auditGroup {

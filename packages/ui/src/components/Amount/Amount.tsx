@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Fragment } from "react";
 import { useFormattingLocale } from "../../locale/LocaleProvider";
 import styles from "./Amount.module.css";
 
@@ -21,6 +22,10 @@ const formatters = new Map<string, Intl.NumberFormat>();
  * `Amount` for standalone figures.
  */
 export function formatAmount(units: number, currency: AmountCurrency, locale: string): string {
+  return formatterFor(currency, locale).format(units / 10 ** currency.decimals);
+}
+
+function formatterFor(currency: AmountCurrency, locale: string): Intl.NumberFormat {
   const key = `${locale}|${currency.code}|${currency.decimals}`;
   let formatter = formatters.get(key);
   if (!formatter) {
@@ -32,7 +37,7 @@ export function formatAmount(units: number, currency: AmountCurrency, locale: st
     });
     formatters.set(key, formatter);
   }
-  return formatter.format(units / 10 ** currency.decimals);
+  return formatter;
 }
 
 export interface AmountProps {
@@ -45,8 +50,23 @@ export interface AmountProps {
   className?: string | undefined;
 }
 
-/** An amount of money in the active formatting locale, with tabular numbers so figures line up in lists. */
+/**
+ * An amount of money in the active formatting locale, with tabular numbers so figures line up in
+ * lists. It never wraps; a big standalone figure that sets `white-space: normal` may break only
+ * after a digit group or the space by the currency ("1.284." / "000 COP"), never inside a group,
+ * so a broken line can't be misread as another number.
+ */
 export function Amount({ units, currency, className }: AmountProps) {
   const locale = useFormattingLocale();
-  return <span className={clsx(styles.amount, className)}>{formatAmount(units, currency, locale)}</span>;
+  const parts = formatterFor(currency, locale).formatToParts(units / 10 ** currency.decimals);
+  return (
+    <span className={clsx(styles.amount, className)}>
+      {parts.map((part, index) => (
+        <Fragment key={index}>
+          {part.value}
+          {(part.type === "group" || part.type === "literal") && <wbr />}
+        </Fragment>
+      ))}
+    </span>
+  );
 }

@@ -75,6 +75,18 @@ describe("Amount", () => {
     expect(screen.getByText("€10.70")).toBeInTheDocument();
   });
 
+  it("lets a figure that must wrap break between digit groups and before the currency, never inside a group", () => {
+    const { container } = render(
+      <LocaleProvider locale="es">
+        <Amount units={1_284_000} currency={COP} />
+        <Amount units={10_000_000} currency={EUR} />
+      </LocaleProvider>,
+    );
+    const [pesos, euros] = [...container.querySelectorAll("span")].map((span) => span.innerHTML);
+    expect(pesos).toBe("1.<wbr>284.<wbr>000&nbsp;<wbr>COP");
+    expect(euros).toBe("100.<wbr>000,00&nbsp;<wbr>€");
+  });
+
   it("lines figures up with tabular numbers", () => {
     render(<Amount units={1070} currency={EUR} />);
     expect(screen.getByText("€10.70")).toHaveClass("amount");

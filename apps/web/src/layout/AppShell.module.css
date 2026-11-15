@@ -56,8 +56,10 @@
   text-underline-offset: var(--space-1);
 }
 
+/* One column that never grows past the screen: a long select or input shrinks to fit instead. */
 .main {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: var(--space-6);
   inline-size: 100%;
