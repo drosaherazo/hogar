@@ -17,6 +17,8 @@ body {
   font-size: var(--font-size-md);
   line-height: var(--line-height-base);
   -webkit-font-smoothing: antialiased;
+  /* The page draws edge to edge (viewport-fit=cover): keep content clear of a landscape notch. */
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
   transition:
     background-color var(--duration-base) var(--easing-standard),
     color var(--duration-base) var(--easing-standard);
