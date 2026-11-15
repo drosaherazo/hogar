@@ -2,7 +2,7 @@
 
 - **Status:** accepted
 - **Date:** 2026-11-11
-- **Supersedes:** the palette parts of [0001](./0001-visual-system.md) (warm palette, warm dark mode). The rest of 0001 (three token layers, contrast tests, CSS Modules, Radix, bilingual Storybook, self-hosted Figtree) stands.
+- **Supersedes:** the palette parts of [0001](./0001-visual-system.md) (warm palette, warm dark mode). The rest of 0001 (three token layers, contrast tests, CSS Modules, Radix, bilingual Storybook, self-hosted Figtree) stands; Radix was later replaced by `react-aria` ([0013](./0013-react-aria-primitives.md)).
 
 ## Context
 

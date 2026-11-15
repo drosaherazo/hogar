@@ -31,57 +31,38 @@ export interface DialogProps {
  * Escape or a click outside, hides the page from screen readers while open and returns focus
  * afterwards to whatever had it before, such as the button that opened it.
  */
-export function Dialog({
-  open,
-  onOpenChange,
-  title,
-  description,
-  closeLabel,
-  children,
-  actions,
-  initialFocus,
-}: DialogProps) {
+export function Dialog({ open, onOpenChange, ...content }: DialogProps) {
   const descriptionId = useId();
 
+  // react-aria types `className` as a plain string; CSS Module lookups are `string | undefined`,
+  // so they go through clsx here and in DialogContent.
   return (
     <ModalOverlay isOpen={open} onOpenChange={onOpenChange} isDismissable className={clsx(styles.overlay)}>
       <Modal>
-        <AriaDialog className={clsx(styles.content)} {...(description ? { "aria-describedby": descriptionId } : {})}>
-          <DialogContent
-            title={title}
-            description={
-              description && (
-                <p id={descriptionId} className={styles.description}>
-                  {description}
-                </p>
-              )
-            }
-            closeLabel={closeLabel}
-            onClose={() => onOpenChange(false)}
-            actions={actions}
-            initialFocus={initialFocus}
-          >
-            {children}
-          </DialogContent>
+        <AriaDialog
+          className={clsx(styles.content)}
+          {...(content.description ? { "aria-describedby": descriptionId } : {})}
+        >
+          <DialogContent {...content} descriptionId={descriptionId} onClose={() => onOpenChange(false)} />
         </AriaDialog>
       </Modal>
     </ModalOverlay>
   );
 }
 
-interface DialogContentProps {
-  title: string;
-  description: ReactNode;
-  closeLabel: string;
+type DialogContentProps = Omit<DialogProps, "open" | "onOpenChange"> & {
+  descriptionId: string;
   onClose: () => void;
-  children: ReactNode;
-  actions: ReactNode;
-  initialFocus: RefObject<HTMLElement | null> | undefined;
-}
+};
 
+/**
+ * The dialog's inside. It is its own component so its focus effect runs once the dialog is
+ * mounted, and before react-aria's.
+ */
 function DialogContent({
   title,
   description,
+  descriptionId,
   closeLabel,
   onClose,
   children,
@@ -108,7 +89,11 @@ function DialogContent({
           <X aria-hidden="true" />
         </button>
       </header>
-      {description}
+      {description && (
+        <p id={descriptionId} className={styles.description}>
+          {description}
+        </p>
+      )}
       {children && <div className={styles.body}>{children}</div>}
       {actions && (
         <footer ref={footer} className={styles.actions}>

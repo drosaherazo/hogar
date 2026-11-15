@@ -7,7 +7,7 @@
 
 ADR 0001 chose Radix primitives for complex interactive widgets, so accessibility behavior comes from a well-tested library while the look stays ours. `packages/ui` uses `@radix-ui/react-dialog` and `@radix-ui/react-dropdown-menu`.
 
-Supporting every currency (ADR 0014) needs a searchable picker for about 155 currencies: an accessible combobox. Radix has no combobox primitive. ADR 0012 rules out adding a second primitives library beside Radix.
+The currency feature needs a searchable currency picker: an accessible combobox. Radix has no combobox primitive, and ADR 0012 rules out adding a second primitives library beside it.
 
 ## Decision
 

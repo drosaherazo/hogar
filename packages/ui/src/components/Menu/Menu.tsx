@@ -21,6 +21,9 @@ import {
 } from "react-aria-components";
 import styles from "./Menu.module.css";
 
+// react-aria types `className` as a plain string; CSS Module lookups are `string | undefined`,
+// so the classes passed to its components go through clsx.
+
 export interface MenuProps {
   /** The element that opens the menu. It must be a focusable control with an accessible name. */
   trigger: ReactNode;
@@ -47,7 +50,8 @@ export function Menu({ trigger, children, align = "end" }: MenuProps) {
 
   return (
     <MenuTrigger isOpen={open} onOpenChange={setOpen}>
-      {/* The app passes its own button (a plain one or our Button); Pressable wires it up. */}
+      {/* The app passes its own button (a plain one or our Button, which forwards its ref and
+          props); Pressable wires it up. The stories pass no trigger, hence the guard. */}
       {isValidElement(trigger) && (
         <Pressable ref={triggerRef}>{trigger as ReactElement<DOMAttributes<Element>, string>}</Pressable>
       )}
