@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router";
 import { errorKey } from "../../api/client";
+import { moveToNextField } from "../../forms/moveToNextField";
 import { useUpdateSplit } from "../../household/useHousehold";
 import { sharesForDrafts, WeightsEditor } from "../../household/WeightsEditor";
 import { usePercent } from "../../i18n/format";
@@ -77,7 +78,7 @@ function SplitForm({ household }: { household: HouseholdView }) {
   }
 
   return (
-    <form className={styles.form} onSubmit={submit} noValidate>
+    <form className={styles.form} onSubmit={submit} onKeyDown={moveToNextField} noValidate>
       <WeightsEditor
         members={household.members}
         drafts={drafts}

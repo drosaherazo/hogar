@@ -14,8 +14,9 @@ export function useCurrency(): Currency {
 
 /**
  * What amount fields need to speak the household's currency: the symbol for their label
- * ("Amount (€)", "Amount (COP)"), an example for their hint that the field reads back, and the
- * limits for `errors:money.amount.invalid` (pass `limits` to any error translation).
+ * ("Amount (€)", "Amount (COP)"), an example for their hint that the field reads back, the limits
+ * for `errors:money.amount.invalid` (pass `limits` to any error translation), and the phone
+ * keyboard to bring up: digits only when the currency has no decimals, a decimal key otherwise.
  */
 export function useAmountField() {
   const language = useLocale();
@@ -32,6 +33,7 @@ export function useAmountField() {
       symbol: parts.find((part) => part.type === "currency")?.value ?? currency.code,
       example,
       limits: { min: money(MIN_AMOUNT_UNITS), max: money(MAX_AMOUNT_UNITS) },
+      inputMode: currency.decimals === 0 ? ("numeric" as const) : ("decimal" as const),
     };
   }, [language, locale, money, currency]);
 }

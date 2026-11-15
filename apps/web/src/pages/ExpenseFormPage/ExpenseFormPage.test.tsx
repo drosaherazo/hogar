@@ -70,6 +70,41 @@ describe("ExpenseFormPage (adding)", () => {
     await waitFor(() => expect(body).toEqual(expect.objectContaining({ amountCents: 85_000, currency: "COP" })));
   });
 
+  it.each([
+    ["pesos, which have no decimals, bring up a keyboard with digits only", "COP", "Amount (COP)", "numeric"],
+    ["euros bring up a keyboard with a decimal key", "EUR", "Amount (€)", "decimal"],
+  ] as const)("amounts in %s", async (_, currency, name, inputMode) => {
+    server.use(handlers.signedIn(), handlers.household(homeView({ currency })));
+    renderApp({ path: PATH });
+    expect(await screen.findByRole("textbox", { name })).toHaveAttribute("inputmode", inputMode);
+  });
+
+  it("moves from the description to the amount with the keyboard's next key, and saves with its done key", async () => {
+    let body: unknown;
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView()),
+      http.post("*/api/household/expenses", async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ expense: expenseView() }, { status: 201 });
+      }),
+      handlers.expense(),
+    );
+    renderApp({ path: PATH });
+    const description = await screen.findByRole("textbox", { name: "What was it?" });
+    const amount = screen.getByRole("textbox", { name: "Amount (€)" });
+    expect(description).toHaveAttribute("enterkeyhint", "next");
+    expect(amount).toHaveAttribute("enterkeyhint", "done");
+
+    await userEvent.type(description, "Dinner{Enter}");
+    expect(amount).toHaveFocus();
+    expect(body).toBeUndefined();
+
+    await userEvent.type(amount, "10{Enter}");
+    await screen.findByRole("status");
+    expect(body).toEqual(expect.objectContaining({ description: "Dinner", amountCents: 1000 }));
+  });
+
   it("refuses to save when the household's currency changed meanwhile, then reloads it to check and save again", async () => {
     let currency: "EUR" | "COP" = "EUR";
     const bodies: unknown[] = [];

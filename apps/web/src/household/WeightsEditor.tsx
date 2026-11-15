@@ -48,6 +48,7 @@ export function WeightsEditor({ members, drafts, onChange, disabled }: WeightsEd
             inline
             type="number"
             inputMode="numeric"
+            enterKeyHint={index < members.length - 1 ? "next" : "done"}
             min={0}
             max={100}
             step={1}

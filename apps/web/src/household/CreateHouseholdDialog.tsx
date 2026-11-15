@@ -110,6 +110,7 @@ export function CreateHouseholdDialog({ open, onOpenChange }: CreateHouseholdDia
           value={name}
           onChange={(event) => setName(event.target.value)}
           autoComplete="off"
+          enterKeyHint="done"
         />
         <CurrencyPicker
           inputRef={currencyField}

@@ -33,6 +33,7 @@ import { categoryKeys, useCategories } from "../../expenses/useCategories";
 import { useCreateExpense, useExpense, useUpdateExpense } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
 import { householdKeys, useHousehold, useReloadOnCurrencyMismatch } from "../../household/useHousehold";
+import { moveToNextField } from "../../forms/moveToNextField";
 import { localToday, useAmountField, useCurrency, useList, useMoney, usePercent } from "../../i18n/format";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell } from "../../layout/AppShell";
@@ -425,7 +426,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
       };
 
   return (
-    <form className={styles.form} onSubmit={submit} noValidate>
+    <form className={styles.form} onSubmit={submit} onKeyDown={moveToNextField} noValidate>
       {save.isError && !shownElsewhere && <Alert tone="danger">{t(errorKey(save.error), amountField.limits)}</Alert>}
       <TextField
         label={t("form.description")}
@@ -434,6 +435,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
         onChange={(event) => setDescription(event.target.value)}
         error={error("description")}
         autoComplete="off"
+        enterKeyHint="next"
       />
       <Select
         label={t("form.category.label")}
@@ -448,7 +450,8 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
       <TextField
         label={t("form.amount", { symbol: amountField.symbol })}
         hint={t("form.amountHint", { example: amountField.example })}
-        inputMode="decimal"
+        inputMode={amountField.inputMode}
+        enterKeyHint="done"
         autoComplete="off"
         value={amountText}
         onChange={(event) => setAmountText(event.target.value)}
@@ -534,12 +537,13 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
       {method === "EXACT" && (
         <fieldset className={styles.exact}>
           <legend className={styles.exactLegend}>{t("form.split.amounts")}</legend>
-          {people.map((person) => (
+          {people.map((person, index) => (
             <TextField
               key={person.userId}
               inline
               label={personLabel(person)}
-              inputMode="decimal"
+              inputMode={amountField.inputMode}
+              enterKeyHint={index < people.length - 1 ? "next" : "done"}
               autoComplete="off"
               value={exactTexts[person.userId] ?? ""}
               onChange={(event) => setExactTexts((texts) => ({ ...texts, [person.userId]: event.target.value }))}

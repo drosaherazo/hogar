@@ -230,7 +230,8 @@ export function RecordPaymentDialog({
         />
         <TextField
           label={t("payment.amount", { symbol: amountField.symbol })}
-          inputMode="decimal"
+          inputMode={amountField.inputMode}
+          enterKeyHint="done"
           autoComplete="off"
           value={amountText}
           onChange={(event) => setAmountText(event.target.value)}
