@@ -55,6 +55,15 @@ describe("Amount", () => {
     expect(screen.getByText("42,80 US$")).toBeInTheDocument();
   });
 
+  it("formats with the provider's formatting locale, which carries the device region", () => {
+    render(
+      <LocaleProvider locale="es" formattingLocale="es-CO">
+        <Amount units={85_000} currency={COP} />
+      </LocaleProvider>,
+    );
+    expect(screen.getByText("$ 85.000")).toBeInTheDocument();
+  });
+
   it("falls back to English outside a provider", () => {
     render(<Amount units={1070} currency={EUR} />);
     expect(screen.getByText("€10.70")).toBeInTheDocument();
