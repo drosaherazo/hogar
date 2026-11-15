@@ -116,5 +116,8 @@
   "server": {
     "unexpected": "Something went wrong on our side. Please try again in a moment."
   },
-  "network": "We couldn't reach Hogar. Check your connection and try again."
+  "network": "We couldn't reach Hogar. Check your connection and try again.",
+  "client": {
+    "outdated": "This version of Hogar is out of date. Update to keep going."
+  }
 }

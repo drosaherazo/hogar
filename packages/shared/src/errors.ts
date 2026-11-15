@@ -5,6 +5,7 @@ import { z } from "zod";
  * The web translates each one (`errors` namespace), so every code needs an `en` and `es` message.
  */
 export const ERROR_CODES = [
+  "client.outdated",
   "auth.google.invalid_token",
   "auth.google.email_not_verified",
   "auth.google.already_linked",
