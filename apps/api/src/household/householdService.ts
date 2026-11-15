@@ -1,6 +1,7 @@
 import {
   checkAdminInvariant,
   resolveLocale,
+  type CreateHouseholdRequest,
   type CurrentHousehold,
   type HouseholdView,
   type MembershipChange,
@@ -84,12 +85,13 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
     },
 
     /** Creates the household and its first membership (ADMIN, weight 1) together, or neither. */
-    async create(userId: string, name: string): Promise<HouseholdView> {
+    async create(userId: string, { name, currency }: CreateHouseholdRequest): Promise<HouseholdView> {
       try {
         const household = await db.$transaction(async (tx) => {
           const created = await tx.household.create({
             data: {
               name,
+              currency,
               membersChangedAt: now(),
               memberships: { create: { userId, role: "ADMIN", weight: 1, joinedAt: now() } },
             },

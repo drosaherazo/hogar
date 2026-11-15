@@ -37,8 +37,8 @@ export function createHouseholdRouter(db: Database, households: HouseholdService
   });
 
   router.post("/", async (req, res) => {
-    const { name } = parseBody(createHouseholdRequestSchema, req.body);
-    const body: HouseholdResponse = { household: await households.create(userIdOf(req), name) };
+    const request = parseBody(createHouseholdRequestSchema, req.body);
+    const body: HouseholdResponse = { household: await households.create(userIdOf(req), request) };
     res.status(201).json(body);
   });
 
