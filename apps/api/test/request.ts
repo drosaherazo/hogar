@@ -9,13 +9,13 @@ type App = Parameters<typeof supertest>[0];
  * the version check itself.
  */
 export function request(app: App) {
-  const test = supertest(app);
+  const api = supertest(app);
   const version = String(API_VERSION);
   return {
-    get: (url: string) => test.get(url).set(API_VERSION_HEADER, version),
-    post: (url: string) => test.post(url).set(API_VERSION_HEADER, version),
-    put: (url: string) => test.put(url).set(API_VERSION_HEADER, version),
-    patch: (url: string) => test.patch(url).set(API_VERSION_HEADER, version),
-    delete: (url: string) => test.delete(url).set(API_VERSION_HEADER, version),
+    get: (url: string) => api.get(url).set(API_VERSION_HEADER, version),
+    post: (url: string) => api.post(url).set(API_VERSION_HEADER, version),
+    put: (url: string) => api.put(url).set(API_VERSION_HEADER, version),
+    patch: (url: string) => api.patch(url).set(API_VERSION_HEADER, version),
+    delete: (url: string) => api.delete(url).set(API_VERSION_HEADER, version),
   };
 }

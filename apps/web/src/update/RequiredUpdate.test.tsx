@@ -44,7 +44,7 @@ describe("Required update", () => {
   });
 
   it("shows the screen even when the client found out before the gate was there", async () => {
-    server.use(http.get(`${BASE}/me`, outdated));
+    server.use(http.get("*/api/me", outdated));
     const client = new ApiClient(BASE);
     await client.me().catch(() => undefined);
     renderGate(client);
@@ -53,7 +53,7 @@ describe("Required update", () => {
   });
 
   it("updates with its only button, and can't be dismissed", async () => {
-    server.use(http.get(`${BASE}/me`, outdated));
+    server.use(http.get("*/api/me", outdated));
     const client = new ApiClient(BASE);
     const onUpdate = renderGate(client);
     expect(screen.getByText("Your household")).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe("Required update", () => {
   });
 
   it("speaks Spanish and passes axe", async () => {
-    server.use(http.get(`${BASE}/me`, outdated));
+    server.use(http.get("*/api/me", outdated));
     const client = new ApiClient(BASE);
     await client.me().catch(() => undefined);
     renderGate(client, vi.fn(), "es");

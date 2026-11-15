@@ -1,28 +1,18 @@
 import { API_VERSION, API_VERSION_HEADER } from "@hogar/shared";
 import supertest from "supertest";
 import { describe, expect, it } from "vitest";
-import { createTestApp, signIn } from "./testApp";
+import { createTestApp, signIn, WEB_ORIGIN } from "./testApp";
 
 const outdated = { error: { code: "client.outdated" } };
 
 describe("API version check", () => {
-  it("lets a client on the current version through", async () => {
+  it.each([
+    ["the current version", API_VERSION],
+    ["a newer version, since the web can deploy before the API", API_VERSION + 1],
+  ])("lets a client on %s through", async (_, version) => {
     const { app } = createTestApp();
     const { auth } = await signIn(app);
-    const res = await supertest(app)
-      .get("/api/me")
-      .set("Authorization", auth)
-      .set(API_VERSION_HEADER, String(API_VERSION));
-    expect(res.status).toBe(200);
-  });
-
-  it("lets a newer client through, since the web can deploy before the API", async () => {
-    const { app } = createTestApp();
-    const { auth } = await signIn(app);
-    const res = await supertest(app)
-      .get("/api/me")
-      .set("Authorization", auth)
-      .set(API_VERSION_HEADER, String(API_VERSION + 1));
+    const res = await supertest(app).get("/api/me").set("Authorization", auth).set(API_VERSION_HEADER, String(version));
     expect(res.status).toBe(200);
   });
 
@@ -45,6 +35,22 @@ describe("API version check", () => {
     const res = await supertest(app).post("/api/auth/refresh");
     expect(res.status).toBe(426);
     expect(res.body).toEqual(outdated);
+  });
+
+  it("leaves the refresh token untouched when it refuses a refresh, so updating keeps the session", async () => {
+    const { app } = createTestApp();
+    const login = await supertest(app)
+      .post("/api/auth/google")
+      .set("Origin", WEB_ORIGIN)
+      .set(API_VERSION_HEADER, String(API_VERSION))
+      .send({ credential: "valid-ana-token" });
+    const cookie = String(login.headers["set-cookie"]);
+    const refresh = (version?: number) => {
+      const req = supertest(app).post("/api/auth/refresh").set("Origin", WEB_ORIGIN).set("Cookie", cookie);
+      return version === undefined ? req : req.set(API_VERSION_HEADER, String(version));
+    };
+    expect((await refresh()).status).toBe(426);
+    expect((await refresh(API_VERSION)).status).toBe(200);
   });
 
   it("answers the health check without a version, so waking the server always works", async () => {

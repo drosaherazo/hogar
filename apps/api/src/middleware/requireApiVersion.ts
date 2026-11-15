@@ -16,7 +16,8 @@ import { HttpError } from "../httpError";
  *   request after a deploy is what has to fail cleanly. The health check stays version-free so
  *   waking the server never depends on it.
  * - Vercel (web) and Render (API) deploy the same merge independently, minutes apart. A newer
- *   version than ours is accepted, so a web that lands first keeps working. If the API lands first,
+ *   version than ours isn't blocked, so a web that lands first is never sent to the required update
+ *   (calls that need the new API may still fail until Render finishes). If the API lands first,
  *   older webs see the required update, and reloading brings the old web back (and the screen)
  *   until Vercel finishes.
  */
