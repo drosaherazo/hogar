@@ -7,6 +7,8 @@ export const MEMBER_ORDER = [{ joinedAt: "asc" }, { id: "asc" }] satisfies Prism
 /** What `toHouseholdView` needs; load it with `HOUSEHOLD_VIEW_INCLUDE`. */
 export const HOUSEHOLD_VIEW_INCLUDE = {
   memberships: { orderBy: MEMBER_ORDER, include: { user: { select: { name: true, avatarUrl: true } } } },
+  // Deleted records are soft-deleted rows, so they count too: they still fix the currency.
+  _count: { select: { expenses: true, settlements: true } },
 } satisfies Prisma.HouseholdInclude;
 
 export type HouseholdWithMembers = Prisma.HouseholdGetPayload<{ include: typeof HOUSEHOLD_VIEW_INCLUDE }>;
@@ -28,6 +30,7 @@ export function toHouseholdView(household: HouseholdWithMembers, viewerUserId: s
     name: household.name,
     // Only listed codes are ever written, so a failure here is a bug worth surfacing loudly.
     currency: currencyCodeSchema.parse(household.currency),
+    currencyLocked: household._count.expenses + household._count.settlements > 0,
     myMembershipId: viewer.id,
     myRole: viewer.role,
     members: members.map((member, index) => ({

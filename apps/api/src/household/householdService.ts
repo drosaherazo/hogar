@@ -6,6 +6,7 @@ import {
   type HouseholdView,
   type MembershipChange,
   type Role,
+  type UpdateHouseholdRequest,
 } from "@hogar/shared";
 import type { Database } from "../db";
 import { Prisma, type Membership } from "../generated/prisma/client";
@@ -109,8 +110,30 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
       }
     },
 
-    async rename(householdId: string, viewerUserId: string, name: string): Promise<HouseholdView> {
-      await db.household.update({ where: { id: householdId }, data: { name } });
+    /**
+     * An admin renames the household or changes its currency. The currency only changes while the
+     * household has never recorded an expense or payment (ADR 0011): the row is locked first, so a
+     * money record saved at the same time either lands before (and the change is refused) or reads
+     * the new currency (and is refused itself, `money.currency.mismatch`).
+     */
+    async update(householdId: string, viewerUserId: string, changes: UpdateHouseholdRequest): Promise<HouseholdView> {
+      await db.$transaction(async (tx) => {
+        const [current] = await tx.$queryRaw<{ currency: string }[]>`
+          SELECT currency FROM households WHERE id = ${householdId} FOR UPDATE`;
+        if (changes.currency !== undefined && changes.currency !== current?.currency) {
+          const records =
+            (await tx.expense.count({ where: { householdId } })) +
+            (await tx.settlement.count({ where: { householdId } }));
+          if (records > 0) throw conflict("household.currency.locked");
+        }
+        await tx.household.update({
+          where: { id: householdId },
+          data: {
+            ...(changes.name !== undefined && { name: changes.name }),
+            ...(changes.currency !== undefined && { currency: changes.currency }),
+          },
+        });
+      });
       return view(householdId, viewerUserId);
     },
 

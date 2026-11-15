@@ -2,7 +2,7 @@ import {
   changeRoleRequestSchema,
   createHouseholdRequestSchema,
   errorCodeFrom,
-  renameHouseholdRequestSchema,
+  updateHouseholdRequestSchema,
   updateSplitRequestSchema,
   type CurrentHousehold,
   type HouseholdResponse,
@@ -43,9 +43,9 @@ export function createHouseholdRouter(db: Database, households: HouseholdService
   });
 
   router.patch("/", member, requireAdmin, async (req, res) => {
-    const { name } = parseBody(renameHouseholdRequestSchema, req.body);
+    const changes = parseBody(updateHouseholdRequestSchema, req.body);
     const body: HouseholdResponse = {
-      household: await households.rename(membershipOf(req).householdId, userIdOf(req), name),
+      household: await households.update(membershipOf(req).householdId, userIdOf(req), changes),
     };
     res.json(body);
   });
