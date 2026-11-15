@@ -1,5 +1,5 @@
 import type { InvitableRole, InvitationView } from "@hogar/shared";
-import { Alert, Badge, Button, Card, ChoiceGroup, Dialog, Spinner } from "@hogar/ui";
+import { Alert, Badge, Button, Card, ChoiceGroup, Dialog, Spinner, useFormattingLocale } from "@hogar/ui";
 import { RefreshCw, Trash2, UserPlus } from "lucide-react";
 import { useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -97,7 +97,8 @@ function InvitationRow({
   onRenew: () => void;
   onRevoke: () => void;
 }) {
-  const { t, i18n } = useTranslation("household");
+  const { t } = useTranslation("household");
+  const formattingLocale = useFormattingLocale();
   const expired = invitation.status === "expired";
 
   return (
@@ -110,7 +111,7 @@ function InvitationRow({
           ) : (
             <span>
               {t("settings.invitations.expiresIn", {
-                time: formatTimeLeft(invitation.expiresAt, i18n.resolvedLanguage ?? "en"),
+                time: formatTimeLeft(invitation.expiresAt, formattingLocale),
               })}
             </span>
           )}

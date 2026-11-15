@@ -20,7 +20,9 @@ export function CurrencySection({ household }: { household: HouseholdView }) {
   const change = useChangeCurrency();
   const options = useCurrencyOptions();
   const nameOf = useCurrencyName();
-  const [currency, setCurrency] = useState<CurrencyCode>(household.currency);
+  // Follows the household (a reload may bring another admin's change) until the admin picks one.
+  const [picked, setPicked] = useState<CurrencyCode | null>(null);
+  const currency = picked ?? household.currency;
   const field = useRef<HTMLSelectElement>(null);
   const lockedHint = useRef<HTMLParagraphElement>(null);
   const [lockedWhileChoosing, setLockedWhileChoosing] = useState(false);
@@ -36,7 +38,7 @@ export function CurrencySection({ household }: { household: HouseholdView }) {
   function submit(event: FormEvent) {
     event.preventDefault();
     change.mutate(currency, {
-      onSuccess: (updated) => setCurrency(updated.currency),
+      onSuccess: () => setPicked(null),
       onError: (error) => {
         if (error instanceof ApiRequestError && error.code === "household.currency.locked") {
           setLockedWhileChoosing(true);
@@ -61,8 +63,8 @@ export function CurrencySection({ household }: { household: HouseholdView }) {
             options={options}
             value={currency}
             onChange={(event) => {
-              const picked = currencyCodeSchema.safeParse(event.target.value);
-              if (picked.success) setCurrency(picked.data);
+              const choice = currencyCodeSchema.safeParse(event.target.value);
+              if (choice.success) setPicked(choice.data);
               change.reset();
             }}
             error={change.isError && !lockedWhileChoosing ? t(errorKey(change.error)) : undefined}

@@ -1,5 +1,5 @@
 import { emailAddressSchema, errorCodeFrom, normalizeEmail, resolveLocale, signInCodeSchema } from "@hogar/shared";
-import { Button, TextField } from "@hogar/ui";
+import { Button, TextField, useFormattingLocale } from "@hogar/ui";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -39,6 +39,7 @@ function useCountdown(): [secondsLeft: number, start: (seconds: number) => void]
  */
 export function EmailSignIn() {
   const { t, i18n } = useTranslation(["auth", "errors"]);
+  const formattingLocale = useFormattingLocale();
   const client = useApiClient();
   const { signInWithEmailCode } = useAuth();
 
@@ -59,7 +60,7 @@ export function EmailSignIn() {
   const mustWait = (address: string) => secondsLeft > 0 && normalizeEmail(address) === waitingAddress;
   const waitLabel = () =>
     t("login.code.resendIn", {
-      time: new Intl.NumberFormat(i18n.resolvedLanguage, { style: "unit", unit: "second" }).format(secondsLeft),
+      time: new Intl.NumberFormat(formattingLocale, { style: "unit", unit: "second" }).format(secondsLeft),
     });
 
   const emailField = useRef<HTMLInputElement>(null);

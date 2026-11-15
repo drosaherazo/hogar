@@ -24,7 +24,9 @@ export function useAmountField() {
   const currency = useCurrency();
   return useMemo(() => {
     const parts = new Intl.NumberFormat(locale, { style: "currency", currency: currency.code }).formatToParts(0);
-    // Pesos are written in thousands, cents as a small purchase: both read like a real amount.
+    // The symbol is how money is shown (formatting locale: "$" in es-CO); the example is how it's
+    // typed, which parseAmount reads per language, so it uses the language. Pesos are written in
+    // thousands, cents as a small purchase: both read like a real amount.
     const example = amountInputValue(currency.decimals === 0 ? 85_000 : 4280, currency, language);
     return {
       symbol: parts.find((part) => part.type === "currency")?.value ?? currency.code,

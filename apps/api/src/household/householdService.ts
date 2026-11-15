@@ -13,7 +13,7 @@ import type { Database } from "../db";
 import { Prisma, type Membership } from "../generated/prisma/client";
 import { seedStarterCategories } from "../categories/starterCategories";
 import { badRequest, conflict, forbidden, notFound } from "../httpError";
-import { HOUSEHOLD_VIEW_INCLUDE, toHouseholdView } from "./householdView";
+import { CURRENCY_LOCK_COUNTS, HOUSEHOLD_VIEW_INCLUDE, isCurrencyLocked, toHouseholdView } from "./householdView";
 
 /**
  * Serializes membership changes within one household: the transaction holds a row lock on the
@@ -132,14 +132,10 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
         await lockHousehold(tx, householdId);
         const current = await tx.household.findUniqueOrThrow({
           where: { id: householdId },
-          select: { currency: true },
+          select: { currency: true, _count: { select: CURRENCY_LOCK_COUNTS } },
         });
-        if (changes.currency !== undefined && changes.currency !== current.currency) {
-          const records =
-            (await tx.expense.count({ where: { householdId } })) +
-            (await tx.settlement.count({ where: { householdId } }));
-          if (records > 0) throw conflict("household.currency.locked");
-        }
+        const changesCurrency = changes.currency !== undefined && changes.currency !== current.currency;
+        if (changesCurrency && isCurrencyLocked(current._count)) throw conflict("household.currency.locked");
         await tx.household.update({
           where: { id: householdId },
           data: {

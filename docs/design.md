@@ -79,7 +79,7 @@ Rules:
 
 - **No hardcoded copy.** Every visible or accessible string (including `aria-label`, `alt`, `title`, placeholders, toasts and empty states) comes from i18n in `web`, or through props in `ui`.
 - Every key exists in `en` and `es`. `en` is the source of truth.
-- Money, dates and numbers with `Intl` and the active locale (`€12.50` / `12,50 €`). Never build them by concatenating strings.
+- Money, dates and numbers with `Intl` and the formatting locale: the active language plus the device region when they match (`€12.50` / `12,50 €`; `$ 85.000` in `es-CO`). Never build them by concatenating strings.
 - Never concatenate translated fragments into a sentence: use one key with interpolation, so each language controls its own word order.
 - Plurals with `_one` / `_other`, never `count === 1 ? … : …`.
 - The friendly tone is reviewed in **each** language, not just translated literally.
@@ -126,7 +126,7 @@ Before calling done any task that touches the interface:
 - [ ] Copy reviewed in both languages for a friendly, approachable tone; empty states and errors written.
 - [ ] Fuchsia only for the primary action, focus and the one brand card; states in teal, coral and amber.
 - [ ] Layout holds with the longer language (no clipped or overflowing text).
-- [ ] Money, dates and numbers formatted with `Intl` and the active locale.
+- [ ] Money, dates and numbers formatted with `Intl` and the formatting locale (language plus device region).
 - [ ] Visible focus, full keyboard use and touch targets ≥ 44 px.
 - [ ] Animations use duration tokens and respect reduced motion.
 - [ ] Component documented with "why" and "how it helps the person", in `en` and `es`.
