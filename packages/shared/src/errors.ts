@@ -38,6 +38,7 @@ export const ERROR_CODES = [
   "split.members_changed",
   "money.amount.invalid",
   "money.currency.invalid",
+  "money.currency.mismatch",
   "money.date.invalid",
   "money.date.future",
   "expense.description.required",
