@@ -36,6 +36,7 @@ export const ERROR_CODES = [
   "split.all_zero",
   "split.members_changed",
   "money.amount.invalid",
+  "money.currency.invalid",
   "money.date.invalid",
   "money.date.future",
   "expense.description.required",

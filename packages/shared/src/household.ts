@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { currencyCodeSchema } from "./currency";
 import type { ErrorCode } from "./errors";
 
 /** Zod messages are error codes the web translates, never sentences. */
@@ -42,11 +43,12 @@ export function defaultWeightFor(role: Role): number {
 // Requests
 // ---------------------------------------------------------------------------
 
-export const createHouseholdRequestSchema = z.object({ name: householdNameSchema });
+/** A household is created with its currency (ADR 0011): every amount in it is in that currency. */
+export const createHouseholdRequestSchema = z.object({ name: householdNameSchema, currency: currencyCodeSchema });
 export type CreateHouseholdRequest = z.infer<typeof createHouseholdRequestSchema>;
 
-export const renameHouseholdRequestSchema = createHouseholdRequestSchema;
-export type RenameHouseholdRequest = CreateHouseholdRequest;
+export const renameHouseholdRequestSchema = z.object({ name: householdNameSchema });
+export type RenameHouseholdRequest = z.infer<typeof renameHouseholdRequestSchema>;
 
 export const createInvitationRequestSchema = z.object({ role: invitableRoleSchema });
 export type CreateInvitationRequest = z.infer<typeof createInvitationRequestSchema>;
@@ -90,6 +92,8 @@ export type MemberView = z.infer<typeof memberViewSchema>;
 export const householdViewSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
+  /** Every amount in the household is in whole minor units of this currency. */
+  currency: currencyCodeSchema,
   myMembershipId: z.string().min(1),
   myRole: roleSchema,
   /** Ordered by when people joined; this order also decides who gets leftover cents. */

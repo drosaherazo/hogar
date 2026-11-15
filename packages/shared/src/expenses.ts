@@ -9,26 +9,31 @@ const code = (value: ErrorCode) => value;
 // Money, dates and descriptions
 // ---------------------------------------------------------------------------
 
-/** €100,000.00: a guard against typing mistakes, not a business rule. */
-export const MAX_AMOUNT_CENTS = 10_000_000;
+/**
+ * The same limits for every currency, in whole minor units: a guard against typing mistakes, not a
+ * business rule. The maximum is €10,000,000.00 or $1.000.000.000 in Colombian pesos, enough for a
+ * year of rent or a car anywhere, and it still fits a Postgres `Int`.
+ */
+export const MIN_AMOUNT_UNITS = 1;
+export const MAX_AMOUNT_UNITS = 1_000_000_000;
 export const EXPENSE_DESCRIPTION_MAX = 100;
 /** History items per page, and the most a client may ask for. */
 export const ACTIVITY_PAGE_SIZE = 30;
 export const ACTIVITY_PAGE_MAX = 50;
 
-/** Money is always a whole number of euro cents; it is formatted only when displayed. */
+/** Money is always a whole number of the household currency's minor unit; it is formatted only when displayed. */
 export const moneyCentsSchema = z
   .number(code("money.amount.invalid"))
   .int(code("money.amount.invalid"))
-  .min(1, code("money.amount.invalid"))
-  .max(MAX_AMOUNT_CENTS, code("money.amount.invalid"));
+  .min(MIN_AMOUNT_UNITS, code("money.amount.invalid"))
+  .max(MAX_AMOUNT_UNITS, code("money.amount.invalid"));
 
-/** A person's part of an expense can be €0.00 (an equal split of a tiny amount). */
+/** A person's part of an expense can be zero (an equal split of a tiny amount). */
 const shareCentsSchema = z
   .number(code("money.amount.invalid"))
   .int(code("money.amount.invalid"))
   .min(0, code("money.amount.invalid"))
-  .max(MAX_AMOUNT_CENTS, code("money.amount.invalid"));
+  .max(MAX_AMOUNT_UNITS, code("money.amount.invalid"));
 
 /** A calendar day, `YYYY-MM-DD`, without a time of day. */
 export const calendarDateSchema = z.iso.date(code("money.date.invalid"));

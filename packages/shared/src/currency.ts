@@ -1,3 +1,5 @@
+import { z } from "zod";
+import type { ErrorCode } from "./errors";
 import type { Locale } from "./locale";
 
 /**
@@ -27,6 +29,11 @@ export interface Currency {
   /** Digits after the decimal separator: how many minor units make a major one (2 → 100). */
   decimals: 0 | 2;
 }
+
+/** A listed currency code, exactly as written in ISO 4217 ("COP"). */
+export const currencyCodeSchema = z.enum(CURRENCY_CODES as [CurrencyCode, ...CurrencyCode[]], {
+  error: "money.currency.invalid" satisfies ErrorCode,
+});
 
 export function currency(code: CurrencyCode): Currency {
   return { code, decimals: DECIMALS[code] };

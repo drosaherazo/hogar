@@ -5,6 +5,7 @@ import {
   createInvitationRequestSchema,
   householdNameSchema,
   invitationTokenRequestSchema,
+  renameHouseholdRequestSchema,
   updateSplitRequestSchema,
   weightSchema,
 } from "./household";
@@ -21,9 +22,28 @@ describe("householdNameSchema", () => {
     expect(errorCodeFrom(householdNameSchema.safeParse("a".repeat(51)).error)).toBe("household.name.too_long");
   });
 
-  it("is what the create request validates", () => {
-    expect(createHouseholdRequestSchema.safeParse({ name: "Piso Lavapiés" }).success).toBe(true);
-    expect(createHouseholdRequestSchema.safeParse({}).success).toBe(false);
+  it("is what the rename request validates", () => {
+    expect(renameHouseholdRequestSchema.safeParse({ name: "Piso Lavapiés" }).success).toBe(true);
+    expect(renameHouseholdRequestSchema.safeParse({}).success).toBe(false);
+  });
+});
+
+describe("createHouseholdRequestSchema", () => {
+  it("takes a name and a listed currency", () => {
+    expect(createHouseholdRequestSchema.parse({ name: " Casa ", currency: "COP" })).toEqual({
+      name: "Casa",
+      currency: "COP",
+    });
+  });
+
+  it.each([
+    ["no currency", {}],
+    ["an unlisted currency", { currency: "JPY" }],
+    ["a lowercase code", { currency: "cop" }],
+  ])("refuses %s with money.currency.invalid", (_, extra) => {
+    expect(errorCodeFrom(createHouseholdRequestSchema.safeParse({ name: "Casa", ...extra }).error)).toBe(
+      "money.currency.invalid",
+    );
   });
 });
 
