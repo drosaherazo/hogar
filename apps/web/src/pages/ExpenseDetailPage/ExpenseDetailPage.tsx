@@ -1,5 +1,6 @@
 import { canEditContent, type ExpenseView, type MemberView } from "@hogar/shared";
-import { Alert, Amount, Avatar, Badge, Button, Card, Dialog, Spinner } from "@hogar/ui";
+import { Alert, Avatar, Badge, Button, Card, Dialog, Spinner } from "@hogar/ui";
+import { Money } from "../../expenses/Money";
 import { ArrowLeft, Check, Pencil, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -119,7 +120,7 @@ function Details({ expense, members, canEdit }: { expense: ExpenseView; members:
           {expense.description}
         </h1>
         <CategoryLabel category={expense.category} className={styles.category} />
-        <Amount cents={expense.amountCents} className={styles.total} />
+        <Money units={expense.amountCents} className={styles.total} />
       </div>
 
       <dl className={styles.facts}>
@@ -157,7 +158,7 @@ function Details({ expense, members, canEdit }: { expense: ExpenseView; members:
                 {share.person.name}
                 {share.person.former && <Badge>{t("balances.former")}</Badge>}
               </span>
-              <Amount cents={share.amountCents} />
+              <Money units={share.amountCents} />
             </li>
           ))}
         </ul>

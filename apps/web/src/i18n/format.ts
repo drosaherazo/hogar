@@ -1,5 +1,13 @@
+import { currency, type Currency } from "@hogar/shared";
 import { formatAmount, useLocale } from "@hogar/ui";
 import { useMemo } from "react";
+
+const EUR = currency("EUR");
+
+/** The currency the household's money is in. Every household is in euros until households get a currency. */
+export function useCurrency(): Currency {
+  return EUR;
+}
 
 /** Whole-number percentage of shared costs, in the active language ("75%" / "75 %"). */
 export function usePercent() {
@@ -10,10 +18,11 @@ export function usePercent() {
   }, [locale]);
 }
 
-/** Cents as euros for sentences ("You owe {{amount}}"); standalone figures use the `Amount` component. */
+/** Minor units in the household's currency, for sentences ("You owe {{amount}}"); standalone figures use `Money`. */
 export function useMoney() {
   const locale = useLocale();
-  return useMemo(() => (cents: number) => formatAmount(cents, locale), [locale]);
+  const money = useCurrency();
+  return useMemo(() => (units: number) => formatAmount(units, money, locale), [locale, money]);
 }
 
 /** "Ana 75 % y Bruno 25 %": a list joined the way the active language joins lists. */

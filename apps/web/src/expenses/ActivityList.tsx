@@ -1,5 +1,6 @@
 import type { ActivityItem } from "@hogar/shared";
-import { Amount, Button } from "@hogar/ui";
+import { Button } from "@hogar/ui";
+import { Money } from "./Money";
 import clsx from "clsx";
 import { HandCoins, ReceiptText, Trash2 } from "lucide-react";
 import { useId } from "react";
@@ -140,7 +141,7 @@ function ExpenseRow({ item, viewerId }: { item: Extract<ActivityItem, { kind: "e
         </span>
       </span>
       <span className={styles.side}>
-        <Amount cents={item.amountCents} className={styles.amount} />
+        <Money units={item.amountCents} className={styles.amount} />
         <span className={clsx(styles.part, styles[kind])}>{part}</span>
       </span>
     </Link>
@@ -162,7 +163,7 @@ function SettlementRow({ item, onOpen }: { item: Extract<ActivityItem, { kind: "
         </span>
       </span>
       <span className={styles.side}>
-        <Amount cents={item.amountCents} className={styles.amount} />
+        <Money units={item.amountCents} className={styles.amount} />
       </span>
     </button>
   );
