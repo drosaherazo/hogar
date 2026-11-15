@@ -19,7 +19,7 @@ interface Searchable {
 /**
  * Builds a search over `codes` in `language` (ADR 0014): a typed text matches a currency when it is
  * part of its name, its ISO code or the name of a country that uses it, ignoring case and accents
- * ("japon" finds "yen japonés" by "Japón"). Names come from `Intl.DisplayNames`, so nothing is
+ * ("alemania" finds the euro through "Alemania"). Names come from `Intl.DisplayNames`, so nothing is
  * hand-written; results keep the language's alphabetical order.
  */
 export function createCurrencySearch(codes: readonly CurrencyCode[], language: string) {
