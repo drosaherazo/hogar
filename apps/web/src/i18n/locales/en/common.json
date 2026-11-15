@@ -50,5 +50,12 @@
       "title": "You seem to be offline",
       "description": "We'll carry on as soon as you're back online."
     }
+  },
+  "update": {
+    "action": "Update",
+    "required": {
+      "title": "Hogar has been updated",
+      "description": "Update to keep going. Anything you hadn't saved can't be kept."
+    }
   }
 }

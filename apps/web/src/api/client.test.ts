@@ -1,3 +1,4 @@
+import { API_VERSION } from "@hogar/shared";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it, vi } from "vitest";
 import { ana, apiError, categoryView, server, session, starterCategories } from "../test/server";
@@ -212,5 +213,37 @@ describe("ApiClient.health", () => {
     controller.abort();
     await expect(pending).rejects.toMatchObject({ code: "network", status: 0 });
     expect(received).toBe(controller.signal);
+  });
+});
+
+describe("ApiClient and the API version", () => {
+  it("sends the API version on every request, the refresh included", async () => {
+    const versions: (string | null)[] = [];
+    const fetchImpl = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      versions.push(new Headers(init?.headers).get("X-Hogar-Api-Version"));
+      return Promise.resolve(HttpResponse.json(session()));
+    });
+    const client = new ApiClient(BASE, fetchImpl);
+    await client.health();
+    await client.refresh();
+    await client.loginWithGoogle("google-token");
+    await client.logout();
+    expect(versions).toEqual(Array(4).fill(String(API_VERSION)));
+  });
+
+  it("tells the required-update handler once the API says this version is outdated", async () => {
+    server.use(
+      http.post(`${BASE}/auth/refresh`, () => apiError(426, "client.outdated")),
+      http.get(`${BASE}/household`, () => apiError(426, "client.outdated")),
+    );
+    const client = new ApiClient(BASE);
+    const onOutdated = vi.fn();
+    client.onOutdated(onOutdated);
+    expect(client.isOutdated).toBe(false);
+    await expect(client.refresh()).rejects.toMatchObject({ code: "client.outdated", status: 426 });
+    expect(client.isOutdated).toBe(true);
+    expect(onOutdated).toHaveBeenCalledOnce();
+    await expect(client.getHousehold()).rejects.toMatchObject({ code: "client.outdated" });
+    expect(onOutdated).toHaveBeenCalledOnce();
   });
 });
