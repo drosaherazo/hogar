@@ -1,30 +1,62 @@
+/*
+ * Phones: a bottom sheet, full width and anchored to the bottom, so its buttons sit in thumb reach.
+ * The overlay is as tall as the visible viewport (react-aria measures it, keyboard excluded), so
+ * the sheet rises above the on-screen keyboard and scrolls inside when it doesn't fit.
+ * From 48rem up: centered, as on a desktop.
+ */
 .overlay {
   position: fixed;
-  inset: 0;
+  inset-block-start: 0;
+  inset-inline-start: 0;
   z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  inline-size: 100%;
+  block-size: var(--visual-viewport-height, 100dvh);
   background-color: var(--color-overlay);
   animation: fade var(--duration-slow) var(--easing-gentle);
 }
 
+.modal {
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  max-block-size: calc(100% - var(--space-8));
+}
+
 .content {
-  position: fixed;
-  inset-block-start: 50%;
-  inset-inline-start: 50%;
-  z-index: 21;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  inline-size: min(calc(100vw - var(--space-8)), var(--size-content-sm));
-  max-block-size: calc(100dvh - var(--space-8));
+  inline-size: 100%;
+  min-block-size: 0;
   overflow-y: auto;
-  padding: var(--space-6);
+  padding: var(--space-6) max(var(--space-4), env(safe-area-inset-right))
+    calc(var(--space-6) + env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left));
   background-color: var(--color-surface);
   color: var(--color-text);
-  border-radius: var(--radius-xl);
+  border-start-start-radius: var(--radius-xl);
+  border-start-end-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   font-family: var(--font-family-base);
-  transform: translate(-50%, -50%);
-  animation: rise var(--duration-slow) var(--easing-gentle);
+  animation: slide-up var(--duration-slow) var(--easing-gentle);
+}
+
+@media (min-width: 48rem) {
+  .overlay {
+    align-items: center;
+  }
+
+  .modal {
+    inline-size: min(calc(100% - var(--space-8)), var(--size-content-sm));
+  }
+
+  .content {
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    animation-name: rise;
+  }
 }
 
 .content:focus-visible {
@@ -104,9 +136,15 @@
   }
 }
 
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translate(-50%, -48%);
+    transform: translateY(2%);
   }
 }

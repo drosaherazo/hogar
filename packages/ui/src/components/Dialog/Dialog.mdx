@@ -21,11 +21,13 @@ A window over the page for a decision that needs full attention: confirming some
 - **The title asks the exact question** ("Leave Casa Ana?") and the description states the consequence, so nobody confirms blindly.
 - **The safe choice comes first** ("Cancel"), and destructive buttons use a verb ("Leave household"), never "OK".
 - **Large radius (`--radius-xl`), soft shadow and a dimmed overlay:** it feels like a friendly card lifted from the page, not an alarm.
-- **A gentle rise animation** with `--duration-slow`, which disappears under reduced motion.
+- **A bottom sheet on phones:** below `48rem` it slides up from the bottom edge at full width, with rounded top corners and room for the home indicator; from `48rem` up it stays centered, as people expect on a big screen.
+- **A gentle animation** with `--duration-slow` (sliding up as a sheet, rising when centered), which disappears under reduced motion.
 
 ## How it helps the person
 - **Fewer regrets:** naming exactly what will happen before it happens prevents mistakes with shared data.
 - **Focus without pressure:** the rest of the page fades but stays visible behind, so the person keeps their sense of place.
+- **Buttons in thumb reach:** on a phone the actions sit at the bottom of the screen, and the sheet rises above the on-screen keyboard and scrolls inside, so "Save" is never hidden behind it. This is design intent, based on holding a phone with one hand.
 - **Evidence-backed:** focus trapping, Escape to close and focus returning to where you were are WAI-ARIA dialog practices that keep keyboard and screen reader users oriented. The friendliness of the styling is design intent.
 
 ## Accessibility
@@ -35,6 +37,10 @@ A window over the page for a decision that needs full attention: confirming some
 
 ## Variants
 <Canvas of={DialogStories.WithForm} />
+
+On a phone (320 px here) the same dialog opens as a bottom sheet:
+
+<Canvas of={DialogStories.OnAPhone} />
 
 </Lang>
 
@@ -55,11 +61,13 @@ Una ventana sobre la página para una decisión que necesita toda la atención: 
 - **El título hace la pregunta exacta** ("¿Salir de Casa Ana?") y la descripción explica la consecuencia, para que nadie confirme a ciegas.
 - **La opción segura va primero** ("Cancelar"), y los botones destructivos usan un verbo ("Salir del hogar"), nunca "Aceptar".
 - **Radio grande (`--radius-xl`), sombra suave y fondo atenuado:** se siente como una tarjeta amable que se levanta de la página, no como una alarma.
-- **Una animación suave al aparecer** con `--duration-slow`, que desaparece con movimiento reducido.
+- **Una hoja inferior en el móvil:** por debajo de `48rem` sube desde el borde inferior a todo el ancho, con las esquinas de arriba redondeadas y espacio para el indicador de inicio; desde `48rem` se queda centrado, como se espera en una pantalla grande.
+- **Una animación suave al aparecer** con `--duration-slow` (sube como hoja, se eleva cuando está centrado), que desaparece con movimiento reducido.
 
 ## Cómo ayuda a la persona
 - **Menos arrepentimientos:** nombrar exactamente qué va a pasar antes de que pase evita errores con datos compartidos.
 - **Atención sin presión:** el resto de la página se atenúa pero sigue visible detrás, así la persona no pierde el contexto.
+- **Botones al alcance del pulgar:** en el móvil las acciones quedan abajo, y la hoja sube por encima del teclado y se desplaza por dentro, así "Guardar" nunca queda tapado. Es intención de diseño, pensada para usar el móvil con una mano.
 - **Respaldado:** atrapar el foco, cerrar con Escape y devolver el foco a donde estabas son prácticas WAI-ARIA para diálogos que orientan a quien usa teclado o lector de pantalla. La amabilidad del estilo es intención de diseño.
 
 ## Accesibilidad
@@ -69,5 +77,9 @@ Una ventana sobre la página para una decisión que necesita toda la atención: 
 
 ## Variantes
 <Canvas of={DialogStories.WithForm} />
+
+En el móvil (aquí, 320 px) el mismo diálogo se abre como hoja inferior:
+
+<Canvas of={DialogStories.OnAPhone} />
 
 </Lang>

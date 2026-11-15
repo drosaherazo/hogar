@@ -85,3 +85,9 @@ export const WithForm: Story = {
     );
   },
 };
+
+/** The same form at 320 px: below 48rem every dialog opens as a bottom sheet. */
+export const OnAPhone: Story = {
+  ...WithForm,
+  globals: { viewport: { value: "mobile1", isRotated: false } },
+};
