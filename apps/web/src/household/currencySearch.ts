@@ -11,8 +11,8 @@ export interface CurrencyResult {
 interface Searchable {
   code: CurrencyCode;
   name: string;
-  /** Name and code, folded for matching. */
-  folded: string;
+  /** Name and code, each folded for matching. */
+  folded: { name: string; code: string };
   countries: { name: string; folded: string }[];
 }
 
@@ -34,7 +34,7 @@ export function createCurrencySearch(codes: readonly CurrencyCode[], language: s
         .map((region) => regionNames.of(region))
         .filter((country): country is string => country !== undefined)
         .map((country) => ({ name: country, folded: fold(country) }));
-      return { code, name, folded: fold(`${name} ${code}`), countries };
+      return { code, name, folded: { name: fold(name), code: fold(code) }, countries };
     })
     .sort((a, b) => a.name.localeCompare(b.name, language));
 
@@ -42,7 +42,7 @@ export function createCurrencySearch(codes: readonly CurrencyCode[], language: s
     const wanted = fold(query.trim());
     const results: CurrencyResult[] = [];
     for (const { code, name, folded, countries } of searchable) {
-      if (folded.includes(wanted)) {
+      if (folded.name.includes(wanted) || folded.code.includes(wanted)) {
         results.push({ code, name });
         continue;
       }

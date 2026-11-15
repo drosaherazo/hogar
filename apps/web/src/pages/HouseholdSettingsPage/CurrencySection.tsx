@@ -1,11 +1,12 @@
-import { currencyCodeSchema, type CurrencyCode, type HouseholdView } from "@hogar/shared";
-import { Button, Card, Combobox } from "@hogar/ui";
+import { type CurrencyCode, type HouseholdView } from "@hogar/shared";
+import { Button, Card } from "@hogar/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiRequestError, errorKey } from "../../api/client";
-import { useCurrencyName, useCurrencySearch } from "../../household/useCurrencySearch";
+import { CurrencyPicker } from "../../household/CurrencyPicker";
+import { useCurrencyName } from "../../household/useCurrencyName";
 import { householdKeys, useChangeCurrency } from "../../household/useHousehold";
 import styles from "./HouseholdSettingsPage.module.css";
 
@@ -18,7 +19,6 @@ export function CurrencySection({ household }: { household: HouseholdView }) {
   const { t } = useTranslation(["household", "errors"]);
   const queryClient = useQueryClient();
   const change = useChangeCurrency();
-  const searchCurrencies = useCurrencySearch(household.currency);
   const nameOf = useCurrencyName();
   // Follows the household (a reload may bring another admin's change) until the admin picks one.
   const [picked, setPicked] = useState<CurrencyCode | null>(null);
@@ -57,19 +57,16 @@ export function CurrencySection({ household }: { household: HouseholdView }) {
       </h2>
       {editable ? (
         <form className={styles.form} onSubmit={submit} noValidate>
-          <Combobox
+          <CurrencyPicker
             inputRef={field}
             label={t("settings.currency.label")}
             hint={t("currencyPicker.searchHint")}
-            search={searchCurrencies}
-            selectedId={currency}
-            onSelectionChange={(id) => {
-              const choice = currencyCodeSchema.safeParse(id);
-              if (choice.success) setPicked(choice.data);
+            value={currency}
+            current={household.currency}
+            onChange={(code) => {
+              setPicked(code);
               change.reset();
             }}
-            noResults={(query) => t("currencyPicker.noResults", { query })}
-            triggerLabel={t("currencyPicker.showAll")}
             error={change.isError && !lockedWhileChoosing ? t(errorKey(change.error)) : undefined}
           />
           <div className={styles.row}>

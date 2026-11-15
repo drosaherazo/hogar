@@ -1,16 +1,10 @@
-import {
-  createHouseholdRequestSchema,
-  currencyCodeSchema,
-  suggestCurrency,
-  type CurrencyCode,
-  type ErrorCode,
-} from "@hogar/shared";
-import { Button, Combobox, Dialog, TextField } from "@hogar/ui";
+import { createHouseholdRequestSchema, suggestCurrency, type CurrencyCode, type ErrorCode } from "@hogar/shared";
+import { Button, Dialog, TextField } from "@hogar/ui";
 import { useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiRequestError } from "../api/client";
 import styles from "./CreateHouseholdDialog.module.css";
-import { useCurrencySearch } from "./useCurrencySearch";
+import { CurrencyPicker } from "./CurrencyPicker";
 import { useCreateHousehold } from "./useHousehold";
 
 export interface CreateHouseholdDialogProps {
@@ -43,7 +37,6 @@ export function CreateHouseholdDialog({ open, onOpenChange }: CreateHouseholdDia
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState<CurrencyCode>(suggestedCurrency);
   const [errors, setErrors] = useState<FieldErrors>({});
-  const searchCurrencies = useCurrencySearch();
 
   function changeOpen(next: boolean) {
     if (!next) {
@@ -118,18 +111,12 @@ export function CreateHouseholdDialog({ open, onOpenChange }: CreateHouseholdDia
           onChange={(event) => setName(event.target.value)}
           autoComplete="off"
         />
-        <Combobox
+        <CurrencyPicker
           inputRef={currencyField}
           label={t("create.currencyLabel")}
           hint={t("create.currencyHint")}
-          search={searchCurrencies}
-          selectedId={currency}
-          onSelectionChange={(id) => {
-            const picked = currencyCodeSchema.safeParse(id);
-            if (picked.success) setCurrency(picked.data);
-          }}
-          noResults={(query) => t("currencyPicker.noResults", { query })}
-          triggerLabel={t("currencyPicker.showAll")}
+          value={currency}
+          onChange={setCurrency}
           error={errorText("currency")}
         />
       </form>
