@@ -103,9 +103,9 @@ Package guidance loads on demand from `apps/web/CLAUDE.md` (i18n) and `packages/
 
 ## Scope
 
-- **Current phase, MVP (v1):** auth (Google or an email sign-in code) and roles, household with shareable-link invitations, expenses with splits and balances, expense categories (with an optional own split and a list filter), chores with an assignee, shopping list, and real time.
-- **Out of the MVP:** invitation emails, recurring expenses and recurring chores (v1.1), budgets and charts, including totals and charts per category (v1.2).
-- **Out of scope:** multiple households per user, a shared pot, real payments, multiple currencies within a household (and conversion between them), native mobile app, and gamification. They are not implemented unless explicitly requested and these rules are amended.
+- **Current phase, MVP (v1):** auth (Google or an email sign-in code) and roles, household with shareable-link invitations, expenses with splits and balances, expense categories (with an optional own split and a list filter), chores with an assignee, shopping list, real time, and an installable PWA that shows the last data it loaded while offline, read-only (ADR 0015).
+- **Out of the MVP:** invitation emails, recurring expenses and recurring chores, push notifications (v1.1), budgets and charts, including totals and charts per category (v1.2).
+- **Out of scope:** multiple households per user, a shared pot, real payments, multiple currencies within a household (and conversion between them), creating or changing data offline (ADR 0015), native mobile app, and gamification. They are not implemented unless explicitly requested and these rules are amended.
 
 ## Git workflow
 
@@ -128,4 +128,4 @@ Standard scripts live in the root `package.json`. Non-obvious bits:
 - New worktree: `pnpm install` and copy `apps/api/.env` and `apps/web/.env` from the main folder; `pnpm db:up` reuses the shared containers.
 - Deploy: `docs/deploy.md` (`render.yaml`, `apps/web/vercel.json`, `packages/ui/vercel.json`). API production build: `pnpm --filter @hogar/api build`.
 
-**Version**: 6.1.1 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-15
+**Version**: 6.2.0 | **Ratified**: 2026-11-10 | **Last Amended**: 2026-11-15
