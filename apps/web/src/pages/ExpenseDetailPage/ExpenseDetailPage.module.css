@@ -39,10 +39,21 @@
   overflow-wrap: anywhere;
 }
 
-/* Key figure: bold is allowed here. */
-.total {
-  font-size: var(--font-size-3xl);
+/*
+ * Key figure: bold is allowed here. On phones it is a step smaller so "1.284.000 COP" fits on one
+ * line; at 200 % text it may still break as a last resort rather than widen the page.
+ */
+.header > .total {
+  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 48rem) {
+  .header > .total {
+    font-size: var(--font-size-3xl);
+  }
 }
 
 .facts {
