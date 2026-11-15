@@ -37,6 +37,19 @@ describe("CurrencySection", () => {
     expect(select).toHaveDisplayValue("Colombian Peso");
   });
 
+  it("offers every currency in force somewhere, by name in the active language", async () => {
+    server.use(handlers.signedIn(), handlers.household());
+    renderApp({ path: PATH });
+
+    const section = await currencySection();
+    const select = within(section).getByRole("combobox", { name: "Household currency" });
+    const options = within(select).getAllByRole("option");
+    expect(options.length).toBeGreaterThan(150);
+    expect(within(select).getByRole("option", { name: "Japanese Yen" })).toHaveValue("JPY");
+    expect(within(select).getByRole("option", { name: "Kuwaiti Dinar" })).toHaveValue("KWD");
+    expect(within(select).queryByRole("option", { name: "Gold" })).not.toBeInTheDocument();
+  });
+
   it("shows a fixed currency, and why, once the household has money", async () => {
     server.use(handlers.signedIn(), handlers.household(householdView({ currency: "COP", currencyLocked: true })));
     renderApp({ path: PATH });

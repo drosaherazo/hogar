@@ -10,7 +10,7 @@ import { householdKeys, useChangeCurrency } from "../../household/useHousehold";
 import styles from "./HouseholdSettingsPage.module.css";
 
 /**
- * The household's currency (ADR 0011): an admin can change it until the first expense or payment,
+ * The household's currency (ADRs 0011, 0014): an admin can change it until the first expense or payment,
  * since after that a change would silently change what every stored amount means. Then it is
  * shown fixed, with why; members and guests always see it read-only.
  */
@@ -18,7 +18,7 @@ export function CurrencySection({ household }: { household: HouseholdView }) {
   const { t } = useTranslation(["household", "errors"]);
   const queryClient = useQueryClient();
   const change = useChangeCurrency();
-  const options = useCurrencyOptions();
+  const options = useCurrencyOptions(household.currency);
   const nameOf = useCurrencyName();
   // Follows the household (a reload may bring another admin's change) until the admin picks one.
   const [picked, setPicked] = useState<CurrencyCode | null>(null);

@@ -103,8 +103,8 @@ describe("HomePage", () => {
       await waitFor(() => expect(body).toEqual({ name: "Casa Bogotá", currency: "COP" }));
     });
 
-    it("suggests euros when the region isn't listed, and lets the person pick another", async () => {
-      deviceLanguages("ja-JP");
+    it("suggests euros when the region has no currency of its own (Antarctica), and lets the person pick another", async () => {
+      deviceLanguages("en-AQ");
       let body: unknown;
       server.use(
         handlers.signedIn(),
