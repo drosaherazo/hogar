@@ -175,10 +175,12 @@ interface VisitOptions {
   theme?: Theme;
   /** `wake-up` stops at the screen shown while the server wakes, instead of the page behind it. */
   until?: "page" | "wake-up";
+  /** The browser's text size setting: 2 is 200 %. */
+  textZoom?: number;
 }
 
 /** Opens `path` with a stored language and theme, as a returning person would, ready to measure. */
-export function visitIn(path: string, { locale, theme = "light", until = "page" }: VisitOptions) {
+export function visitIn(path: string, { locale, theme = "light", until = "page", textZoom = 1 }: VisitOptions) {
   cy.visit(path, {
     onBeforeLoad(win) {
       win.localStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
@@ -198,10 +200,11 @@ export function visitIn(path: string, { locale, theme = "light", until = "page" 
   }
   // Measure with Figtree, not the fallback font it swaps in for while loading.
   cy.document().its("fonts.status").should("equal", "loaded");
-  // Phones draw scrollbars over the content; Electron's classic one would steal 15 px of the 320.
   cy.document().then((doc) => {
     const style = doc.createElement("style");
-    style.textContent = "html { scrollbar-width: none; }";
+    // Phones draw scrollbars over the content; Electron's classic one would steal 15 px of the 320.
+    // A browser's text size setting scales the root font size, which every rem token follows.
+    style.textContent = `html { scrollbar-width: none; font-size: ${textZoom * 100}%; }`;
     doc.head.append(style);
   });
 }

@@ -73,7 +73,7 @@ Rules:
 Most people use Hogar on a phone, often with one hand. 375 px is the design width; 320 px is the guaranteed minimum.
 
 1. **Reflow at 320 px** (WCAG 2.2 1.4.10): no horizontal scrolling and no clipped text, checked in `es`. `small-screens.cy.ts` fails CI if a main page scrolls sideways.
-2. **Text at 200 %** stays readable and usable: no fixed heights on containers with text.
+2. **Text at 200 %** stays readable and usable: no fixed heights on containers with text. The same spec checks every main page at 375 px with text at 200 %; long words may break there, a page may not scroll sideways.
 3. **Inputs at 16 px text** or more (`--font-size-md`), so iOS doesn't zoom on focus.
 4. **The right keyboard:** `inputMode="decimal"` for amounts (`numeric` when the household's currency has no decimals), `type="email"` and `autoComplete="email"` for addresses, `enterKeyHint` in forms.
 5. **Touch targets** at least 44 px (`--size-touch`), with at least `--space-2` between adjacent ones.
