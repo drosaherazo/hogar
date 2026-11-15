@@ -26,3 +26,22 @@ export function resolveLocale(input: string | null | undefined): Locale {
     .sort((a, b) => b.quality - a.quality);
   return candidates.map((candidate) => candidate.language).find(isLocale) ?? DEFAULT_LOCALE;
 }
+
+/**
+ * The BCP 47 tag `Intl` formats money, dates and numbers with: the active language plus the
+ * device region when the device speaks that language (`es` + [`es-CO`, `en`] → `es-CO`), so each
+ * person sees separators and symbols the way they write them. Without such a device language, the
+ * language alone (`es` + [`en-US`] → `es`), never a mix. Translations stay `en` and `es`.
+ */
+export function formattingLocale(language: Locale, deviceLanguages: readonly string[]): string {
+  for (const tag of deviceLanguages) {
+    let canonical: string | undefined;
+    try {
+      canonical = Intl.getCanonicalLocales(tag)[0];
+    } catch {
+      continue; // Not a language tag at all.
+    }
+    if (canonical?.split("-")[0] === language) return canonical;
+  }
+  return language;
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLocale, resolveLocale } from "./locale";
+import { formattingLocale, isLocale, resolveLocale } from "./locale";
 
 describe("resolveLocale", () => {
   it.each([
@@ -25,5 +25,28 @@ describe("isLocale", () => {
     expect(isLocale("es")).toBe(true);
     expect(isLocale("es-ES")).toBe(false);
     expect(isLocale(42)).toBe(false);
+  });
+});
+
+describe("formattingLocale", () => {
+  it.each([
+    ["es", ["es-CO", "en"], "es-CO"],
+    ["es", ["en-US"], "es"],
+    ["en", ["es-CO", "en-GB"], "en-GB"],
+    ["es", ["en", "es-MX", "es-CO"], "es-MX"],
+    ["en", ["EN-us"], "en-US"],
+    ["es", ["es"], "es"],
+    ["es", [], "es"],
+  ] as const)("formats %s with device languages %j as %s", (language, device, expected) => {
+    expect(formattingLocale(language, device)).toBe(expected);
+  });
+
+  it.each([
+    ["es-419", "es-419"],
+    ["es-Latn-CO", "es-Latn-CO"],
+    ["esp-CO", "es"],
+    ["not a tag", "es"],
+  ])("reads the device language %s as %s for es", (device, expected) => {
+    expect(formattingLocale("es", [device])).toBe(expected);
   });
 });
