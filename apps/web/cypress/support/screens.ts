@@ -233,3 +233,59 @@ function overflowing(doc: Document, viewportWidth: number): string {
       .join(", ") || "none"
   );
 }
+
+const TOUCH_TARGETS = [
+  "a[href]",
+  "button",
+  "select",
+  "textarea",
+  'input:not([type="hidden"])',
+  '[role="button"]',
+  '[role="link"]',
+  '[role="menuitem"]',
+  '[role="option"]',
+  '[role="radio"]',
+  '[role="checkbox"]',
+  '[role="combobox"]',
+].join(", ");
+
+/** 44 px and `--space-2`, from rule 5 of "Small screens" in docs/design.md. */
+const MIN_TARGET_PX = 44;
+const MIN_GAP_PX = 8;
+
+/**
+ * Rule 5 of "Small screens": every touch target on the page is at least 44 px tall and at least
+ * `--space-2` away from its neighbours. A checkbox or radio counts as its whole label, which is
+ * what a finger presses; visually hidden controls and the skip link (off screen until focused)
+ * aren't targets.
+ */
+export function assertTouchTargets() {
+  cy.document().should((doc) => {
+    const targets = new Map<Element, DOMRect>();
+    for (const control of doc.querySelectorAll(TOUCH_TARGETS)) {
+      const target = control.closest("label") ?? control;
+      const rect = target.getBoundingClientRect();
+      if (rect.width <= 1 || rect.height <= 1 || rect.bottom <= 0) continue;
+      if ([...targets.keys()].some((other) => other.contains(target))) continue;
+      for (const inner of [...targets.keys()]) if (target.contains(inner)) targets.delete(inner);
+      targets.set(target, rect);
+    }
+    const entries = [...targets];
+    const small = entries.filter(([, rect]) => rect.height < MIN_TARGET_PX - 0.5).map(([target]) => nameOf(target));
+    expect(small, "touch targets under 44 px tall").to.deep.equal([]);
+    const crowded: string[] = [];
+    entries.forEach(([a, ra], index) => {
+      for (const [b, rb] of entries.slice(index + 1)) {
+        const gapX = Math.max(rb.left - ra.right, ra.left - rb.right);
+        const gapY = Math.max(rb.top - ra.bottom, ra.top - rb.bottom);
+        if (Math.max(gapX, gapY) < MIN_GAP_PX - 0.5) crowded.push(`${nameOf(a)} ↔ ${nameOf(b)}`);
+      }
+    });
+    expect(crowded, "touch targets closer than --space-2").to.deep.equal([]);
+  });
+}
+
+function nameOf(element: Element): string {
+  const name = element.getAttribute("aria-label") ?? element.textContent?.trim().slice(0, 30) ?? "";
+  return `<${element.tagName.toLowerCase()}> "${name}"`;
+}
