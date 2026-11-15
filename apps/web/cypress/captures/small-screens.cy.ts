@@ -2,7 +2,8 @@ import { LOCALES, type Locale } from "@hogar/shared";
 import i18next from "i18next";
 import { NAMESPACES, resources } from "../../src/i18n/resources";
 import { ana, session } from "../support/e2e";
-import { BRUNO, CARLA, invitationPreview, signedInPages, stubSignedIn, visitIn, type Theme } from "../support/screens";
+import type { Theme } from "../../src/theme/theme";
+import { BRUNO, CARLA, invitation, invitationPreview, signedInPages, stubSignedIn, visitIn } from "../support/screens";
 
 /**
  * Screenshots of every screen and dialog on small phones, for the "Small screens" audit in
@@ -82,16 +83,7 @@ const dialogs: DialogCapture[] = [
     stub: () =>
       cy.intercept("POST", "/api/household/invitations", {
         statusCode: 201,
-        body: {
-          token: "tok_capture",
-          invitation: {
-            id: "inv_2",
-            role: "MEMBER",
-            createdByName: ana.name,
-            expiresAt: "2026-11-20T22:00:00.000Z",
-            status: "pending",
-          },
-        },
+        body: { token: "tok_capture", invitation: invitation("inv_2") },
       }),
     open: (t) => cy.contains("button", t("household:settings.invitations.create")).click(),
   },
@@ -99,8 +91,7 @@ const dialogs: DialogCapture[] = [
     name: "remove-member",
     path: "/household/settings",
     open: (t) => {
-      const bruno = BRUNO;
-      cy.get(`button[aria-label="${t("household:settings.members.options", { name: bruno })}"]`).click();
+      cy.get(`button[aria-label="${t("household:settings.members.options", { name: BRUNO })}"]`).click();
       cy.contains("[role=menuitem]", t("household:settings.members.remove")).click();
     },
   },

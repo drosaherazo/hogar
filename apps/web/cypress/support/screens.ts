@@ -5,10 +5,13 @@ import type {
   ExpenseView,
   HouseholdView,
   InvitationPreview,
+  InvitationView,
   Locale,
   MemberView,
   PersonRef,
 } from "@hogar/shared";
+import { LANGUAGE_STORAGE_KEY } from "../../src/i18n";
+import { THEME_STORAGE_KEY, type Theme } from "../../src/theme/theme";
 import { ana, categoryView, session } from "./e2e";
 
 /**
@@ -146,20 +149,13 @@ export function stubSignedIn(locale: Locale) {
   cy.intercept("GET", "/api/household/activity*", activity);
   cy.intercept("GET", "/api/household/categories", { body: { categories } });
   cy.intercept("GET", "/api/household/expenses/expense_1", { body: { expense } });
-  cy.intercept("GET", "/api/household/invitations", {
-    body: {
-      invitations: [
-        {
-          id: "inv_1",
-          role: "MEMBER",
-          createdByName: ana.name,
-          expiresAt: "2026-11-20T22:00:00.000Z",
-          status: "pending",
-        },
-      ],
-    },
-  });
+  cy.intercept("GET", "/api/household/invitations", { body: { invitations: [invitation("inv_1")] } });
   cy.intercept("POST", "/api/invitations/lookup", invitationPreview);
+}
+
+/** A pending member invitation Ana created. */
+export function invitation(id: string): InvitationView {
+  return { id, role: "MEMBER", createdByName: ana.name, expiresAt: "2026-11-20T22:00:00.000Z", status: "pending" };
 }
 
 /** Every main signed-in page, as a path the router serves. */
@@ -174,8 +170,6 @@ export const signedInPages = [
   "/invite#tok_join",
 ] as const;
 
-export type Theme = "light" | "dark";
-
 interface VisitOptions {
   locale: Locale;
   theme?: Theme;
@@ -187,8 +181,8 @@ interface VisitOptions {
 export function visitIn(path: string, { locale, theme = "light", until = "page" }: VisitOptions) {
   cy.visit(path, {
     onBeforeLoad(win) {
-      win.localStorage.setItem("hogar-language", locale); // LANGUAGE_STORAGE_KEY in src/i18n
-      win.localStorage.setItem("hogar-theme", theme);
+      win.localStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
+      win.localStorage.setItem(THEME_STORAGE_KEY, theme);
     },
   });
   if (until === "wake-up") {
