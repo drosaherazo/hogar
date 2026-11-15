@@ -1,3 +1,4 @@
+import { formattingLocale } from "@hogar/shared";
 import { LocaleProvider } from "@hogar/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { i18n as I18n } from "i18next";
@@ -45,10 +46,19 @@ export function createRoutes({ googleClientId }: AppConfig): RouteObject[] {
   ];
 }
 
-/** Feeds the active i18next language to the design system's formatting components. */
+/**
+ * Feeds the active i18next language to the design system, plus the formatting locale: that language
+ * with the device's region when the device speaks it ("es-CO"), so money, dates and numbers look the
+ * way each person writes them.
+ */
 function UiLocale({ children }: { children: React.ReactNode }) {
   const { i18n } = useTranslation();
-  return <LocaleProvider locale={currentLocale(i18n.resolvedLanguage)}>{children}</LocaleProvider>;
+  const locale = currentLocale(i18n.resolvedLanguage);
+  return (
+    <LocaleProvider locale={locale} formattingLocale={formattingLocale(locale, navigator.languages)}>
+      {children}
+    </LocaleProvider>
+  );
 }
 
 export interface AppProvidersProps {

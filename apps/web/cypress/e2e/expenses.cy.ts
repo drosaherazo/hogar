@@ -211,20 +211,21 @@ describe("Expenses", () => {
     cy.visit("/expenses/new", colombia);
     cy.contains("label", "¿Qué fue?").click();
     cy.focused().type("Mercado");
-    cy.contains("label", "Importe (COP)").click();
+    // Formatted the Colombian way, Spanish plus the browser's region: "$ 85.000", not "85.000 COP".
+    cy.contains("label", "Importe ($)").click();
     cy.focused().type("85.000");
     cy.contains("li", "Ana García")
       .invoke("text")
-      .should("match", /63\.750\sCOP/);
+      .should("match", /\$\s63\.750/);
     cy.contains("li", "Bruno Díaz")
       .invoke("text")
-      .should("match", /21\.250\sCOP/);
+      .should("match", /\$\s21\.250/);
     cy.contains("button", "Guardar gasto").click();
 
     cy.wait("@create");
     cy.contains("[role=status]", "Gasto guardado.");
     cy.findHeading("Mercado");
-    cy.contains(/85\.000\sCOP/);
+    cy.contains(/\$\s85\.000/);
   });
 
   it("splits equally among some people, and with exact amounts", () => {
