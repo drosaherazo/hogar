@@ -4,6 +4,12 @@ import { stubSignedIn, visitIn } from "../support/screens";
  * Dialogs open as a bottom sheet on phones, so their buttons sit in thumb reach, and stay centered
  * from 48rem up. Measured on "Record a payment", which every dialog shares its layout with.
  */
+function rectOf($element: JQuery<HTMLElement>): DOMRect {
+  const element = $element.get(0);
+  if (!element) throw new Error("Nothing to measure");
+  return element.getBoundingClientRect();
+}
+
 function openPaymentDialog() {
   stubSignedIn("es");
   visitIn("/balances", { locale: "es" });
@@ -16,7 +22,7 @@ describe("Dialogs on small and wide screens", () => {
     cy.viewport(375, 667);
     // Retried until the opening animation has settled.
     openPaymentDialog().should(($dialog) => {
-      const rect = $dialog[0]!.getBoundingClientRect();
+      const rect = rectOf($dialog);
       expect(rect.left, "left edge").to.equal(0);
       expect(rect.width, "width").to.equal(375);
       expect(rect.bottom, "bottom edge").to.be.closeTo(667, 1);
@@ -28,7 +34,7 @@ describe("Dialogs on small and wide screens", () => {
     cy.viewport(320, 300);
     // Retried until the opening animation has settled.
     openPaymentDialog().should(($dialog) => {
-      expect($dialog[0]!.getBoundingClientRect().bottom, "bottom edge").to.be.at.most(300);
+      expect(rectOf($dialog).bottom, "bottom edge").to.be.at.most(300);
     });
     cy.get("[role=dialog]").contains("button", "Anotar pago").scrollIntoView().should("be.visible");
   });
@@ -37,7 +43,7 @@ describe("Dialogs on small and wide screens", () => {
     cy.viewport(1280, 800);
     // Retried until the opening animation has settled.
     openPaymentDialog().should(($dialog) => {
-      const rect = $dialog[0]!.getBoundingClientRect();
+      const rect = rectOf($dialog);
       expect(rect.left + rect.width / 2, "horizontal center").to.be.closeTo(640, 1);
       expect(rect.top + rect.height / 2, "vertical center").to.be.closeTo(400, 1);
     });
