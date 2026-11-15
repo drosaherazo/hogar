@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { Check, ChevronDown, CircleAlert } from "lucide-react";
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, type Ref } from "react";
 import {
   Button,
   ComboBox,
@@ -10,6 +10,7 @@ import {
   ListBox,
   ListBoxItem,
   Popover,
+  Text,
   type Key,
 } from "react-aria-components";
 import { useLocale } from "../../locale/LocaleProvider";
@@ -49,6 +50,8 @@ export interface ComboboxProps {
   /** What went wrong and how to fix it, already translated. Marks the field invalid. */
   error?: string | undefined;
   className?: string | undefined;
+  /** The text input, so a form can move focus to the field (back to it after an error). */
+  inputRef?: Ref<HTMLInputElement> | undefined;
 }
 
 /**
@@ -67,6 +70,7 @@ export function Combobox({
   hint,
   error,
   className,
+  inputRef,
 }: ComboboxProps) {
   const locale = useLocale();
   const id = useId();
@@ -125,7 +129,7 @@ export function Combobox({
       >
         <Label className={clsx(styles.label)}>{label}</Label>
         <div className={styles.control}>
-          <Input className={clsx(styles.input)} />
+          <Input ref={inputRef} className={clsx(styles.input)} />
           <Button className={clsx(styles.trigger)} aria-label={triggerLabel}>
             <ChevronDown className={styles.chevron} aria-hidden="true" />
           </Button>
@@ -154,12 +158,25 @@ export function Combobox({
               <ListBoxItem id={item.id} textValue={item.label} className={clsx(styles.option)}>
                 {({ isSelected }) => (
                   <>
-                    <span className={styles.name}>
-                      {item.label}
-                      {item.tag && <span className={styles.tag}>{item.tag}</span>}
-                      {isSelected && <Check className={styles.check} aria-hidden="true" />}
-                    </span>
-                    {item.detail && <span className={styles.detail}>{item.detail}</span>}
+                    {/* One label, so screen readers read it all as the option's name: "US Dollar USD, Used in Ecuador". */}
+                    <Text slot="label" className={clsx(styles.text)}>
+                      <span className={styles.name}>
+                        {item.label}
+                        {item.tag && (
+                          <>
+                            {" "}
+                            <span className={styles.tag}>{item.tag}</span>
+                          </>
+                        )}
+                        {isSelected && <Check className={styles.check} aria-hidden="true" />}
+                      </span>
+                      {item.detail && (
+                        <>
+                          <span className={styles.visuallyHidden}>,</span>{" "}
+                          <span className={styles.detail}>{item.detail}</span>
+                        </>
+                      )}
+                    </Text>
                   </>
                 )}
               </ListBoxItem>

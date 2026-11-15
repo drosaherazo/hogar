@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
+import { createRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { expectNoA11yViolations } from "../../test/axe";
 import { Combobox, type ComboboxItem } from "./Combobox";
@@ -65,10 +65,10 @@ describe("Combobox", () => {
     await userEvent.click(screen.getByRole("button", { name: /Show all currencies/ }));
     const options = await screen.findAllByRole("option");
     expect(options.map((option) => option.textContent)).toEqual([
-      "EuroEUR",
-      "Japanese YenJPY",
-      "Kuwaiti DinarKWD",
-      "US DollarUSD",
+      "Euro EUR",
+      "Japanese Yen JPY",
+      "Kuwaiti Dinar KWD",
+      "US Dollar USD",
     ]);
   });
 
@@ -78,7 +78,7 @@ describe("Combobox", () => {
     const input = screen.getByRole("combobox", { name: "Currency" });
     await userEvent.clear(input);
     await userEvent.type(input, "yen");
-    expect((await screen.findAllByRole("option")).map((option) => option.textContent)).toEqual(["Japanese YenJPY"]);
+    expect((await screen.findAllByRole("option")).map((option) => option.textContent)).toEqual(["Japanese Yen JPY"]);
     await userEvent.click(screen.getByRole("option", { name: /Japanese Yen/ }));
     expect(onChange).toHaveBeenCalledWith("JPY");
     expect(input).toHaveValue("Japanese Yen");
@@ -90,7 +90,7 @@ describe("Combobox", () => {
     await userEvent.clear(input);
     await userEvent.type(input, "ecua");
     const option = await screen.findByRole("option");
-    expect(option).toHaveTextContent("US DollarUSDUsed in Ecuador");
+    expect(option).toHaveAccessibleName("US Dollar USD, Used in Ecuador");
   });
 
   it("is used with the keyboard alone", async () => {
@@ -149,6 +149,23 @@ describe("Combobox", () => {
       />,
     );
     expect(screen.getByRole("combobox")).toHaveValue("US Dollar");
+  });
+
+  it("hands its input to the form, which can move focus there", () => {
+    const input = createRef<HTMLInputElement>();
+    render(
+      <Combobox
+        label="Currency"
+        search={search}
+        selectedId="EUR"
+        onSelectionChange={vi.fn()}
+        noResults={() => ""}
+        triggerLabel="All"
+        inputRef={input}
+      />,
+    );
+    input.current?.focus();
+    expect(screen.getByRole("combobox", { name: "Currency" })).toHaveFocus();
   });
 
   it("links the error before the hint and marks the field invalid", () => {

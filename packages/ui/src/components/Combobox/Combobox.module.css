@@ -132,7 +132,13 @@
 }
 
 /* Chosen: weight and a check mark, never color alone. */
-.option[data-selected] .name {
+.option[data-selected] .text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.name {
   font-weight: var(--font-weight-semibold);
 }
 
