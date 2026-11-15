@@ -62,3 +62,8 @@ declare global {
 }
 
 Cypress.Commands.add("findHeading", (text: string) => cy.contains("h1", new RegExp(`^${text}$`)));
+
+/** What the browser says the person speaks (`navigator.languages`), which suggests a new household's currency. */
+export function browserLanguages(win: Window, ...languages: string[]) {
+  Object.defineProperty(win.navigator, "languages", { get: () => languages });
+}

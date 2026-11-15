@@ -2,7 +2,7 @@ import { currentHouseholdSchema, householdResponseSchema } from "@hogar/shared";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { addMember, createHousehold, householdRow } from "./householdHelpers";
-import { bruno, carla, createTestApp, signIn } from "./testApp";
+import { bruno, carla, createTestApp, db, signIn } from "./testApp";
 
 describe("GET /api/household", () => {
   it("says the user has no household yet", async () => {
@@ -57,11 +57,15 @@ describe("POST /api/household", () => {
   it("creates the household with the creator as its only admin, weight 1", async () => {
     const { app } = createTestApp();
     const ana = await signIn(app);
-    const res = await request(app).post("/api/household").set("Authorization", ana.auth).send({ name: "  Casa Ana " });
+    const res = await request(app)
+      .post("/api/household")
+      .set("Authorization", ana.auth)
+      .send({ name: "  Casa Ana ", currency: "EUR" });
 
     expect(res.status).toBe(201);
     const { household } = householdResponseSchema.parse(res.body);
     expect(household.name).toBe("Casa Ana");
+    expect(household.currency).toBe("EUR");
     expect(household.myRole).toBe("ADMIN");
     expect(household.splitNeedsReview).toBe(false);
     expect(household.members).toEqual([
@@ -78,16 +82,49 @@ describe("POST /api/household", () => {
   ])("refuses %s", async (_, name, code) => {
     const { app } = createTestApp();
     const ana = await signIn(app);
-    const res = await request(app).post("/api/household").set("Authorization", ana.auth).send({ name });
+    const res = await request(app)
+      .post("/api/household")
+      .set("Authorization", ana.auth)
+      .send({ name, currency: "EUR" });
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ error: { code } });
+  });
+
+  it("keeps the currency chosen, which every member then reads", async () => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    const created = await createHousehold(app, ana, "Casa Bogotá", "COP");
+    expect(created.currency).toBe("COP");
+    const brunoMember = await addMember(app, created.id, bruno, "MEMBER");
+
+    const res = await request(app).get("/api/household").set("Authorization", brunoMember.auth);
+    expect(householdResponseSchema.parse(res.body).household.currency).toBe("COP");
+  });
+
+  it.each([
+    ["without a currency", {}],
+    ["with a currency outside the list", { currency: "JPY" }],
+    ["with a currency that isn't text", { currency: 978 }],
+  ])("refuses a household %s", async (_, extra) => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    const res = await request(app)
+      .post("/api/household")
+      .set("Authorization", ana.auth)
+      .send({ name: "Casa", ...extra });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: { code: "money.currency.invalid" } });
+    expect(await db.household.count()).toBe(0);
   });
 
   it("refuses a second household for someone who already has one", async () => {
     const { app } = createTestApp();
     const ana = await signIn(app);
     const first = await createHousehold(app, ana);
-    const res = await request(app).post("/api/household").set("Authorization", ana.auth).send({ name: "Otra" });
+    const res = await request(app)
+      .post("/api/household")
+      .set("Authorization", ana.auth)
+      .send({ name: "Otra", currency: "EUR" });
 
     expect(res.status).toBe(409);
     expect(res.body).toEqual({ error: { code: "household.already_member" } });
@@ -99,7 +136,10 @@ describe("POST /api/household", () => {
     const ana = await signIn(app);
     const household = await createHousehold(app, ana);
     const guest = await addMember(app, household.id, carla, "GUEST");
-    const res = await request(app).post("/api/household").set("Authorization", guest.auth).send({ name: "Mío" });
+    const res = await request(app)
+      .post("/api/household")
+      .set("Authorization", guest.auth)
+      .send({ name: "Mío", currency: "EUR" });
     expect(res.status).toBe(409);
   });
 });

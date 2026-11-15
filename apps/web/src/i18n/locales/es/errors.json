@@ -39,11 +39,14 @@
   },
   "money": {
     "amount": {
-      "invalid": "Escribe un importe entre 0,01 € y 100.000,00 €."
+      "invalid": "Escribe un importe entre {{min}} y {{max}}."
     },
     "date": {
       "invalid": "Esa fecha no parece correcta. Elígela en el calendario.",
       "future": "Esa fecha aún no ha llegado. Elige hoy o un día anterior."
+    },
+    "currency": {
+      "invalid": "Elige una moneda de la lista."
     }
   },
   "expense": {

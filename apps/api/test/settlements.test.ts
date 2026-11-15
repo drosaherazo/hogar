@@ -68,7 +68,7 @@ describe("POST /api/household/settlements", () => {
 
   it.each([
     ["an amount of zero", { amountCents: 0 }, "money.amount.invalid"],
-    ["more than €100,000.00", { amountCents: 10_000_001 }, "money.amount.invalid"],
+    ["more than 1,000,000,000 units", { amountCents: 1_000_000_001 }, "money.amount.invalid"],
     ["a date that doesn't exist", { date: "2026-02-30" }, "money.date.invalid"],
     ["a date that hasn't happened yet", { date: "2026-10-28" }, "money.date.future"],
   ] as const)("refuses %s", async (_, input, code) => {

@@ -76,7 +76,7 @@ describe("POST /api/household/expenses", () => {
     ["an amount of zero", { amountCents: 0 }, "money.amount.invalid"],
     ["a negative amount", { amountCents: -1 }, "money.amount.invalid"],
     ["a fraction of a cent", { amountCents: 1.5 }, "money.amount.invalid"],
-    ["more than €100,000.00", { amountCents: 10_000_001 }, "money.amount.invalid"],
+    ["more than 1,000,000,000 units", { amountCents: 1_000_000_001 }, "money.amount.invalid"],
     ["a date that doesn't exist", { date: "2026-13-01" }, "money.date.invalid"],
   ])("refuses %s", async (_, input, code) => {
     const { app } = createTestApp();
@@ -85,6 +85,14 @@ describe("POST /api/household/expenses", () => {
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ error: { code } });
     expect(await db.expense.count()).toBe(0);
+  });
+
+  it("records a year of rent in a household in Colombian pesos, which have no decimals", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app, { currency: "COP" });
+    const expense = await addExpense(app, ana, { amountCents: 30_000_000 });
+    expect(expense.amountCents).toBe(30_000_000);
+    expect(sharesByUser(expense)).toEqual({ [ana.user.id]: 22_500_000, [bruno.user.id]: 7_500_000 });
   });
 
   it("refuses dates that haven't happened yet, allowing one day for time zones", async () => {

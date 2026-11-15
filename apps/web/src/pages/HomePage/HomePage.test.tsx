@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { expectNoA11yViolations } from "../../test/axe";
 import { installFakeGoogle, renderApp } from "../../test/renderApp";
 import { ana, anaIsOwed, apiError, balancesView, handlers, householdView, member, server } from "../../test/server";
@@ -19,6 +19,11 @@ describe("firstName", () => {
     expect(firstName(name)).toBe(expected);
   });
 });
+
+/** The browser's preferred languages, which suggest a household's currency. */
+function deviceLanguages(...languages: string[]) {
+  vi.spyOn(navigator, "languages", "get").mockReturnValue(languages);
+}
 
 describe("HomePage", () => {
   describe("without a household", () => {
@@ -51,11 +56,12 @@ describe("HomePage", () => {
     });
 
     it("creates a household with a valid name and shows it", async () => {
+      deviceLanguages("en-GB", "en");
       server.use(
         handlers.signedIn(),
         handlers.noHousehold(),
         http.post("*/api/household", async ({ request }) => {
-          expect(await request.json()).toEqual({ name: "Casa Ana" });
+          expect(await request.json()).toEqual({ name: "Casa Ana", currency: "GBP" });
           return HttpResponse.json({ household: householdView() }, { status: 201 });
         }),
       );
@@ -69,6 +75,57 @@ describe("HomePage", () => {
       expect(await screen.findByRole("heading", { level: 2, name: "Casa Ana" })).toBeInTheDocument();
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(screen.getByText("1 person lives here")).toBeInTheDocument();
+    });
+
+    it("suggests the currency of the device's region, named in the person's language", async () => {
+      deviceLanguages("es-CO", "es");
+      let body: unknown;
+      server.use(
+        handlers.signedIn(),
+        handlers.noHousehold(),
+        http.post("*/api/household", async ({ request }) => {
+          body = await request.json();
+          return HttpResponse.json({ household: householdView({ currency: "COP" }) }, { status: 201 });
+        }),
+      );
+      renderApp({ path: "/", locale: "es" });
+
+      await userEvent.click(await screen.findByRole("button", { name: "Crear un hogar" }));
+      const dialog = await screen.findByRole("dialog", { name: "Crea tu hogar" });
+      const currency = within(dialog).getByRole("combobox", { name: "Moneda" });
+      expect(currency).toHaveDisplayValue(/^peso colombiano$/i);
+      expect(currency).toHaveAccessibleDescription(
+        "Todo tu hogar usará esta moneda. Puedes cambiarla hasta el primer gasto o pago.",
+      );
+      await userEvent.type(within(dialog).getByRole("textbox", { name: "Nombre del hogar" }), "Casa Bogotá");
+      await userEvent.click(within(dialog).getByRole("button", { name: "Crear hogar" }));
+
+      await waitFor(() => expect(body).toEqual({ name: "Casa Bogotá", currency: "COP" }));
+    });
+
+    it("suggests euros when the region isn't listed, and lets the person pick another", async () => {
+      deviceLanguages("ja-JP");
+      let body: unknown;
+      server.use(
+        handlers.signedIn(),
+        handlers.noHousehold(),
+        http.post("*/api/household", async ({ request }) => {
+          body = await request.json();
+          return HttpResponse.json({ household: householdView({ currency: "USD" }) }, { status: 201 });
+        }),
+      );
+      renderApp({ path: "/" });
+
+      await userEvent.click(await screen.findByRole("button", { name: "Create a household" }));
+      const dialog = await screen.findByRole("dialog");
+      const currency = within(dialog).getByRole("combobox", { name: "Currency" });
+      expect(currency).toHaveValue("EUR");
+      expect(within(currency).getByRole("option", { name: "Euro" })).toBeInTheDocument();
+      await userEvent.selectOptions(currency, "USD");
+      await userEvent.type(within(dialog).getByRole("textbox", { name: "Household name" }), "Our flat");
+      await userEvent.click(within(dialog).getByRole("button", { name: "Create household" }));
+
+      await waitFor(() => expect(body).toEqual({ name: "Our flat", currency: "USD" }));
     });
 
     it("explains an empty name without calling the API", async () => {
@@ -118,6 +175,28 @@ describe("HomePage", () => {
       renderApp({ path: "/", locale: "es" });
       expect(await screen.findByRole("heading", { level: 1, name: "Hola, Ana" })).toBeInTheDocument();
       expect(await screen.findByRole("button", { name: "Crear un hogar" })).toBeEnabled();
+    });
+
+    it("shows a currency the API refused under the currency, not the name", async () => {
+      deviceLanguages("en-GB");
+      server.use(
+        handlers.signedIn(),
+        handlers.noHousehold(),
+        http.post("*/api/household", () => apiError(400, "money.currency.invalid")),
+      );
+      renderApp({ path: "/" });
+
+      await userEvent.click(await screen.findByRole("button", { name: "Create a household" }));
+      const dialog = await screen.findByRole("dialog");
+      const name = within(dialog).getByRole("textbox", { name: "Household name" });
+      const currency = within(dialog).getByRole("combobox", { name: "Currency" });
+      await userEvent.type(name, "Casa Ana");
+      await userEvent.click(within(dialog).getByRole("button", { name: "Create household" }));
+
+      await waitFor(() => expect(currency).toHaveAttribute("aria-invalid", "true"));
+      expect(currency).toHaveAccessibleDescription(expect.stringContaining("Choose a currency from the list."));
+      expect(currency).toHaveFocus();
+      expect(name).not.toHaveAttribute("aria-invalid");
     });
 
     it("has no accessibility violations", async () => {

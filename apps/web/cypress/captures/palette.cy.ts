@@ -21,6 +21,7 @@ const member = (id: string, userId: string, name: string, role: MemberView["role
 const household: HouseholdView = {
   id: "household_1",
   name: "Casa Ana",
+  currency: "EUR",
   myMembershipId: "m_ana",
   myRole: "ADMIN",
   members: [

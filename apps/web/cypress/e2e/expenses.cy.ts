@@ -7,7 +7,7 @@ import type {
   MemberView,
   PersonRef,
 } from "@hogar/shared";
-import { ana, session } from "../support/e2e";
+import { ana, browserLanguages, session } from "../support/e2e";
 
 // --- Stub data -----------------------------------------------------------------
 
@@ -35,6 +35,7 @@ const brunoMember: MemberView = {
 const household: HouseholdView = {
   id: "household_1",
   name: "Casa Ana",
+  currency: "EUR",
   myMembershipId: "m_ana",
   myRole: "ADMIN",
   members: [anaMember, brunoMember],
@@ -161,6 +162,69 @@ describe("Expenses", () => {
     cy.findHeading("Groceries");
     cy.contains("a", "Home").click();
     cy.contains("You're owed €10.70 in total");
+  });
+
+  it("records an expense in pesos in a household created in Colombian pesos", () => {
+    // Ana speaks Spanish and her browser is set to Colombia.
+    cy.intercept("POST", "/api/auth/refresh", session({ ...ana, locale: "es" }));
+    const pesos: HouseholdView = { ...household, name: "Casa Bogotá", currency: "COP" };
+    let created = false;
+    cy.intercept("GET", "/api/household", (req) =>
+      req.reply(created ? { household: pesos } : { household: null, removedFrom: null }),
+    );
+    cy.intercept("POST", "/api/household", (req) => {
+      expect(req.body).to.deep.equal({ name: "Casa Bogotá", currency: "COP" });
+      created = true;
+      req.reply({ statusCode: 201, body: { household: pesos } });
+    }).as("createHousehold");
+    const mercado = expense({
+      description: "Mercado",
+      amountCents: 85_000,
+      split: {
+        method: "WEIGHTS",
+        shares: [
+          { person: anaRef, amountCents: 63_750 },
+          { person: brunoRef, amountCents: 21_250 },
+        ],
+      },
+    });
+    cy.intercept("POST", "/api/household/expenses", (req) => {
+      // Whole pesos: "85.000" is eighty-five thousand, never 85 with centavos.
+      expect(req.body).to.deep.include({ description: "Mercado", amountCents: 85_000 });
+      req.reply({ statusCode: 201, body: { expense: mercado } });
+    }).as("create");
+    cy.intercept("GET", "/api/household/expenses/expense_1", { body: { expense: mercado } });
+
+    const colombia = { onBeforeLoad: (win: Window) => browserLanguages(win, "es-CO", "es") };
+    cy.visit("/", colombia);
+    cy.contains("button", "Crear un hogar").click();
+    cy.get("[role=dialog]").within(() => {
+      cy.contains("label", "Moneda").click();
+      cy.focused().find("option:selected").should("have.text", "peso colombiano");
+      cy.contains("label", "Nombre del hogar").click();
+      cy.focused().type("Casa Bogotá");
+      cy.contains("button", "Crear hogar").click();
+    });
+    cy.wait("@createHousehold");
+    cy.contains("h2", "Casa Bogotá");
+
+    cy.visit("/expenses/new", colombia);
+    cy.contains("label", "¿Qué fue?").click();
+    cy.focused().type("Mercado");
+    cy.contains("label", "Importe (COP)").click();
+    cy.focused().type("85.000");
+    cy.contains("li", "Ana García")
+      .invoke("text")
+      .should("match", /63\.750\sCOP/);
+    cy.contains("li", "Bruno Díaz")
+      .invoke("text")
+      .should("match", /21\.250\sCOP/);
+    cy.contains("button", "Guardar gasto").click();
+
+    cy.wait("@create");
+    cy.contains("[role=status]", "Gasto guardado.");
+    cy.findHeading("Mercado");
+    cy.contains(/85\.000\sCOP/);
   });
 
   it("splits equally among some people, and with exact amounts", () => {

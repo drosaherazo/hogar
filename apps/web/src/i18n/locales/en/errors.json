@@ -39,11 +39,14 @@
   },
   "money": {
     "amount": {
-      "invalid": "Enter an amount from €0.01 to €100,000.00."
+      "invalid": "Enter an amount from {{min}} to {{max}}."
     },
     "date": {
       "invalid": "That date doesn't look right. Pick it from the calendar.",
       "future": "That date hasn't happened yet. Choose today or an earlier day."
+    },
+    "currency": {
+      "invalid": "Choose a currency from the list."
     }
   },
   "expense": {

@@ -1,4 +1,11 @@
-import type { CurrentHousehold, HouseholdView, InvitableRole, Role, UpdateSplitRequest } from "@hogar/shared";
+import type {
+  CreateHouseholdRequest,
+  CurrentHousehold,
+  HouseholdView,
+  InvitableRole,
+  Role,
+  UpdateSplitRequest,
+} from "@hogar/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "../api/ApiClientContext";
 import { expenseKeys } from "../expenses/useExpenses";
@@ -34,7 +41,7 @@ function useHouseholdMutation<TVariables>(mutationFn: (variables: TVariables) =>
 
 export function useCreateHousehold() {
   const client = useApiClient();
-  return useHouseholdMutation((name: string) => client.createHousehold(name));
+  return useHouseholdMutation((request: CreateHouseholdRequest) => client.createHousehold(request));
 }
 
 export function useRenameHousehold() {

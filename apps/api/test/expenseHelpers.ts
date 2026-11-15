@@ -1,5 +1,6 @@
 import {
   balancesViewSchema,
+  type CurrencyCode,
   defaultWeights,
   splitAmount,
   expenseResponseSchema,
@@ -27,10 +28,13 @@ export const TODAY = "2026-10-26";
  * optionally Carla (GUEST, weight 0). Join times are set explicitly so member order (and so who
  * gets leftover cents) is always Ana, Bruno, Carla.
  */
-export async function homeWith(app: App, options: { weights?: [number, number]; withGuest?: boolean } = {}) {
+export async function homeWith(
+  app: App,
+  options: { weights?: [number, number]; withGuest?: boolean; currency?: CurrencyCode } = {},
+) {
   const [anaWeight, brunoWeight] = options.weights ?? [3, 1];
   const anaSession = await signIn(app);
-  const household: HouseholdView = await createHousehold(app, anaSession);
+  const household: HouseholdView = await createHousehold(app, anaSession, "Casa Ana", options.currency);
   const ana: Member = { ...anaSession, membershipId: household.myMembershipId };
   await db.membership.update({ where: { id: ana.membershipId }, data: { weight: anaWeight } });
 

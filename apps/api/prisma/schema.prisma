@@ -52,6 +52,8 @@ enum Role {
 model Household {
   id               String    @id @default(cuid())
   name             String
+  /// ISO 4217 code from the curated list in packages/shared (ADR 0011); amounts are its minor units.
+  currency         String
   /// Bumped on create, join, leave and remove, so admins can be asked to review the split.
   membersChangedAt DateTime  @map("members_changed_at")
   /// Last time an admin saved the split; null until the first save.

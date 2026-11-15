@@ -1,4 +1,10 @@
-import { defaultWeightFor, householdResponseSchema, type HouseholdView, type Role } from "@hogar/shared";
+import {
+  type CurrencyCode,
+  defaultWeightFor,
+  householdResponseSchema,
+  type HouseholdView,
+  type Role,
+} from "@hogar/shared";
 import request from "supertest";
 import { type createTestApp, db, signIn, type SignedIn } from "./testApp";
 import type { GoogleIdentity } from "../src/auth/googleVerifier";
@@ -6,8 +12,13 @@ import type { GoogleIdentity } from "../src/auth/googleVerifier";
 type App = ReturnType<typeof createTestApp>["app"];
 
 /** Creates a household through the API, as `owner`. */
-export async function createHousehold(app: App, owner: SignedIn, name = "Casa Ana"): Promise<HouseholdView> {
-  const res = await request(app).post("/api/household").set("Authorization", owner.auth).send({ name });
+export async function createHousehold(
+  app: App,
+  owner: SignedIn,
+  name = "Casa Ana",
+  currency: CurrencyCode = "EUR",
+): Promise<HouseholdView> {
+  const res = await request(app).post("/api/household").set("Authorization", owner.auth).send({ name, currency });
   if (res.status !== 201) throw new Error(`createHousehold failed: ${res.status} ${JSON.stringify(res.body)}`);
   return householdResponseSchema.parse(res.body).household;
 }

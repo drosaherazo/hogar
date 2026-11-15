@@ -35,12 +35,14 @@ describe("expenseDescriptionSchema", () => {
 });
 
 describe("moneyCentsSchema", () => {
-  it("accepts whole cents from €0.01 to €100,000.00", () => {
+  it("accepts whole minor units from 1 to 1,000,000,000 in any currency", () => {
     expect(moneyCentsSchema.safeParse(1).success).toBe(true);
-    expect(moneyCentsSchema.safeParse(10_000_000).success).toBe(true);
+    // A year of rent in Colombian pesos, which have no decimals: $30.000.000.
+    expect(moneyCentsSchema.safeParse(30_000_000).success).toBe(true);
+    expect(moneyCentsSchema.safeParse(1_000_000_000).success).toBe(true);
   });
 
-  it.each([0, -1, 1.5, 10_000_001, "4280"])("refuses %s", (value) => {
+  it.each([0, -1, 1.5, 1_000_000_001, "4280"])("refuses %s", (value) => {
     expect(codeOf(moneyCentsSchema.safeParse(value))).toBe("money.amount.invalid");
   });
 });

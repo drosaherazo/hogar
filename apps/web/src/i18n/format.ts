@@ -1,12 +1,36 @@
-import { currency, type Currency } from "@hogar/shared";
+import { amountInputValue, currency, MAX_AMOUNT_UNITS, MIN_AMOUNT_UNITS, type Currency } from "@hogar/shared";
 import { formatAmount, useLocale } from "@hogar/ui";
 import { useMemo } from "react";
+import { useHousehold } from "../household/useHousehold";
 
-const EUR = currency("EUR");
-
-/** The currency the household's money is in. Every household is in euros until households get a currency. */
+/**
+ * The currency the household's money is in (ADR 0011). Money only shows up inside a household,
+ * which is loaded before any page that shows it; euros only stand in while it loads.
+ */
 export function useCurrency(): Currency {
-  return EUR;
+  const code = useHousehold().data?.household?.currency ?? "EUR";
+  return useMemo(() => currency(code), [code]);
+}
+
+/**
+ * What amount fields need to speak the household's currency: the symbol for their label
+ * ("Amount (€)", "Amount (COP)"), an example for their hint that the field reads back, and the
+ * limits for `errors:money.amount.invalid` (pass `limits` to any error translation).
+ */
+export function useAmountField() {
+  const locale = useLocale();
+  const money = useMoney();
+  const currency = useCurrency();
+  return useMemo(() => {
+    const parts = new Intl.NumberFormat(locale, { style: "currency", currency: currency.code }).formatToParts(0);
+    // Pesos are written in thousands, cents as a small purchase: both read like a real amount.
+    const example = amountInputValue(currency.decimals === 0 ? 85_000 : 4280, currency, locale);
+    return {
+      symbol: parts.find((part) => part.type === "currency")?.value ?? currency.code,
+      example,
+      limits: { min: money(MIN_AMOUNT_UNITS), max: money(MAX_AMOUNT_UNITS) },
+    };
+  }, [locale, money, currency]);
 }
 
 /** Whole-number percentage of shared costs, in the active language ("75%" / "75 %"). */

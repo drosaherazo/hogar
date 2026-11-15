@@ -1,4 +1,4 @@
-import { weightsToBasisPoints, type HouseholdView } from "@hogar/shared";
+import { currencyCodeSchema, weightsToBasisPoints, type HouseholdView } from "@hogar/shared";
 import type { Prisma } from "../generated/prisma/client";
 
 /** Member order everywhere: who joined first. It also decides who gets leftover cents. */
@@ -26,6 +26,8 @@ export function toHouseholdView(household: HouseholdWithMembers, viewerUserId: s
   return {
     id: household.id,
     name: household.name,
+    // Only listed codes are ever written, so a failure here is a bug worth surfacing loudly.
+    currency: currencyCodeSchema.parse(household.currency),
     myMembershipId: viewer.id,
     myRole: viewer.role,
     members: members.map((member, index) => ({

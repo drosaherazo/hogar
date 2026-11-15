@@ -26,6 +26,7 @@ import {
   type ErrorCode,
   type ExpenseInput,
   type ExpenseView,
+  type CreateHouseholdRequest,
   type HouseholdView,
   type InvitableRole,
   type InvitationPreview,
@@ -167,8 +168,8 @@ export class ApiClient {
     return this.request("/household", { schema: currentHouseholdSchema });
   }
 
-  async createHousehold(name: string): Promise<HouseholdView> {
-    return (await this.request("/household", { method: "POST", body: { name }, schema: householdResponseSchema }))
+  async createHousehold(request: CreateHouseholdRequest): Promise<HouseholdView> {
+    return (await this.request("/household", { method: "POST", body: request, schema: householdResponseSchema }))
       .household;
   }
 

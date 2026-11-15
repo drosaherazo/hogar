@@ -24,6 +24,8 @@
     "description": "Give it a name everyone at home will recognise. You can change it later.",
     "nameLabel": "Household name",
     "nameHint": "Up to 50 characters.",
+    "currencyLabel": "Currency",
+    "currencyHint": "Everything in your household will be in this currency. You can change it until the first expense or payment.",
     "submit": "Create household",
     "submitting": "Creating your household"
   },

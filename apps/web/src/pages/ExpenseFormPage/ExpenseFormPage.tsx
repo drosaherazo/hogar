@@ -3,7 +3,8 @@ import {
   canEditContent,
   defaultWeights,
   expenseInputSchema,
-  MAX_AMOUNT_CENTS,
+  MAX_AMOUNT_UNITS,
+  MIN_AMOUNT_UNITS,
   parseAmount,
   SPLIT_METHODS,
   splitAmount,
@@ -32,7 +33,7 @@ import { categoryKeys, useCategories } from "../../expenses/useCategories";
 import { useCreateExpense, useExpense, useUpdateExpense } from "../../expenses/useExpenses";
 import { LoadError } from "../../household/LoadError";
 import { householdKeys, useHousehold } from "../../household/useHousehold";
-import { localToday, useCurrency, useList, useMoney, usePercent } from "../../i18n/format";
+import { localToday, useAmountField, useCurrency, useList, useMoney, usePercent } from "../../i18n/format";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell } from "../../layout/AppShell";
 import styles from "./ExpenseFormPage.module.css";
@@ -67,7 +68,7 @@ function fieldErrors(issues: readonly { path: readonly PropertyKey[]; message: s
 }
 
 const isValidAmount = (cents: number | null): cents is number =>
-  cents !== null && cents >= 1 && cents <= MAX_AMOUNT_CENTS;
+  cents !== null && cents >= MIN_AMOUNT_UNITS && cents <= MAX_AMOUNT_UNITS;
 
 /** Adding an expense (`/expenses/new`) or editing one (`/expenses/:id/edit`). */
 export function ExpenseFormPage() {
@@ -149,6 +150,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   const list = useList();
   const money = useMoney();
   const currency = useCurrency();
+  const amountField = useAmountField();
   const create = useCreateExpense();
   const update = useUpdateExpense();
   const save = existing ? update : create;
@@ -294,7 +296,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
 
   const error = (field: Field) => {
     const code = errors[field];
-    return code ? t(`errors:${code}`) : undefined;
+    return code ? t(`errors:${code}`, amountField.limits) : undefined;
   };
   const failedCode = save.error instanceof ApiRequestError ? save.error.code : null;
   // These are shown where they happened (the edit conflict above the form, the category next to
@@ -421,7 +423,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      {save.isError && !shownElsewhere && <Alert tone="danger">{t(errorKey(save.error))}</Alert>}
+      {save.isError && !shownElsewhere && <Alert tone="danger">{t(errorKey(save.error), amountField.limits)}</Alert>}
       <TextField
         label={t("form.description")}
         hint={t("form.descriptionHint")}
@@ -441,8 +443,8 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
         error={error("category")}
       />
       <TextField
-        label={t("form.amount")}
-        hint={t("form.amountHint")}
+        label={t("form.amount", { symbol: amountField.symbol })}
+        hint={t("form.amountHint", { example: amountField.example })}
         inputMode="decimal"
         autoComplete="off"
         value={amountText}
