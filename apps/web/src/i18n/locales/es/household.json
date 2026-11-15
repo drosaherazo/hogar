@@ -25,9 +25,15 @@
     "nameLabel": "Nombre del hogar",
     "nameHint": "Hasta 50 caracteres.",
     "currencyLabel": "Moneda",
-    "currencyHint": "Todo tu hogar usará esta moneda. Puedes cambiarla hasta el primer gasto o pago.",
+    "currencyHint": "Busca por nombre, código o país. Todo tu hogar usará esta moneda; puedes cambiarla hasta el primer gasto o pago.",
     "submit": "Crear hogar",
     "submitting": "Creando tu hogar"
+  },
+  "currencyPicker": {
+    "searchHint": "Busca por nombre, código (como USD) o país.",
+    "noResults": "Ninguna moneda coincide con «{{query}}». Prueba con su nombre, su código o un país.",
+    "usedIn": "Se usa en {{country}}",
+    "showAll": "Mostrar todas las monedas"
   },
   "settings": {
     "title": "Ajustes del hogar",

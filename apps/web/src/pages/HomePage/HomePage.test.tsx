@@ -95,7 +95,7 @@ describe("HomePage", () => {
       const currency = within(dialog).getByRole("combobox", { name: "Moneda" });
       expect(currency).toHaveDisplayValue(/^peso colombiano$/i);
       expect(currency).toHaveAccessibleDescription(
-        "Todo tu hogar usará esta moneda. Puedes cambiarla hasta el primer gasto o pago.",
+        "Busca por nombre, código o país. Todo tu hogar usará esta moneda; puedes cambiarla hasta el primer gasto o pago.",
       );
       await userEvent.type(within(dialog).getByRole("textbox", { name: "Nombre del hogar" }), "Casa Bogotá");
       await userEvent.click(within(dialog).getByRole("button", { name: "Crear hogar" }));
@@ -103,7 +103,7 @@ describe("HomePage", () => {
       await waitFor(() => expect(body).toEqual({ name: "Casa Bogotá", currency: "COP" }));
     });
 
-    it("suggests euros when the region has no currency of its own (Antarctica), and lets the person pick another", async () => {
+    it("suggests euros when the region has no currency of its own (Antarctica), and finds another by country", async () => {
       deviceLanguages("en-AQ");
       let body: unknown;
       server.use(
@@ -119,9 +119,11 @@ describe("HomePage", () => {
       await userEvent.click(await screen.findByRole("button", { name: "Create a household" }));
       const dialog = await screen.findByRole("dialog");
       const currency = within(dialog).getByRole("combobox", { name: "Currency" });
-      expect(currency).toHaveValue("EUR");
-      expect(within(currency).getByRole("option", { name: "Euro" })).toBeInTheDocument();
-      await userEvent.selectOptions(currency, "USD");
+      expect(currency).toHaveValue("Euro");
+      await userEvent.clear(currency);
+      await userEvent.type(currency, "ecuador");
+      await userEvent.click(await screen.findByRole("option", { name: "US Dollar USD, Used in Ecuador" }));
+      expect(currency).toHaveValue("US Dollar");
       await userEvent.type(within(dialog).getByRole("textbox", { name: "Household name" }), "Our flat");
       await userEvent.click(within(dialog).getByRole("button", { name: "Create household" }));
 

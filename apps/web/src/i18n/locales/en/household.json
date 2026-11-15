@@ -25,9 +25,15 @@
     "nameLabel": "Household name",
     "nameHint": "Up to 50 characters.",
     "currencyLabel": "Currency",
-    "currencyHint": "Everything in your household will be in this currency. You can change it until the first expense or payment.",
+    "currencyHint": "Search by name, code or country. Everything in your household will be in this currency; you can change it until the first expense or payment.",
     "submit": "Create household",
     "submitting": "Creating your household"
+  },
+  "currencyPicker": {
+    "searchHint": "Search by name, code (like USD) or country.",
+    "noResults": "No currency matches “{{query}}”. Try its name, its code or a country.",
+    "usedIn": "Used in {{country}}",
+    "showAll": "Show all currencies"
   },
   "settings": {
     "title": "Household settings",

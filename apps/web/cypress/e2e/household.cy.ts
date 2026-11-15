@@ -79,6 +79,33 @@ describe("Households", () => {
     cy.contains("1 person lives here");
   });
 
+  it("finds a currency by the country that uses it when creating a household", () => {
+    cy.intercept("POST", "/api/household", (req) => {
+      expect(req.body).to.deep.equal({ name: "Casa Quito", currency: "USD" });
+      req.reply({ statusCode: 201, body: { household: household({ name: "Casa Quito", currency: "USD" }) } });
+    }).as("create");
+
+    cy.visit("/", { onBeforeLoad: (win) => browserLanguages(win, "en-ES", "en") });
+    cy.contains("button", "Create a household").click();
+    cy.get("[role=dialog]").within(() => {
+      cy.contains("label", "Household name").click();
+      cy.focused().type("Casa Quito");
+      cy.contains("label", "Currency").click();
+      cy.focused().should("have.value", "Euro").clear().type("ecuador");
+    });
+    // The list opens outside the dialog, and says why the dollar matched.
+    cy.get("[role=listbox]").within(() => {
+      cy.get("[role=option]").should("have.length", 1).and("contain.text", "Used in Ecuador").click();
+    });
+    cy.get("[role=dialog]").within(() => {
+      cy.contains("label", "Currency").click();
+      cy.focused().should("have.value", "US Dollar");
+      cy.contains("button", "Create household").click();
+    });
+    cy.wait("@create");
+    cy.contains("h2", "Casa Quito");
+  });
+
   it("invites someone, and sees them after they join", () => {
     cy.intercept("GET", "/api/household", { body: { household: household() } }).as("household");
     cy.intercept("GET", "/api/household/invitations", { body: { invitations: [] } });

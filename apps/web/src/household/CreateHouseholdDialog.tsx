@@ -5,12 +5,12 @@ import {
   type CurrencyCode,
   type ErrorCode,
 } from "@hogar/shared";
-import { Button, Dialog, Select, TextField } from "@hogar/ui";
+import { Button, Combobox, Dialog, TextField } from "@hogar/ui";
 import { useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiRequestError } from "../api/client";
 import styles from "./CreateHouseholdDialog.module.css";
-import { useCurrencyOptions } from "./useCurrencyOptions";
+import { useCurrencySearch } from "./useCurrencySearch";
 import { useCreateHousehold } from "./useHousehold";
 
 export interface CreateHouseholdDialogProps {
@@ -30,20 +30,20 @@ type FieldErrors = Partial<Record<Field, Code>>;
 const fieldOf = (code: Code): Field => (code === "money.currency.invalid" ? "currency" : "name");
 
 /**
- * Asks for a name and a currency: the creator becomes the household's admin. Currency names
- * come from `Intl.DisplayNames` in the active language ("Colombian peso" / "peso colombiano"),
- * sorted the way that language sorts, so nobody needs to know ISO codes.
+ * Asks for a name and a currency: the creator becomes the household's admin. The currency is
+ * searched by name in the active language ("peso colombiano"), ISO code or country (ADR 0014), so
+ * nobody needs to know codes or scroll through ~150 currencies.
  */
 export function CreateHouseholdDialog({ open, onOpenChange }: CreateHouseholdDialogProps) {
   const { t } = useTranslation(["household", "errors"]);
   const formId = useId();
   const nameField = useRef<HTMLInputElement>(null);
-  const currencyField = useRef<HTMLSelectElement>(null);
+  const currencyField = useRef<HTMLInputElement>(null);
   const create = useCreateHousehold();
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState<CurrencyCode>(suggestedCurrency);
   const [errors, setErrors] = useState<FieldErrors>({});
-  const currencyOptions = useCurrencyOptions();
+  const searchCurrencies = useCurrencySearch();
 
   function changeOpen(next: boolean) {
     if (!next) {
@@ -118,16 +118,18 @@ export function CreateHouseholdDialog({ open, onOpenChange }: CreateHouseholdDia
           onChange={(event) => setName(event.target.value)}
           autoComplete="off"
         />
-        <Select
-          ref={currencyField}
+        <Combobox
+          inputRef={currencyField}
           label={t("create.currencyLabel")}
           hint={t("create.currencyHint")}
-          options={currencyOptions}
-          value={currency}
-          onChange={(event) => {
-            const picked = currencyCodeSchema.safeParse(event.target.value);
+          search={searchCurrencies}
+          selectedId={currency}
+          onSelectionChange={(id) => {
+            const picked = currencyCodeSchema.safeParse(id);
             if (picked.success) setCurrency(picked.data);
           }}
+          noResults={(query) => t("currencyPicker.noResults", { query })}
+          triggerLabel={t("currencyPicker.showAll")}
           error={errorText("currency")}
         />
       </form>

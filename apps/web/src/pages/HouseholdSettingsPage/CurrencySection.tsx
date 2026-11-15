@@ -1,11 +1,11 @@
 import { currencyCodeSchema, type CurrencyCode, type HouseholdView } from "@hogar/shared";
-import { Button, Card, Select } from "@hogar/ui";
+import { Button, Card, Combobox } from "@hogar/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiRequestError, errorKey } from "../../api/client";
-import { useCurrencyName, useCurrencyOptions } from "../../household/useCurrencyOptions";
+import { useCurrencyName, useCurrencySearch } from "../../household/useCurrencySearch";
 import { householdKeys, useChangeCurrency } from "../../household/useHousehold";
 import styles from "./HouseholdSettingsPage.module.css";
 
@@ -18,18 +18,18 @@ export function CurrencySection({ household }: { household: HouseholdView }) {
   const { t } = useTranslation(["household", "errors"]);
   const queryClient = useQueryClient();
   const change = useChangeCurrency();
-  const options = useCurrencyOptions(household.currency);
+  const searchCurrencies = useCurrencySearch(household.currency);
   const nameOf = useCurrencyName();
   // Follows the household (a reload may bring another admin's change) until the admin picks one.
   const [picked, setPicked] = useState<CurrencyCode | null>(null);
   const currency = picked ?? household.currency;
-  const field = useRef<HTMLSelectElement>(null);
+  const field = useRef<HTMLInputElement>(null);
   const lockedHint = useRef<HTMLParagraphElement>(null);
   const [lockedWhileChoosing, setLockedWhileChoosing] = useState(false);
   const isAdmin = household.myRole === "ADMIN";
   const editable = isAdmin && !household.currencyLocked;
 
-  // Someone recorded money while the admin was choosing: the select is gone, so focus moves to
+  // Someone recorded money while the admin was choosing: the field is gone, so focus moves to
   // the explanation and screen readers announce why the currency can no longer change.
   useEffect(() => {
     if (lockedWhileChoosing && household.currencyLocked) lockedHint.current?.focus();
@@ -57,16 +57,19 @@ export function CurrencySection({ household }: { household: HouseholdView }) {
       </h2>
       {editable ? (
         <form className={styles.form} onSubmit={submit} noValidate>
-          <Select
-            ref={field}
+          <Combobox
+            inputRef={field}
             label={t("settings.currency.label")}
-            options={options}
-            value={currency}
-            onChange={(event) => {
-              const choice = currencyCodeSchema.safeParse(event.target.value);
+            hint={t("currencyPicker.searchHint")}
+            search={searchCurrencies}
+            selectedId={currency}
+            onSelectionChange={(id) => {
+              const choice = currencyCodeSchema.safeParse(id);
               if (choice.success) setPicked(choice.data);
               change.reset();
             }}
+            noResults={(query) => t("currencyPicker.noResults", { query })}
+            triggerLabel={t("currencyPicker.showAll")}
             error={change.isError && !lockedWhileChoosing ? t(errorKey(change.error)) : undefined}
           />
           <div className={styles.row}>

@@ -24,30 +24,39 @@ describe("CurrencySection", () => {
     renderApp({ path: PATH });
 
     const section = await currencySection();
-    const select = within(section).getByRole("combobox", { name: "Household currency" });
-    expect(select).toHaveDisplayValue("Euro");
+    const field = within(section).getByRole("combobox", { name: "Household currency" });
+    expect(field).toHaveValue("Euro");
+    expect(field).toHaveAccessibleDescription("Search by name, code (like USD) or country.");
     const save = within(section).getByRole("button", { name: "Save currency" });
     expect(save).toBeDisabled();
 
-    await userEvent.selectOptions(select, "COP");
+    await userEvent.clear(field);
+    await userEvent.type(field, "cop");
+    await userEvent.click(await screen.findByRole("option", { name: /Colombian Peso/ }));
     await userEvent.click(save);
 
     expect(await within(section).findByRole("status")).toHaveTextContent("Currency saved.");
     expect(sent).toEqual({ currency: "COP" });
-    expect(select).toHaveDisplayValue("Colombian Peso");
+    expect(field).toHaveValue("Colombian Peso");
   });
 
-  it("offers every currency in force somewhere, by name in the active language", async () => {
+  it("offers every currency in force somewhere, by name in the active language, and says when nothing matches", async () => {
     server.use(handlers.signedIn(), handlers.household());
     renderApp({ path: PATH });
 
     const section = await currencySection();
-    const select = within(section).getByRole("combobox", { name: "Household currency" });
-    const options = within(select).getAllByRole("option");
-    expect(options.length).toBeGreaterThan(150);
-    expect(within(select).getByRole("option", { name: "Japanese Yen" })).toHaveValue("JPY");
-    expect(within(select).getByRole("option", { name: "Kuwaiti Dinar" })).toHaveValue("KWD");
-    expect(within(select).queryByRole("option", { name: "Gold" })).not.toBeInTheDocument();
+    await userEvent.click(within(section).getByRole("button", { name: /Show all currencies/ }));
+    const listbox = await screen.findByRole("listbox");
+    expect(within(listbox).getAllByRole("option").length).toBeGreaterThan(150);
+    expect(within(listbox).getByRole("option", { name: /Japanese Yen JPY/ })).toBeInTheDocument();
+    expect(within(listbox).getByRole("option", { name: /Kuwaiti Dinar KWD/ })).toBeInTheDocument();
+
+    const field = within(section).getByRole("combobox", { name: "Household currency" });
+    await userEvent.clear(field);
+    await userEvent.type(field, "zzz");
+    expect(await screen.findByRole("listbox")).toHaveTextContent(
+      "No currency matches “zzz”. Try its name, its code or a country.",
+    );
   });
 
   it("shows a fixed currency, and why, once the household has money", async () => {
@@ -75,7 +84,10 @@ describe("CurrencySection", () => {
     renderApp({ path: PATH });
 
     const section = await currencySection();
-    await userEvent.selectOptions(within(section).getByRole("combobox", { name: "Household currency" }), "USD");
+    const field = within(section).getByRole("combobox", { name: "Household currency" });
+    await userEvent.clear(field);
+    await userEvent.type(field, "us dollar");
+    await userEvent.click(await screen.findByRole("option", { name: /US Dollar/ }));
     await userEvent.click(within(section).getByRole("button", { name: "Save currency" }));
 
     const hint = await within(section).findByText("The currency is fixed once the household has expenses or payments.");
