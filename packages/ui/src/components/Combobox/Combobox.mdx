@@ -1,0 +1,83 @@
+import { Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as ComboboxStories from "./Combobox.stories";
+
+<Meta of={ComboboxStories} />
+
+<Lang locale="en">
+
+# Combobox
+
+<Canvas of={ComboboxStories.Default} />
+
+## What it is and when to use it
+
+A text field that narrows a long list of options as the person types, and keeps exactly one of them chosen. Use it when there are too many options to scan, like the ~150 currencies a household can use. For a short list use `Select`; for two to five options that need explaining, `ChoiceGroup`.
+
+## Why it's designed this way
+
+- **Built on react-aria's `ComboBox`** (ADR 0013), so keyboard use, focus, the list's roles and the screen reader announcements come from a library tested with real assistive technology; the look is ours, with the same sunken fill, strong border, 44 px height and focus ring as `TextField` and `Select`.
+- **The app decides what matches.** The component only shows what the app's search returns, so a currency can be found by its name, its code or a country that uses it, ignoring accents, without the design system knowing anything about money.
+- **Each option says why it is there:** the name, a short tag such as the code (many currencies share names: dollars, pesos, dinars), and, when it matched by something else, a line saying so ("Used in Ecuador").
+- **It never holds half-typed text.** Leaving the field goes back to the chosen option, so a form can't send something that isn't one.
+- **A button opens the whole list,** for people who would rather browse than type.
+- **Errors in coral with an icon, above the hint,** like every other field; the chosen option is marked with weight and a check, never color alone.
+
+## How it helps the person
+
+- **Finds their option in a few keystrokes,** whichever way they know it: "yen", "JPY" or "Japón".
+- **No guessing:** the tag and the matched country explain options they didn't name, so similar names aren't confused.
+- **A friendly dead end:** when nothing matches, the list says what they can search by instead of going blank.
+- **Evidence-backed:** the WAI-ARIA combobox pattern is the standard way to make a filterable list usable with a keyboard and a screen reader, and persistent labels and inline errors are WCAG requirements (3.3.1, 3.3.2). The tone of the messages is design intent.
+
+## Accessibility
+
+- `role="combobox"` on the input, linked to its visible label and to a `listbox` of `option`s; error and hint linked with `aria-describedby` (error first), and `aria-invalid` when there is an error.
+- Arrow keys move through the options, Enter picks one, Escape closes the list; focus stays in the field.
+- The "no results" message is shown in the list and announced through a status region.
+- Every string (label, hint, error, options, "no results", the button's name) comes in already translated through props; react-aria's own announcements follow the active language.
+
+## Variants
+
+<Canvas of={ComboboxStories.WithError} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Combobox
+
+<Canvas of={ComboboxStories.Default} />
+
+## Qué es y cuándo usarlo
+
+Un campo de texto que va acotando una lista larga de opciones mientras la persona escribe, y mantiene siempre una elegida. Úsalo cuando hay demasiadas opciones para recorrerlas, como las ~150 monedas que puede usar un hogar. Para una lista corta usa `Select`; para entre dos y cinco opciones que necesitan explicación, `ChoiceGroup`.
+
+## Por qué está diseñado así
+
+- **Construido sobre el `ComboBox` de react-aria** (ADR 0013), así el teclado, el foco, los roles de la lista y los avisos para lectores de pantalla vienen de una librería probada con tecnologías de apoyo reales; el aspecto es nuestro, con el mismo fondo hundido, borde marcado, 44 px de alto y anillo de foco que `TextField` y `Select`.
+- **La app decide qué coincide.** El componente solo muestra lo que devuelve la búsqueda de la app, así una moneda se encuentra por su nombre, su código o un país que la usa, sin importar las tildes, sin que el sistema de diseño sepa nada de dinero.
+- **Cada opción dice por qué está ahí:** el nombre, una etiqueta corta como el código (muchas monedas comparten nombre: dólares, pesos, dinares) y, cuando coincidió por otra cosa, una línea que lo dice ("Se usa en Ecuador").
+- **Nunca se queda con texto a medias.** Al salir del campo vuelve a la opción elegida, así un formulario no puede enviar algo que no sea una opción.
+- **Un botón abre la lista entera,** para quien prefiere mirar a escribir.
+- **Errores en coral con icono, encima de la ayuda,** como en el resto de campos; la opción elegida se marca con peso y un check, nunca solo con color.
+
+## Cómo ayuda a la persona
+
+- **Encuentra su opción en pocas teclas,** la conozca como la conozca: "yen", "JPY" o "Japón".
+- **Sin adivinar:** la etiqueta y el país que coincidió explican las opciones que no nombró, así no se confunden nombres parecidos.
+- **Un callejón sin salida amable:** cuando nada coincide, la lista dice por qué se puede buscar en vez de quedarse en blanco.
+- **Respaldado:** el patrón combobox de WAI-ARIA es la forma estándar de hacer usable una lista filtrable con teclado y lector de pantalla, y las etiquetas persistentes y los errores junto al campo son requisitos WCAG (3.3.1, 3.3.2). El tono de los mensajes es intención de diseño.
+
+## Accesibilidad
+
+- `role="combobox"` en el campo, vinculado a su etiqueta visible y a un `listbox` de `option`s; error y ayuda vinculados con `aria-describedby` (primero el error), y `aria-invalid` cuando hay error.
+- Las flechas recorren las opciones, Intro elige una, Escape cierra la lista; el foco se queda en el campo.
+- El mensaje de "sin resultados" se muestra en la lista y se anuncia con una región de estado.
+- Todos los textos (etiqueta, ayuda, error, opciones, "sin resultados", el nombre del botón) llegan ya traducidos por props; los avisos propios de react-aria siguen el idioma activo.
+
+## Variantes
+
+<Canvas of={ComboboxStories.WithError} />
+
+</Lang>

@@ -30,6 +30,8 @@ export type {
   MultipleChoiceGroupProps,
   SingleChoiceGroupProps,
 } from "./components/ChoiceGroup/ChoiceGroup";
+export { Combobox } from "./components/Combobox/Combobox";
+export type { ComboboxItem, ComboboxProps } from "./components/Combobox/Combobox";
 export { Dialog } from "./components/Dialog/Dialog";
 export type { DialogProps } from "./components/Dialog/Dialog";
 export { EmptyState } from "./components/EmptyState/EmptyState";
