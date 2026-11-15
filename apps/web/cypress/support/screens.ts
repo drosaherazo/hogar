@@ -271,21 +271,23 @@ export function assertTouchTargets() {
       targets.set(target, rect);
     }
     const entries = [...targets];
-    const small = entries.filter(([, rect]) => rect.height < MIN_TARGET_PX - 0.5).map(([target]) => nameOf(target));
+    const small = entries
+      .filter(([, rect]) => rect.height < MIN_TARGET_PX - 0.5)
+      .map(([target]) => describeTarget(target));
     expect(small, "touch targets under 44 px tall").to.deep.equal([]);
     const crowded: string[] = [];
-    entries.forEach(([a, ra], index) => {
-      for (const [b, rb] of entries.slice(index + 1)) {
-        const gapX = Math.max(rb.left - ra.right, ra.left - rb.right);
-        const gapY = Math.max(rb.top - ra.bottom, ra.top - rb.bottom);
-        if (Math.max(gapX, gapY) < MIN_GAP_PX - 0.5) crowded.push(`${nameOf(a)} ↔ ${nameOf(b)}`);
+    entries.forEach(([a, rectA], index) => {
+      for (const [b, rectB] of entries.slice(index + 1)) {
+        const gapX = Math.max(rectB.left - rectA.right, rectA.left - rectB.right);
+        const gapY = Math.max(rectB.top - rectA.bottom, rectA.top - rectB.bottom);
+        if (Math.max(gapX, gapY) < MIN_GAP_PX - 0.5) crowded.push(`${describeTarget(a)} ↔ ${describeTarget(b)}`);
       }
     });
     expect(crowded, "touch targets closer than --space-2").to.deep.equal([]);
   });
 }
 
-function nameOf(element: Element): string {
+function describeTarget(element: Element): string {
   const name = element.getAttribute("aria-label") ?? element.textContent?.trim().slice(0, 30) ?? "";
   return `<${element.tagName.toLowerCase()}> "${name}"`;
 }

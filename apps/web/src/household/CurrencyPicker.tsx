@@ -54,6 +54,8 @@ export function CurrencyPicker({ label, hint, value, onChange, error, inputRef, 
       noResults={(query) => t("currencyPicker.noResults", { query })}
       triggerLabel={t("currencyPicker.showAll")}
       error={error}
+      // Both forms it lives in save on Enter once the list is closed.
+      enterKeyHint="done"
     />
   );
 }

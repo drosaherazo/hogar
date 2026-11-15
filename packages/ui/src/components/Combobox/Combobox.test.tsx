@@ -105,6 +105,21 @@ describe("Combobox", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
+  it("gives its text field the enter key the form asks for", () => {
+    render(
+      <Combobox
+        label="Currency"
+        search={() => []}
+        selectedId=""
+        onSelectionChange={vi.fn()}
+        noResults={() => ""}
+        triggerLabel="Show all"
+        enterKeyHint="done"
+      />,
+    );
+    expect(screen.getByRole("combobox", { name: "Currency" })).toHaveAttribute("enterkeyhint", "done");
+  });
+
   it("says, in the list, when nothing matches", async () => {
     render(<Picker />);
     const input = screen.getByRole("combobox", { name: "Currency" });

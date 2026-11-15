@@ -7,6 +7,11 @@ function isTextEntry(element: Element): element is HTMLInputElement | HTMLTextAr
   return (typed || element instanceof HTMLTextAreaElement) && !element.disabled && !element.readOnly;
 }
 
+/** The enter key for one of several fields typed in a row: "next" until the last one, then "done". */
+export function enterKeyFor(index: number, count: number): "next" | "done" {
+  return index < count - 1 ? "next" : "done";
+}
+
 /**
  * Keeps a phone keyboard's "next" key honest. Attach it to a form's `onKeyDown`: Enter in a field
  * with `enterKeyHint="next"` moves to the form's next field that takes typing, instead of

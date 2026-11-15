@@ -1,6 +1,7 @@
 import { weightSchema, weightsToBasisPoints } from "@hogar/shared";
 import { TextField } from "@hogar/ui";
 import { useTranslation } from "react-i18next";
+import { enterKeyFor } from "../forms/moveToNextField";
 import { usePercent } from "../i18n/format";
 import styles from "./WeightsEditor.module.css";
 
@@ -48,7 +49,7 @@ export function WeightsEditor({ members, drafts, onChange, disabled }: WeightsEd
             inline
             type="number"
             inputMode="numeric"
-            enterKeyHint={index < members.length - 1 ? "next" : "done"}
+            enterKeyHint={enterKeyFor(index, members.length)}
             min={0}
             max={100}
             step={1}

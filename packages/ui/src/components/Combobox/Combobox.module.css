@@ -58,6 +58,10 @@
   cursor: pointer;
 }
 
+.trigger[data-pressed] {
+  background-color: var(--color-surface-sunken);
+}
+
 .trigger[data-focus-visible] {
   outline: var(--focus-ring-width) solid var(--color-focus);
   outline-offset: calc(var(--focus-ring-width) * -1);

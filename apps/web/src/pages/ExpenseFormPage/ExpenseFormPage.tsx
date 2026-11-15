@@ -31,9 +31,9 @@ import { Money } from "../../expenses/Money";
 import { avatarPropsFor, usePersonLabel } from "../../expenses/people";
 import { categoryKeys, useCategories } from "../../expenses/useCategories";
 import { useCreateExpense, useExpense, useUpdateExpense } from "../../expenses/useExpenses";
+import { enterKeyFor, moveToNextField } from "../../forms/moveToNextField";
 import { LoadError } from "../../household/LoadError";
 import { householdKeys, useHousehold, useReloadOnCurrencyMismatch } from "../../household/useHousehold";
-import { moveToNextField } from "../../forms/moveToNextField";
 import { localToday, useAmountField, useCurrency, useList, useMoney, usePercent } from "../../i18n/format";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell } from "../../layout/AppShell";
@@ -543,7 +543,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
               inline
               label={personLabel(person)}
               inputMode={amountField.inputMode}
-              enterKeyHint={index < people.length - 1 ? "next" : "done"}
+              enterKeyHint={enterKeyFor(index, people.length)}
               autoComplete="off"
               value={exactTexts[person.userId] ?? ""}
               onChange={(event) => setExactTexts((texts) => ({ ...texts, [person.userId]: event.target.value }))}

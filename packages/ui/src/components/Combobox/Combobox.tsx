@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { Check, ChevronDown, CircleAlert } from "lucide-react";
-import { useId, useMemo, useState, type Ref } from "react";
+import { useId, useMemo, useState, type InputHTMLAttributes, type Ref } from "react";
 import {
   Button,
   ComboBox,
@@ -52,6 +52,8 @@ export interface ComboboxProps {
   className?: string | undefined;
   /** The text input, so a form can move focus to the field (back to it after an error). */
   inputRef?: Ref<HTMLInputElement> | undefined;
+  /** What the phone keyboard's enter key says while typing (`"done"` when Enter submits the form). */
+  enterKeyHint?: InputHTMLAttributes<HTMLInputElement>["enterKeyHint"];
 }
 
 /**
@@ -71,6 +73,7 @@ export function Combobox({
   error,
   className,
   inputRef,
+  enterKeyHint,
 }: ComboboxProps) {
   const locale = useLocale();
   const id = useId();
@@ -129,7 +132,7 @@ export function Combobox({
       >
         <Label className={clsx(styles.label)}>{label}</Label>
         <div className={styles.control}>
-          <Input ref={inputRef} className={clsx(styles.input)} />
+          <Input ref={inputRef} className={clsx(styles.input)} enterKeyHint={enterKeyHint} />
           <Button className={clsx(styles.trigger)} aria-label={triggerLabel}>
             <ChevronDown className={styles.chevron} aria-hidden="true" />
           </Button>
