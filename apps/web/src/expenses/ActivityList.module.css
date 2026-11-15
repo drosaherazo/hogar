@@ -29,8 +29,8 @@
 }
 
 /*
- * On phones the amount gets its own line under the text: beside it, "You lent 642.000 COP" would
- * squeeze the description to a few letters per line. From 48rem everything fits on one line.
+ * On phones the amount gets its own full-width line under the text: beside it, "You lent 642.000 COP"
+ * would squeeze the description to a few letters per line. From 48rem everything fits on one line.
  */
 .row {
   display: grid;
@@ -123,7 +123,7 @@
 
 .side {
   display: grid;
-  grid-column: 2;
+  grid-column: 1 / -1;
   flex: none;
   justify-items: end;
   gap: var(--space-1);
