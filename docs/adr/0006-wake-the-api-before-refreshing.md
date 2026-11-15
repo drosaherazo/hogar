@@ -1,6 +1,6 @@
 # 0006 · Wake the API with a health check before restoring the session
 
-- **Status:** accepted
+- **Status:** accepted; extended by [0015](./0015-offline-read-only.md) (with no connection the app shows the offline state, not the wake-up screen)
 - **Date:** 2026-11-12
 
 ## Context
