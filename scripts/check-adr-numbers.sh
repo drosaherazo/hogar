@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Fails when two ADRs share a numeric prefix (docs/adr/NNNN-*.md).
+# Fails when two ADRs share a numeric prefix (docs/adr/NNNN-*).
 #
 # Parallel worktrees each pick the next free number, so two branches can add
 # the same one. CI runs this on the PR's merge with main, so whichever branch
@@ -18,7 +18,7 @@ fi
 
 shopt -s nullglob
 declare -A files_by_number=()
-for path in "$dir"/[0-9]*-*.md; do
+for path in "$dir"/[0-9]*-*; do
   name="${path##*/}"
   number="${name%%-*}"
   files_by_number[$number]+="${files_by_number[$number]:+, }$name"
@@ -27,7 +27,7 @@ done
 status=0
 for number in $(printf '%s\n' "${!files_by_number[@]}" | sort); do
   if [[ "${files_by_number[$number]}" == *", "* ]]; then
-    echo "::error::ADR number $number is used by more than one file: ${files_by_number[$number]}. Renumber the newer one."
+    echo "::error::ADR number $number is used by more than one file: ${files_by_number[$number]}. Renumber the ADR this branch added."
     status=1
   fi
 done
