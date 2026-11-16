@@ -99,8 +99,8 @@ describe("Offline view", () => {
     expect(add()).toHaveAttribute("aria-disabled", "true");
 
     goOnline(true);
-    await waitFor(() => expect(screen.queryByText(BANNER)).not.toBeInTheDocument());
-    expect(add()).toHaveAttribute("href", "/expenses/new");
+    await waitFor(() => expect(add()).toHaveAttribute("href", "/expenses/new"));
+    expect(screen.queryByText(BANNER)).not.toBeInTheDocument();
   });
 });
 

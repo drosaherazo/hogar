@@ -1,6 +1,6 @@
 import { formattingLocale } from "@hogar/shared";
 import { LocaleProvider } from "@hogar/ui";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { i18n as I18n } from "i18next";
 import { useState } from "react";
@@ -77,6 +77,9 @@ export interface AppProvidersProps {
 
 export function AppProviders({ i18n, client, offline, update, children }: AppProvidersProps) {
   const [{ queryClient, offlineCache }] = useState(() => {
+    // TanStack Query assumes a connection until the browser says otherwise; opened offline, its
+    // queries must pause on the kept data instead of failing over it (ADR 0015).
+    onlineManager.setOnline(navigator.onLine !== false);
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
     return { queryClient, offlineCache: createOfflineCache(offline, queryClient) };
   });
