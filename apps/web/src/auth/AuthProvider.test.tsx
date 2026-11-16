@@ -6,6 +6,8 @@ import { I18nextProvider } from "react-i18next";
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { ApiRequestError, type ApiClient } from "../api/client";
 import { createI18n } from "../i18n";
+import { createOfflineCache } from "../offline/offlineCache";
+import { browserTab } from "../test/memoryStorage";
 import { ana, session } from "../test/server";
 import { AuthProvider, useAuth, type AuthContextValue } from "./AuthProvider";
 
@@ -41,10 +43,12 @@ function Probe({ onValue }: { onValue: (value: AuthContextValue) => void }) {
 }
 
 function renderProvider(client: FakeClient) {
+  const queryClient = new QueryClient();
+  const offline = createOfflineCache(browserTab(), queryClient);
   return render(
     <I18nextProvider i18n={createI18n({ lng: "en" })}>
-      <QueryClientProvider client={new QueryClient()}>
-        <AuthProvider client={client as unknown as ApiClient}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider client={client as unknown as ApiClient} offline={offline}>
           <Probe
             onValue={(value) => {
               auth = value;
