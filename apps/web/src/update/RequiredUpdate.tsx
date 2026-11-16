@@ -8,7 +8,7 @@ const reloadPage = () => window.location.reload();
 export interface RequiredUpdateGateProps {
   client: ApiClient;
   /** What "Update" does. Defaults to reloading, which loads the newest version. */
-  onUpdate?: () => void;
+  onUpdate?: () => void | Promise<void>;
   children: ReactNode;
 }
 
@@ -23,8 +23,9 @@ export function RequiredUpdateGate({ client, onUpdate = reloadPage, children }: 
 }
 
 /** The full-page scene the wake-up screen uses, resting, with one way forward. */
-function RequiredUpdate({ onUpdate }: { onUpdate: () => void }) {
+function RequiredUpdate({ onUpdate }: { onUpdate: () => void | Promise<void> }) {
   const { t } = useTranslation();
+  const [updating, setUpdating] = useState(false);
   // It starts empty and fills in a moment later, so screen readers announce the live status.
   const [revealed, setRevealed] = useState(false);
   useEffect(() => {
@@ -37,7 +38,18 @@ function RequiredUpdate({ onUpdate }: { onUpdate: () => void }) {
       revealed={revealed}
       status={t("update.required.title")}
       description={t("update.required.description")}
-      action={<Button onClick={onUpdate}>{t("update.action")}</Button>}
+      action={
+        <Button
+          loading={updating}
+          loadingLabel={t("update.updating")}
+          onClick={() => {
+            setUpdating(true);
+            void onUpdate();
+          }}
+        >
+          {t("update.action")}
+        </Button>
+      }
     />
   );
 }

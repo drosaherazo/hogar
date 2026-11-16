@@ -4,6 +4,8 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { ApiClient } from "../api/client";
 import { AppProviders, createRoutes } from "../App";
 import { createI18n, LANGUAGE_STORAGE_KEY } from "../i18n";
+import type { AppUpdate } from "../update/appUpdate";
+import { fakeServiceWorker } from "./fakeServiceWorker";
 import { MemoryStorage } from "./memoryStorage";
 
 /**
@@ -40,17 +42,30 @@ export interface RenderAppOptions {
   storage?: Storage;
   /** Whether Hogar runs as the installed app (display mode standalone). */
   installed?: boolean;
+  /** The service worker's new versions; none arrive unless the test says so. */
+  update?: AppUpdate;
 }
 
 export function renderApp(options: RenderAppOptions = {}) {
-  const { path = "/", locale, storage = new MemoryStorage(), installed = false } = options;
+  const {
+    path = "/",
+    locale,
+    storage = new MemoryStorage(),
+    installed = false,
+    update = fakeServiceWorker().update,
+  } = options;
   const googleClientId = "googleClientId" in options ? options.googleClientId : "test-client-id";
   if (locale) localStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
   const i18n = createI18n({ lng: locale ?? "en" });
   const client = new ApiClient("http://localhost/api");
   const router = createMemoryRouter(createRoutes({ googleClientId }), { initialEntries: [path] });
   const result = render(
-    <AppProviders i18n={i18n} client={client} offline={{ storage: () => storage, isInstalled: () => installed }}>
+    <AppProviders
+      i18n={i18n}
+      client={client}
+      offline={{ storage: () => storage, isInstalled: () => installed }}
+      update={update}
+    >
       <RouterProvider router={router} />
     </AppProviders>,
   );

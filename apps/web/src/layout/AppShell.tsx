@@ -6,6 +6,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../auth/AuthProvider";
 import { useCurrentUser } from "../auth/guards";
 import { useHousehold } from "../household/useHousehold";
+import { UpdateNotice } from "../update/UpdateNotice";
 import { AppHeader } from "./AppHeader";
 import styles from "./AppShell.module.css";
 
@@ -61,6 +62,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         onSignOut={() => void logout()}
       />
       <main id="main" className={styles.main} tabIndex={-1}>
+        <UpdateNotice />
         {children}
       </main>
     </div>

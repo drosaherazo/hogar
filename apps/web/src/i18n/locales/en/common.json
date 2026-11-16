@@ -52,7 +52,10 @@
     }
   },
   "update": {
+    "notice": "There's a new version of Hogar",
     "action": "Update",
+    "updating": "Updating…",
+    "later": "Later",
     "required": {
       "title": "Hogar has been updated",
       "description": "Update to keep going. Anything you hadn't saved can't be kept."
