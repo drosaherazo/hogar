@@ -50,6 +50,22 @@ describe("Floating Add expense", () => {
     });
   });
 
+  it("looks the same on Home as on Expenses, fuchsia with a visible focus ring, though Home's sits in the brand card", () => {
+    cy.viewport(375, 667);
+    const looks = () =>
+      addExpense()
+        .focus()
+        .then(($link) => {
+          const style = getComputedStyle($link.get(0) as Element);
+          return { background: style.backgroundColor, text: style.color, focus: style.outlineColor };
+        });
+    visitIn("/expenses", { locale: "es" });
+    looks().then((onExpenses) => {
+      visitIn("/", { locale: "es" });
+      looks().should("deep.equal", onExpenses);
+    });
+  });
+
   it("stays in the page on a wide screen", () => {
     cy.viewport(1280, 800);
     visitIn("/expenses", { locale: "es" });
