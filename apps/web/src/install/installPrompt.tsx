@@ -70,7 +70,8 @@ export function createInstallPrompt({ target, isInstalled, isIOS }: InstallPromp
       // The browser lets each install event open its dialog once.
       deferred = null;
       changed();
-      await event.prompt();
+      // A dialog the browser refuses to open leaves nothing to do; the item comes back with the next offer.
+      await event.prompt().catch(() => undefined);
     },
   };
 }

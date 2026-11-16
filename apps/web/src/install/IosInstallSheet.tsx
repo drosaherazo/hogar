@@ -11,7 +11,8 @@ export function IosInstallSheet({ open, onOpenChange }: { open: boolean; onOpenC
   const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange} title={t("install.ios.title")} closeLabel={t("install.ios.close")}>
-      <ol className={styles.steps}>
+      {/* role="list": Safari drops list semantics from lists without bullets. */}
+      <ol className={styles.steps} role="list">
         <li className={styles.step}>
           <span className={styles.icon} aria-hidden="true">
             <Share />
