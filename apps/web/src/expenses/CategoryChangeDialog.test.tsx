@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ApiClient } from "../api/client";
 import { AppProviders } from "../App";
 import { createI18n } from "../i18n";
+import { createInstallPrompt } from "../install/installPrompt";
 import { expectNoA11yViolations } from "../test/axe";
 import { fakeServiceWorker } from "../test/fakeServiceWorker";
 import { browserTab } from "../test/memoryStorage";
@@ -26,6 +27,7 @@ function renderDialog(props: Partial<CategoryChangeDialogProps> = {}) {
       client={new ApiClient("http://localhost/api")}
       offline={browserTab()}
       update={fakeServiceWorker().update}
+      install={createInstallPrompt({ target: new EventTarget(), isInstalled: () => false, isIOS: () => false })}
     >
       <CategoryChangeDialog
         open
