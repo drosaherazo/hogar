@@ -119,6 +119,7 @@ Screenshots of every screen and dialog at 320 and 375 px, in both languages and 
 - **Real time:** changes by other people show their name and member color ("Marta added milk").
 - **Deleting:** a confirmation that names exactly what will be deleted, with a destructive button using a verb; initial focus on "Cancel". Or an undo option.
 - **Money:** first _with whom_, then _how much_.
+- **Creating on a phone:** a screen whose main action creates something ("Add expense") shows it below `48rem` as an extended floating button, icon and label, above the tab bar at the trailing edge (`ActionLink floating`). It is the same link as on wider screens, so there is still one fuchsia action per screen, and the page keeps room so it never covers the last item.
 - **Waiting:** say what is happening and roughly how long it takes, show honest stages instead of fake percentages, and never leave an endless spinner: after a limit, offer a way forward (`WakeUpScreen`).
 
 ## Adding something new
