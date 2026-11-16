@@ -30,6 +30,10 @@
     background-color var(--duration-fast) var(--easing-standard);
 }
 
+.choice:active {
+  background-color: var(--color-surface-sunken);
+}
+
 /* Selected: the accent border plus the native check mark, so color is never the only sign. */
 .choice:has(.input:checked) {
   border-color: var(--color-accent);

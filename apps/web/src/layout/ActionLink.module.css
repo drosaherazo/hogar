@@ -11,7 +11,14 @@
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
   text-decoration: none;
-  transition: background-color var(--duration-fast) var(--easing-standard);
+  transition:
+    background-color var(--duration-fast) var(--easing-standard),
+    transform var(--duration-fast) var(--easing-standard);
+}
+
+/* Pressed like a Button, so a tap on a phone gets the same feedback. */
+.link:active {
+  transform: translateY(var(--border-width));
 }
 
 .primary {
@@ -19,7 +26,8 @@
   color: var(--color-accent-contrast);
 }
 
-.primary:hover {
+.primary:hover,
+.primary:active {
   background-color: var(--color-accent-hover);
 }
 
@@ -29,7 +37,8 @@
   color: var(--color-text);
 }
 
-.secondary:hover {
+.secondary:hover,
+.secondary:active {
   background-color: var(--color-surface-sunken);
 }
 
@@ -38,7 +47,8 @@
   color: var(--color-accent-text);
 }
 
-.ghost:hover {
+.ghost:hover,
+.ghost:active {
   background-color: var(--color-surface-sunken);
 }
 

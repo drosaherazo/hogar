@@ -63,6 +63,18 @@ describe("SplitSection", () => {
     expect(within(region).queryByText("Review the split")).not.toBeInTheDocument();
   });
 
+  it("moves from one weight to the next with the keyboard's next key, and the last one is done", async () => {
+    server.use(handlers.signedIn(), handlers.household(pair()));
+    renderApp({ path: PATH });
+    const region = await section();
+    const anaWeight = within(region).getByRole("spinbutton", { name: "Ana García" });
+    const brunoWeight = within(region).getByRole("spinbutton", { name: "Bruno Díaz" });
+    expect(anaWeight).toHaveAttribute("enterkeyhint", "next");
+    expect(brunoWeight).toHaveAttribute("enterkeyhint", "done");
+    await userEvent.type(anaWeight, "{Enter}");
+    expect(brunoWeight).toHaveFocus();
+  });
+
   it("explains invalid weights and keeps Save disabled", async () => {
     server.use(handlers.signedIn(), handlers.household(pair()));
     renderApp({ path: PATH });

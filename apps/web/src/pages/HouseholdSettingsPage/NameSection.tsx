@@ -48,6 +48,7 @@ export function NameSection({ household }: { household: HouseholdView }) {
             }}
             error={fieldError ?? (rename.isError ? t(errorKey(rename.error)) : undefined)}
             autoComplete="off"
+            enterKeyHint="done"
           />
           <div className={styles.row}>
             <Button

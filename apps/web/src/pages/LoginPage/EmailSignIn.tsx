@@ -153,6 +153,7 @@ export function EmailSignIn() {
           type="email"
           inputMode="email"
           autoComplete="email"
+          enterKeyHint="send"
           autoCapitalize="none"
           spellCheck={false}
           value={email}
@@ -189,6 +190,7 @@ export function EmailSignIn() {
           label={t("login.code.label")}
           inputMode="numeric"
           autoComplete="one-time-code"
+          enterKeyHint="go"
           value={code}
           onChange={(event) => {
             setCode(event.target.value);

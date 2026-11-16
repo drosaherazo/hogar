@@ -6,9 +6,10 @@
   gap: var(--space-2) var(--space-4);
 }
 
+/* --space-2 between the two buttons, so a thumb can't press the other language (rule 5). */
 .languages {
   display: flex;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .active {

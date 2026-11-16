@@ -40,7 +40,9 @@
 }
 
 .accountButton:hover,
-.accountButton[data-state="open"] {
+.accountButton:active,
+.accountButton[data-pressed],
+.accountButton[aria-expanded="true"] {
   background-color: var(--color-surface-sunken);
 }
 

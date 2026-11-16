@@ -75,10 +75,10 @@ Most people use Hogar on a phone, often with one hand. 375 px is the design widt
 1. **Reflow at 320 px** (WCAG 2.2 1.4.10): no horizontal scrolling and no clipped text, checked in `es`. `small-screens.cy.ts` fails CI if a main page scrolls sideways.
 2. **Text at 200 %** stays readable and usable: no fixed heights on containers with text. The same spec checks every main page at 375 px with text at 200 %; long words may break there, a page may not scroll sideways.
 3. **Inputs at 16 px text** or more (`--font-size-md`), so iOS doesn't zoom on focus.
-4. **The right keyboard:** `inputMode="decimal"` for amounts (`numeric` when the household's currency has no decimals), `type="email"` and `autoComplete="email"` for addresses, `enterKeyHint` in forms.
-5. **Touch targets** at least 44 px (`--size-touch`), with at least `--space-2` between adjacent ones.
+4. **The right keyboard:** `inputMode="decimal"` for amounts (`numeric` when the household's currency has no decimals; `useAmountField` gives the right one), `type="email"` and `autoComplete="email"` for addresses, `enterKeyHint` in forms. A field's enter key says what it does: `next` only with `moveToNextField` on the form, so it moves on instead of submitting; `done`, `send` or `go` when it submits.
+5. **Touch targets** at least 44 px (`--size-touch`), with at least `--space-2` between adjacent ones. `small-screens.cy.ts` checks both on every main page at 375 px.
 6. **Safe areas:** nothing fixed (tab bar, floating button, sheets) sits under the notch or the home indicator; pad it with `env(safe-area-inset-*)`.
-7. **No hover dependency:** no meaning or action appears only on hover, and pressed states are visible on touch.
+7. **No hover dependency:** no meaning or action appears only on hover, and pressed states are visible on touch: `:active` (or react-aria's `[data-pressed]`) looks like `:hover`. The browser's grey tap flash is off in `base.css`, so every control needs one.
 8. **One breakpoint, `48rem`**, written mobile-first: `@media (min-width: 48rem)`, in `rem` so it follows the person's zoom. A new breakpoint must be justified here.
 
 Screenshots of every screen and dialog at 320 and 375 px, in both languages and themes: `pnpm --filter @hogar/web capture:small-screens` (not committed).
