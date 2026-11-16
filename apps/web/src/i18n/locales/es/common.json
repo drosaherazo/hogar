@@ -52,7 +52,9 @@
     }
   },
   "update": {
+    "notice": "Hay una versión nueva de Hogar",
     "action": "Actualizar",
+    "later": "Más tarde",
     "required": {
       "title": "Hogar se ha actualizado",
       "description": "Actualiza para seguir. Lo que no hayas guardado no se puede conservar."

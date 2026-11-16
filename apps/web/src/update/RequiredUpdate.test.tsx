@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ApiClient } from "../api/client";
 import { createI18n } from "../i18n";
 import { expectNoA11yViolations } from "../test/axe";
+import { fakeAppUpdate } from "../test/fakeAppUpdate";
 import { renderApp } from "../test/renderApp";
 import { apiError, handlers, homeView, server } from "../test/server";
 import { RequiredUpdateGate } from "./RequiredUpdate";
@@ -31,6 +32,15 @@ describe("Required update", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Hogar has been updated" })).toBeInTheDocument();
     expect(screen.getByText("Update to keep going. Anything you hadn't saved can't be kept.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Update" })).toBeInTheDocument();
+  });
+
+  it("hands over to the new version the service worker downloaded when Update is pressed", async () => {
+    server.use(http.post("*/api/auth/refresh", outdated));
+    const update = fakeAppUpdate();
+    renderApp({ path: "/", update });
+    update.arrive();
+    await userEvent.click(await screen.findByRole("button", { name: "Update" }));
+    expect(update.apply).toHaveBeenCalledOnce();
   });
 
   it("replaces the page in use, whatever request found out", async () => {
