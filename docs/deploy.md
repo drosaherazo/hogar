@@ -147,6 +147,10 @@ The dashboard steps only you can do are guided by a wizard: run `bash scripts/wi
 
 The auth rate limit is per client IP. Behind proxies, Express takes the client IP from `X-Forwarded-For`, trusting as many hops as `TRUST_PROXY_HOPS` says. Too few and every user shares one proxy IP (and one limit); too many and a client can pick its own IP by sending the header. The value in `render.yaml` counts Vercel's rewrite and Render's proxy.
 
+## Installable app
+
+`vite-plugin-pwa` (`apps/web/pwa.config.ts`) builds the manifest and `sw.js`, which precaches the app's own files and never touches `/api/*`. Vercel serves `/sw.js` with `Cache-Control: max-age=0, must-revalidate` (`apps/web/vercel.json`), so browsers find a new version on the next visit; the hashed `/assets/*` stay immutable. Nothing to configure in the dashboard. The icons in `apps/web/public` are generated from `favicon.svg` with `pnpm --filter @hogar/web icons` and committed; run it again only when the mark changes.
+
 ## Checks after a deploy
 
 ### Production
@@ -155,6 +159,7 @@ The auth rate limit is per client IP. Behind proxies, Express takes the client I
 - Sign in with a code sent by email: it arrives within seconds, in your language and not in spam.
 - In the browser's dev tools, the `hogar_refresh` cookie belongs to `hogar.therandomcollection.co`, with `HttpOnly`, `Secure`, `SameSite=Lax` and `Path=/api/auth`.
 - `https://hogar-virid-nine.vercel.app` redirects (308) to the production domain.
+- `curl -sI https://hogar.therandomcollection.co/sw.js` answers `200` with `max-age=0`, and `/manifest.webmanifest` names Hogar.
 
 ### `dev`
 

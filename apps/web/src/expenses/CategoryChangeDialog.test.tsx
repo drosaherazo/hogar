@@ -5,6 +5,7 @@ import { ApiClient } from "../api/client";
 import { AppProviders } from "../App";
 import { createI18n } from "../i18n";
 import { expectNoA11yViolations } from "../test/axe";
+import { fakeServiceWorker } from "../test/fakeServiceWorker";
 import { browserTab } from "../test/memoryStorage";
 import { handlers, homeView, server } from "../test/server";
 import { CategoryChangeDialog, type CategoryChangeDialogProps } from "./CategoryChangeDialog";
@@ -20,7 +21,12 @@ function renderDialog(props: Partial<CategoryChangeDialogProps> = {}) {
   // Amounts are in the household's currency, euros here.
   server.use(handlers.signedIn(), handlers.household(homeView()));
   render(
-    <AppProviders i18n={i18n} client={new ApiClient("http://localhost/api")} offline={browserTab()}>
+    <AppProviders
+      i18n={i18n}
+      client={new ApiClient("http://localhost/api")}
+      offline={browserTab()}
+      update={fakeServiceWorker().update}
+    >
       <CategoryChangeDialog
         open
         onOpenChange={() => undefined}

@@ -1,0 +1,6 @@
+/* --space-2 between the two buttons, so a thumb can't press the wrong one (Small screens rule 5). */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

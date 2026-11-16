@@ -13,7 +13,8 @@
     "e2e:open": "node scripts/e2e.mjs open",
     "capture": "start-server-and-test dev:e2e http://localhost:5174 \"cypress run --spec cypress/captures/palette.cy.ts --config specPattern=cypress/captures/**/*.cy.ts\"",
     "capture:small-screens": "start-server-and-test dev:e2e http://localhost:5174 \"cypress run --spec cypress/captures/small-screens.cy.ts --config specPattern=cypress/captures/**/*.cy.ts\"",
-    "dev:e2e": "vite --mode e2e --port 5174 --strictPort"
+    "dev:e2e": "vite --mode e2e --port 5174 --strictPort",
+    "icons": "pwa-assets-generator"
   },
   "dependencies": {
     "@hogar/shared": "workspace:*",
@@ -29,6 +30,7 @@
     "react-dom": "^19.3.1",
     "react-i18next": "^17.1.9",
     "react-router": "^8.5.0",
+    "workbox-window": "^7.4.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -37,6 +39,7 @@
     "@testing-library/user-event": "^14.6.8",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@vite-pwa/assets-generator": "^2.0.0",
     "@vitejs/plugin-react": "^6.1.2",
     "cypress": "^16.2.0",
     "jsdom": "^30.1.3",
@@ -44,6 +47,7 @@
     "start-server-and-test": "^3.0.13",
     "typescript": "~6.0.3",
     "vite": "^8.3.5",
+    "vite-plugin-pwa": "^2.0.0",
     "vitest": "^5.0.5",
     "vitest-axe": "^0.1.0"
   }

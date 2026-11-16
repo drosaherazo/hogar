@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { createI18n } from "./i18n";
+import { registerAppUpdate } from "./update/registerAppUpdate";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing #root element in index.html");
@@ -11,6 +12,6 @@ const googleClientId = import.meta.env["VITE_GOOGLE_CLIENT_ID"]?.trim() || undef
 
 createRoot(root).render(
   <StrictMode>
-    <App i18n={createI18n()} config={{ googleClientId }} />
+    <App i18n={createI18n()} config={{ googleClientId }} update={registerAppUpdate()} />
   </StrictMode>,
 );
