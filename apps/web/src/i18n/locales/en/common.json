@@ -54,6 +54,7 @@
   "update": {
     "notice": "There's a new version of Hogar",
     "action": "Update",
+    "updating": "Updating…",
     "later": "Later",
     "required": {
       "title": "Hogar has been updated",

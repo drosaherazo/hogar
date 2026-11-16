@@ -54,6 +54,7 @@
   "update": {
     "notice": "Hay una versión nueva de Hogar",
     "action": "Actualizar",
+    "updating": "Actualizando…",
     "later": "Más tarde",
     "required": {
       "title": "Hogar se ha actualizado",

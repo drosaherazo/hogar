@@ -91,7 +91,7 @@ export function AppProviders({ i18n, client, offline, update, children }: AppPro
     <I18nextProvider i18n={i18n}>
       <UiLocale>
         <AppUpdateProvider update={update}>
-          <RequiredUpdateGate client={client} onUpdate={() => void update.apply()}>
+          <RequiredUpdateGate client={client} onUpdate={() => update.apply()}>
             {offlineCache.persistOptions ? (
               <PersistQueryClientProvider client={queryClient} persistOptions={offlineCache.persistOptions}>
                 {session}

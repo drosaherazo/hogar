@@ -14,7 +14,8 @@ export const pwaOptions: Partial<VitePWAOptions> = {
   // The app registers it itself (src/update/appUpdate.ts) to drive the update notice.
   injectRegister: false,
   devOptions: { enabled: false },
-  includeAssets: ["favicon.ico", "favicon.svg", "apple-touch-icon-180x180.png", "hogar-mark-*.svg"],
+  // The glob below already precaches the icons.
+  includeManifestIcons: false,
   manifest: {
     id: "/",
     // The brand, identical in both languages.
@@ -34,6 +35,7 @@ export const pwaOptions: Partial<VitePWAOptions> = {
     ],
   },
   workbox: {
+    // Everything the build outputs, public icons included, and nothing else.
     globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
     // Pages open from the cached app; API addresses always go to the network, untouched.
     navigateFallback: "/index.html",
