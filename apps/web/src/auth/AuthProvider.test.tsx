@@ -20,6 +20,8 @@ interface FakeClient {
   onSessionExpired: Mock<(listener: () => void) => () => void>;
   loginWithGoogle: Mock<() => Promise<AuthResponse>>;
   logout: Mock<() => Promise<void>>;
+  onReachabilityChange: Mock<(listener: () => void) => () => void>;
+  isReachable: boolean;
 }
 
 function fakeClient(): FakeClient {
@@ -29,6 +31,8 @@ function fakeClient(): FakeClient {
     onSessionExpired: vi.fn(() => () => undefined),
     loginWithGoogle: vi.fn(() => Promise.resolve(session())),
     logout: vi.fn(() => Promise.resolve()),
+    onReachabilityChange: vi.fn(() => () => undefined),
+    isReachable: true,
   };
 }
 

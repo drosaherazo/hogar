@@ -59,6 +59,7 @@
   },
   "offline": {
     "banner": "Estás sin conexión. Esto es lo que Hogar te mostró {{time}}.",
+    "justNow": "hace un momento",
     "actionDisabled": "Podrás hacer cambios cuando vuelvas a tener conexión.",
     "empty": {
       "title": "Estás sin conexión",

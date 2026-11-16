@@ -1,6 +1,8 @@
-import type { AuthUser } from "@hogar/shared";
+import type { AuthUser, CurrentHousehold } from "@hogar/shared";
+import { useIsRestoring, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
+import { householdKeys } from "../household/useHousehold";
 import { WakeUpLoading } from "../layout/WakeUpLoading";
 import { OfflineEmpty } from "../offline/OfflineEmpty";
 import { useAuth } from "./AuthProvider";
@@ -32,8 +34,13 @@ export function safeReturnPath(from: unknown): string {
 export function RequireAuth() {
   const { state } = useAuth();
   const location = useLocation();
+  const keptHousehold = useKeptHousehold();
   if (state.status === "loading") return <WakeUpLoading />;
-  if (state.status === "offline" && !state.user) return <OfflineEmpty />;
+  if (state.status === "offline") {
+    // Kept data is still being read from the device: a moment, then the page or the empty state.
+    if (keptHousehold === "restoring") return null;
+    if (!state.user || !keptHousehold) return <OfflineEmpty />;
+  }
   if (state.status === "anonymous") {
     const from = `${location.pathname}${location.search}${location.hash}`;
     return <Navigate to="/login" replace state={{ from } satisfies LoginState} />;
@@ -55,6 +62,14 @@ export function RedirectIfAuthenticated() {
     return <Navigate to={safeReturnPath((location.state as LoginState | null)?.from)} replace />;
   }
   return <Outlet />;
+}
+
+/** Whether the device kept a household to show offline: pages without one would only spin. */
+function useKeptHousehold(): boolean | "restoring" {
+  const restoring = useIsRestoring();
+  const queryClient = useQueryClient();
+  if (restoring) return "restoring";
+  return queryClient.getQueryData<CurrentHousehold>(householdKeys.current)?.household != null;
 }
 
 /** The signed-in user, for pages behind `RequireAuth`. */

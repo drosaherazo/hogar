@@ -59,6 +59,7 @@
   },
   "offline": {
     "banner": "You're offline. This is what Hogar showed you {{time}}.",
+    "justNow": "just now",
     "actionDisabled": "Changes are available when you're back online.",
     "empty": {
       "title": "You're offline",

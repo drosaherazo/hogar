@@ -38,7 +38,9 @@ describe("Offline view", () => {
     cy.intercept("/api/**", { forceNetworkError: true });
     openInstalledApp("/expenses", { online: false });
 
-    cy.contains("[role=status]", "Estás sin conexión. Esto es lo que Hogar te mostró").should("be.visible");
+    cy.contains("[role=status]", "Estás sin conexión. Esto es lo que Hogar te mostró hace un momento.").should(
+      "be.visible",
+    );
     cy.contains(expenseDescription).should("be.visible");
     cy.contains("a", "Añadir gasto").should("have.attr", "aria-disabled", "true").and("not.have.attr", "href");
     cy.contains("Llamando a la puerta").should("not.exist");

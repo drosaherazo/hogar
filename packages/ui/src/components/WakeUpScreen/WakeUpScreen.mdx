@@ -32,7 +32,7 @@ The full page Hogar shows while it waits for its server to wake up. The free ser
 - "Try again" is the only focusable element, so one Tab reaches it. Focus is never moved by a timer.
 
 ## Variants
-`mood="waking"` (animated, busy) while waiting; `mood="resting"` (still, lights off) for "taking longer than usual" and "offline".
+`mood="waking"` (animated, busy) while waiting; `mood="resting"` (still, lights off) for "taking longer than usual", and for the other full-page moments that reuse the scene: the offline view with nothing kept (being offline is not the server sleeping, so it never shows the waiting stages) and the required update.
 
 <Canvas of={WakeUpScreenStories.Slow} />
 <Canvas of={WakeUpScreenStories.Offline} />
@@ -68,7 +68,7 @@ La página completa que muestra Hogar mientras espera a que su servidor despiert
 - "Intentarlo de nuevo" es el único elemento enfocable, así que se llega con un solo Tab. Ningún temporizador mueve el foco.
 
 ## Variantes
-`mood="waking"` (animada, ocupada) mientras espera; `mood="resting"` (quieta, luces apagadas) para "está tardando más de lo normal" y "sin conexión".
+`mood="waking"` (animada, ocupada) mientras espera; `mood="resting"` (quieta, luces apagadas) para "está tardando más de lo normal", y para los otros momentos de página completa que reutilizan la escena: la vista sin conexión cuando no hay nada guardado (estar sin conexión no es que el servidor duerma, así que nunca muestra las etapas de espera) y la actualización obligatoria.
 
 <Canvas of={WakeUpScreenStories.Slow} />
 <Canvas of={WakeUpScreenStories.Offline} />

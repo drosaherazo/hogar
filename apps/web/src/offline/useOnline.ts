@@ -1,5 +1,6 @@
 import { useCallback, useSyncExternalStore } from "react";
 import { useApiClient } from "../api/ApiClientContext";
+import { useAuth } from "../auth/AuthProvider";
 
 /**
  * Whether Hogar can reach its server right now: the browser says it is online and the last
@@ -21,4 +22,14 @@ export function useOnline(): boolean {
     [client],
   );
   return useSyncExternalStore(subscribe, () => navigator.onLine !== false && client.isReachable);
+}
+
+/**
+ * Whether changes are off: without a connection, and also while the offline view still shows kept
+ * data as the session comes back underneath (nothing can be sent before it does).
+ */
+export function useReadOnly(): boolean {
+  const online = useOnline();
+  const { state } = useAuth();
+  return !online || state.status === "offline";
 }

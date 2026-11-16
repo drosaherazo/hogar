@@ -2,7 +2,7 @@ import clsx from "clsx";
 import type { ReactNode } from "react";
 import { Link, type LinkProps } from "react-router";
 import { OFFLINE_REASON_ID } from "../offline/OfflineBanner";
-import { useOnline } from "../offline/useOnline";
+import { useReadOnly } from "../offline/useOnline";
 import styles from "./ActionLink.module.css";
 
 export interface ActionLinkProps extends LinkProps {
@@ -22,7 +22,7 @@ export function ActionLink({
   children,
   ...rest
 }: ActionLinkProps) {
-  const online = useOnline();
+  const readOnly = useReadOnly();
   const content = (
     <>
       {icon && (
@@ -33,10 +33,12 @@ export function ActionLink({
       {children}
     </>
   );
-  if (changesData && !online) {
-    // A link with no address can't be followed; aria-disabled keeps it findable, with the reason.
+  if (changesData && readOnly) {
+    // No address, so it can't be followed; still a focusable link, announced as unavailable, with why.
     return (
       <a
+        role="link"
+        tabIndex={0}
         className={clsx(styles.link, styles[variant], styles.disabled, className)}
         aria-disabled="true"
         aria-describedby={OFFLINE_REASON_ID}

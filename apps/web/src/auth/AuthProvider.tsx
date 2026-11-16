@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ApiRequestError, type ApiClient } from "../api/client";
 import { hasStoredLanguage } from "../i18n";
 import type { OfflineCache, SavedPerson } from "../offline/offlineCache";
+import { holdQueries } from "../offline/queryConnectivity";
 import { pause, waitForServer } from "../startup/waitForServer";
 import { GIVE_UP_AFTER_MS, isWakingError, settleDelay } from "../startup/wakeUp";
 
@@ -40,6 +41,9 @@ const waiting = (phase: WaitPhase, attempt: number): AuthState => ({
   attempt,
 });
 
+/** How often the offline view checks whether the server can be reached again. */
+const RECONNECT_CHECK_MS = 20_000;
+
 /** Pause before polling again after a refresh failed while the server was still settling. */
 const RETRY_AFTER_REFRESH_MS = 2000;
 
@@ -57,9 +61,11 @@ export interface AuthProviderProps {
  * cookie, waiting first for the API to wake up if it was asleep (ADR 0006).
  */
 export function AuthProvider({ client, offline, children }: AuthProviderProps) {
-  const [state, setState] = useState<AuthState>(() =>
-    isOnline() ? waiting("waking", 0) : { status: "offline", user: offline.savedPerson() },
-  );
+  const [state, setState] = useState<AuthState>(() => {
+    if (isOnline()) return waiting("waking", 0);
+    holdQueries(true);
+    return { status: "offline", user: offline.savedPerson() };
+  });
   const { i18n } = useTranslation();
   const queryClient = useQueryClient();
   const retryRef = useRef<() => void>(() => undefined);
@@ -69,6 +75,7 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
   const signOutLocally = useCallback(() => {
     queryClient.clear();
     offline.erase();
+    holdQueries(false);
     setState(ANONYMOUS);
   }, [queryClient, offline]);
 
@@ -78,6 +85,7 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
       if (!hasStoredLanguage() && i18n.resolvedLanguage !== user.locale) void i18n.changeLanguage(user.locale);
       // Kept data is shown only once the session says it belongs to this person.
       offline.confirmPerson(user);
+      holdQueries(false);
       setState({ status: "authenticated", user });
       return user;
     },
@@ -98,25 +106,41 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
     let disposed = false;
     let finished = false;
     let attempt = 0;
-    let phase: WaitPhase | "offline" = "waking";
+    let phase: WaitPhase | "offline" | "reconnecting" = "waking";
+    let offlineUser: SavedPerson | null = null;
     let controller: AbortController | null = null;
     let giveUpTimer: ReturnType<typeof setTimeout> | undefined;
+    let reconnectCheck: ReturnType<typeof setInterval> | undefined;
 
     const show = (next: WaitPhase) => {
       phase = next;
       setState(waiting(next, attempt));
     };
 
-    // Being offline isn't the server sleeping: no wake-up screen, no refresh, just what was kept.
-    const showOffline = () => {
-      phase = "offline";
-      setState({ status: "offline", user: offline.savedPerson() });
+    const anonymous = () => {
+      holdQueries(false);
+      setState(ANONYMOUS);
     };
 
     const stop = () => {
       controller?.abort();
       controller = null;
       clearTimeout(giveUpTimer);
+      clearInterval(reconnectCheck);
+    };
+
+    // Being offline isn't the server sleeping: no wake-up screen, no refresh, just what was kept.
+    // A quick health check now and then notices the connection coming back even when the browser
+    // doesn't say so (a network that is up but goes nowhere).
+    const showOffline = () => {
+      phase = "offline";
+      offlineUser = offline.savedPerson();
+      holdQueries(true);
+      setState({ status: "offline", user: offlineUser });
+      clearInterval(reconnectCheck);
+      reconnectCheck = setInterval(() => {
+        client.health().then(reconnect, () => undefined);
+      }, RECONNECT_CHECK_MS);
     };
 
     /**
@@ -182,17 +206,48 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
           const delay = settleDelay(Date.now() - startedAt, attempt);
           if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
           if (disposed || current.signal.aborted) return;
-          finished = true;
-          controller = null;
-          if (outcome instanceof ApiRequestError) {
-            // A 401 means the session expired or was revoked: nothing kept may stay (ADR 0015).
-            if (outcome.status === 401) signOutRef.current();
-            else setState(ANONYMOUS);
-          } else if (outcome) signInRef.current(outcome);
-          else setState(ANONYMOUS);
+          settle(outcome);
         },
         () => undefined, // Aborted: whoever aborted has already shown the next state.
       );
+    };
+
+    const settle = (outcome: AuthUser | ApiRequestError | null) => {
+      finished = true;
+      controller = null;
+      clearInterval(reconnectCheck);
+      if (outcome instanceof ApiRequestError) {
+        // A 401 means the session expired or was revoked: nothing kept may stay (ADR 0015).
+        if (outcome.status === 401) signOutRef.current();
+        else anonymous();
+      } else if (outcome) signInRef.current(outcome);
+      else anonymous();
+    };
+
+    /**
+     * The connection is back while the offline view shows kept data: it stays on screen, still
+     * read-only, while the usual startup (health check, then one refresh) runs underneath, so
+     * nobody is thrown back to the wake-up screen in the middle of reading.
+     */
+    const reconnectQuietly = () => {
+      stop();
+      phase = "reconnecting";
+      const current = new AbortController();
+      controller = current;
+      const noLimit = { arm: () => undefined, disarm: () => undefined };
+      restore(current.signal, noLimit).then(
+        (outcome) => {
+          if (disposed || current.signal.aborted) return;
+          settle(outcome);
+        },
+        () => undefined,
+      );
+    };
+
+    const reconnect = () => {
+      if (phase !== "offline" || finished || disposed) return;
+      if (offlineUser) reconnectQuietly();
+      else restart();
     };
 
     const restart = () => {
@@ -201,9 +256,7 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
       start();
     };
 
-    const onOnline = () => {
-      if (phase === "offline") restart();
-    };
+    const onOnline = reconnect;
 
     const onOffline = () => {
       if (finished) return;
@@ -215,6 +268,13 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
       if (phase === "slow") restart();
     };
 
+    // A request that gets no answer at all means no connection, not a sleeping server.
+    const stopWatching = client.onReachabilityChange(() => {
+      if (finished || phase === "offline" || client.isReachable) return;
+      stop();
+      showOffline();
+    });
+
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
     start();
@@ -223,6 +283,7 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
       disposed = true;
       stop();
       retryRef.current = () => undefined;
+      stopWatching();
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
     };

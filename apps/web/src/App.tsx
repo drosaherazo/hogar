@@ -1,6 +1,6 @@
 import { formattingLocale } from "@hogar/shared";
 import { LocaleProvider } from "@hogar/ui";
-import { onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { i18n as I18n } from "i18next";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import { AuthProvider } from "./auth/AuthProvider";
 import { RedirectIfAuthenticated, RequireAuth } from "./auth/guards";
 import { currentLocale } from "./i18n";
 import { createOfflineCache, runsInstalled, type OfflineCacheOptions } from "./offline/offlineCache";
+import { followBrowserConnection } from "./offline/queryConnectivity";
 import { BalancesPage } from "./pages/BalancesPage/BalancesPage";
 import { ExpenseDetailPage } from "./pages/ExpenseDetailPage/ExpenseDetailPage";
 import { ExpenseFormPage } from "./pages/ExpenseFormPage/ExpenseFormPage";
@@ -77,10 +78,14 @@ export interface AppProvidersProps {
 
 export function AppProviders({ i18n, client, offline, update, children }: AppProvidersProps) {
   const [{ queryClient, offlineCache }] = useState(() => {
-    // TanStack Query assumes a connection until the browser says otherwise; opened offline, its
-    // queries must pause on the kept data instead of failing over it (ADR 0015).
-    onlineManager.setOnline(navigator.onLine !== false);
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
+    followBrowserConnection();
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: 1, refetchOnWindowFocus: false },
+        // A change is sent now or fails now: it is never queued for when the connection returns (ADR 0015).
+        mutations: { networkMode: "always" },
+      },
+    });
     return { queryClient, offlineCache: createOfflineCache(offline, queryClient) };
   });
   const session = (

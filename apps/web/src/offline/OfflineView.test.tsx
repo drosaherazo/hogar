@@ -41,7 +41,7 @@ describe("Offline view", () => {
     setOnline(false);
     const { container } = renderApp({ path: "/balances", storage, installed: true });
     expect(await screen.findByText(BANNER)).toHaveTextContent(
-      "You're offline. This is what Hogar showed you this minute. Changes are available when you're back online.",
+      "You're offline. This is what Hogar showed you just now. Changes are available when you're back online.",
     );
     expect(screen.getByText("You're owed €7.70 in total")).toBeInTheDocument();
     expect(screen.queryByText("Knocking on your home's door…")).not.toBeInTheDocument();
@@ -70,23 +70,58 @@ describe("Offline view", () => {
     await expectNoA11yViolations(container);
   });
 
-  it("starts as usual once the connection is back: one health check, one refresh, and the offline view goes", async () => {
+  it("keeps showing the kept data while the session comes back, then health, one refresh and only then the data", async () => {
     const storage = new MemoryStorage();
     (await useInstalledAppOnline(storage)).unmount();
 
-    const health = vi.fn(() => HttpResponse.json({ status: "ok" }));
-    const refresh = vi.fn(() => HttpResponse.json(session()));
-    server.use(http.get("*/api/health", health), http.post("*/api/auth/refresh", refresh));
+    const order: string[] = [];
+    let wake: () => void = () => undefined;
+    const awake = new Promise<void>((resolve) => {
+      wake = resolve;
+    });
+    server.use(
+      http.get("*/api/health", async () => {
+        order.push("health");
+        await awake;
+        return HttpResponse.json({ status: "ok" });
+      }),
+      http.post("*/api/auth/refresh", () => {
+        order.push("refresh");
+        return HttpResponse.json(session());
+      }),
+      http.get("*/api/household*", ({ request }) => {
+        order.push(new URL(request.url).pathname);
+        return HttpResponse.json({ household: homeView() });
+      }),
+    );
     setOnline(false);
     renderApp({ path: "/balances", storage, installed: true });
     await screen.findByText(BANNER);
-    expect(health).not.toHaveBeenCalled();
 
     goOnline(true);
+    await waitFor(() => expect(order).toContain("health"));
+    // The server is still waking: the kept data stays, read-only, and no wake-up screen appears.
+    expect(screen.getByText("You're owed €7.70 in total")).toBeInTheDocument();
+    expect(screen.getByText(BANNER)).toBeInTheDocument();
+    expect(screen.queryByText("Knocking on your home's door…")).not.toBeInTheDocument();
+
+    wake();
     await waitFor(() => expect(screen.queryByText(BANNER)).not.toBeInTheDocument());
-    await screen.findByText("You're owed €7.70 in total");
-    expect(health).toHaveBeenCalledOnce();
-    expect(refresh).toHaveBeenCalledOnce();
+    expect(order.slice(0, 2)).toEqual(["health", "refresh"]);
+    expect(order.filter((step) => step === "refresh")).toHaveLength(1);
+  });
+
+  it("shows the empty state when the person was kept but no household was (not in one yet)", async () => {
+    const storage = new MemoryStorage();
+    server.use(handlers.signedIn(), handlers.noHousehold());
+    const first = renderApp({ path: "/", storage, installed: true });
+    await screen.findByRole("button", { name: "Create a household" });
+    await waitFor(() => expect(storage.contents()).toContain("Ana García"));
+    first.unmount();
+
+    setOnline(false);
+    renderApp({ path: "/", storage, installed: true });
+    expect(await screen.findByRole("heading", { level: 1, name: "You're offline" })).toBeInTheDocument();
   });
 
   it("switches changes off when the connection drops while in use, and back on when it returns", async () => {
