@@ -1,11 +1,13 @@
 import clsx from "clsx";
 import { House, ReceiptText } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../auth/AuthProvider";
 import { useCurrentUser } from "../auth/guards";
 import { useHousehold } from "../household/useHousehold";
+import { IosInstallSheet } from "../install/IosInstallSheet";
+import { useInstallPrompt } from "../install/installPrompt";
 import { UpdateNotice } from "../update/UpdateNotice";
 import { AppHeader } from "./AppHeader";
 import styles from "./AppShell.module.css";
@@ -28,6 +30,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const household = useHousehold();
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const install = useInstallPrompt();
+  const [iosSteps, setIosSteps] = useState(false);
   const hasNavigation = Boolean(household.data?.household);
   const navClass = ({ isActive }: { isActive: boolean }) => clsx(styles.navLink, isActive && styles.current);
   // Balances belong to the money section too, so "Expenses" stays marked there.
@@ -59,8 +63,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         user={user}
         navigation={navigation}
         onOpenSettings={hasNavigation ? () => void navigate("/household/settings") : undefined}
+        onInstall={
+          install.way === "none"
+            ? undefined
+            : () => (install.way === "native" ? void install.promptNative() : setIosSteps(true))
+        }
         onSignOut={() => void logout()}
       />
+      <IosInstallSheet open={iosSteps} onOpenChange={setIosSteps} />
       <main id="main" className={styles.main} tabIndex={-1}>
         <UpdateNotice />
         {children}

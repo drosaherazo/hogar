@@ -1,6 +1,6 @@
 import { LOCALES, type AuthUser, type Locale } from "@hogar/shared";
 import { Avatar, Menu, MenuItem, MenuRadioGroup, MenuSeparator } from "@hogar/ui";
-import { Languages, LogOut, Moon, Settings, Sun } from "lucide-react";
+import { Download, Languages, LogOut, Moon, Settings, Sun } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { LANGUAGE_NAMES, useLocalePreference } from "../i18n";
@@ -14,11 +14,13 @@ export interface AppHeaderProps {
   navigation?: ReactNode;
   /** Opens the household settings; offered in the account menu once there is a household. */
   onOpenSettings?: (() => void) | undefined;
+  /** Installs Hogar; offered only where it can be installed and isn't yet (spec #82). */
+  onInstall?: (() => void) | undefined;
   onSignOut: () => void;
 }
 
 /** Top bar of the signed-in app: the brand, the main navigation and the account menu (theme, language, sign out). */
-export function AppHeader({ user, navigation, onOpenSettings, onSignOut }: AppHeaderProps) {
+export function AppHeader({ user, navigation, onOpenSettings, onInstall, onSignOut }: AppHeaderProps) {
   const { t } = useTranslation(["common", "household"]);
   const { theme, setTheme } = useTheme();
   const { locale, setLocale } = useLocalePreference();
@@ -60,6 +62,11 @@ export function AppHeader({ user, navigation, onOpenSettings, onSignOut }: AppHe
         {onOpenSettings && (
           <MenuItem icon={<Settings />} onSelect={onOpenSettings}>
             {t("household:home.settingsLink")}
+          </MenuItem>
+        )}
+        {onInstall && (
+          <MenuItem icon={<Download />} onSelect={onInstall}>
+            {t("install.menuItem")}
           </MenuItem>
         )}
         <MenuItem icon={<LogOut />} onSelect={onSignOut}>

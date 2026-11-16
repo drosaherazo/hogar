@@ -60,5 +60,14 @@
       "title": "Hogar has been updated",
       "description": "Update to keep going. Anything you hadn't saved can't be kept."
     }
+  },
+  "install": {
+    "menuItem": "Install Hogar",
+    "ios": {
+      "title": "Add Hogar to your home screen",
+      "share": "Tap the Share button.",
+      "add": "Choose “Add to Home Screen”.",
+      "close": "Close"
+    }
   }
 }
