@@ -257,7 +257,8 @@ const MIN_GAP_PX = 8;
  * Rule 5 of "Small screens": every touch target on the page is at least 44 px tall and at least
  * `--space-2` away from its neighbours. A checkbox or radio counts as its whole label, which is
  * what a finger presses; visually hidden controls and the skip link (off screen until focused)
- * aren't targets.
+ * aren't targets. Spacing is compared within a layer: content scrolling under the fixed tab bar
+ * isn't its neighbour.
  */
 export function assertTouchTargets() {
   cy.document().should((doc) => {
@@ -280,11 +281,20 @@ export function assertTouchTargets() {
       for (const [b, rectB] of entries.slice(index + 1)) {
         const gapX = Math.max(rectB.left - rectA.right, rectA.left - rectB.right);
         const gapY = Math.max(rectB.top - rectA.bottom, rectA.top - rectB.bottom);
+        if (layerOf(a) !== layerOf(b)) continue;
         if (Math.max(gapX, gapY) < MIN_GAP_PX - 0.5) crowded.push(`${describeTarget(a)} ↔ ${describeTarget(b)}`);
       }
     });
     expect(crowded, "touch targets closer than --space-2").to.deep.equal([]);
   });
+}
+
+/** The fixed element a target lives in (the tab bar, a floating button), or null for the page. */
+function layerOf(element: Element): Element | null {
+  for (let current: Element | null = element; current; current = current.parentElement) {
+    if (getComputedStyle(current).position === "fixed") return current;
+  }
+  return null;
 }
 
 function describeTarget(element: Element): string {

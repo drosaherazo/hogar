@@ -13,6 +13,14 @@ describe("AppShell navigation", () => {
     expect(within(nav).getByRole("link", { name: "Expenses" })).not.toHaveAttribute("aria-current");
   });
 
+  it("is one main navigation, in the header, whatever the screen size", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()));
+    renderApp({ path: "/" });
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    expect(screen.getAllByRole("navigation")).toHaveLength(1);
+    expect(within(screen.getByRole("banner")).getByRole("navigation", { name: "Main" })).toBe(nav);
+  });
+
   it("keeps Expenses marked on the balances, which belong to the same section", async () => {
     server.use(handlers.signedIn(), handlers.household(homeView()));
     renderApp({ path: "/balances" });

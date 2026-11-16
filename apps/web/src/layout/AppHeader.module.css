@@ -37,6 +37,8 @@
   font: inherit;
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--easing-standard);
+  /* Pushed to the end, so the navigation sits right next to the brand. */
+  margin-inline-start: auto;
 }
 
 .accountButton:hover,
