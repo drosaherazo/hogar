@@ -18,22 +18,27 @@
   animation: fade var(--duration-slow) var(--easing-gentle);
 }
 
+/* A strip of the page stays visible above the sheet, never under the status bar or notch. */
 .modal {
   display: flex;
   flex-direction: column;
   inline-size: 100%;
-  max-block-size: calc(100% - var(--space-8));
+  max-block-size: calc(100% - max(var(--space-8), env(safe-area-inset-top) + var(--space-2)));
 }
 
 .content {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  inline-size: 100%;
   min-block-size: 0;
   overflow-y: auto;
+  /*
+   * Full width, so the sides use the page's own gutter and keep clear of a landscape notch. The
+   * bottom clears the home indicator without doubling it (iOS keeps the inset while the keyboard
+   * is open, and that space is better spent on the form).
+   */
   padding: var(--space-6) max(var(--space-4), env(safe-area-inset-right))
-    calc(var(--space-6) + env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left));
+    max(var(--space-6), env(safe-area-inset-bottom) + var(--space-2)) max(var(--space-4), env(safe-area-inset-left));
   background-color: var(--color-surface);
   color: var(--color-text);
   border-start-start-radius: var(--radius-xl);
@@ -44,8 +49,10 @@
 }
 
 @media (min-width: 48rem) {
+  /* Centered, it still keeps clear of a landscape phone's notch and home indicator. */
   .overlay {
     align-items: center;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 
   .modal {
@@ -59,9 +66,10 @@
   }
 }
 
+/* Drawn inside, so it isn't cut off at the screen edges of a full-width sheet. */
 .content:focus-visible {
   outline: var(--focus-ring-width) solid var(--color-focus);
-  outline-offset: var(--border-width);
+  outline-offset: calc(var(--focus-ring-width) * -1);
 }
 
 .header {
@@ -129,7 +137,7 @@
   gap: var(--space-3);
 }
 
-/* Fades only the backdrop color, so the dialog inside keeps its own rise. */
+/* Fades only the backdrop color, so the dialog inside keeps its own motion (slide up or rise). */
 @keyframes fade {
   from {
     background-color: transparent;
