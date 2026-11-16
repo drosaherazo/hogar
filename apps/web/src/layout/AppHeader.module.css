@@ -1,3 +1,4 @@
+/* No transform or filter here: they would pin the tab bar inside (position: fixed) to the header. */
 .header {
   position: sticky;
   inset-block-start: 0;

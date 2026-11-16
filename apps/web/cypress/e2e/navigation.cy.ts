@@ -26,28 +26,35 @@ describe("Main navigation", () => {
     mainNav().contains("a", "Gastos").should("have.attr", "aria-current", "page");
   });
 
-  it("never hides the end of a page behind the tab bar", () => {
-    cy.viewport(375, 667);
-    visitIn("/expenses", { locale: "es" });
-    cy.scrollTo("bottom");
-    mainNav().then(($nav) => {
-      const navTop = rectOf($nav).top;
-      cy.get("main *").then(($content) => {
-        const bottoms = [...$content]
-          .map((element) => element.getBoundingClientRect())
-          .filter((rect) => rect.height > 0);
-        const end = Math.max(...bottoms.map((rect) => rect.bottom));
-        expect(end, "end of the page").to.be.at.most(navTop);
+  for (const textZoom of [1, 2]) {
+    it(`never hides the end of a page behind the tab bar (text at ${textZoom * 100} %)`, () => {
+      cy.viewport(375, 667);
+      visitIn("/expenses", { locale: "es", textZoom });
+      cy.scrollTo("bottom");
+      mainNav().then(($nav) => {
+        const navTop = rectOf($nav).top;
+        cy.get("main *").then(($content) => {
+          const bottoms = [...$content]
+            .map((element) => element.getBoundingClientRect())
+            .filter((rect) => rect.height > 0);
+          const end = Math.max(...bottoms.map((rect) => rect.bottom));
+          expect(end, "end of the page").to.be.at.most(navTop);
+        });
       });
     });
-  });
+  }
 
   it("sits in the header next to the brand on a wide screen", () => {
     cy.viewport(1280, 800);
     visitIn("/", { locale: "es" });
     cy.get("header").then(($header) => {
+      const brand = rectOf($header.children().first());
+      const account = rectOf($header.find("button").last());
       mainNav().should(($nav) => {
-        expect(rectOf($nav).bottom, "inside the header").to.be.at.most(rectOf($header).bottom);
+        const nav = rectOf($nav);
+        expect(nav.bottom, "inside the header").to.be.at.most(rectOf($header).bottom);
+        expect(nav.left - brand.right, "gap after the brand").to.be.within(0, 48);
+        expect(nav.right, "before the account menu").to.be.at.most(account.left);
       });
     });
     mainNav().contains("a", "Gastos").click();

@@ -25,7 +25,7 @@
  * is an icon over a one-line label; the page reserves --tab-bar-size so nothing hides behind it.
  * From 48rem up: plain links in the header next to the brand (see the comment in AppShell.tsx).
  */
-.withTabBar {
+:global(html):has(.withTabBar) {
   --tab-bar-size: calc(
     var(--size-icon-md) + var(--font-size-xs) * var(--line-height-tight) + var(--space-1) * 5 + var(--border-width)
   );
@@ -71,6 +71,7 @@
   block-size: var(--size-icon-md);
 }
 
+/* One word per tab on one line: a label that needs two lines must also grow --tab-bar-size. */
 .navLabel {
   white-space: nowrap;
 }
@@ -93,8 +94,13 @@
   text-underline-offset: var(--space-1);
 }
 
+/* Keyboard focus scrolls into view above the tab bar, never under it. */
+:global(html):has(.withTabBar) {
+  scroll-padding-block-end: calc(var(--tab-bar-size) + env(safe-area-inset-bottom));
+}
+
 @media (min-width: 48rem) {
-  .withTabBar {
+  :global(html):has(.withTabBar) {
     --tab-bar-size: 0rem;
   }
 

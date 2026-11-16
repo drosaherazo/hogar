@@ -257,8 +257,8 @@ const MIN_GAP_PX = 8;
  * Rule 5 of "Small screens": every touch target on the page is at least 44 px tall and at least
  * `--space-2` away from its neighbours. A checkbox or radio counts as its whole label, which is
  * what a finger presses; visually hidden controls and the skip link (off screen until focused)
- * aren't targets. Spacing is compared within a layer: content scrolling under the fixed tab bar
- * isn't its neighbour.
+ * aren't targets. Page content scrolling under something fixed (the tab bar) isn't its
+ * neighbour, but fixed things are measured against each other (the tab bar and a floating button).
  */
 export function assertTouchTargets() {
   cy.document().should((doc) => {
@@ -277,11 +277,12 @@ export function assertTouchTargets() {
       .map(([target]) => describeTarget(target));
     expect(small, "touch targets under 44 px tall").to.deep.equal([]);
     const crowded: string[] = [];
+    const fixed = new Map(entries.map(([target]) => [target, isFixed(target)]));
     entries.forEach(([a, rectA], index) => {
       for (const [b, rectB] of entries.slice(index + 1)) {
         const gapX = Math.max(rectB.left - rectA.right, rectA.left - rectB.right);
         const gapY = Math.max(rectB.top - rectA.bottom, rectA.top - rectB.bottom);
-        if (layerOf(a) !== layerOf(b)) continue;
+        if (fixed.get(a) !== fixed.get(b)) continue;
         if (Math.max(gapX, gapY) < MIN_GAP_PX - 0.5) crowded.push(`${describeTarget(a)} ↔ ${describeTarget(b)}`);
       }
     });
@@ -289,12 +290,12 @@ export function assertTouchTargets() {
   });
 }
 
-/** The fixed element a target lives in (the tab bar, a floating button), or null for the page. */
-function layerOf(element: Element): Element | null {
+/** Whether a target stays put while the page scrolls (inside the tab bar or a floating button). */
+function isFixed(element: Element): boolean {
   for (let current: Element | null = element; current; current = current.parentElement) {
-    if (getComputedStyle(current).position === "fixed") return current;
+    if (getComputedStyle(current).position === "fixed") return true;
   }
-  return null;
+  return false;
 }
 
 function describeTarget(element: Element): string {

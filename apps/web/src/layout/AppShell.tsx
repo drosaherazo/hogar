@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { House, ReceiptText } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, NavLink, useLocation } from "react-router";
+import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../auth/AuthProvider";
 import { useCurrentUser } from "../auth/guards";
 import { useHousehold } from "../household/useHousehold";
@@ -26,6 +26,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
   const household = useHousehold();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const hasNavigation = Boolean(household.data?.household);
   const navClass = ({ isActive }: { isActive: boolean }) => clsx(styles.navLink, isActive && styles.current);
   // Balances belong to the money section too, so "Expenses" stays marked there.
@@ -53,7 +54,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       <a href="#main" className={styles.skipLink}>
         {t("skipToContent")}
       </a>
-      <AppHeader user={user} navigation={navigation} onSignOut={() => void logout()} />
+      <AppHeader
+        user={user}
+        navigation={navigation}
+        onOpenSettings={hasNavigation ? () => void navigate("/household/settings") : undefined}
+        onSignOut={() => void logout()}
+      />
       <main id="main" className={styles.main} tabIndex={-1}>
         {children}
       </main>
