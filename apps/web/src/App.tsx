@@ -21,6 +21,7 @@ import { HomePage } from "./pages/HomePage/HomePage";
 import { HouseholdSettingsPage } from "./pages/HouseholdSettingsPage/HouseholdSettingsPage";
 import { InvitePage } from "./pages/InvitePage/InvitePage";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
+import { InstallPromptProvider, type InstallPrompt } from "./install/installPrompt";
 import { AppUpdateProvider, type AppUpdate } from "./update/appUpdate";
 import { RequiredUpdateGate } from "./update/RequiredUpdate";
 
@@ -73,10 +74,12 @@ export interface AppProvidersProps {
   offline: OfflineCacheOptions;
   /** New versions of Hogar from the service worker, for the update notice and the required update. */
   update: AppUpdate;
+  /** Whether and how Hogar can be installed, for the account menu. */
+  install: InstallPrompt;
   children: React.ReactNode;
 }
 
-export function AppProviders({ i18n, client, offline, update, children }: AppProvidersProps) {
+export function AppProviders({ i18n, client, offline, update, install, children }: AppProvidersProps) {
   const [{ queryClient, offlineCache }] = useState(() => {
     followBrowserConnection();
     const queryClient = new QueryClient({
@@ -99,15 +102,17 @@ export function AppProviders({ i18n, client, offline, update, children }: AppPro
     <I18nextProvider i18n={i18n}>
       <UiLocale>
         <AppUpdateProvider update={update}>
-          <RequiredUpdateGate client={client} onUpdate={() => update.apply()}>
-            {offlineCache.persistOptions ? (
-              <PersistQueryClientProvider client={queryClient} persistOptions={offlineCache.persistOptions}>
-                {session}
-              </PersistQueryClientProvider>
-            ) : (
-              <QueryClientProvider client={queryClient}>{session}</QueryClientProvider>
-            )}
-          </RequiredUpdateGate>
+          <InstallPromptProvider prompt={install}>
+            <RequiredUpdateGate client={client} onUpdate={() => update.apply()}>
+              {offlineCache.persistOptions ? (
+                <PersistQueryClientProvider client={queryClient} persistOptions={offlineCache.persistOptions}>
+                  {session}
+                </PersistQueryClientProvider>
+              ) : (
+                <QueryClientProvider client={queryClient}>{session}</QueryClientProvider>
+              )}
+            </RequiredUpdateGate>
+          </InstallPromptProvider>
         </AppUpdateProvider>
       </UiLocale>
     </I18nextProvider>
@@ -116,11 +121,18 @@ export function AppProviders({ i18n, client, offline, update, children }: AppPro
 
 const thisDevice: OfflineCacheOptions = { storage: () => window.localStorage, isInstalled: runsInstalled };
 
-export function App({ i18n, config, update }: { i18n: I18n; config: AppConfig; update: AppUpdate }) {
+export interface AppProps {
+  i18n: I18n;
+  config: AppConfig;
+  update: AppUpdate;
+  install: InstallPrompt;
+}
+
+export function App({ i18n, config, update, install }: AppProps) {
   const [client] = useState(() => new ApiClient());
   const [router] = useState(() => createBrowserRouter(createRoutes(config)));
   return (
-    <AppProviders i18n={i18n} client={client} offline={thisDevice} update={update}>
+    <AppProviders i18n={i18n} client={client} offline={thisDevice} update={update} install={install}>
       <RouterProvider router={router} />
     </AppProviders>
   );

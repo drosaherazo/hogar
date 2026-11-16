@@ -57,6 +57,15 @@
       "description": "Actualiza para seguir. Lo que no hayas guardado no se puede conservar."
     }
   },
+  "install": {
+    "menuItem": "Instalar Hogar",
+    "ios": {
+      "title": "Añade Hogar a tu pantalla de inicio",
+      "share": "Toca el botón Compartir.",
+      "add": "Elige «Añadir a pantalla de inicio».",
+      "close": "Cerrar"
+    }
+  },
   "offline": {
     "banner": "Estás sin conexión. Esto es lo que Hogar te mostró {{time}}.",
     "justNow": "hace un momento",
