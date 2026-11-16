@@ -96,7 +96,7 @@
 
 /* Keyboard focus scrolls into view above the tab bar, never under it. */
 :global(html):has(.withTabBar) {
-  scroll-padding-block-end: calc(var(--tab-bar-size) + env(safe-area-inset-bottom));
+  scroll-padding-block-end: calc(var(--tab-bar-size) + var(--floating-action-room, 0rem) + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 48rem) {
@@ -133,7 +133,9 @@
   max-inline-size: var(--size-content-md);
   margin-inline: auto;
   padding: var(--space-8) var(--space-4);
-  padding-block-end: calc(var(--space-8) + var(--tab-bar-size, 0rem) + env(safe-area-inset-bottom));
+  padding-block-end: calc(
+    var(--space-8) + var(--tab-bar-size, 0rem) + var(--floating-action-room, 0rem) + env(safe-area-inset-bottom)
+  );
 }
 
 /* The page's own column, laid out exactly like main; only there to switch every control off offline. */

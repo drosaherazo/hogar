@@ -162,7 +162,7 @@ function MoneyCard({ canEdit }: { canEdit: boolean }) {
       )}
       <div className={styles.moneyActions}>
         {canEdit && (
-          <ActionLink to="/expenses/new" changesData variant="primary" icon={<Plus />}>
+          <ActionLink to="/expenses/new" changesData variant="primary" icon={<Plus />} floating>
             {t("add")}
           </ActionLink>
         )}

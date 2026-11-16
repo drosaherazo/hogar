@@ -63,3 +63,72 @@
   opacity: 0.55;
   pointer-events: none;
 }
+
+/*
+ * The extended floating button on phones: icon and label, fixed above the tab bar at the trailing
+ * edge and clear of the safe areas. It is the same link as on wider screens, so each screen keeps
+ * exactly one fuchsia action; from 48rem up it goes back into the page.
+ */
+/*
+ * The page's own action colors, read where the theme is set. On Home the action is a child of
+ * the brand card, which turns accents and focus white for its own content; floating over the page,
+ * the button must keep the page's fuchsia and focus ring instead.
+ */
+:global(:root),
+:global([data-theme]) {
+  --page-accent: var(--color-accent);
+  --page-accent-hover: var(--color-accent-hover);
+  --page-accent-contrast: var(--color-accent-contrast);
+  --page-focus: var(--color-focus);
+}
+
+.floating {
+  position: fixed;
+  inset-inline-end: max(var(--space-4), env(safe-area-inset-right));
+  inset-block-end: calc(var(--tab-bar-size, 0rem) + var(--space-4) + env(safe-area-inset-bottom));
+  z-index: 10;
+  padding-inline: var(--space-5);
+  border-radius: var(--radius-full);
+  background-color: var(--page-accent);
+  color: var(--page-accent-contrast);
+  box-shadow: var(--shadow-lg);
+}
+
+.floating:hover,
+.floating:active {
+  background-color: var(--page-accent-hover);
+}
+
+.floating:focus-visible {
+  outline-color: var(--page-focus);
+}
+
+/* A page with a floating action keeps room for it, so it never covers the last item. */
+:global(html):has(.floating) {
+  --floating-action-room: calc(var(--size-touch) + var(--space-4));
+}
+
+@media (min-width: 48rem) {
+  /* Back in the page: the variant's own colors again (inside the brand card, its white ones). */
+  .floating {
+    position: static;
+    padding-inline: var(--space-4);
+    border-radius: var(--radius-md);
+    background-color: var(--color-accent);
+    color: var(--color-accent-contrast);
+    box-shadow: none;
+  }
+
+  .floating:hover,
+  .floating:active {
+    background-color: var(--color-accent-hover);
+  }
+
+  .floating:focus-visible {
+    outline-color: var(--color-focus);
+  }
+
+  :global(html):has(.floating) {
+    --floating-action-room: 0rem;
+  }
+}
