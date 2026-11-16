@@ -259,12 +259,12 @@ describe("AuthProvider when waking goes wrong", () => {
     expect(shown()).toBe("loading:waking:0");
   });
 
-  it("says the device is offline instead of polling, and resumes when it is back", async () => {
+  it("shows the offline view instead of waiting for the server, and starts as usual when the connection is back", async () => {
     setOnline(false);
     const client = fakeClient();
     renderProvider(client);
     await advance(10_000);
-    expect(shown()).toBe("loading:offline:0");
+    expect(shown()).toBe("offline");
     expect(client.health).not.toHaveBeenCalled();
 
     setOnline(true);
@@ -276,7 +276,7 @@ describe("AuthProvider when waking goes wrong", () => {
     expect(shown()).toBe("authenticated");
   });
 
-  it("pauses when the connection drops mid-wait and starts a new attempt when it returns", async () => {
+  it("leaves the wait for the offline view when the connection drops, and starts a new attempt when it returns", async () => {
     const client = fakeClient();
     client.health.mockImplementation(
       (signal) =>
@@ -293,12 +293,12 @@ describe("AuthProvider when waking goes wrong", () => {
       window.dispatchEvent(new Event("offline"));
       await vi.advanceTimersByTimeAsync(0);
     });
-    expect(shown()).toBe("loading:offline:0");
+    expect(shown()).toBe("offline");
     expect(attemptSignal?.aborted).toBe(true);
 
     // The 90-second limit belongs to the attempt that was cancelled.
     await advance(120_000);
-    expect(shown()).toBe("loading:offline:0");
+    expect(shown()).toBe("offline");
 
     setOnline(true);
     await act(async () => {

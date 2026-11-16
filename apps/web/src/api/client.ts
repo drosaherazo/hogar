@@ -81,6 +81,8 @@ export class ApiClient {
 
   private readonly sessionExpiredListeners = new Set<() => void>();
   private outdated = false;
+  private reachable = true;
+  private readonly reachabilityListeners = new Set<() => void>();
   private readonly outdatedListeners = new Set<() => void>();
 
   constructor(
@@ -101,6 +103,20 @@ export class ApiClient {
   onOutdated(listener: () => void): () => void {
     this.outdatedListeners.add(listener);
     return () => this.outdatedListeners.delete(listener);
+  }
+
+  /**
+   * Whether the last request reached the server. A request that fails without any answer (no
+   * connection) makes it false until one gets an answer again; a cancelled request doesn't count,
+   * so a server slow to wake is never mistaken for being offline.
+   */
+  get isReachable() {
+    return this.reachable;
+  }
+
+  onReachabilityChange(listener: () => void): () => void {
+    this.reachabilityListeners.add(listener);
+    return () => this.reachabilityListeners.delete(listener);
   }
 
   /** Whether the API has said this build is too old for it. It never goes back to false. */
@@ -363,9 +379,13 @@ export class ApiClient {
         ...(signal ? { signal } : {}),
         ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       });
-    } catch {
+    } catch (error) {
+      // A request someone cancelled says nothing about the connection.
+      const cancelled = signal?.aborted === true || (error instanceof Error && error.name === "AbortError");
+      if (!cancelled) this.setReachable(false);
       throw new ApiRequestError("network", 0);
     }
+    this.setReachable(true);
 
     if (response.status === 401 && authenticated && !isRetry) {
       try {
@@ -386,6 +406,12 @@ export class ApiClient {
     const parsed = schema.safeParse(await response.json());
     if (!parsed.success) throw new ApiRequestError("server.unexpected", response.status);
     return parsed.data;
+  }
+
+  private setReachable(reachable: boolean) {
+    if (this.reachable === reachable) return;
+    this.reachable = reachable;
+    this.reachabilityListeners.forEach((listener) => listener());
   }
 
   private reportOutdated() {

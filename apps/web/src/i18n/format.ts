@@ -90,6 +90,22 @@ export function useDates() {
   }, [locale]);
 }
 
+const AGO_UNITS = [
+  { unit: "day", ms: 24 * 60 * 60 * 1000 },
+  { unit: "hour", ms: 60 * 60 * 1000 },
+  { unit: "minute", ms: 60 * 1000 },
+] as const;
+
+/**
+ * How long ago a moment was, in the person's words: "5 minutes ago", "yesterday", "hace 2 horas",
+ * in the largest whole unit (under a minute reads as "this minute").
+ */
+export function formatAgo(at: number, now: number, locale: string): string {
+  const elapsed = Math.max(0, now - at);
+  const { unit, ms } = AGO_UNITS.find((candidate) => elapsed >= candidate.ms) ?? AGO_UNITS[2];
+  return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(-Math.floor(elapsed / ms), unit);
+}
+
 /** Today on the person's device, as `YYYY-MM-DD`: the default and the latest day for new records. */
 export function localToday(now = new Date()): string {
   const pad = (value: number) => String(value).padStart(2, "0");

@@ -4,16 +4,18 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useTranslation } from "react-i18next";
 import { ApiRequestError, type ApiClient } from "../api/client";
 import { hasStoredLanguage } from "../i18n";
-import type { OfflineCache } from "../offline/offlineCache";
+import type { OfflineCache, SavedPerson } from "../offline/offlineCache";
 import { pause, waitForServer } from "../startup/waitForServer";
 import { GIVE_UP_AFTER_MS, isWakingError, settleDelay } from "../startup/wakeUp";
 
 /** What the wake-up screen tells the person while the session is being restored. */
-export type WaitPhase = "waking" | "slow" | "offline";
+export type WaitPhase = "waking" | "slow";
 
 export type AuthState =
   | { status: "loading"; user: null; phase: WaitPhase; startedAt: number; attempt: number }
   | { status: "anonymous"; user: null }
+  /** No connection at startup: the last person's kept data, read-only, or nothing (ADR 0015). */
+  | { status: "offline"; user: SavedPerson | null }
   | { status: "authenticated"; user: AuthUser };
 
 export interface AuthContextValue {
@@ -55,7 +57,9 @@ export interface AuthProviderProps {
  * cookie, waiting first for the API to wake up if it was asleep (ADR 0006).
  */
 export function AuthProvider({ client, offline, children }: AuthProviderProps) {
-  const [state, setState] = useState<AuthState>(() => waiting(isOnline() ? "waking" : "offline", 0));
+  const [state, setState] = useState<AuthState>(() =>
+    isOnline() ? waiting("waking", 0) : { status: "offline", user: offline.savedPerson() },
+  );
   const { i18n } = useTranslation();
   const queryClient = useQueryClient();
   const retryRef = useRef<() => void>(() => undefined);
@@ -94,13 +98,19 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
     let disposed = false;
     let finished = false;
     let attempt = 0;
-    let phase: WaitPhase = "waking";
+    let phase: WaitPhase | "offline" = "waking";
     let controller: AbortController | null = null;
     let giveUpTimer: ReturnType<typeof setTimeout> | undefined;
 
     const show = (next: WaitPhase) => {
       phase = next;
       setState(waiting(next, attempt));
+    };
+
+    // Being offline isn't the server sleeping: no wake-up screen, no refresh, just what was kept.
+    const showOffline = () => {
+      phase = "offline";
+      setState({ status: "offline", user: offline.savedPerson() });
     };
 
     const stop = () => {
@@ -136,7 +146,7 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
     const start = () => {
       stop();
       if (!isOnline()) {
-        show("offline");
+        showOffline();
         return;
       }
       show("waking");
@@ -198,7 +208,7 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
     const onOffline = () => {
       if (finished) return;
       stop();
-      show("offline");
+      showOffline();
     };
 
     retryRef.current = () => {
@@ -216,7 +226,7 @@ export function AuthProvider({ client, offline, children }: AuthProviderProps) {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
     };
-  }, [client]);
+  }, [client, offline]);
 
   const retry = useCallback(() => retryRef.current(), []);
 

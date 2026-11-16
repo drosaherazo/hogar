@@ -1,0 +1,24 @@
+import { useCallback, useSyncExternalStore } from "react";
+import { useApiClient } from "../api/ApiClientContext";
+
+/**
+ * Whether Hogar can reach its server right now: the browser says it is online and the last
+ * request got an answer. Without a connection the installed app shows the offline view (ADR 0015).
+ */
+export function useOnline(): boolean {
+  const client = useApiClient();
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      window.addEventListener("online", onChange);
+      window.addEventListener("offline", onChange);
+      const stopListening = client.onReachabilityChange(onChange);
+      return () => {
+        window.removeEventListener("online", onChange);
+        window.removeEventListener("offline", onChange);
+        stopListening();
+      };
+    },
+    [client],
+  );
+  return useSyncExternalStore(subscribe, () => navigator.onLine !== false && client.isReachable);
+}

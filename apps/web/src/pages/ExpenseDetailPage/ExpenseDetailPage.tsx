@@ -177,7 +177,7 @@ function Details({ expense, members, canEdit }: { expense: ExpenseView; members:
 
       {canEdit && (
         <div className={styles.actions}>
-          <ActionLink to={`/expenses/${expense.id}/edit`} icon={<Pencil />}>
+          <ActionLink to={`/expenses/${expense.id}/edit`} changesData icon={<Pencil />}>
             {t("details.edit")}
           </ActionLink>
           <Button variant="secondary" icon={<Trash2 />} onClick={() => setDeleting(true)}>

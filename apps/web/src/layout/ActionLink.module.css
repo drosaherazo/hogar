@@ -57,3 +57,9 @@
   inline-size: var(--size-icon-md);
   block-size: var(--size-icon-md);
 }
+
+/* Offline, links that would change something look and act switched off, like a disabled Button. */
+.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}

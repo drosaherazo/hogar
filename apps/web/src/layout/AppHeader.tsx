@@ -1,15 +1,16 @@
-import { LOCALES, type AuthUser, type Locale } from "@hogar/shared";
+import { LOCALES, type Locale } from "@hogar/shared";
 import { Avatar, Menu, MenuItem, MenuRadioGroup, MenuSeparator } from "@hogar/ui";
 import { Languages, LogOut, Moon, Settings, Sun } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import type { CurrentUser } from "../auth/guards";
 import { LANGUAGE_NAMES, useLocalePreference } from "../i18n";
 import { useTheme, type Theme } from "../theme/theme";
 import styles from "./AppHeader.module.css";
 import { HogarMark } from "./HogarMark";
 
 export interface AppHeaderProps {
-  user: AuthUser;
+  user: CurrentUser;
   /** The main navigation: beside the brand from 48rem up, a tab bar at the bottom below. */
   navigation?: ReactNode;
   /** Opens the household settings; offered in the account menu once there is a household. */

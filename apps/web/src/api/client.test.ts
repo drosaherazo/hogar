@@ -247,3 +247,38 @@ describe("ApiClient and the API version", () => {
     expect(onOutdated).toHaveBeenCalledOnce();
   });
 });
+
+describe("ApiClient and the connection", () => {
+  it("counts a request with no answer as unreachable, until one gets an answer", async () => {
+    let failing = true;
+    const fetchImpl = vi.fn(() =>
+      failing ? Promise.reject(new TypeError("Failed to fetch")) : Promise.resolve(HttpResponse.json({ status: "ok" })),
+    );
+    const client = new ApiClient(BASE, fetchImpl);
+    const onChange = vi.fn();
+    client.onReachabilityChange(onChange);
+    expect(client.isReachable).toBe(true);
+
+    await client.health().catch(() => undefined);
+    expect(client.isReachable).toBe(false);
+    failing = false;
+    await client.health();
+    expect(client.isReachable).toBe(true);
+    expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  it("never takes a cancelled request, such as a slow server's health check, for being offline", async () => {
+    const fetchImpl = vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+        }),
+    );
+    const client = new ApiClient(BASE, fetchImpl);
+    const controller = new AbortController();
+    const pending = client.health(controller.signal);
+    controller.abort();
+    await pending.catch(() => undefined);
+    expect(client.isReachable).toBe(true);
+  });
+});

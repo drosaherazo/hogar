@@ -6,6 +6,8 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../auth/AuthProvider";
 import { useCurrentUser } from "../auth/guards";
 import { useHousehold } from "../household/useHousehold";
+import { OFFLINE_REASON_ID, OfflineBanner } from "../offline/OfflineBanner";
+import { useOnline } from "../offline/useOnline";
 import { UpdateNotice } from "../update/UpdateNotice";
 import { AppHeader } from "./AppHeader";
 import styles from "./AppShell.module.css";
@@ -27,6 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
   const household = useHousehold();
   const { pathname } = useLocation();
+  const online = useOnline();
   const navigate = useNavigate();
   const hasNavigation = Boolean(household.data?.household);
   const navClass = ({ isActive }: { isActive: boolean }) => clsx(styles.navLink, isActive && styles.current);
@@ -63,7 +66,16 @@ export function AppShell({ children }: { children: ReactNode }) {
       />
       <main id="main" className={styles.main} tabIndex={-1}>
         <UpdateNotice />
-        {children}
+        <OfflineBanner />
+        {/* Offline, every control on the page is off at once (ADR 0015); always rendered so that
+            losing the connection never remounts the page and loses what was being typed. */}
+        <fieldset
+          className={styles.content}
+          disabled={!online}
+          aria-describedby={online ? undefined : OFFLINE_REASON_ID}
+        >
+          {children}
+        </fieldset>
       </main>
     </div>
   );

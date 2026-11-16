@@ -45,11 +45,7 @@
       "title": "Esto está tardando más de lo normal",
       "description": "Puede que tu hogar siga despertándose. Vuelve a intentarlo en un momento."
     },
-    "retry": "Intentarlo de nuevo",
-    "offline": {
-      "title": "Parece que no tienes conexión",
-      "description": "Seguiremos en cuanto vuelvas a tener conexión."
-    }
+    "retry": "Intentarlo de nuevo"
   },
   "update": {
     "notice": "Hay una versión nueva de Hogar",
@@ -59,6 +55,14 @@
     "required": {
       "title": "Hogar se ha actualizado",
       "description": "Actualiza para seguir. Lo que no hayas guardado no se puede conservar."
+    }
+  },
+  "offline": {
+    "banner": "Estás sin conexión. Esto es lo que Hogar te mostró {{time}}.",
+    "actionDisabled": "Podrás hacer cambios cuando vuelvas a tener conexión.",
+    "empty": {
+      "title": "Estás sin conexión",
+      "description": "Hogar vuelve en cuanto recuperes la conexión."
     }
   }
 }
