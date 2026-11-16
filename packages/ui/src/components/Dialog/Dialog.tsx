@@ -38,7 +38,7 @@ export function Dialog({ open, onOpenChange, ...content }: DialogProps) {
   // so they go through clsx here and in DialogContent.
   return (
     <ModalOverlay isOpen={open} onOpenChange={onOpenChange} isDismissable className={clsx(styles.overlay)}>
-      <Modal>
+      <Modal className={clsx(styles.modal)}>
         <AriaDialog
           className={clsx(styles.content)}
           {...(content.description ? { "aria-describedby": descriptionId } : {})}

@@ -1,35 +1,75 @@
+/*
+ * Phones: a bottom sheet, full width and anchored to the bottom, so its buttons sit in thumb reach.
+ * The overlay is as tall as the visible viewport (react-aria measures it, keyboard excluded), so
+ * the sheet rises above the on-screen keyboard and scrolls inside when it doesn't fit.
+ * From 48rem up: centered, as on a desktop.
+ */
 .overlay {
   position: fixed;
-  inset: 0;
+  inset-block-start: 0;
+  inset-inline-start: 0;
   z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  inline-size: 100%;
+  block-size: var(--visual-viewport-height, 100dvh);
   background-color: var(--color-overlay);
   animation: fade var(--duration-slow) var(--easing-gentle);
 }
 
+/* A strip of the page stays visible above the sheet, never under the status bar or notch. */
+.modal {
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  max-block-size: calc(100% - max(var(--space-8), env(safe-area-inset-top) + var(--space-2)));
+}
+
 .content {
-  position: fixed;
-  inset-block-start: 50%;
-  inset-inline-start: 50%;
-  z-index: 21;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  inline-size: min(calc(100vw - var(--space-8)), var(--size-content-sm));
-  max-block-size: calc(100dvh - var(--space-8));
+  min-block-size: 0;
   overflow-y: auto;
-  padding: var(--space-6);
+  /*
+   * Full width, so the sides use the page's own gutter and keep clear of a landscape notch. The
+   * bottom clears the home indicator without doubling it (iOS keeps the inset while the keyboard
+   * is open, and that space is better spent on the form).
+   */
+  padding: var(--space-6) max(var(--space-4), env(safe-area-inset-right))
+    max(var(--space-6), env(safe-area-inset-bottom) + var(--space-2)) max(var(--space-4), env(safe-area-inset-left));
   background-color: var(--color-surface);
   color: var(--color-text);
-  border-radius: var(--radius-xl);
+  border-start-start-radius: var(--radius-xl);
+  border-start-end-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   font-family: var(--font-family-base);
-  transform: translate(-50%, -50%);
-  animation: rise var(--duration-slow) var(--easing-gentle);
+  animation: slide-up var(--duration-slow) var(--easing-gentle);
 }
 
+@media (min-width: 48rem) {
+  /* Centered, it still keeps clear of a landscape phone's notch and home indicator. */
+  .overlay {
+    align-items: center;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  .modal {
+    inline-size: min(calc(100% - var(--space-8)), var(--size-content-sm));
+  }
+
+  .content {
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    animation-name: rise;
+  }
+}
+
+/* Drawn inside, so it isn't cut off at the screen edges of a full-width sheet. */
 .content:focus-visible {
   outline: var(--focus-ring-width) solid var(--color-focus);
-  outline-offset: var(--border-width);
+  outline-offset: calc(var(--focus-ring-width) * -1);
 }
 
 .header {
@@ -97,16 +137,22 @@
   gap: var(--space-3);
 }
 
-/* Fades only the backdrop color, so the dialog inside keeps its own rise. */
+/* Fades only the backdrop color, so the dialog inside keeps its own motion (slide up or rise). */
 @keyframes fade {
   from {
     background-color: transparent;
   }
 }
 
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translate(-50%, -48%);
+    transform: translateY(2%);
   }
 }
