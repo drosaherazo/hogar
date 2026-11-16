@@ -32,7 +32,7 @@ export function ExpensesPage() {
       <div className={styles.heading}>
         <h1 className={styles.title}>{t("title")}</h1>
         {current && canEditContent(current.myRole) && (
-          <ActionLink to="/expenses/new" variant="primary" icon={<Plus />} floating>
+          <ActionLink to="/expenses/new" changesData variant="primary" icon={<Plus />} floating>
             {t("add")}
           </ActionLink>
         )}

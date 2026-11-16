@@ -165,15 +165,5 @@ describe("WakeUpLoading", () => {
       await userEvent.click(screen.getByRole("button", { name: "Try again" }));
       expect(retry).toHaveBeenCalledOnce();
     });
-
-    it("says the device is offline, with nothing to press", () => {
-      state = waitingState("offline");
-      renderLoading();
-      expect(heading()).toBe("You seem to be offline");
-      expect(screen.getByText("We'll carry on as soon as you're back online.")).toBeInTheDocument();
-      expect(screen.queryByRole("button")).toBeNull();
-      expect(screen.queryByText("Quick tip")).toBeNull();
-      expect(screen.getByRole("main")).not.toHaveAttribute("aria-busy");
-    });
   });
 });

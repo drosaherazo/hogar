@@ -138,6 +138,18 @@
   );
 }
 
+/* The page's own column, laid out exactly like main; only there to switch every control off offline. */
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-6);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .main:focus {
   outline: none;
 }

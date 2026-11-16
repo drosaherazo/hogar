@@ -12,6 +12,7 @@ import { AuthProvider } from "./auth/AuthProvider";
 import { RedirectIfAuthenticated, RequireAuth } from "./auth/guards";
 import { currentLocale } from "./i18n";
 import { createOfflineCache, runsInstalled, type OfflineCacheOptions } from "./offline/offlineCache";
+import { followBrowserConnection } from "./offline/queryConnectivity";
 import { BalancesPage } from "./pages/BalancesPage/BalancesPage";
 import { ExpenseDetailPage } from "./pages/ExpenseDetailPage/ExpenseDetailPage";
 import { ExpenseFormPage } from "./pages/ExpenseFormPage/ExpenseFormPage";
@@ -80,7 +81,14 @@ export interface AppProvidersProps {
 
 export function AppProviders({ i18n, client, offline, update, install, children }: AppProvidersProps) {
   const [{ queryClient, offlineCache }] = useState(() => {
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
+    followBrowserConnection();
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: 1, refetchOnWindowFocus: false },
+        // A change is sent now or fails now: it is never queued for when the connection returns (ADR 0015).
+        mutations: { networkMode: "always" },
+      },
+    });
     return { queryClient, offlineCache: createOfflineCache(offline, queryClient) };
   });
   const session = (

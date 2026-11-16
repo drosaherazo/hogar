@@ -45,11 +45,7 @@
       "title": "This is taking longer than usual",
       "description": "Your home may still be waking up. Give it another go in a moment."
     },
-    "retry": "Try again",
-    "offline": {
-      "title": "You seem to be offline",
-      "description": "We'll carry on as soon as you're back online."
-    }
+    "retry": "Try again"
   },
   "update": {
     "notice": "There's a new version of Hogar",
@@ -68,6 +64,15 @@
       "share": "Tap the Share button.",
       "add": "Choose “Add to Home Screen”.",
       "close": "Close"
+    }
+  },
+  "offline": {
+    "banner": "You're offline. This is what Hogar showed you {{time}}.",
+    "justNow": "just now",
+    "actionDisabled": "Changes are available when you're back online.",
+    "empty": {
+      "title": "You're offline",
+      "description": "Hogar will be back as soon as you reconnect."
     }
   }
 }

@@ -63,10 +63,10 @@ export const Offline: Story = {
   render: (args, { globals }) => (
     <WakeUpScreen
       {...args}
-      status={storyText(globals, { en: "You seem to be offline", es: "Parece que no tienes conexión" })}
+      status={storyText(globals, { en: "You're offline", es: "Estás sin conexión" })}
       description={storyText(globals, {
-        en: "We'll carry on as soon as you're back online.",
-        es: "Seguiremos en cuanto vuelvas a tener conexión.",
+        en: "Hogar will be back as soon as you reconnect.",
+        es: "Hogar vuelve en cuanto recuperes la conexión.",
       })}
     />
   ),

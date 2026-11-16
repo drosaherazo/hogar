@@ -36,12 +36,6 @@ export function WakeUpLoading() {
     );
   }
 
-  if (state.phase === "offline") {
-    return (
-      <WakeUpScreen mood="resting" status={t("wakeUp.offline.title")} description={t("wakeUp.offline.description")} />
-    );
-  }
-
   const elapsed = Math.max(0, now - state.startedAt);
   const tipId = TIP_IDS[tipIndexAt(elapsed, TIP_IDS.length)] ?? TIP_IDS[0];
   return (

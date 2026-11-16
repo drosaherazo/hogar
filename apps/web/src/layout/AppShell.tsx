@@ -8,6 +8,8 @@ import { useCurrentUser } from "../auth/guards";
 import { useHousehold } from "../household/useHousehold";
 import { IosInstallSheet } from "../install/IosInstallSheet";
 import { useInstallPrompt } from "../install/installPrompt";
+import { OFFLINE_REASON_ID, OfflineBanner } from "../offline/OfflineBanner";
+import { useReadOnly } from "../offline/useOnline";
 import { UpdateNotice } from "../update/UpdateNotice";
 import { AppHeader } from "./AppHeader";
 import styles from "./AppShell.module.css";
@@ -29,6 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
   const household = useHousehold();
   const { pathname } = useLocation();
+  const readOnly = useReadOnly();
   const navigate = useNavigate();
   const install = useInstallPrompt();
   const [iosSteps, setIosSteps] = useState(false);
@@ -73,7 +76,18 @@ export function AppShell({ children }: { children: ReactNode }) {
       <IosInstallSheet open={iosSteps} onOpenChange={setIosSteps} />
       <main id="main" className={styles.main} tabIndex={-1}>
         <UpdateNotice />
-        {children}
+        <OfflineBanner />
+        {/* Offline, every control on the page is off at once (ADR 0015); always rendered so that
+            losing the connection never remounts the page and loses what was being typed. */}
+        <fieldset
+          className={styles.content}
+          disabled={readOnly}
+          // Only a group, described by the reason, while it is read-only; otherwise no extra semantics.
+          role={readOnly ? undefined : "none"}
+          aria-describedby={readOnly ? OFFLINE_REASON_ID : undefined}
+        >
+          {children}
+        </fieldset>
       </main>
     </div>
   );

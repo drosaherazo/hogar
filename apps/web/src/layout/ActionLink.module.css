@@ -58,6 +58,12 @@
   block-size: var(--size-icon-md);
 }
 
+/* Offline, links that would change something look and act switched off, like a disabled Button. */
+.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 /*
  * The extended floating button on phones: icon and label, fixed above the tab bar at the trailing
  * edge and clear of the safe areas. It is the same link as on wider screens, so each screen keeps

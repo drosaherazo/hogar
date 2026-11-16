@@ -39,6 +39,13 @@ export const server = setupServer(
   http.post("*/api/auth/logout", () => new HttpResponse(null, { status: 204 })),
   http.get("*/api/household/balances", () => HttpResponse.json(balancesView())),
   http.get("*/api/household/categories", () => HttpResponse.json({ categories: starterCategories() })),
+  http.get("*/api/household/invitations", () => HttpResponse.json({ invitations: [] })),
+  // Anything a test didn't set up answers like a broken server, not a lost connection: a network
+  // failure would switch the app to its offline view and leave unrelated pages read-only.
+  http.all("*/api/*", ({ request }) => {
+    console.warn(`[test] No handler for ${request.method} ${request.url}`);
+    return apiError(500, "server.unexpected");
+  }),
 );
 
 export function member(overrides: Partial<MemberView> & Pick<MemberView, "id" | "name">): MemberView {
