@@ -302,3 +302,10 @@ function describeTarget(element: Element): string {
   const name = element.getAttribute("aria-label") ?? element.textContent?.trim().slice(0, 30) ?? "";
   return `<${element.tagName.toLowerCase()}> "${name}"`;
 }
+
+/** Where an element is on screen, for layout checks. */
+export function rectOf($element: JQuery<HTMLElement>): DOMRect {
+  const element = $element.get(0);
+  if (!element) throw new Error("Nothing to measure");
+  return element.getBoundingClientRect();
+}

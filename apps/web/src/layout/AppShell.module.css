@@ -150,6 +150,30 @@
   border: 0;
 }
 
+.wide {
+  max-inline-size: var(--size-content-lg);
+}
+
+/* On a wide page only the columns use the width; headings, notices and alerts keep a reading line. */
+.wide > :not(.content),
+.wide > .content > :not(.columns) {
+  max-inline-size: var(--size-content-md);
+}
+
+/* Two columns from 48rem on wide pages; one, in reading order, on phones. */
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-6);
+}
+
+@media (min-width: 48rem) {
+  .columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .main:focus {
   outline: none;
 }

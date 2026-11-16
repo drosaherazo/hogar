@@ -1,11 +1,6 @@
-import { stubSignedIn, visitIn } from "../support/screens";
+import { rectOf, stubSignedIn, visitIn } from "../support/screens";
 
 /** "Add expense" in thumb reach on phones, as a floating button above the tab bar; in the page from 48rem. */
-function rectOf($element: JQuery<HTMLElement>): DOMRect {
-  const element = $element.get(0);
-  if (!element) throw new Error("Nothing to measure");
-  return element.getBoundingClientRect();
-}
 
 const addExpense = () => cy.contains("a", "Añadir gasto");
 
