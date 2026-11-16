@@ -70,9 +70,11 @@ describe("Dialogs on small and wide screens", () => {
       // The sheet itself scrolls to its actions; the page behind it stays put.
       cy.window().then((win) => {
         const pageScroll = win.scrollY;
-        cy.get("[role=dialog]").scrollTo("bottom").should(($dialog) => {
-          expect($dialog.get(0)?.scrollTop, "scrolled inside the sheet").to.be.greaterThan(0);
-        });
+        cy.get("[role=dialog]")
+          .scrollTo("bottom")
+          .should(($dialog) => {
+            expect($dialog.get(0)?.scrollTop, "scrolled inside the sheet").to.be.greaterThan(0);
+          });
         cy.window().its("scrollY").should("equal", pageScroll);
       });
       cy.get("[role=dialog]").contains("button", dialog.action).should("be.visible");
