@@ -1,11 +1,6 @@
-import { stubSignedIn, visitIn } from "../support/screens";
+import { rectOf, stubSignedIn, visitIn } from "../support/screens";
 
 /** The main navigation: a tab bar in thumb reach on phones, in the header from 48rem up. */
-function rectOf($element: JQuery<HTMLElement>): DOMRect {
-  const element = $element.get(0);
-  if (!element) throw new Error("Nothing to measure");
-  return element.getBoundingClientRect();
-}
 
 const mainNav = () => cy.get('nav[aria-label="Principal"]');
 

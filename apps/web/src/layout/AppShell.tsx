@@ -14,6 +14,15 @@ import { UpdateNotice } from "../update/UpdateNotice";
 import { AppHeader } from "./AppHeader";
 import styles from "./AppShell.module.css";
 
+export interface AppShellProps {
+  /**
+   * `reading` (default): one column a comfortable line long. `wide`: room for two columns from
+   * 48rem, for pages whose cards read better side by side than stacked on a big screen.
+   */
+  width?: "reading" | "wide";
+  children: ReactNode;
+}
+
 /**
  * Frame of every signed-in page: skip link, header with the account menu, the main navigation
  * (once there's a household to navigate) and the main column.
@@ -25,15 +34,6 @@ import styles from "./AppShell.module.css";
  * doesn't look like a stretched phone. It is one `<nav>` in the header at every size (the tab bar
  * is the same element, fixed by CSS), so screen readers announce a single main navigation.
  */
-export interface AppShellProps {
-  /**
-   * `reading` (default): one column a comfortable line long. `wide`: room for two columns from
-   * 48rem, for pages whose cards read better side by side than stacked on a big screen.
-   */
-  width?: "reading" | "wide";
-  children: ReactNode;
-}
-
 export function AppShell({ width = "reading", children }: AppShellProps) {
   const { t } = useTranslation();
   const user = useCurrentUser();

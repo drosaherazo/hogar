@@ -154,6 +154,12 @@
   max-inline-size: var(--size-content-lg);
 }
 
+/* On a wide page only the columns use the width; headings, notices and alerts keep a reading line. */
+.wide > :not(.content),
+.wide > .content > :not(.columns) {
+  max-inline-size: var(--size-content-md);
+}
+
 /* Two columns from 48rem on wide pages; one, in reading order, on phones. */
 .columns {
   display: grid;

@@ -21,14 +21,15 @@ import styles from "./BalancesPage.module.css";
 export function BalancesPage() {
   const { t } = useTranslation(["expenses", "common"]);
   const household = useHousehold();
-  // Balances and the payments that settle them side by side on a big screen, when there are both.
-  const settling = (useBalances().data?.suggestions.length ?? 0) > 0;
+  // Balances and the payments that settle them side by side on a big screen; one narrow card
+  // once everyone is square. Wide while loading, so the page doesn't jump when data arrives.
+  const allSquare = useBalances().data?.suggestions.length === 0;
 
   if (household.isSuccess && !household.data.household) return <Navigate to="/" replace />;
   const current = household.data?.household;
 
   return (
-    <AppShell width={settling ? "wide" : "reading"}>
+    <AppShell width={allSquare ? "reading" : "wide"}>
       <div className={styles.heading}>
         <ActionLink to="/expenses" variant="ghost" icon={<ArrowLeft />} className={styles.back}>
           {t("balances.back")}

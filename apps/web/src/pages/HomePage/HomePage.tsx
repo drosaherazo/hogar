@@ -28,7 +28,7 @@ export function HomePage() {
   const household = useHousehold();
 
   return (
-    <AppShell width={household.data?.household ? "wide" : "reading"}>
+    <AppShell width={household.data?.household === null ? "reading" : "wide"}>
       <div className={styles.welcome}>
         <h1 className={styles.greeting}>{t("greeting", { name: firstName(user.name) })}</h1>
         <p className={styles.subtitle}>{t("subtitle")}</p>

@@ -1,4 +1,4 @@
-import { stubSignedIn, visitIn } from "../support/screens";
+import { rectOf, stubSignedIn, visitIn } from "../support/screens";
 
 /**
  * Dialogs open as a bottom sheet on phones, so their buttons sit in thumb reach, and stay centered
@@ -31,12 +31,6 @@ const dialogs = [
 ];
 
 type DialogCase = (typeof dialogs)[number];
-
-function rectOf($element: JQuery<HTMLElement>): DOMRect {
-  const element = $element.get(0);
-  if (!element) throw new Error("Nothing to measure");
-  return element.getBoundingClientRect();
-}
 
 function openDialog({ path, open, ...rest }: DialogCase) {
   stubSignedIn("es");

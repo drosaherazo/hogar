@@ -153,6 +153,7 @@ Before calling done any task that touches the interface:
 - [ ] Nothing fixed sits under a notch or home indicator.
 - [ ] Nothing depends on hover; pressed states visible on touch.
 - [ ] The only width media query is `@media (min-width: 48rem)`.
+- [ ] On wide screens lines stay a reading length: one `--size-content-md` column, or `Columns` on a `wide` page.
 - [ ] Animations use duration tokens and respect reduced motion.
 - [ ] Component documented with "why" and "how it helps the person", in `en` and `es`.
 - [ ] Storybook pages and stories switch correctly with the Locale toolbar.

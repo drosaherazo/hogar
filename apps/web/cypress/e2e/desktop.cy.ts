@@ -1,11 +1,6 @@
-import { stubSignedIn, visitIn } from "../support/screens";
+import { rectOf, stubSignedIn, visitIn } from "../support/screens";
 
 /** On a big screen Hogar uses the width where it helps reading, and never spreads edge to edge. */
-function rectOf($element: JQuery<HTMLElement>): DOMRect {
-  const element = $element.get(0);
-  if (!element) throw new Error("Nothing to measure");
-  return element.getBoundingClientRect();
-}
 
 const householdCard = () => cy.contains("h2", "Piso compartido de la calle Mayor").closest("section");
 const moneyCard = () => cy.contains("h2", "Gastos").closest("section");
@@ -47,6 +42,21 @@ describe("Desktop layout", () => {
       moneyCard().should(($money) => {
         expect(rectOf($money).top, "below it").to.be.greaterThan(rectOf($household).bottom);
       });
+    });
+  });
+
+  it("lines the header up with the page on a very wide screen, and keeps alerts a reading line long", () => {
+    cy.viewport(1920, 1000);
+    visitIn("/", { locale: "es" });
+    cy.contains("h1", "Hola, Ana").then(($greeting) => {
+      cy.get("header").should(($header) => {
+        expect(rectOf($header.children().first()).left, "brand over the page").to.be.closeTo(rectOf($greeting).left, 1);
+      });
+    });
+    cy.get("main").then(($main) => {
+      const greeting = $main.find("h1").parent();
+      // --size-content-md: 40rem, 640 px at the default text size.
+      expect(rectOf(greeting).width, "text outside the columns").to.be.at.most(640);
     });
   });
 
