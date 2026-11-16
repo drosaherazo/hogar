@@ -57,3 +57,36 @@
   inline-size: var(--size-icon-md);
   block-size: var(--size-icon-md);
 }
+
+/*
+ * The extended floating button on phones: icon and label, fixed above the tab bar at the trailing
+ * edge and clear of the safe areas. It is the same link as on wider screens, so each screen keeps
+ * exactly one fuchsia action; from 48rem up it goes back into the page.
+ */
+.floating {
+  position: fixed;
+  inset-inline-end: max(var(--space-4), env(safe-area-inset-right));
+  inset-block-end: calc(var(--tab-bar-size, 0rem) + var(--space-4) + env(safe-area-inset-bottom));
+  z-index: 10;
+  padding-inline: var(--space-5);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-lg);
+}
+
+/* A page with a floating action keeps room for it, so it never covers the last item. */
+:global(html):has(.floating) {
+  --floating-action-room: calc(var(--size-touch) + var(--space-4));
+}
+
+@media (min-width: 48rem) {
+  .floating {
+    position: static;
+    padding-inline: var(--space-4);
+    border-radius: var(--radius-md);
+    box-shadow: none;
+  }
+
+  :global(html):has(.floating) {
+    --floating-action-room: 0rem;
+  }
+}
