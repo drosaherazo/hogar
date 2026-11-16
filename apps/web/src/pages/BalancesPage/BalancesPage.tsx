@@ -14,19 +14,21 @@ import { LoadError } from "../../household/LoadError";
 import { useHousehold } from "../../household/useHousehold";
 import { useMoney } from "../../i18n/format";
 import { ActionLink } from "../../layout/ActionLink";
-import { AppShell } from "../../layout/AppShell";
+import { AppShell, Columns } from "../../layout/AppShell";
 import styles from "./BalancesPage.module.css";
 
 /** Where everyone stands, in words, and the payments that would settle it. */
 export function BalancesPage() {
   const { t } = useTranslation(["expenses", "common"]);
   const household = useHousehold();
+  // Balances and the payments that settle them side by side on a big screen, when there are both.
+  const settling = (useBalances().data?.suggestions.length ?? 0) > 0;
 
   if (household.isSuccess && !household.data.household) return <Navigate to="/" replace />;
   const current = household.data?.household;
 
   return (
-    <AppShell>
+    <AppShell width={settling ? "wide" : "reading"}>
       <div className={styles.heading}>
         <ActionLink to="/expenses" variant="ghost" icon={<ArrowLeft />} className={styles.back}>
           {t("balances.back")}
@@ -95,7 +97,7 @@ function Balances({ household }: { household: HouseholdView }) {
           />
         </Card>
       ) : (
-        <>
+        <Columns>
           <Card as="section" padding="lg" aria-labelledby={everyoneId} className={styles.section}>
             <h2 id={everyoneId} className={styles.sectionTitle}>
               {t("balances.everyone")}
@@ -131,7 +133,7 @@ function Balances({ household }: { household: HouseholdView }) {
               </ul>
             </Card>
           )}
-        </>
+        </Columns>
       )}
       {payment && (
         <RecordPaymentDialog

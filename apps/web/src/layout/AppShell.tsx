@@ -25,7 +25,16 @@ import styles from "./AppShell.module.css";
  * doesn't look like a stretched phone. It is one `<nav>` in the header at every size (the tab bar
  * is the same element, fixed by CSS), so screen readers announce a single main navigation.
  */
-export function AppShell({ children }: { children: ReactNode }) {
+export interface AppShellProps {
+  /**
+   * `reading` (default): one column a comfortable line long. `wide`: room for two columns from
+   * 48rem, for pages whose cards read better side by side than stacked on a big screen.
+   */
+  width?: "reading" | "wide";
+  children: ReactNode;
+}
+
+export function AppShell({ width = "reading", children }: AppShellProps) {
   const { t } = useTranslation();
   const user = useCurrentUser();
   const { logout } = useAuth();
@@ -74,7 +83,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         onSignOut={() => void logout()}
       />
       <IosInstallSheet open={iosSteps} onOpenChange={setIosSteps} />
-      <main id="main" className={styles.main} tabIndex={-1}>
+      <main id="main" className={clsx(styles.main, width === "wide" && styles.wide)} tabIndex={-1}>
         <UpdateNotice />
         <OfflineBanner />
         {/* Offline, every control on the page is off at once (ADR 0015); always rendered so that
@@ -91,4 +100,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
     </div>
   );
+}
+
+/** Two columns from 48rem on a `wide` page, one on phones: for cards that read better side by side. */
+export function Columns({ children }: { children: ReactNode }) {
+  return <div className={styles.columns}>{children}</div>;
 }

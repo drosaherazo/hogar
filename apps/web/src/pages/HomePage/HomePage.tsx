@@ -11,7 +11,7 @@ import { LoadError } from "../../household/LoadError";
 import { memberColor } from "../../household/members";
 import { useDismissRemovalNotice, useHousehold } from "../../household/useHousehold";
 import { ActionLink } from "../../layout/ActionLink";
-import { AppShell } from "../../layout/AppShell";
+import { AppShell, Columns } from "../../layout/AppShell";
 import styles from "./HomePage.module.css";
 
 /** What the greeting calls the person: their first name, or their whole starter name. */
@@ -28,7 +28,7 @@ export function HomePage() {
   const household = useHousehold();
 
   return (
-    <AppShell>
+    <AppShell width={household.data?.household ? "wide" : "reading"}>
       <div className={styles.welcome}>
         <h1 className={styles.greeting}>{t("greeting", { name: firstName(user.name) })}</h1>
         <p className={styles.subtitle}>{t("subtitle")}</p>
@@ -98,26 +98,28 @@ function HouseholdSummary({ household }: { household: HouseholdView }) {
           {t("home.reviewSplit.description")}
         </Alert>
       )}
-      <Card as="section" padding="lg" aria-labelledby="household-name" className={styles.household}>
-        <div className={styles.householdHeader}>
-          <h2 id="household-name" className={styles.householdName}>
-            {household.name}
-          </h2>
-          <p className={styles.people}>{t("home.people", { count: household.members.length })}</p>
-        </div>
-        <ul className={styles.members}>
-          {household.members.map((member, index) => (
-            <li key={member.id} className={styles.member}>
-              <Avatar name={member.name} src={member.avatarUrl} colorIndex={memberColor(index)} decorative />
-              <span>{member.name}</span>
-            </li>
-          ))}
-        </ul>
-        <ActionLink to="/household/settings" icon={<Settings />} className={styles.settingsLink}>
-          {t("home.settingsLink")}
-        </ActionLink>
-      </Card>
-      <MoneyCard canEdit={canEditContent(household.myRole)} />
+      <Columns>
+        <Card as="section" padding="lg" aria-labelledby="household-name" className={styles.household}>
+          <div className={styles.householdHeader}>
+            <h2 id="household-name" className={styles.householdName}>
+              {household.name}
+            </h2>
+            <p className={styles.people}>{t("home.people", { count: household.members.length })}</p>
+          </div>
+          <ul className={styles.members}>
+            {household.members.map((member, index) => (
+              <li key={member.id} className={styles.member}>
+                <Avatar name={member.name} src={member.avatarUrl} colorIndex={memberColor(index)} decorative />
+                <span>{member.name}</span>
+              </li>
+            ))}
+          </ul>
+          <ActionLink to="/household/settings" icon={<Settings />} className={styles.settingsLink}>
+            {t("home.settingsLink")}
+          </ActionLink>
+        </Card>
+        <MoneyCard canEdit={canEditContent(household.myRole)} />
+      </Columns>
     </>
   );
 }

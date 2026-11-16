@@ -150,6 +150,24 @@
   border: 0;
 }
 
+.wide {
+  max-inline-size: var(--size-content-lg);
+}
+
+/* Two columns from 48rem on wide pages; one, in reading order, on phones. */
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-6);
+}
+
+@media (min-width: 48rem) {
+  .columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .main:focus {
   outline: none;
 }
