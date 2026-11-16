@@ -1,6 +1,7 @@
 import { LOCALES, type AuthUser, type Locale } from "@hogar/shared";
 import { Avatar, Menu, MenuItem, MenuRadioGroup, MenuSeparator } from "@hogar/ui";
-import { Languages, LogOut, Moon, Sun } from "lucide-react";
+import { Languages, LogOut, Moon, Settings, Sun } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { LANGUAGE_NAMES, useLocalePreference } from "../i18n";
 import { useTheme, type Theme } from "../theme/theme";
@@ -9,12 +10,16 @@ import { HogarMark } from "./HogarMark";
 
 export interface AppHeaderProps {
   user: AuthUser;
+  /** The main navigation: beside the brand from 48rem up, a tab bar at the bottom below. */
+  navigation?: ReactNode;
+  /** Opens the household settings; offered in the account menu once there is a household. */
+  onOpenSettings?: (() => void) | undefined;
   onSignOut: () => void;
 }
 
-/** Top bar of the signed-in app: the brand and the account menu (theme, language, sign out). */
-export function AppHeader({ user, onSignOut }: AppHeaderProps) {
-  const { t } = useTranslation();
+/** Top bar of the signed-in app: the brand, the main navigation and the account menu (theme, language, sign out). */
+export function AppHeader({ user, navigation, onOpenSettings, onSignOut }: AppHeaderProps) {
+  const { t } = useTranslation(["common", "household"]);
   const { theme, setTheme } = useTheme();
   const { locale, setLocale } = useLocalePreference();
 
@@ -24,6 +29,7 @@ export function AppHeader({ user, onSignOut }: AppHeaderProps) {
         <HogarMark />
         <span className={styles.appName}>{t("appName")}</span>
       </div>
+      {navigation}
       <Menu
         trigger={
           <button type="button" className={styles.accountButton} aria-label={t("account.menu", { name: user.name })}>
@@ -51,6 +57,11 @@ export function AppHeader({ user, onSignOut }: AppHeaderProps) {
           options={LOCALES.map((option) => ({ value: option, label: LANGUAGE_NAMES[option], icon: <Languages /> }))}
         />
         <MenuSeparator />
+        {onOpenSettings && (
+          <MenuItem icon={<Settings />} onSelect={onOpenSettings}>
+            {t("household:home.settingsLink")}
+          </MenuItem>
+        )}
         <MenuItem icon={<LogOut />} onSelect={onSignOut}>
           {t("account.signOut")}
         </MenuItem>

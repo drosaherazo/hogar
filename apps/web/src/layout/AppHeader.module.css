@@ -1,3 +1,4 @@
+/* No transform or filter here: they would pin the tab bar inside (position: fixed) to the header. */
 .header {
   position: sticky;
   inset-block-start: 0;
@@ -37,6 +38,8 @@
   font: inherit;
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--easing-standard);
+  /* Pushed to the end, so the navigation sits right next to the brand. */
+  margin-inline-start: auto;
 }
 
 .accountButton:hover,

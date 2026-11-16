@@ -20,26 +20,60 @@
   transform: none;
 }
 
+/*
+ * Phones: a tab bar fixed to the bottom, in thumb reach and clear of the home indicator. Each tab
+ * is an icon over a one-line label; the page reserves --tab-bar-size so nothing hides behind it.
+ * From 48rem up: plain links in the header next to the brand (see the comment in AppShell.tsx).
+ */
+:global(html):has(.withTabBar) {
+  --tab-bar-size: calc(
+    var(--size-icon-md) + var(--font-size-xs) * var(--line-height-tight) + var(--space-1) * 5 + var(--border-width)
+  );
+}
+
 .nav {
-  display: flex;
-  flex-wrap: wrap;
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 10;
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
   gap: var(--space-2);
-  inline-size: 100%;
-  max-inline-size: var(--size-content-md);
-  margin-inline: auto;
-  padding: var(--space-4) var(--space-4) 0;
+  padding: var(--space-1) max(var(--space-2), env(safe-area-inset-right))
+    calc(var(--space-1) + env(safe-area-inset-bottom)) max(var(--space-2), env(safe-area-inset-left));
+  background-color: var(--color-surface);
+  border-block-start: var(--border-width) solid var(--color-border);
 }
 
 .navLink {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
   min-block-size: var(--size-touch);
-  padding-inline: var(--space-4);
-  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
   color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
   text-decoration: none;
-  transition: background-color var(--duration-fast) var(--easing-standard);
+  transition:
+    background-color var(--duration-fast) var(--easing-standard),
+    color var(--duration-fast) var(--easing-standard);
+}
+
+.navIcon {
+  flex: none;
+  inline-size: var(--size-icon-md);
+  block-size: var(--size-icon-md);
+}
+
+/* One word per tab on one line: a label that needs two lines must also grow --tab-bar-size. */
+.navLabel {
+  white-space: nowrap;
 }
 
 .navLink:hover,
@@ -48,13 +82,45 @@
   color: var(--color-text);
 }
 
-/* The current page: filled, darker text and underlined, so it never relies on color alone. */
+/* The current page: filled, darker text and an underlined label, so it never relies on color alone. */
 .current {
   background-color: var(--color-surface-sunken);
   color: var(--color-text);
+}
+
+.current .navLabel {
   text-decoration: underline;
   text-decoration-thickness: var(--border-width);
   text-underline-offset: var(--space-1);
+}
+
+/* Keyboard focus scrolls into view above the tab bar, never under it. */
+:global(html):has(.withTabBar) {
+  scroll-padding-block-end: calc(var(--tab-bar-size) + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 48rem) {
+  :global(html):has(.withTabBar) {
+    --tab-bar-size: 0rem;
+  }
+
+  .nav {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0;
+    background: none;
+    border: none;
+  }
+
+  .navLink {
+    flex-direction: row;
+    gap: var(--space-2);
+    padding-inline: var(--space-4);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-md);
+  }
 }
 
 /* One column that never grows past the screen: a long select or input shrinks to fit instead. */
@@ -67,6 +133,7 @@
   max-inline-size: var(--size-content-md);
   margin-inline: auto;
   padding: var(--space-8) var(--space-4);
+  padding-block-end: calc(var(--space-8) + var(--tab-bar-size, 0rem) + env(safe-area-inset-bottom));
 }
 
 .main:focus {
