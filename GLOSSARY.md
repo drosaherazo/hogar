@@ -106,6 +106,36 @@ A member's weight for one category that uses its own split. Exists for every cur
 The five categories every household gets when it is created (Rent, Groceries, Utilities, Leisure, Other), named in the creator's language.
 _Avoid_: default categories, presets
 
+## Shopping
+
+**Shopping list**:
+The household's single list of things to buy, shared live by all its members.
+_Avoid_: grocery list, lists (there is only one)
+
+**Item** (`ShoppingItem`):
+One thing on the shopping list that someone needs bought ("Milk"), with an optional note ("lactose-free") and who asked for it, which is whoever added it. The list never holds two items with the same name at once; once bought or deleted, the same name can be added again as a new item.
+_Avoid_: product, entry, article
+
+**Deleted item**:
+An item taken off the list because nobody needs it any more. It was never bought, so it leaves no trace and is never suggested.
+_Avoid_: removed item
+
+**Bought item**:
+An item that left the list when someone finished shopping. Bought items are the household's shopping history: they feed the suggestions and show what an expense paid for.
+_Avoid_: completed item, archived item
+
+**Suggestion**:
+Something this household has bought before, offered while someone types a new item, most frequent first and with its last note.
+_Avoid_: autocomplete, recommendation
+
+**Cart**:
+The items one person has marked while shopping, shown to everyone as in that person's cart ("In Ana's cart"). An item is in at most one person's cart at a time, and only that person can take it out, change it or delete it. Taking an item out of a cart puts it back on the list, still to buy.
+_Avoid_: basket, checked items, ticked items
+
+**Finish shopping**:
+What a person does when they are done: the items in their cart leave the list, and they may record what they paid as one expense, which then shows what was bought. Items they didn't find stay on the list.
+_Avoid_: checkout, complete list
+
 ## Signing in
 
 **Sign-in method**:
