@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "../api/ApiClientContext";
 import { ApiRequestError } from "../api/client";
 import { expenseKeys } from "../expenses/useExpenses";
+import { shoppingKeys } from "../shopping/useShopping";
 
 export const householdKeys = {
   current: ["household"] as const,
@@ -105,9 +106,10 @@ export function useLeaveHousehold() {
     mutationFn: () => client.leaveHousehold(),
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: householdKeys.invitations });
-      // That household's money isn't theirs to see any more.
+      // That household's money and list aren't theirs to see any more.
       queryClient.removeQueries({ queryKey: expenseKeys.activity });
       queryClient.removeQueries({ queryKey: expenseKeys.balances });
+      queryClient.removeQueries({ queryKey: shoppingKeys.list });
       const noHousehold: CurrentHousehold = { household: null, removedFrom: null };
       queryClient.setQueryData(householdKeys.current, noHousehold);
     },

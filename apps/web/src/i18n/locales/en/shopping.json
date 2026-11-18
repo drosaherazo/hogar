@@ -1,0 +1,25 @@
+{
+  "title": "Shopping",
+  "add": {
+    "nameLabel": "What's needed?",
+    "noteLabel": "Note (optional)",
+    "noteHint": "Brand, size, how many…",
+    "submit": "Add",
+    "adding": "Adding…"
+  },
+  "added": "You added {{name}}",
+  "item": {
+    "askedBy": "asked for by {{name}}"
+  },
+  "empty": {
+    "title": "Nothing to buy",
+    "description": "When something runs out, add it here and everyone will see it."
+  },
+  "duplicate": {
+    "message": "{{name}} is already on the list."
+  },
+  "guest": {
+    "readOnly": "As a guest you can see the list but not change it."
+  },
+  "loadError": "We couldn't load the shopping list."
+}

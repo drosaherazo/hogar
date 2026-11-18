@@ -5,7 +5,8 @@
   "nav": {
     "label": "Principal",
     "home": "Inicio",
-    "expenses": "Gastos"
+    "expenses": "Gastos",
+    "shopping": "Compras"
   },
   "theme": {
     "label": "Tema",

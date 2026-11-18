@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { House, ReceiptText } from "lucide-react";
+import { House, ReceiptText, ShoppingBasket } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, useLocation, useNavigate } from "react-router";
@@ -63,6 +63,10 @@ export function AppShell({ width = "reading", children }: AppShellProps) {
         <ReceiptText className={styles.navIcon} aria-hidden="true" />
         <span className={styles.navLabel}>{t("nav.expenses")}</span>
       </Link>
+      <NavLink to="/shopping" className={navClass}>
+        <ShoppingBasket className={styles.navIcon} aria-hidden="true" />
+        <span className={styles.navLabel}>{t("nav.shopping")}</span>
+      </NavLink>
     </nav>
   );
 

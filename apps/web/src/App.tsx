@@ -21,6 +21,7 @@ import { HomePage } from "./pages/HomePage/HomePage";
 import { HouseholdSettingsPage } from "./pages/HouseholdSettingsPage/HouseholdSettingsPage";
 import { InvitePage } from "./pages/InvitePage/InvitePage";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
+import { ShoppingPage } from "./pages/ShoppingPage/ShoppingPage";
 import { InstallPromptProvider, type InstallPrompt } from "./install/installPrompt";
 import { AppUpdateProvider, type AppUpdate } from "./update/appUpdate";
 import { RequiredUpdateGate } from "./update/RequiredUpdate";
@@ -46,6 +47,7 @@ export function createRoutes({ googleClientId }: AppConfig): RouteObject[] {
         { path: "/expenses/:id", element: <ExpenseDetailPage /> },
         { path: "/expenses/:id/edit", element: <ExpenseFormPage /> },
         { path: "/balances", element: <BalancesPage /> },
+        { path: "/shopping", element: <ShoppingPage /> },
       ],
     },
     { path: "*", element: <RedirectIfAuthenticated /> },

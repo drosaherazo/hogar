@@ -11,6 +11,7 @@ import type {
   MemberView,
   PersonRef,
   SettlementView,
+  ShoppingItemView,
 } from "@hogar/shared";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -31,7 +32,7 @@ export const apiError = (status: number, code: ErrorCode) => HttpResponse.json({
 
 /**
  * By default the server is awake (health answers 200) and nobody is signed in: refresh answers 401 and logout succeeds. Balances default to
- * "all square", so pages that show a balance sentence work without setting them up.
+ * "all square" and the shopping list to empty, so pages that show them work without setting them up.
  */
 export const server = setupServer(
   http.get("*/api/health", () => HttpResponse.json({ status: "ok" })),
@@ -40,6 +41,7 @@ export const server = setupServer(
   http.get("*/api/household/balances", () => HttpResponse.json(balancesView())),
   http.get("*/api/household/categories", () => HttpResponse.json({ categories: starterCategories() })),
   http.get("*/api/household/invitations", () => HttpResponse.json({ invitations: [] })),
+  http.get("*/api/household/shopping", () => HttpResponse.json({ items: [] })),
   // Anything a test didn't set up answers like a broken server, not a lost connection: a network
   // failure would switch the app to its offline view and leave unrelated pages read-only.
   http.all("*/api/*", ({ request }) => {
@@ -143,6 +145,19 @@ export function starterCategories(): CategoryView[] {
   ];
 }
 
+/** Milk, asked for by Bruno; override the name, note or who asked. */
+export function shoppingItem(overrides: Partial<ShoppingItemView> = {}): ShoppingItemView {
+  return {
+    id: "item_milk",
+    name: "Milk",
+    note: null,
+    askedBy: brunoRef,
+    addedAt: "2026-11-18T10:00:00.000Z",
+    version: 1,
+    ...overrides,
+  };
+}
+
 /** Everyone square unless overridden. */
 export function balancesView(overrides: Partial<BalancesView> = {}): BalancesView {
   return { balances: [], suggestions: [], myBalanceCents: 0, ...overrides };
@@ -222,6 +237,7 @@ export const handlers = {
     http.get("*/api/household/expenses/:id", () => HttpResponse.json({ expense })),
   categories: (categories: CategoryView[] = starterCategories()) =>
     http.get("*/api/household/categories", () => HttpResponse.json({ categories })),
+  shopping: (items: ShoppingItemView[]) => http.get("*/api/household/shopping", () => HttpResponse.json({ items })),
   balances: (view: BalancesView = anaIsOwed()) => http.get("*/api/household/balances", () => HttpResponse.json(view)),
   settlement: (settlement: SettlementView = settlementView()) =>
     http.get("*/api/household/settlements/:id", () => HttpResponse.json({ settlement })),

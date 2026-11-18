@@ -14,6 +14,19 @@ describe("AppShell navigation", () => {
     expect(within(nav).getByRole("link", { name: "Expenses" })).not.toHaveAttribute("aria-current");
   });
 
+  it("offers Shopping third, marking it on the shopping list", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()));
+    renderApp({ path: "/shopping" });
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    expect(
+      within(nav)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["Home", "Expenses", "Shopping"]);
+    expect(within(nav).getByRole("link", { name: "Shopping" })).toHaveAttribute("aria-current", "page");
+    expect(within(nav).getByRole("link", { name: "Expenses" })).not.toHaveAttribute("aria-current");
+  });
+
   it("is one main navigation, in the header, whatever the screen size", async () => {
     server.use(handlers.signedIn(), handlers.household(homeView()));
     renderApp({ path: "/" });

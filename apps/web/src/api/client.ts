@@ -15,7 +15,10 @@ import {
   invitationListSchema,
   invitationPreviewSchema,
   settlementResponseSchema,
+  shoppingItemResponseSchema,
+  shoppingListSchema,
   type ActivityPage,
+  type AddShoppingItemInput,
   type AuthResponse,
   type AuthUser,
   type BalancesView,
@@ -38,6 +41,7 @@ import {
   type Role,
   type SettlementInput,
   type SettlementView,
+  type ShoppingItemView,
   type UpdateCategoryInput,
   type UpdateCategorySplitInput,
   type UpdateExpenseInput,
@@ -269,6 +273,23 @@ export class ApiClient {
 
   deleteCategory(id: string, version: number): Promise<void> {
     return this.request(`/household/categories/${encodeURIComponent(id)}?version=${version}`, { method: "DELETE" });
+  }
+
+  // --- Shopping list -------------------------------------------------------
+
+  /** The items on the list, in the order they were added. */
+  async getShoppingList(): Promise<ShoppingItemView[]> {
+    return (await this.request("/household/shopping", { schema: shoppingListSchema })).items;
+  }
+
+  async addShoppingItem(input: AddShoppingItemInput): Promise<ShoppingItemView> {
+    return (
+      await this.request("/household/shopping/items", {
+        method: "POST",
+        body: input,
+        schema: shoppingItemResponseSchema,
+      })
+    ).item;
   }
 
   // --- Invitations ---------------------------------------------------------
