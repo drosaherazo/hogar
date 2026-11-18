@@ -97,4 +97,31 @@ describe("Shopping list", () => {
     cy.contains("[role=status]", "Milk is already on the list.");
     cy.get("main li").should("have.length", 1);
   });
+
+  it("shows what a second person adds while the list is open", () => {
+    let items: ShoppingItemView[] = [bread];
+    let reads = 0;
+    cy.intercept("GET", "/api/household/shopping", (req) => {
+      reads += 1;
+      req.reply({ items });
+    });
+
+    cy.visit("/shopping");
+    cy.contains("li", "Bread");
+    cy.task("socket:connection");
+    // The first read, then the one connecting makes to catch up: anything newer comes from the event.
+    cy.wrap(null).should(() => expect(reads).to.equal(2));
+
+    // Bruno adds milk on his phone: the API now lists it and announces the change.
+    cy.then(() => {
+      items = [bread, { ...milk, askedBy: brunoRef }];
+    });
+    cy.task("socket:emit", "shopping:changed");
+
+    cy.get("main li")
+      .should("have.length", 2)
+      .last()
+      .should("contain", "Milk")
+      .and("contain", "asked for by Bruno Díaz");
+  });
 });
