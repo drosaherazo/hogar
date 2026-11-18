@@ -155,6 +155,8 @@ model Expense {
   editedBy  User?            @relation("ExpenseEditedBy", fields: [editedById], references: [id], onDelete: Restrict)
   deletedBy User?            @relation("ExpenseDeletedBy", fields: [deletedById], references: [id], onDelete: Restrict)
   shares    ExpenseShare[]
+  /// What was bought, when the expense notes what someone paid as they finished shopping.
+  boughtItems ShoppingItem[]
 
   @@index([householdId, date(sort: Desc), createdAt(sort: Desc), id(sort: Desc)])
   @@index([householdId, paidById])
@@ -280,8 +282,12 @@ model ShoppingItem {
   /// within the window.
   deletedAt   DateTime? @map("deleted_at")
   deletedById String?   @map("deleted_by_id")
+  /// The expense it was paid with, when whoever bought it noted what they paid. Expense edits never
+  /// change it, and deleting the expense (soft) leaves the item bought and still linked.
+  expenseId   String?   @map("expense_id")
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  expense   Expense?  @relation(fields: [expenseId], references: [id], onDelete: SetNull)
   askedBy   User      @relation("ShoppingItemAskedBy", fields: [askedById], references: [id], onDelete: Restrict)
   boughtBy  User?     @relation("ShoppingItemBoughtBy", fields: [boughtById], references: [id], onDelete: Restrict)
   deletedBy User?     @relation("ShoppingItemDeletedBy", fields: [deletedById], references: [id], onDelete: Restrict)
@@ -290,6 +296,7 @@ model ShoppingItem {
   @@index([householdId, addedAt])
   @@index([askedById])
   @@index([householdId, cartOwnerId])
+  @@index([expenseId])
   @@map("shopping_items")
 }
 

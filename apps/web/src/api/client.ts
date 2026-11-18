@@ -45,6 +45,7 @@ import {
   type SettlementInput,
   type SettlementView,
   type ShoppingItemView,
+  type ShoppingList,
   type ShoppingSuggestion,
   type SocketAuth,
   type UpdateCategoryInput,
@@ -307,9 +308,9 @@ export class ApiClient {
 
   // --- Shopping list -------------------------------------------------------
 
-  /** The items on the list, in the order they were added. */
-  async getShoppingList(): Promise<ShoppingItemView[]> {
-    return (await this.request("/household/shopping", { schema: shoppingListSchema })).items;
+  /** The items on the list, in the order they were added, and the last purchase expense's category. */
+  getShoppingList(): Promise<ShoppingList> {
+    return this.request("/household/shopping", { schema: shoppingListSchema });
   }
 
   /** What the household bought before whose name contains `query`, the most bought first. */
@@ -366,6 +367,17 @@ export class ApiClient {
       body: { itemIds, expense: null },
       schema: finishShoppingResponseSchema,
     });
+  }
+
+  /**
+   * Finishes shopping noting what the person paid: the expense is recorded with every expense rule
+   * and comes back with what was bought. Refused with `shopping.cart.changed` like a finish without
+   * one, and with any refusal an expense can get; either way nothing is recorded.
+   */
+  async finishShoppingWithExpense(itemIds: readonly string[], expense: ExpenseInput): Promise<ExpenseView> {
+    const path = "/household/shopping/finish";
+    return (await this.request(path, { method: "POST", body: { itemIds, expense }, schema: expenseResponseSchema }))
+      .expense;
   }
 
   /** Puts what a finish bought back in the person's cart, within the server's undo window. */

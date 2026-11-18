@@ -2,14 +2,17 @@ import {
   SHOPPING_ITEM_NAME_MAX,
   shoppingNameKey,
   type AddShoppingItemInput,
+  type ExpenseInput,
   type PersonRef,
   type ShoppingItemView,
+  type ShoppingList,
   type ShoppingSuggestion,
   type UpdateShoppingItemInput,
 } from "@hogar/shared";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useApiClient } from "../api/ApiClientContext";
+import { expenseKeys } from "../expenses/useExpenses";
 
 /** Under the household's key, so the installed app keeps the list with the rest (ADR 0015). */
 export const shoppingKeys = {
@@ -21,6 +24,9 @@ export const shoppingKeys = {
   suggestions: (nameKey: string) => [...shoppingKeys.list, "suggestions", nameKey] as const,
 };
 
+const itemsOf = (list: ShoppingList) => list.items;
+const lastCategoryOf = (list: ShoppingList) => list.lastCategoryId;
+
 /**
  * The household's shopping list, in the order items were added, kept current by the live
  * connection (`LiveHousehold` re-reads it on `shopping:changed`).
@@ -30,7 +36,23 @@ export function useShoppingList() {
   return useQuery({
     queryKey: shoppingKeys.list,
     queryFn: () => client.getShoppingList(),
+    select: itemsOf,
   });
+}
+
+/** The category of the household's last purchase expense, which the next one starts with. */
+export function useLastPurchaseCategory() {
+  const client = useApiClient();
+  return useQuery({
+    queryKey: shoppingKeys.list,
+    queryFn: () => client.getShoppingList(),
+    select: lastCategoryOf,
+  });
+}
+
+/** Changes the items the list shows, before the server answers or with what it answered. */
+function updateItems(queryClient: QueryClient, update: (items: ShoppingItemView[]) => ShoppingItemView[]) {
+  queryClient.setQueryData<ShoppingList>(shoppingKeys.list, (list) => list && { ...list, items: update(list.items) });
 }
 
 const NO_SUGGESTIONS: ShoppingSuggestion[] = [];
@@ -80,7 +102,7 @@ export function useAddShoppingItem() {
   return useMutation({
     mutationFn: (input: AddShoppingItemInput) => client.addShoppingItem(input),
     onSuccess: (item) => {
-      queryClient.setQueryData<ShoppingItemView[]>(shoppingKeys.list, (items) => items && [...items, item]);
+      updateItems(queryClient, (items) => [...items, item]);
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
   });
@@ -96,10 +118,7 @@ export function useEditShoppingItem() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateShoppingItemInput }) => client.editShoppingItem(id, input),
     onSuccess: (item) => {
-      queryClient.setQueryData<ShoppingItemView[]>(
-        shoppingKeys.list,
-        (items) => items && items.map((other) => (other.id === item.id ? item : other)),
-      );
+      updateItems(queryClient, (items) => items.map((other) => (other.id === item.id ? item : other)));
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
   });
@@ -116,11 +135,8 @@ export function useDeleteShoppingItem() {
     mutationFn: (item: ShoppingItemView) => client.deleteShoppingItem(item.id, item.version),
     onMutate: async (item) => {
       await queryClient.cancelQueries({ queryKey: shoppingKeys.list });
-      const before = queryClient.getQueryData<ShoppingItemView[]>(shoppingKeys.list);
-      queryClient.setQueryData<ShoppingItemView[]>(
-        shoppingKeys.list,
-        (items) => items && items.filter((other) => other.id !== item.id),
-      );
+      const before = queryClient.getQueryData<ShoppingList>(shoppingKeys.list);
+      updateItems(queryClient, (items) => items.filter((other) => other.id !== item.id));
       return { before };
     },
     onError: (_error, _item, context) => {
@@ -137,10 +153,7 @@ export function useRestoreShoppingItem() {
   return useMutation({
     mutationFn: (id: string) => client.restoreShoppingItem(id),
     onSuccess: (item) => {
-      queryClient.setQueryData<ShoppingItemView[]>(
-        shoppingKeys.list,
-        (items) => items && inListOrder([...items.filter((other) => other.id !== item.id), item]),
-      );
+      updateItems(queryClient, (items) => inListOrder([...items.filter((other) => other.id !== item.id), item]));
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
   });
@@ -165,10 +178,9 @@ export function useMoveInCart() {
     mutationFn: ({ item, owner }: CartMove) => (owner ? client.putInCart(item.id) : client.takeOutOfCart(item.id)),
     onMutate: async ({ item, owner }) => {
       await queryClient.cancelQueries({ queryKey: shoppingKeys.list });
-      const before = queryClient.getQueryData<ShoppingItemView[]>(shoppingKeys.list);
-      queryClient.setQueryData<ShoppingItemView[]>(
-        shoppingKeys.list,
-        (items) => items && items.map((other) => (other.id === item.id ? { ...other, cartOwner: owner } : other)),
+      const before = queryClient.getQueryData<ShoppingList>(shoppingKeys.list);
+      updateItems(queryClient, (items) =>
+        items.map((other) => (other.id === item.id ? { ...other, cartOwner: owner } : other)),
       );
       return { before };
     },
@@ -195,15 +207,37 @@ export function useFinishShopping() {
     mutationFn: (itemIds: readonly string[]) => client.finishShopping(itemIds),
     onMutate: async (itemIds) => {
       await queryClient.cancelQueries({ queryKey: shoppingKeys.list });
-      const before = queryClient.getQueryData<ShoppingItemView[]>(shoppingKeys.list);
-      queryClient.setQueryData<ShoppingItemView[]>(
-        shoppingKeys.list,
-        (items) => items && items.filter((item) => !itemIds.includes(item.id)),
-      );
+      const before = queryClient.getQueryData<ShoppingList>(shoppingKeys.list);
+      updateItems(queryClient, (items) => items.filter((item) => !itemIds.includes(item.id)));
       return { before };
     },
     onError: (_error, _itemIds, context) => {
       if (context?.before) queryClient.setQueryData(shoppingKeys.list, context.before);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
+  });
+}
+
+/** Finishing shopping noting what the person paid: everything in their cart, and the expense. */
+export interface FinishWithExpense {
+  itemIds: readonly string[];
+  expense: ExpenseInput;
+}
+
+/**
+ * Finishes shopping noting what the person paid. Unlike finishing without an expense it waits for
+ * the server, which may refuse the expense, and the form shows the answer. The expense's details
+ * are then ready to show, and the list, the history and the balances are read again.
+ */
+export function useFinishShoppingWithExpense() {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ itemIds, expense }: FinishWithExpense) => client.finishShoppingWithExpense(itemIds, expense),
+    onSuccess: (expense) => {
+      queryClient.setQueryData(expenseKeys.expense(expense.id), expense);
+      void queryClient.invalidateQueries({ queryKey: expenseKeys.activity });
+      void queryClient.invalidateQueries({ queryKey: expenseKeys.balances });
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
   });
@@ -217,10 +251,7 @@ export function useUndoFinishShopping() {
     mutationFn: (itemIds: readonly string[]) => client.undoFinishShopping(itemIds),
     onSuccess: (back) => {
       const ids = new Set(back.map((item) => item.id));
-      queryClient.setQueryData<ShoppingItemView[]>(
-        shoppingKeys.list,
-        (items) => items && inListOrder([...items.filter((item) => !ids.has(item.id)), ...back]),
-      );
+      updateItems(queryClient, (items) => inListOrder([...items.filter((item) => !ids.has(item.id)), ...back]));
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
   });

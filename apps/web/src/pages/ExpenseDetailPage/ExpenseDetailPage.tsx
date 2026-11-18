@@ -1,4 +1,4 @@
-import { canEditContent, type ExpenseView, type MemberView } from "@hogar/shared";
+import { canEditContent, type BoughtItemView, type ExpenseView, type MemberView } from "@hogar/shared";
 import { Alert, Avatar, Badge, Button, Card, Dialog, Spinner } from "@hogar/ui";
 import { ArrowLeft, Check, Pencil, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
@@ -14,6 +14,7 @@ import { useHousehold } from "../../household/useHousehold";
 import { useDates, useMoney } from "../../i18n/format";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell } from "../../layout/AppShell";
+import { BoughtItems } from "../../shopping/BoughtItems";
 import styles from "./ExpenseDetailPage.module.css";
 
 /** One expense: how much, who paid, when, and everyone's share. */
@@ -105,13 +106,21 @@ function DeleteExpenseDialog({
   );
 }
 
+/** What was bought; an expense the installed app kept from before purchases existed has nothing. */
+function boughtItemsOf(expense: ExpenseView): readonly BoughtItemView[] {
+  const kept: { boughtItems?: readonly BoughtItemView[] } = expense;
+  return kept.boughtItems ?? [];
+}
+
 function Details({ expense, members, canEdit }: { expense: ExpenseView; members: MemberView[]; canEdit: boolean }) {
   const { t } = useTranslation("expenses");
   const dates = useDates();
   const titleId = useId();
   const sharesId = useId();
+  const boughtId = useId();
   const [deleting, setDeleting] = useState(false);
   const { method, shares } = expense.split;
+  const bought = boughtItemsOf(expense);
 
   return (
     <Card as="article" padding="lg" className={styles.card} aria-labelledby={titleId}>
@@ -163,6 +172,15 @@ function Details({ expense, members, canEdit }: { expense: ExpenseView; members:
           ))}
         </ul>
       </section>
+
+      {bought.length > 0 && (
+        <section className={styles.sharesSection} aria-labelledby={boughtId}>
+          <h2 id={boughtId} className={styles.sharesTitle}>
+            {t("details.bought")}
+          </h2>
+          <BoughtItems items={bought} labelledBy={boughtId} />
+        </section>
+      )}
 
       <div className={styles.auditGroup}>
         <p className={styles.audit}>

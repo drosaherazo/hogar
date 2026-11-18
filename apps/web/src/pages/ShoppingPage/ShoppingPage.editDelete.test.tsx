@@ -36,7 +36,7 @@ function serveList(items: ShoppingItemView[]) {
   server.use(
     handlers.signedIn(),
     handlers.household(homeView()),
-    http.get("*/api/household/shopping", () => HttpResponse.json({ items: current })),
+    http.get("*/api/household/shopping", () => HttpResponse.json({ items: current, lastCategoryId: null })),
     http.delete("*/api/household/shopping/items/:id", ({ request, params }) => {
       deletes.push(`${String(params["id"])}${new URL(request.url).search}`);
       current = current.filter((item) => item.id !== params["id"]);
@@ -185,7 +185,7 @@ function serveEdits(
   server.use(
     handlers.signedIn(),
     handlers.household(homeView()),
-    http.get("*/api/household/shopping", () => HttpResponse.json({ items: current })),
+    http.get("*/api/household/shopping", () => HttpResponse.json({ items: current, lastCategoryId: null })),
     http.patch("*/api/household/shopping/items/:id", async ({ request, params }) => {
       const id = String(params["id"]);
       const body = (await request.json()) as Record<string, unknown>;

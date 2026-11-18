@@ -1,11 +1,31 @@
-import { finishShoppingResponseSchema, shoppingItemResponseSchema, shoppingItemsResponseSchema } from "@hogar/shared";
+import {
+  expenseResponseSchema,
+  finishShoppingResponseSchema,
+  shoppingItemResponseSchema,
+  shoppingItemsResponseSchema,
+  shoppingListSchema,
+  type ExpenseInput,
+} from "@hogar/shared";
 import { describe, expect, it } from "vitest";
-import { homeWithGuest } from "./expenseHelpers";
+import { addCategory, deleteCategory } from "./categoryHelpers";
+import {
+  addExpense,
+  balanceByUser,
+  balancesOf,
+  deleteExpense,
+  homeWithGuest,
+  inputOf,
+  previewSharesFor,
+  putExpense,
+  sharesByUser,
+  TODAY,
+} from "./expenseHelpers";
 import { createHousehold } from "./householdHelpers";
 import { request } from "./request";
 import {
   addItem,
   deleteItem,
+  getList,
   listOf,
   patchItem,
   postItem,
@@ -316,3 +336,231 @@ describe("POST /api/household/shopping/finish/undo", () => {
     expect(empty.body).toEqual({ error: { code: "request.invalid" } });
   });
 });
+
+/** What the form would send to note what `who` paid: their purchase, split by the household's weights. */
+async function purchase(who: SignedIn, overrides: Partial<ExpenseInput> = {}): Promise<ExpenseInput> {
+  const amountCents = overrides.amountCents ?? 2400;
+  return {
+    description: "Milk and eggs",
+    amountCents,
+    currency: "EUR",
+    paidById: who.user.id,
+    date: TODAY,
+    categoryId: null,
+    split: { method: "WEIGHTS", previewShares: await previewSharesFor(who, amountCents, overrides.categoryId ?? null) },
+    ...overrides,
+  };
+}
+
+const getExpense = (app: App, who: SignedIn, id: string) =>
+  request(app).get(`/api/household/expenses/${id}`).set("Authorization", who.auth);
+
+describe("finishing with an expense", () => {
+  it("records the expense and what was bought together, and takes the cart off the list", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, milk, eggs, bread, rice } = await shopping(app);
+    await patchItem(app, bruno, milk.id, { note: "oat", version: 1 }).expect(200);
+
+    const res = await finish(app, bruno, { itemIds: [eggs.id, milk.id], expense: await purchase(bruno) });
+
+    expect(res.status).toBe(201);
+    const { expense } = finishShoppingResponseSchema.parse(res.body);
+    expect(expense).toEqual(
+      expect.objectContaining({
+        description: "Milk and eggs",
+        amountCents: 2400,
+        date: TODAY,
+        boughtItems: [
+          { name: "Milk", note: "oat" },
+          { name: "Eggs", note: null },
+        ],
+      }),
+    );
+    expect(expense?.paidBy.userId).toBe(bruno.user.id);
+    expect(sharesByUser(expenseOrThrow(expense))).toEqual({ [ana.user.id]: 1800, [bruno.user.id]: 600 });
+    const saved = await getExpense(app, ana, expenseOrThrow(expense).id).expect(200);
+    expect(expenseResponseSchema.parse(saved.body).expense).toEqual(expense);
+    expect((await listOf(app, ana)).map((item) => item.id)).toEqual([bread.id, rice.id]);
+  });
+
+  it.each([
+    ["a future date", 400, "money.date.future", (bruno: SignedIn) => purchase(bruno, { date: "2026-10-28" })],
+    ["another currency", 409, "money.currency.mismatch", (bruno: SignedIn) => purchase(bruno, { currency: "USD" })],
+    [
+      "a payer from outside the household",
+      400,
+      "expense.person.not_member",
+      (bruno: SignedIn) => purchase(bruno, { paidById: "user_outsider" }),
+    ],
+    [
+      "shares that aren't the ones the split gives now",
+      409,
+      "expense.split.changed",
+      async (bruno: SignedIn) => ({
+        ...(await purchase(bruno)),
+        split: { method: "WEIGHTS" as const, previewShares: [{ userId: bruno.user.id, amountCents: 2400 }] },
+      }),
+    ],
+    [
+      "a category of no household",
+      400,
+      "expense.category.not_found",
+      (bruno: SignedIn) => purchase(bruno, { categoryId: "cat_missing" }),
+    ],
+  ])(
+    "refuses %s like any expense, records nothing and leaves the cart as it was",
+    async (_case, status, code, body) => {
+      const { app } = createTestApp();
+      const { ana, bruno, milk, eggs } = await shopping(app);
+      const before = await listOf(app, ana);
+
+      const res = await finish(app, bruno, { itemIds: [milk.id, eggs.id], expense: await body(bruno) });
+
+      expect(res.status).toBe(status);
+      expect(res.body).toEqual({ error: { code } });
+      expect(await listOf(app, ana)).toEqual(before);
+      expect(Object.values(balanceByUser(await balancesOf(app, ana))).every((cents) => cents === 0)).toBe(true);
+    },
+  );
+
+  it("records nothing when the cart changed meanwhile", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, milk, eggs } = await shopping(app);
+    const before = await listOf(app, ana);
+
+    const res = await finish(app, bruno, { itemIds: [milk.id], expense: await purchase(bruno) });
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "shopping.cart.changed" } });
+    expect(await listOf(app, ana)).toEqual(before);
+    expect(Object.values(balanceByUser(await balancesOf(app, ana))).every((cents) => cents === 0)).toBe(true);
+    await finish(app, bruno, { itemIds: [milk.id, eggs.id], expense: await purchase(bruno) }).expect(201);
+  });
+
+  it("answers an error code to an expense that isn't valid, and buys nothing", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, milk, eggs } = await shopping(app);
+    const before = await listOf(app, ana);
+
+    const res = await finish(app, bruno, {
+      itemIds: [milk.id, eggs.id],
+      expense: { ...(await purchase(bruno)), amountCents: 0 },
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: { code: "money.amount.invalid" } });
+    expect(await listOf(app, ana)).toEqual(before);
+  });
+
+  it("can't be undone: what was paid with an expense stays bought", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, milk, eggs, bread, rice } = await shopping(app);
+    await finish(app, bruno, { itemIds: [milk.id, eggs.id], expense: await purchase(bruno) }).expect(201);
+
+    const res = await undo(app, bruno, { itemIds: [milk.id, eggs.id] });
+
+    expect(res.status).toBe(410);
+    expect(res.body).toEqual({ error: { code: "shopping.undo.expired" } });
+    expect((await listOf(app, ana)).map((item) => item.id)).toEqual([bread.id, rice.id]);
+  });
+});
+
+describe("what was bought, on expenses", () => {
+  it("is empty for an expense noted any other way", async () => {
+    const { app } = createTestApp();
+    const { ana } = await shopping(app);
+    expect((await addExpense(app, ana)).boughtItems).toEqual([]);
+  });
+
+  it("never changes when the expense is edited, and the items stay bought when it is deleted", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, milk, eggs, bread, rice } = await shopping(app);
+    const res = await finish(app, bruno, { itemIds: [milk.id, eggs.id], expense: await purchase(bruno) });
+    const expense = expenseOrThrow(finishShoppingResponseSchema.parse(res.body).expense);
+
+    const edited = await putExpense(app, ana, expense.id, {
+      ...inputOf(expense),
+      description: "The weekly shop",
+      amountCents: 3000,
+      version: expense.version,
+    });
+    expect(edited.status).toBe(200);
+    expect(expenseResponseSchema.parse(edited.body).expense.boughtItems).toEqual(expense.boughtItems);
+
+    await deleteExpense(app, ana, expense.id, expense.version + 1).expect(204);
+    expect((await listOf(app, ana)).map((item) => item.id)).toEqual([bread.id, rice.id]);
+    const undone = await undo(app, bruno, { itemIds: [milk.id, eggs.id] });
+    expect(undone.status).toBe(410);
+  });
+});
+
+describe("the category the next purchase starts with", () => {
+  const lastCategoryOf = async (app: App, who: SignedIn) =>
+    shoppingListSchema.parse((await getList(app, who).expect(200)).body).lastCategoryId;
+
+  it("is none until something is paid for when finishing", async () => {
+    const { app } = createTestApp();
+    const { ana, carla } = await shopping(app);
+    const category = await addCategory(app, ana, "Supermarket");
+    await addExpense(app, ana, { categoryId: category.id });
+
+    expect(await lastCategoryOf(app, ana)).toBeNull();
+    expect(await lastCategoryOf(app, carla)).toBeNull();
+  });
+
+  it("is the newest purchase's, for everyone, even with newer expenses that weren't purchases", async () => {
+    const { app, clock } = createTestApp();
+    const { ana, bruno, carla, milk, eggs, bread } = await shopping(app);
+    const market = await addCategory(app, ana, "Market");
+    const supermarket = await addCategory(app, ana, "Supermarket");
+    const rent = await addCategory(app, ana, "Rent");
+    await finish(app, bruno, {
+      itemIds: [milk.id, eggs.id],
+      expense: await purchase(bruno, { categoryId: market.id }),
+    }).expect(201);
+    clock.advance(1000);
+    await finish(app, ana, {
+      itemIds: [bread.id],
+      expense: await purchase(ana, { categoryId: supermarket.id }),
+    }).expect(201);
+    clock.advance(1000);
+    await addExpense(app, ana, { categoryId: rent.id });
+
+    for (const who of [ana, bruno, carla]) expect(await lastCategoryOf(app, who)).toBe(supermarket.id);
+  });
+
+  it("skips a deleted purchase, and is none when the newest purchase's category was deleted", async () => {
+    const { app, clock } = createTestApp();
+    const { ana, bruno, milk, eggs, bread, rice } = await shopping(app);
+    const market = await addCategory(app, ana, "Market");
+    const supermarket = await addCategory(app, ana, "Supermarket");
+    await finish(app, bruno, {
+      itemIds: [milk.id, eggs.id],
+      expense: await purchase(bruno, { categoryId: market.id }),
+    }).expect(201);
+    clock.advance(1000);
+    const res = await finish(app, ana, {
+      itemIds: [bread.id],
+      expense: await purchase(ana, { categoryId: supermarket.id }),
+    });
+    const second = expenseOrThrow(finishShoppingResponseSchema.parse(res.body).expense);
+
+    await deleteExpense(app, ana, second.id, second.version).expect(204);
+    expect(await lastCategoryOf(app, ana)).toBe(market.id);
+
+    await deleteCategory(app, ana, market.id, market.version).expect(204);
+    expect(await lastCategoryOf(app, ana)).toBeNull();
+
+    clock.advance(1000);
+    await putInCart(app, ana, rice.id).expect(200);
+    await finish(app, ana, {
+      itemIds: [rice.id],
+      expense: await purchase(ana, { categoryId: supermarket.id }),
+    }).expect(201);
+    expect(await lastCategoryOf(app, ana)).toBe(supermarket.id);
+  });
+});
+function expenseOrThrow<T>(expense: T | null | undefined): T {
+  if (!expense) throw new Error("finishing recorded no expense");
+  return expense;
+}

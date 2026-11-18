@@ -270,6 +270,7 @@ function ListAndForm({ household }: { household: HouseholdView }) {
         open={finishing && myCart.length > 0}
         onOpenChange={setFinishing}
         count={myCart.length}
+        onRecord={() => void navigate("/shopping/finish")}
         onFinishWithoutExpense={finishWithoutExpense}
       />
       {editing && (

@@ -1,4 +1,4 @@
-import type { HouseholdView, MemberView, PersonRef, ShoppingItemView } from "@hogar/shared";
+import type { ExpenseView, HouseholdView, MemberView, PersonRef, ShoppingItemView } from "@hogar/shared";
 import { ana, openInBackground, session, setPageVisibility } from "../support/e2e";
 
 // --- Stub data -----------------------------------------------------------------
@@ -59,7 +59,7 @@ describe("Shopping list", () => {
 
   it("adds an item from the Shopping tab and counts it on Home", () => {
     let items: ShoppingItemView[] = [bread];
-    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items }));
+    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items, lastCategoryId: null }));
     cy.intercept("POST", "/api/household/shopping/items", (req) => {
       expect(req.body).to.deep.equal({ name: "Milk", note: "lactose-free" });
       items = [bread, milk];
@@ -88,7 +88,7 @@ describe("Shopping list", () => {
   });
 
   it("suggests what the household bought, and one tap fills the name and its last note", () => {
-    cy.intercept("GET", "/api/household/shopping", { body: { items: [bread] } });
+    cy.intercept("GET", "/api/household/shopping", { body: { items: [bread], lastCategoryId: null } });
     cy.intercept("GET", "/api/household/shopping/suggestions*", (req) => {
       req.reply({
         body: {
@@ -123,7 +123,7 @@ describe("Shopping list", () => {
   });
 
   it("kindly says when something is already on the list", () => {
-    cy.intercept("GET", "/api/household/shopping", { body: { items: [milk] } });
+    cy.intercept("GET", "/api/household/shopping", { body: { items: [milk], lastCategoryId: null } });
     cy.intercept("POST", "/api/household/shopping/items", {
       statusCode: 409,
       body: { error: { code: "shopping.item.duplicate" } },
@@ -141,7 +141,7 @@ describe("Shopping list", () => {
     let reads = 0;
     cy.intercept("GET", "/api/household/shopping", (req) => {
       reads += 1;
-      req.reply({ items });
+      req.reply({ items, lastCategoryId: null });
     });
 
     // Opened in a background tab: the list goes live once Ana looks at it, after its first read.
@@ -169,7 +169,7 @@ describe("Shopping list", () => {
     let reads = 0;
     cy.intercept("GET", "/api/household/shopping", (req) => {
       reads += 1;
-      req.reply({ items });
+      req.reply({ items, lastCategoryId: null });
     });
 
     // Opened in a background tab: the list goes live once Ana looks at it, after its first read.
@@ -199,7 +199,7 @@ describe("Shopping list", () => {
 
   it("puts an item in Ana's cart with one tap, and says so when Bruno got to another one first", () => {
     let items: ShoppingItemView[] = [bread, milk];
-    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items }));
+    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items, lastCategoryId: null }));
     cy.intercept("PUT", "/api/household/shopping/items/item_bread/cart", (req) => {
       items = [{ ...bread, cartOwner: anaRef }, milk];
       req.reply({ item: items[0] });
@@ -229,7 +229,7 @@ describe("Shopping list", () => {
   it("edits an item someone changed meanwhile, saving the person's version once they've seen theirs", () => {
     let items: ShoppingItemView[] = [milk];
     const edits: unknown[] = [];
-    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items }));
+    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items, lastCategoryId: null }));
     cy.intercept("PATCH", "/api/household/shopping/items/item_milk", (req) => {
       edits.push(req.body);
       if (req.body.version === 1) {
@@ -265,7 +265,7 @@ describe("Shopping list", () => {
 
   it("deletes an item at once and brings it back with Undo, from a toast above the tab bar", () => {
     let items: ShoppingItemView[] = [bread, milk];
-    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items }));
+    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items, lastCategoryId: null }));
     cy.intercept("DELETE", "/api/household/shopping/items/item_bread*", (req) => {
       expect(req.url).to.contain("version=1");
       items = [milk];
@@ -301,7 +301,7 @@ describe("Shopping list", () => {
   it("finishes shopping without an expense, keeping what wasn't found, and undoes it from the toast", () => {
     const inCart = (item: ShoppingItemView) => ({ ...item, cartOwner: anaRef });
     let items: ShoppingItemView[] = [inCart(bread), milk];
-    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items }));
+    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items, lastCategoryId: null }));
     cy.intercept("POST", "/api/household/shopping/finish", (req) => {
       expect(req.body).to.deep.equal({ itemIds: ["item_bread"], expense: null });
       items = [milk];
@@ -350,5 +350,101 @@ describe("Shopping list", () => {
     cy.contains("[role=status]", "1 thing is back in your cart");
     cy.get("main li").should("have.length", 2).first().should("contain", "Bread").and("contain", "In your cart");
     cy.contains("p", "1 in your cart").parent().contains("button", "Finish shopping");
+  });
+
+  it("adds, marks and finishes noting what was paid, then shows what was bought on the expense", () => {
+    let items: ShoppingItemView[] = [bread];
+    let expense: ExpenseView | null = null;
+    const inCart = (item: ShoppingItemView) => ({ ...item, cartOwner: anaRef });
+    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items, lastCategoryId: "cat_groceries" }));
+    cy.intercept("POST", "/api/household/shopping/items", (req) => {
+      items = [bread, milk];
+      req.reply({ statusCode: 201, body: { item: milk } });
+    });
+    cy.intercept("PUT", "/api/household/shopping/items/*/cart", (req) => {
+      const id = decodeURIComponent(req.url.split("/").at(-2) ?? "");
+      items = items.map((item) => (item.id === id ? inCart(item) : item));
+      req.reply({ item: items.find((item) => item.id === id) });
+    });
+    cy.intercept("POST", "/api/household/shopping/finish", (req) => {
+      expect(req.body).to.deep.equal({
+        itemIds: ["item_bread", "item_milk"],
+        expense: {
+          description: "Bread and Milk",
+          amountCents: 2400,
+          currency: "EUR",
+          paidById: ana.id,
+          date: req.body.expense.date,
+          categoryId: "cat_groceries",
+          split: {
+            method: "WEIGHTS",
+            previewShares: [
+              { userId: ana.id, amountCents: 1200 },
+              { userId: "user_bruno", amountCents: 1200 },
+            ],
+          },
+        },
+      });
+      items = [];
+      expense = {
+        id: "expense_shop",
+        description: "Bread and Milk",
+        amountCents: 2400,
+        date: req.body.expense.date,
+        paidBy: anaRef,
+        split: {
+          method: "WEIGHTS",
+          shares: [
+            { person: anaRef, amountCents: 1200 },
+            { person: brunoRef, amountCents: 1200 },
+          ],
+        },
+        category: { id: "cat_groceries", name: "Groceries", emoji: "🛒" },
+        boughtItems: [
+          { name: "Bread", note: null },
+          { name: "Milk", note: "lactose-free" },
+        ],
+        createdBy: anaRef,
+        createdAt: "2026-11-18T11:00:00.000Z",
+        editedBy: null,
+        editedAt: null,
+        version: 1,
+      };
+      req.reply({ statusCode: 201, body: { expense } });
+    }).as("finish");
+    cy.intercept("GET", "/api/household/expenses/expense_shop", (req) => req.reply({ expense }));
+
+    cy.visit("/shopping");
+    cy.contains("label", "What's needed?").click();
+    cy.focused().type("Milk");
+    cy.contains("label", "Note (optional)").click();
+    cy.focused().type("lactose-free{enter}");
+    cy.get("main li").should("have.length", 2);
+    cy.get('input[aria-label="Put Bread in your cart"]').check();
+    cy.get('input[aria-label="Put Milk in your cart"]').check();
+
+    cy.contains("p", "2 in your cart").parent().contains("button", "Finish shopping").click();
+    cy.contains("[role=dialog]", "Done shopping?").within(() => {
+      cy.contains("button", "Note what I paid").click();
+    });
+
+    cy.findHeading("Add an expense");
+    cy.contains("label", "What was it?").next("input").should("have.value", "Bread and Milk");
+    cy.contains("label", "Category").parent().find("select").should("have.value", "cat_groceries");
+    cy.contains("section", "What you bought").within(() => {
+      cy.get("li").should("have.length", 2);
+      cy.contains("li", "Milk").should("contain", "lactose-free");
+    });
+    cy.contains("label", "Amount (€)").click();
+    cy.focused().type("24");
+    cy.contains("button", "Save expense").click();
+
+    cy.wait("@finish");
+    cy.findHeading("Bread and Milk");
+    cy.contains("[role=status]", "Expense saved.");
+    cy.contains("section", "What was bought").within(() => {
+      cy.get("li").should("have.length", 2);
+      cy.contains("li", "Milk").should("contain", "lactose-free");
+    });
   });
 });

@@ -118,6 +118,16 @@ const dialogs: DialogCapture[] = [
     },
   },
   {
+    name: "finish-shopping",
+    path: "/shopping",
+    open: (t) =>
+      cy
+        .contains("p", t("shopping:cartBar.count", { count: 1 }))
+        .parent()
+        .contains("button", t("shopping:cartBar.finish"))
+        .click(),
+  },
+  {
     name: "invite-leave-first",
     path: "/invite#tok_join",
     stub: () =>

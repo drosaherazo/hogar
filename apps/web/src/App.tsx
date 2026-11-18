@@ -51,6 +51,7 @@ export function createRoutes({ googleClientId }: AppConfig): RouteObject[] {
         { path: "/expenses/:id/edit", element: <ExpenseFormPage /> },
         { path: "/balances", element: <BalancesPage /> },
         { path: "/shopping", element: <ShoppingPage /> },
+        { path: "/shopping/finish", element: <ExpenseFormPage fromCart /> },
       ],
     },
     { path: "*", element: <RedirectIfAuthenticated /> },
