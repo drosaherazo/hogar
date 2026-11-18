@@ -13,6 +13,7 @@ import type { Database } from "../db";
 import { Prisma, type Membership } from "../generated/prisma/client";
 import { seedStarterCategories } from "../categories/starterCategories";
 import { badRequest, conflict, forbidden, notFound } from "../httpError";
+import { noHouseholdEvents, type HouseholdEvents } from "../realtime/householdEvents";
 import { CURRENCY_LOCK_COUNTS, HOUSEHOLD_VIEW_INCLUDE, isCurrencyLocked, toHouseholdView } from "./householdView";
 
 /**
@@ -68,6 +69,7 @@ export function clearRemovalNotice(client: Prisma.TransactionClient | Database, 
 export interface HouseholdServiceDeps {
   db: Database;
   now?: (() => Date) | undefined;
+  events?: HouseholdEvents;
 }
 
 /** True when Postgres rejected a row because it would break a unique constraint. */
@@ -75,7 +77,11 @@ export function isUniqueViolation(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
 }
 
-export function createHouseholdService({ db, now = () => new Date() }: HouseholdServiceDeps) {
+export function createHouseholdService({
+  db,
+  now = () => new Date(),
+  events = noHouseholdEvents,
+}: HouseholdServiceDeps) {
   async function view(householdId: string, viewerUserId: string): Promise<HouseholdView> {
     const household = await db.household.findUniqueOrThrow({
       where: { id: householdId },
@@ -144,6 +150,7 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
           },
         });
       });
+      events.publish(householdId, "household:changed");
       return view(householdId, viewerUserId);
     },
 
@@ -153,6 +160,7 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
         await guardAdmins(tx, actor.householdId, { type: "role", membershipId, role }, actor.id);
         await tx.membership.update({ where: { id: membershipId }, data: { role } });
       });
+      events.publish(actor.householdId, "household:changed");
       return view(actor.householdId, actor.userId);
     },
 
@@ -160,7 +168,7 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
     async removeMember(actor: Membership, membershipId: string): Promise<HouseholdView> {
       // Removing yourself is leaving, which has its own rules (and leaves no note).
       if (membershipId === actor.id) throw badRequest();
-      await db.$transaction(async (tx) => {
+      const removedUserId = await db.$transaction(async (tx) => {
         await guardAdmins(tx, actor.householdId, { type: "remove", membershipId }, actor.id);
         const removed = await tx.membership.delete({
           where: { id: membershipId },
@@ -171,7 +179,10 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
           data: { removedFromHousehold: removed.household.name },
         });
         await tx.household.update({ where: { id: actor.householdId }, data: { membersChangedAt: now() } });
+        return removed.userId;
       });
+      events.membershipEnded(actor.householdId, removedUserId);
+      events.publish(actor.householdId, "household:changed");
       return view(actor.householdId, actor.userId);
     },
 
@@ -186,6 +197,8 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
         await tx.membership.delete({ where: { id: membership.id } });
         await tx.household.update({ where: { id: membership.householdId }, data: { membersChangedAt: now() } });
       });
+      events.membershipEnded(membership.householdId, membership.userId);
+      events.publish(membership.householdId, "household:changed");
     },
 
     /**
@@ -212,6 +225,7 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
         }
         await tx.household.update({ where: { id: actor.householdId }, data: { splitSavedAt: now() } });
       });
+      events.publish(actor.householdId, "household:changed");
       return view(actor.householdId, actor.userId);
     },
 
