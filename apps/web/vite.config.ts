@@ -2,7 +2,7 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
-import { E2E_SOCKET_PATH, E2E_SOCKET_PORT } from "./cypress/socketStub.ts";
+import { E2E_SOCKET_PATH, E2E_SOCKET_PORT } from "./cypress/socketStubAddress.ts";
 import { pwaOptions } from "./pwa.config.ts";
 
 export default defineConfig(({ mode }) => ({
