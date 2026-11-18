@@ -1,10 +1,24 @@
-import type { AddShoppingItemInput, PersonRef, ShoppingItemView, UpdateShoppingItemInput } from "@hogar/shared";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  SHOPPING_ITEM_NAME_MAX,
+  shoppingNameKey,
+  type AddShoppingItemInput,
+  type PersonRef,
+  type ShoppingItemView,
+  type ShoppingSuggestion,
+  type UpdateShoppingItemInput,
+} from "@hogar/shared";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { useApiClient } from "../api/ApiClientContext";
 
 /** Under the household's key, so the installed app keeps the list with the rest (ADR 0015). */
 export const shoppingKeys = {
   list: ["household", "shopping"] as const,
+  /**
+   * Under the list's key, so whatever re-reads the list (a change, a live event, catching up)
+   * re-reads the suggestions too: what goes on the list leaves them.
+   */
+  suggestions: (nameKey: string) => [...shoppingKeys.list, "suggestions", nameKey] as const,
 };
 
 /**
@@ -17,6 +31,38 @@ export function useShoppingList() {
     queryKey: shoppingKeys.list,
     queryFn: () => client.getShoppingList(),
   });
+}
+
+const NO_SUGGESTIONS: ShoppingSuggestion[] = [];
+
+/**
+ * What the household bought before that matches what the person is typing, the most bought first,
+ * leaving out what is on `items` (the list they see). While the server answers a new query, the
+ * last answer stays, narrowed to what still matches, so the suggestions follow every keystroke
+ * without flickering. Nothing is typed, nothing is suggested.
+ *
+ * Kept out of the installed app's offline copy: nothing can be added offline (ADR 0015), and
+ * every half-typed name would otherwise be saved there.
+ */
+export function useShoppingSuggestions(typed: string, items: readonly ShoppingItemView[]): ShoppingSuggestion[] {
+  const client = useApiClient();
+  const nameKey = shoppingNameKey(typed);
+  const query = useQuery({
+    queryKey: shoppingKeys.suggestions(nameKey),
+    queryFn: () => client.getShoppingSuggestions(typed.trim()),
+    enabled: nameKey !== "" && typed.trim().length <= SHOPPING_ITEM_NAME_MAX,
+    placeholderData: keepPreviousData,
+    meta: { offline: false },
+  });
+  const { data } = query;
+  return useMemo(() => {
+    if (nameKey === "" || !data) return NO_SUGGESTIONS;
+    const listed = new Set(items.map((item) => shoppingNameKey(item.name)));
+    return data.filter((suggestion) => {
+      const key = shoppingNameKey(suggestion.name);
+      return key.includes(nameKey) && !listed.has(key);
+    });
+  }, [data, items, nameKey]);
 }
 
 /** The list's own order: when each item was added, like on paper. */

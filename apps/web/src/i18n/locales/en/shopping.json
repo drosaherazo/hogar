@@ -9,6 +9,10 @@
     "submit": "Add",
     "adding": "Adding…"
   },
+  "suggestion": {
+    "timesBought_one": "Bought once",
+    "timesBought_other": "Bought {{count}} times"
+  },
   "added": "You added {{name}}",
   "item": {
     "askedBy": "asked for by {{name}}",
