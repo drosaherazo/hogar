@@ -12,7 +12,8 @@ import { memberColor } from "../../household/members";
 import { useDismissRemovalNotice, useHousehold } from "../../household/useHousehold";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell, Columns } from "../../layout/AppShell";
-import { useShoppingList } from "../../shopping/useShopping";
+import { cartOf, useShoppingList } from "../../shopping/useShopping";
+import type { ShoppingPageState } from "../ShoppingPage/ShoppingPage";
 import styles from "./HomePage.module.css";
 
 /** What the greeting calls the person: their first name, or their whole starter name. */
@@ -122,7 +123,7 @@ function HouseholdSummary({ household }: { household: HouseholdView }) {
         {/* One column with the money card and the list below it, so on wide screens the list sits under the money. */}
         <div className={styles.stack}>
           <MoneyCard canEdit={canEditContent(household.myRole)} />
-          <ShoppingCard />
+          <ShoppingCard canEdit={canEditContent(household.myRole)} />
         </div>
       </Columns>
     </>
@@ -180,11 +181,17 @@ function MoneyCard({ canEdit }: { canEdit: boolean }) {
   );
 }
 
-/** How many things are left to buy, and the way to the list. */
-function ShoppingCard() {
+/**
+ * How many things are left to buy (items in carts too, until they are bought), the way to the
+ * list, and a reminder when the person's own cart still has things in it.
+ */
+function ShoppingCard({ canEdit }: { canEdit: boolean }) {
   const { t } = useTranslation(["home", "shopping", "common"]);
   const list = useShoppingList();
+  const user = useCurrentUser();
   const titleId = useId();
+  const inMyCart = canEdit && list.data ? cartOf(list.data, user.id).length : 0;
+  const finish: ShoppingPageState = { finish: true };
 
   return (
     <Card as="section" padding="lg" aria-labelledby={titleId} className={styles.shopping}>
@@ -199,6 +206,18 @@ function ShoppingCard() {
         <p className={styles.toBuy}>
           {list.data.length > 0 ? t("shopping.toBuy", { count: list.data.length }) : t("shopping.empty")}
         </p>
+      )}
+      {inMyCart > 0 && (
+        <Alert
+          tone="warning"
+          action={
+            <ActionLink to="/shopping" state={finish} changesData>
+              {t("shopping:cartBar.finish")}
+            </ActionLink>
+          }
+        >
+          {t("shopping:reminder.title", { count: inMyCart })}
+        </Alert>
       )}
       <ActionLink to="/shopping" icon={<ShoppingBasket />} className={styles.shoppingLink}>
         {t("shopping.see")}

@@ -132,3 +132,50 @@ export function useMoveInCart() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
   });
 }
+
+/** The items in `userId`'s cart, in list order. */
+export function cartOf(items: readonly ShoppingItemView[], userId: string): ShoppingItemView[] {
+  return items.filter((item) => item.cartOwner?.userId === userId);
+}
+
+/**
+ * Finishes shopping without an expense: the items leave the list at once, before the server
+ * answers, and come back if it refuses (the cart changed meanwhile) or never hears of it.
+ */
+export function useFinishShopping() {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (itemIds: readonly string[]) => client.finishShopping(itemIds),
+    onMutate: async (itemIds) => {
+      await queryClient.cancelQueries({ queryKey: shoppingKeys.list });
+      const before = queryClient.getQueryData<ShoppingItemView[]>(shoppingKeys.list);
+      queryClient.setQueryData<ShoppingItemView[]>(
+        shoppingKeys.list,
+        (items) => items && items.filter((item) => !itemIds.includes(item.id)),
+      );
+      return { before };
+    },
+    onError: (_error, _itemIds, context) => {
+      if (context?.before) queryClient.setQueryData(shoppingKeys.list, context.before);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
+  });
+}
+
+/** Undoes a finish: what it bought comes back into the person's cart, each item in its place. */
+export function useUndoFinishShopping() {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (itemIds: readonly string[]) => client.undoFinishShopping(itemIds),
+    onSuccess: (back) => {
+      const ids = new Set(back.map((item) => item.id));
+      queryClient.setQueryData<ShoppingItemView[]>(
+        shoppingKeys.list,
+        (items) => items && inListOrder([...items.filter((item) => !ids.has(item.id)), ...back]),
+      );
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
+  });
+}

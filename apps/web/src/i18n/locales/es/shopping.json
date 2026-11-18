@@ -48,5 +48,26 @@
     "title": "Alguien cambió esto mientras tanto",
     "keepNew": "Dejar la versión nueva",
     "saveMine": "Guardar la mía"
+  },
+  "cartBar": {
+    "count_one": "{{count}} en tu carrito",
+    "count_other": "{{count}} en tu carrito",
+    "finish": "Terminar compra"
+  },
+  "reminder": {
+    "title_one": "Aún tienes {{count}} en tu carrito",
+    "title_other": "Aún tienes {{count}} en tu carrito"
+  },
+  "finish": {
+    "title": "¿Terminaste la compra?",
+    "description_one": "La cosa que llevas en tu carrito sale de la lista. Lo que no encontraste se queda.",
+    "description_other": "Las {{count}} cosas de tu carrito salen de la lista. Lo que no encontraste se queda.",
+    "withoutExpense": "Terminar sin gasto",
+    "withoutExpenseHint": "Para cuando pagó otra persona o no se reparte.",
+    "done_one": "Listo: 1 cosa fuera de la lista",
+    "done_other": "Listo: {{count}} cosas fuera de la lista",
+    "undone_one": "1 cosa vuelve a estar en tu carrito",
+    "undone_other": "{{count}} cosas vuelven a estar en tu carrito",
+    "cartChanged": "Tu carrito cambió mientras tanto. Revisa lo que llevas y vuelve a terminar."
   }
 }

@@ -14,7 +14,7 @@ import clsx from "clsx";
 import { Check, MoreHorizontal, Pencil, Plus, ShoppingBasket, Trash2 } from "lucide-react";
 import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate } from "react-router";
+import { Navigate, useLocation, useNavigate } from "react-router";
 import { ApiRequestError, errorKey } from "../../api/client";
 import { useCurrentUser } from "../../auth/guards";
 import { usePersonLabel } from "../../expenses/people";
@@ -22,20 +22,30 @@ import { LoadError } from "../../household/LoadError";
 import { useHousehold } from "../../household/useHousehold";
 import { AppShell } from "../../layout/AppShell";
 import {
+  cartOf,
   useAddShoppingItem,
   useDeleteShoppingItem,
+  useFinishShopping,
   useMoveInCart,
   useRestoreShoppingItem,
   useShoppingList,
+  useUndoFinishShopping,
 } from "../../shopping/useShopping";
 import { useToasts } from "../../toast/Toasts";
 import { DuplicateNotice } from "./DuplicateNotice";
 import { EditItemDialog } from "./EditItemDialog";
+import { CartBar, FinishDialog } from "./FinishShopping";
 import styles from "./ShoppingPage.module.css";
 import { useCartReturned } from "./useCartReturned";
+import { useForgottenCart } from "./useForgottenCart";
 
 const TITLE_ID = "shopping-title";
 const NO_ITEMS: ShoppingItemView[] = [];
+
+/** Router state that opens the finish dialog on arrival, as Home's cart reminder does. */
+export interface ShoppingPageState {
+  finish?: boolean;
+}
 
 /** The household's one shopping list: what's needed, in the order it was asked for, and the way to add to it. */
 export function ShoppingPage() {
@@ -76,8 +86,20 @@ function ListAndForm({ household }: { household: HouseholdView }) {
   const remove = useDeleteShoppingItem();
   const restore = useRestoreShoppingItem();
   const move = useMoveInCart();
+  const finish = useFinishShopping();
+  const undoFinish = useUndoFinishShopping();
   const user = useCurrentUser();
   const cartReturned = useCartReturned(items);
+  const myCart = canEdit ? cartOf(items, user.id) : NO_ITEMS;
+  const forgotten = useForgottenCart(myCart.length, list.isSuccess);
+  const location = useLocation();
+  const navigate = useNavigate();
+  // Arriving from Home's reminder opens the finish dialog as soon as the cart is known.
+  const finishOnArrival = (location.state as ShoppingPageState | null)?.finish === true;
+  const [finishing, setFinishing] = useState(finishOnArrival);
+  // A cart that is empty (or emptied elsewhere) has nothing to finish: the dialog closes for good.
+  if (finishing && list.isSuccess && myCart.length === 0) setFinishing(false);
+  const focusAfterFinish = useRef(false);
   const nameField = useRef<HTMLInputElement>(null);
   const listElement = useRef<HTMLUListElement>(null);
   const focusAfterDelete = useRef<FocusAfterDelete | null>(null);
@@ -95,6 +117,19 @@ function ListAndForm({ household }: { household: HouseholdView }) {
     const next = Array.from(buttons).find((button) => button.dataset["optionsFor"] === target.next);
     (next ?? nameField.current)?.focus();
   }, [items]);
+
+  // Only once: going back or reloading doesn't open it again.
+  useEffect(() => {
+    if (finishOnArrival) void navigate(location.pathname, { replace: true, state: null });
+  }, [finishOnArrival, navigate, location.pathname]);
+
+  // The bar that opened the dialog leaves with the cart: keep the keyboard on the page, on adding.
+  useEffect(() => {
+    if (focusAfterFinish.current && myCart.length === 0) {
+      focusAfterFinish.current = false;
+      nameField.current?.focus();
+    }
+  }, [myCart.length]);
 
   function reset() {
     setDone(null);
@@ -124,6 +159,33 @@ function ListAndForm({ household }: { household: HouseholdView }) {
     });
   }
 
+  /** Everything in the viewer's cart leaves the list at once; "Undo" in the toast puts it back. */
+  function finishWithoutExpense() {
+    reset();
+    const itemIds = myCart.map((item) => item.id);
+    setFinishing(false);
+    focusAfterFinish.current = true;
+    finish.mutate(itemIds, {
+      onSuccess: () =>
+        toasts.show({
+          message: t("finish.done", { count: itemIds.length }),
+          action: { label: t("undo"), onAction: () => undoFinishing(itemIds) },
+        }),
+      onError: (error) => {
+        focusAfterFinish.current = false;
+        setFailure(error);
+      },
+    });
+  }
+
+  function undoFinishing(itemIds: readonly string[]) {
+    reset();
+    undoFinish.mutate(itemIds, {
+      onSuccess: (back) => setDone(t("finish.undone", { count: back.length })),
+      onError: setFailure,
+    });
+  }
+
   /**
    * Into the viewer's cart or out of it, at once. When someone else got there first, the item
    * moves back, the list shows whose cart it is in, and the alert says why.
@@ -138,12 +200,24 @@ function ListAndForm({ household }: { household: HouseholdView }) {
   return (
     <>
       {cartReturned && <Alert tone="info">{t("cartReturned")}</Alert>}
+      {forgotten && myCart.length > 0 && (
+        <Alert
+          tone="warning"
+          action={
+            <Button variant="secondary" size="sm" onClick={() => setFinishing(true)}>
+              {t("cartBar.finish")}
+            </Button>
+          }
+        >
+          {t("reminder.title", { count: myCart.length })}
+        </Alert>
+      )}
       {canEdit ? (
         <AddItemForm items={items} nameField={nameField} />
       ) : (
         <p className={styles.muted}>{t("guest.readOnly")}</p>
       )}
-      {failure !== null && <Alert tone="danger">{t(errorKey(failure))}</Alert>}
+      {failure !== null && <Alert tone="danger">{t(failureKey(failure))}</Alert>}
       {done !== null && <Confirmation>{done}</Confirmation>}
       {list.isPending ? (
         <Spinner label={t("common:loading")} />
@@ -177,6 +251,13 @@ function ListAndForm({ household }: { household: HouseholdView }) {
           </ul>
         </Card>
       )}
+      {myCart.length > 0 && <CartBar count={myCart.length} onFinish={() => setFinishing(true)} />}
+      <FinishDialog
+        open={finishing && myCart.length > 0}
+        onOpenChange={setFinishing}
+        count={myCart.length}
+        onFinishWithoutExpense={finishWithoutExpense}
+      />
       {editing && (
         <EditItemDialog
           item={editing}
@@ -190,6 +271,13 @@ function ListAndForm({ household }: { household: HouseholdView }) {
       )}
     </>
   );
+}
+
+/** What a refused change says; a finish refused for a changed cart asks to check it and finish again. */
+function failureKey(failure: unknown) {
+  return failure instanceof ApiRequestError && failure.code === "shopping.cart.changed"
+    ? "shopping:finish.cartChanged"
+    : errorKey(failure);
 }
 
 /** A short confirmation after a change, read out without interrupting. */
