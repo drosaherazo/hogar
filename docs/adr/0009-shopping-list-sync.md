@@ -13,7 +13,7 @@ The API is the single authority; clients show changes optimistically, the server
 
 - **Edits** (name, note) carry the item's `version`, the same optimistic concurrency `Expense` and `ExpenseCategory` use. A stale edit is rejected and the person chooses between the other person's value and their own.
 - **The cart is not an edit** and doesn't bump the version. An item is in at most one person's cart; the first request to reach the server wins and the other person is told whose cart it is in. While an item is in someone's cart, only that person can take it out, edit it or delete it; everyone else sees whose cart it is in. A forgotten cart is handled by reminding its owner, never by others emptying it. A cart empties back onto the list when its owner leaves the household or becomes a guest (who is told why), because nobody else could ever empty it.
-- **Names are unique among items on the list**, ignoring case, accents and surrounding spaces. A duplicate add or rename is refused with a friendly notice and the option to keep the incoming note. Bought or deleted items don't count, so the same name can come back later as a new item.
+- **Names are unique among items on the list**, ignoring case, accents and extra spaces. A duplicate add or rename is refused with a friendly notice and the option to keep the incoming note. Bought or deleted items don't count, so the same name can come back later as a new item.
 - **Offline, the list is read-only** (ADR 0015): it shows the last list loaded, and adding, editing, marking, deleting and Finish shopping are disabled until the connection is back. Nothing is queued on the device.
 - ADMIN and MEMBER have the same powers over the list; there is no "only whoever added it" rule.
 
