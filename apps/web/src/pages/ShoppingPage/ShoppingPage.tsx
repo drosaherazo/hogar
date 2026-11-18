@@ -433,13 +433,14 @@ function AddItemForm({
   const suggestions = useShoppingSuggestions(fields.name, items);
   const options = useMemo(
     () =>
-      suggestions.map((suggestion): ComboboxItem => ({
-        id: shoppingNameKey(suggestion.name),
-        label: suggestion.name,
-        detail: [suggestion.note, t("suggestion.timesBought", { count: suggestion.timesBought })]
-          .filter(Boolean)
-          .join(" · "),
-      })),
+      suggestions.map((suggestion): ComboboxItem => {
+        const timesBought = t("suggestion.timesBought", { count: suggestion.timesBought });
+        return {
+          id: shoppingNameKey(suggestion.name),
+          label: suggestion.name,
+          detail: suggestion.note ? t("suggestion.detail", { note: suggestion.note, timesBought }) : timesBought,
+        };
+      }),
     [suggestions, t],
   );
   const [failure, setFailure] = useState<unknown>(null);
