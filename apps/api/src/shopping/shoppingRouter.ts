@@ -21,7 +21,7 @@ export function createShoppingRouter(db: Database, shopping: ShoppingService) {
   router.use(loadMembership(db));
 
   router.get("/", async (req, res) => {
-    const body: ShoppingList = { items: await shopping.list(membershipOf(req).householdId) };
+    const body: ShoppingList = await shopping.list(membershipOf(req).householdId);
     res.json(body);
   });
 
@@ -64,7 +64,7 @@ export function createShoppingRouter(db: Database, shopping: ShoppingService) {
   router.post("/finish", requireEditor, async (req, res) => {
     const input = parseBody(finishShoppingInputSchema, req.body);
     const body: FinishShoppingResponse = await shopping.finish(membershipOf(req), input);
-    res.json(body);
+    res.status(body.expense === null ? 200 : 201).json(body);
   });
 
   router.post("/finish/undo", requireEditor, async (req, res) => {

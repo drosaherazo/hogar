@@ -26,6 +26,7 @@ import {
 const EXPENSE_INCLUDE = {
   shares: true,
   category: { select: { id: true, name: true, emoji: true } },
+  boughtItems: { select: { name: true, note: true }, orderBy: [{ addedAt: "asc" }, { id: "asc" }] },
 } satisfies Prisma.ExpenseInclude;
 type ExpenseRow = Prisma.ExpenseGetPayload<{ include: typeof EXPENSE_INCLUDE }>;
 
@@ -197,6 +198,7 @@ export function createExpenseService({ db, now = () => new Date() }: ExpenseServ
       paidBy: refOf(refs, row.paidById),
       split: { method: row.splitMethod, shares },
       category: toCategoryRef(row.category),
+      boughtItems: row.boughtItems,
       createdBy: refOf(refs, row.createdById),
       createdAt: row.createdAt.toISOString(),
       editedBy: row.editedById ? refOf(refs, row.editedById) : null,

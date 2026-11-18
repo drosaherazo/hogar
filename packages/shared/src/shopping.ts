@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { ErrorCode } from "./errors";
-import { expenseViewSchema, personRefSchema } from "./expenses";
+import { expenseInputSchema, expenseViewSchema, personRefSchema } from "./expenses";
 
 /** Zod messages are error codes the web translates, never sentences. */
 const code = (value: ErrorCode) => value;
@@ -84,12 +84,13 @@ const itemIdsSchema = z
 
 /**
  * Finishing shopping names every item in the caller's cart, as the person last saw it: a cart that
- * changed meanwhile (on their other device) is refused whole, never half bought. `expense` is null
- * to finish without an expense; it is required, so leaving it out never means "without one".
+ * changed meanwhile (on their other device) is refused whole, never half bought. `expense` is what
+ * the person paid, recorded with every expense rule, or null to finish without an expense; it is
+ * required, so leaving it out never means "without one".
  */
 export const finishShoppingInputSchema = z.object({
   itemIds: itemIdsSchema,
-  expense: z.null(code("request.invalid")),
+  expense: expenseInputSchema.nullable(),
 });
 export type FinishShoppingInput = z.input<typeof finishShoppingInputSchema>;
 
@@ -120,8 +121,15 @@ export const shoppingItemViewSchema = z.object({
 });
 export type ShoppingItemView = z.infer<typeof shoppingItemViewSchema>;
 
-/** The items on the list, in the order they were added. */
-export const shoppingListSchema = z.object({ items: z.array(shoppingItemViewSchema) });
+/**
+ * The items on the list, in the order they were added, and the category of the household's last
+ * purchase expense (the newest one not deleted), so the next one starts with it; null when there
+ * is none, it had no category or its category was deleted.
+ */
+export const shoppingListSchema = z.object({
+  items: z.array(shoppingItemViewSchema),
+  lastCategoryId: z.string().min(1).nullable(),
+});
 export type ShoppingList = z.infer<typeof shoppingListSchema>;
 
 export const shoppingItemResponseSchema = z.object({ item: shoppingItemViewSchema });

@@ -112,7 +112,7 @@ export function createApp({
   app.use("/api/household/categories", requireAuth(signer), createCategoriesRouter(db, categories));
   const settlements = createSettlementService({ db, now });
   app.use("/api/household/settlements", requireAuth(signer), createSettlementsRouter(db, settlements));
-  const shopping = createShoppingService({ db, now, events });
+  const shopping = createShoppingService({ db, now, expenses, events });
   app.use("/api/household/shopping", requireAuth(signer), createShoppingRouter(db, shopping));
   app.use("/api/household", requireAuth(signer), createLedgerRouter(db, createLedgerService({ db })));
   app.use("/api/household", requireAuth(signer), createHouseholdRouter(db, households));

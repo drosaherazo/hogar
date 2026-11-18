@@ -1,5 +1,12 @@
-import { SHOPPING_UNDO_WINDOW_MS, shoppingNameKey, type ShoppingItemView } from "@hogar/shared";
+import {
+  SHOPPING_UNDO_WINDOW_MS,
+  shoppingNameKey,
+  type ExpenseView,
+  type ParsedExpenseInput,
+  type ShoppingItemView,
+} from "@hogar/shared";
 import type { Database } from "../db";
+import type { ExpenseService } from "../expenses/expenseService";
 import { assertStillEditor, currentMembers, personRefs, refOf, type Client } from "../expenses/people";
 import type { Membership, Prisma, ShoppingItem } from "../generated/prisma/client";
 import { isUniqueViolation, lockHousehold } from "../household/householdService";
@@ -9,6 +16,8 @@ import { noHouseholdEvents, type HouseholdEvents } from "../realtime/householdEv
 export interface ShoppingServiceDeps {
   db: Database;
   now?: (() => Date) | undefined;
+  /** Records what someone paid when they finish shopping, with every expense rule. */
+  expenses: ExpenseService;
   /** Where every list and cart change is announced, once it is saved. */
   events?: HouseholdEvents;
 }
@@ -18,15 +27,21 @@ export interface NewShoppingItem {
   note: string | null;
 }
 
-/** Finishing shopping: exactly the items in the caller's cart, and no expense. */
+/** Finishing shopping: exactly the items in the caller's cart, and what they paid or null. */
 export interface FinishShopping {
   itemIds: readonly string[];
-  expense: null;
+  expense: ParsedExpenseInput | null;
 }
 
-/** What finishing recorded: no expense yet when finishing without one. */
+/** What finishing recorded: the expense with what was bought, or null when finishing without one. */
 export interface FinishedShopping {
-  expense: null;
+  expense: ExpenseView | null;
+}
+
+/** The list as everyone sees it, with the category the next purchase expense starts with. */
+export interface ShoppingListView {
+  items: ShoppingItemView[];
+  lastCategoryId: string | null;
 }
 
 /** Items on the list: neither bought nor deleted. */
@@ -54,7 +69,12 @@ export interface ShoppingItemChanges {
  * unique index on the name key is what refuses a duplicate, however close two adds arrive.
  * Every change that is saved is announced to the household as `shopping:changed`.
  */
-export function createShoppingService({ db, now = () => new Date(), events = noHouseholdEvents }: ShoppingServiceDeps) {
+export function createShoppingService({
+  db,
+  now = () => new Date(),
+  expenses,
+  events = noHouseholdEvents,
+}: ShoppingServiceDeps) {
   /** What everyone sees of `rows`: who asked only while the household shows it (it stays stored either way). */
   async function viewsOf(client: Client, householdId: string, rows: ShoppingItem[]): Promise<ShoppingItemView[]> {
     const { showWhoAsked } = await client.household.findUniqueOrThrow({
@@ -154,10 +174,18 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
   }
 
   return {
-    /** The items on the list in the order they were added, like a paper list. */
-    async list(householdId: string): Promise<ShoppingItemView[]> {
+    /**
+     * The items on the list in the order they were added, like a paper list, and the category of
+     * the newest purchase expense still standing (a deleted category reads as none).
+     */
+    async list(householdId: string): Promise<ShoppingListView> {
       const rows = await db.shoppingItem.findMany({ where: { householdId, ...ON_LIST }, orderBy: LIST_ORDER });
-      return viewsOf(db, householdId, rows);
+      const lastPurchase = await db.expense.findFirst({
+        where: { householdId, deletedAt: null, boughtItems: { some: {} } },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        select: { categoryId: true },
+      });
+      return { items: await viewsOf(db, householdId, rows), lastCategoryId: lastPurchase?.categoryId ?? null };
     },
 
     /** A new item goes last, asked for by whoever adds it. */
@@ -273,25 +301,31 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
      * last saw it; a cart that changed meanwhile (on their other device) is refused whole with
      * `shopping.cart.changed`, so nothing is ever half bought. Like a cart move, it takes turns with
      * leaving, removals and role changes under the household lock, and checks the role again there.
+     * With what they paid, the expense is recorded in the same transaction with every expense rule,
+     * and the items are linked to it: any refusal rolls everything back and the cart stays as it was.
      */
-    async finish(actor: Membership, { itemIds }: FinishShopping): Promise<FinishedShopping> {
-      await db.$transaction(async (tx) => {
+    async finish(actor: Membership, { itemIds, expense }: FinishShopping): Promise<FinishedShopping> {
+      const expenseId = await db.$transaction(async (tx) => {
         await lockHousehold(tx, actor.householdId);
         assertStillEditor(await currentMembers(tx, actor.householdId), actor);
         if (!sameItems(await lockedCart(tx, actor), itemIds)) throw conflict("shopping.cart.changed");
+        const created = expense === null ? null : await expenses.createWithin(tx, actor, expense);
         await tx.shoppingItem.updateMany({
           where: { id: { in: [...itemIds] } },
-          data: { boughtAt: now(), boughtById: actor.userId, cartOwnerId: null },
+          data: { boughtAt: now(), boughtById: actor.userId, cartOwnerId: null, expenseId: created?.id ?? null },
         });
+        return created?.id ?? null;
       });
       events.publish(actor.householdId, "shopping:changed");
-      return { expense: null };
+      // Read once the items are linked, so the expense comes with what was bought.
+      return { expense: expenseId === null ? null : await expenses.get(actor.householdId, expenseId) };
     },
 
     /**
      * Undoes the caller's finish within the window: the items come back into their cart, each in
-     * its place on the list. Only for items they bought, and all of them or none: for anything
-     * else it is too late. A name added again meanwhile meets the unique index and refuses the
+     * its place on the list. Only for items they bought without an expense, and all of them or
+     * none: for anything else it is too late. Items paid with an expense stay bought: they are
+     * that expense's record of the shop. A name added again meanwhile meets the unique index and refuses the
      * whole undo with `shopping.item.duplicate`. A second tap finds the items already back in their
      * cart and changes nothing.
      */
@@ -311,6 +345,7 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
           const undoable = (row: ShoppingItem) =>
             row.boughtById === actor.userId &&
             row.boughtAt !== null &&
+            row.expenseId === null &&
             now().getTime() - row.boughtAt.getTime() <= SHOPPING_UNDO_WINDOW_MS;
           if (!sameItems(items, ids) || !items.every((row) => back(row) || undoable(row))) {
             throw gone("shopping.undo.expired");
