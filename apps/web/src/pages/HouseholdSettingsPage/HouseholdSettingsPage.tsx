@@ -13,9 +13,13 @@ import { MembersSection } from "./MembersSection";
 import { CategoriesSection } from "./CategoriesSection";
 import { CurrencySection } from "./CurrencySection";
 import { NameSection } from "./NameSection";
+import { ShoppingSection } from "./ShoppingSection";
 import { SplitSection } from "./SplitSection";
 
-/** Household settings: name, currency, members (and invitations), the split and categories. */
+/**
+ * Household settings: name, currency, members (and invitations), the split, categories and, for
+ * admins, the shopping list.
+ */
 export function HouseholdSettingsPage() {
   const { t } = useTranslation(["household", "common"]);
   const household = useHousehold();
@@ -51,6 +55,7 @@ function Sections({ household }: { household: HouseholdView }) {
       {isAdmin && <InvitationsSection />}
       <SplitSection household={household} />
       <CategoriesSection household={household} />
+      {isAdmin && <ShoppingSection household={household} />}
     </div>
   );
 }

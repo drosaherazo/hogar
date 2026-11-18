@@ -128,10 +128,11 @@ export function createHouseholdService({
     },
 
     /**
-     * An admin renames the household or changes its currency. The currency only changes while the
-     * household has never recorded an expense or payment (ADR 0011): the row is locked first, so a
-     * money record saved at the same time either lands before (and the change is refused) or reads
-     * the new currency (and is refused itself, `money.currency.mismatch`).
+     * An admin renames the household, changes its currency or shows or hides who asked for each
+     * shopping item. The currency only changes while the household has never recorded an expense or
+     * payment (ADR 0011): the row is locked first, so a money record saved at the same time either
+     * lands before (and the change is refused) or reads the new currency (and is refused itself,
+     * `money.currency.mismatch`).
      */
     async update(householdId: string, viewerUserId: string, changes: UpdateHouseholdRequest): Promise<HouseholdView> {
       await db.$transaction(async (tx) => {
@@ -147,6 +148,7 @@ export function createHouseholdService({
           data: {
             ...(changes.name !== undefined && { name: changes.name }),
             ...(changes.currency !== undefined && { currency: changes.currency }),
+            ...(changes.showWhoAsked !== undefined && { showWhoAsked: changes.showWhoAsked }),
           },
         });
       });

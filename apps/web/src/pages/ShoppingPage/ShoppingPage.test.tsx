@@ -38,6 +38,38 @@ describe("ShoppingPage", () => {
     ]);
   });
 
+  it("says nobody's name while the household hides who asked", async () => {
+    server.use(
+      handlers.signedIn(),
+      handlers.household(homeView({ showWhoAsked: false })),
+      handlers.shopping([
+        shoppingItem({ id: "item_milk", name: "Milk", note: "lactose-free", askedBy: undefined }),
+        shoppingItem({ id: "item_eggs", name: "Eggs", askedBy: undefined }),
+      ]),
+    );
+    renderApp({ path: "/shopping" });
+
+    const items = within(await screen.findByRole("list", { name: "Shopping" })).getAllByRole("listitem");
+    expect(items.map((item) => item.textContent)).toEqual(["Milklactose-free", "Eggs"]);
+  });
+
+  it("hides who asked as soon as an admin turns it off, without reloading", async () => {
+    const householdEvents = fakeHouseholdEvents();
+    server.use(handlers.signedIn(), handlers.household(homeView()), handlers.shopping([shoppingItem()]));
+    renderApp({ path: "/shopping", householdEvents });
+    expect(await screen.findByText("asked for by Bruno Díaz")).toBeInTheDocument();
+    act(() => householdEvents.connect());
+
+    server.use(
+      handlers.household(homeView({ showWhoAsked: false })),
+      handlers.shopping([shoppingItem({ askedBy: undefined })]),
+    );
+    act(() => householdEvents.emit("household:changed"));
+
+    await waitFor(() => expect(screen.queryByText("asked for by Bruno Díaz")).not.toBeInTheDocument());
+    expect(screen.getByText("Milk")).toBeInTheDocument();
+  });
+
   it("adds an item with a note at the end of the list, ready for the next one", async () => {
     let body: unknown;
     server.use(

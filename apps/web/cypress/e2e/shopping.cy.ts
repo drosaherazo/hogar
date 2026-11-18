@@ -23,6 +23,7 @@ const household: HouseholdView = {
   myRole: "ADMIN",
   members: [anaMember, { ...anaMember, id: "m_bruno", userId: "user_bruno", name: "Bruno Díaz", role: "MEMBER" }],
   splitNeedsReview: false,
+  showWhoAsked: true,
 };
 
 const anaRef: PersonRef = { userId: ana.id, name: ana.name, avatarUrl: null, former: false };

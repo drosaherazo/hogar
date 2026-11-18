@@ -58,5 +58,6 @@ export function toHouseholdView(household: HouseholdWithMembers, viewerUserId: s
     })),
     // A household of one has nothing to split, so it never asks for a review.
     splitNeedsReview: members.length >= 2 && (splitOutdated || allZero),
+    showWhoAsked: household.showWhoAsked,
   };
 }

@@ -159,6 +159,14 @@
         "deleted": "Category deleted."
       },
       "editButton": "Edit"
+    },
+    "shopping": {
+      "title": "Shopping list",
+      "showWhoAsked": "Show who asked for each item",
+      "showWhoAskedHint": "Handy for knowing who to ask in the shop. When it's off, nobody sees it.",
+      "save": "Save setting",
+      "saving": "Saving the setting",
+      "saved": "Setting saved."
     }
   },
   "invite": {

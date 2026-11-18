@@ -81,12 +81,18 @@ function ListAndForm({ household }: { household: HouseholdView }) {
   );
 }
 
-/** A name and, in smaller text, the note and who asked for it (never the viewer: they know). */
+/**
+ * A name and, in smaller text, the note and who asked for it: never the viewer (they know), and
+ * nobody while the household hides it (the server then leaves `askedBy` out).
+ */
 function ItemRow({ item }: { item: ShoppingItemView }) {
   const { t } = useTranslation("shopping");
   const user = useCurrentUser();
   const personLabel = usePersonLabel();
-  const askedBy = item.askedBy.userId === user.id ? null : t("item.askedBy", { name: personLabel(item.askedBy) });
+  const askedBy =
+    item.askedBy === undefined || item.askedBy.userId === user.id
+      ? null
+      : t("item.askedBy", { name: personLabel(item.askedBy) });
 
   return (
     <li className={styles.item}>

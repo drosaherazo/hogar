@@ -241,6 +241,13 @@ export class ApiClient {
       .household;
   }
 
+  /** Whether the shopping list says who asked for each item; admins only. */
+  async setShowWhoAsked(showWhoAsked: boolean): Promise<HouseholdView> {
+    return (
+      await this.request("/household", { method: "PATCH", body: { showWhoAsked }, schema: householdResponseSchema })
+    ).household;
+  }
+
   leaveHousehold(): Promise<void> {
     return this.request("/household/leave", { method: "POST" });
   }

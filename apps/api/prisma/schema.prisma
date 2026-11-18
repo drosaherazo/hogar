@@ -59,6 +59,8 @@ model Household {
   membersChangedAt DateTime  @map("members_changed_at")
   /// Last time an admin saved the split; null until the first save.
   splitSavedAt     DateTime? @map("split_saved_at")
+  /// Whether shopping item views say who asked for each item. Hiding it never deletes `askedBy`.
+  showWhoAsked     Boolean   @default(true) @map("show_who_asked")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
 

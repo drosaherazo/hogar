@@ -48,6 +48,7 @@ export const household: HouseholdView = {
     { ...member("m_carla", "user_carla", CARLA, "GUEST", 1), shareBps: 2500 },
   ],
   splitNeedsReview: false,
+  showWhoAsked: true,
 };
 
 const ref = (userId: string, name: string): PersonRef => ({ userId, name, avatarUrl: null, former: false });
