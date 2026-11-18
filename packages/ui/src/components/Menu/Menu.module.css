@@ -1,7 +1,12 @@
 .content {
   z-index: 10;
+  /*
+   * As wide as its longest line, up to a limit: a long reason under an item wraps instead of
+   * pushing the menu past a 320 px screen. The width never depends on where the menu is placed, so
+   * placing it can't rewrap it and make react-aria place it again.
+   */
+  inline-size: max-content;
   min-inline-size: 14rem;
-  /* A long reason under an item wraps instead of pushing the menu past a 320 px screen. */
   max-inline-size: min(var(--size-content-sm), 100vw - 2 * var(--space-4));
   /* react-aria caps the height to the space left in the viewport; scroll inside it. */
   overflow-y: auto;
