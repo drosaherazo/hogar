@@ -1,4 +1,10 @@
-import { activityPageSchema, expenseResponseSchema } from "@hogar/shared";
+import {
+  activityPageSchema,
+  currentHouseholdSchema,
+  expenseInputSchema,
+  expenseResponseSchema,
+  type ExpenseInput,
+} from "@hogar/shared";
 import { describe, expect, it } from "vitest";
 import { request } from "./request";
 import { addCategory, categoryNamed, giveOwnSplit, listCategories } from "./categoryHelpers";
@@ -19,6 +25,8 @@ import {
   TODAY,
 } from "./expenseHelpers";
 import { createTestApp, dani, db, signIn } from "./testApp";
+import { createExpenseService } from "../src/expenses/expenseService";
+import { lockHousehold } from "../src/household/householdService";
 
 describe("POST /api/household/expenses", () => {
   it("records an expense with the household's split", async () => {
@@ -915,4 +923,95 @@ describe("moving an expense to another category", () => {
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ error: { code: "expense.split.no_default" } });
   });
+});
+
+describe("recording an expense as one step of a bigger change", () => {
+  /**
+   * What a caller such as finishing shopping holds: the expense service, the actor's membership
+   * and a body already parsed with the shared schema, as the form would send it.
+   */
+  async function setUp() {
+    const { app, clock } = createTestApp();
+    const home = await homeWith(app);
+    const expenses = createExpenseService({ db, now: clock.now });
+    const actor = await db.membership.findUniqueOrThrow({ where: { id: home.ana.membershipId } });
+    const input = async (overrides: Partial<ExpenseInput> = {}) =>
+      expenseInputSchema.parse({
+        description: "Groceries",
+        amountCents: 4280,
+        paidById: home.ana.user.id,
+        date: TODAY,
+        currency: "EUR",
+        split: { method: "WEIGHTS", previewShares: await previewSharesFor(home.ana, 4280) },
+        ...overrides,
+      });
+    return { app, ...home, expenses, actor, input };
+  }
+
+  it("leaves no expense when the caller's transaction rolls back", async () => {
+    const { app, ana, bruno, expenses, actor, input } = await setUp();
+    const body = await input();
+    let recordedId = "";
+
+    await expect(
+      db.$transaction(async (tx) => {
+        recordedId = (await expenses.createWithin(tx, actor, body)).id;
+        throw new Error("the caller's next step failed");
+      }),
+    ).rejects.toThrow("the caller's next step failed");
+
+    expect(recordedId).not.toBe("");
+    const res = await request(app).get(`/api/household/expenses/${recordedId}`).set("Authorization", ana.auth);
+    expect(res.status).toBe(404);
+    expect(balanceByUser(await balancesOf(app, ana))).toEqual({ [ana.user.id]: 0, [bruno.user.id]: 0 });
+  });
+
+  it("records the expense when the caller's transaction commits, even if the caller already holds the household lock", async () => {
+    const { app, ana, bruno, expenses, actor, input } = await setUp();
+    const body = await input();
+
+    const recorded = await db.$transaction(async (tx) => {
+      await lockHousehold(tx, actor.householdId);
+      return expenses.createWithin(tx, actor, body);
+    });
+
+    const res = await request(app).get(`/api/household/expenses/${recorded.id}`).set("Authorization", ana.auth);
+    expect(res.status).toBe(200);
+    const { expense } = expenseResponseSchema.parse(res.body);
+    expect(expense).toEqual(recorded);
+    expect(sharesByUser(expense)).toEqual({ [ana.user.id]: 3210, [bruno.user.id]: 1070 });
+  });
+
+  type Home = Awaited<ReturnType<typeof setUp>>;
+  it.each([
+    ["a date that hasn't happened yet", () => ({ date: "2026-10-28" }), 400, "money.date.future"],
+    ["a currency other than the household's", () => ({ currency: "USD" }), 409, "money.currency.mismatch"],
+    ["a payer who isn't a member", () => ({ paidById: "nobody" }), 400, "expense.person.not_member"],
+    [
+      "shares other than the ones it would save",
+      ({ ana }: Home) => ({
+        split: { method: "WEIGHTS", previewShares: [{ userId: ana.user.id, amountCents: 4280 }] },
+      }),
+      409,
+      "expense.split.changed",
+    ],
+  ] satisfies [string, (home: Home) => Partial<ExpenseInput>, number, string][])(
+    "refuses %s like any expense, rolling back the caller's own changes too",
+    async (_, overrides, status, code) => {
+      const home = await setUp();
+      const { app, ana, bruno, expenses, actor } = home;
+      const body = await home.input(overrides(home));
+
+      await expect(
+        db.$transaction(async (tx) => {
+          await tx.household.update({ where: { id: actor.householdId }, data: { name: "Casa renombrada" } });
+          return expenses.createWithin(tx, actor, body);
+        }),
+      ).rejects.toMatchObject({ status, code });
+
+      const current = await request(app).get("/api/household").set("Authorization", ana.auth);
+      expect(currentHouseholdSchema.parse(current.body).household?.name).toBe("Casa Ana");
+      expect(balanceByUser(await balancesOf(app, ana))).toEqual({ [ana.user.id]: 0, [bruno.user.id]: 0 });
+    },
+  );
 });
