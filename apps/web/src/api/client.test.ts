@@ -282,3 +282,46 @@ describe("ApiClient and the connection", () => {
     expect(client.isReachable).toBe(true);
   });
 });
+
+describe("ApiClient and the live connection", () => {
+  it("hands the handshake the access token and this build's API version", async () => {
+    server.use(http.post(`${BASE}/auth/google`, () => HttpResponse.json(session(ana, "token-123"))));
+    const client = new ApiClient(BASE);
+    await client.loginWithGoogle("google-token");
+    expect(client.realtimeAuth()).toEqual({ token: "token-123", apiVersion: API_VERSION });
+  });
+
+  it("renews a refused access token", async () => {
+    server.use(
+      http.post(`${BASE}/auth/google`, () => HttpResponse.json(session(ana, "old-token"))),
+      http.post(`${BASE}/auth/refresh`, () => HttpResponse.json(session(ana, "fresh-token"))),
+    );
+    const client = new ApiClient(BASE);
+    await client.loginWithGoogle("google-token");
+    await client.renewAccessToken("old-token");
+    expect(client.realtimeAuth().token).toBe("fresh-token");
+  });
+
+  it("keeps a token a request already renewed, instead of rotating the session again", async () => {
+    const refresh = vi.fn(() => HttpResponse.json(session(ana, "fresh-token")));
+    server.use(http.post(`${BASE}/auth/refresh`, refresh));
+    const client = new ApiClient(BASE);
+    await client.refresh();
+    await client.renewAccessToken("old-token");
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(client.realtimeAuth().token).toBe("fresh-token");
+  });
+
+  it("ends the session when a refused token can't be renewed", async () => {
+    server.use(
+      http.post(`${BASE}/auth/google`, () => HttpResponse.json(session(ana, "old-token"))),
+      http.post(`${BASE}/auth/refresh`, () => apiError(401, "auth.session.expired")),
+    );
+    const client = new ApiClient(BASE);
+    await client.loginWithGoogle("google-token");
+    const onSessionExpired = vi.fn();
+    client.onSessionExpired(onSessionExpired);
+    await expect(client.renewAccessToken("old-token")).rejects.toMatchObject({ code: "auth.session.expired" });
+    expect(onSessionExpired).toHaveBeenCalledOnce();
+  });
+});

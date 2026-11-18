@@ -8,16 +8,12 @@ export const categoryKeys = {
   all: ["household", "categories"] as const,
 };
 
-/**
- * The household's categories in list order, with how each one is split. Refetched when people
- * come back to the tab, so other people's changes show up without real time.
- */
+/** The household's categories in list order, with how each one is split. */
 export function useCategories() {
   const client = useApiClient();
   return useQuery({
     queryKey: categoryKeys.all,
     queryFn: () => client.getCategories(),
-    refetchOnWindowFocus: true,
   });
 }
 

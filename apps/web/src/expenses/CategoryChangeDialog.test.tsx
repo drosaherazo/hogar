@@ -6,6 +6,7 @@ import { AppProviders } from "../App";
 import { createI18n } from "../i18n";
 import { createInstallPrompt } from "../install/installPrompt";
 import { expectNoA11yViolations } from "../test/axe";
+import { fakeHouseholdEvents } from "../test/fakeHouseholdEvents";
 import { fakeServiceWorker } from "../test/fakeServiceWorker";
 import { browserTab } from "../test/memoryStorage";
 import { handlers, homeView, server } from "../test/server";
@@ -28,6 +29,7 @@ function renderDialog(props: Partial<CategoryChangeDialogProps> = {}) {
       offline={browserTab()}
       update={fakeServiceWorker().update}
       install={createInstallPrompt({ target: new EventTarget(), isInstalled: () => false, isIOS: () => false })}
+      householdEvents={fakeHouseholdEvents().source}
     >
       <CategoryChangeDialog
         open
