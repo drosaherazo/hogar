@@ -196,8 +196,8 @@ function FreeTextCombobox({
       items={items}
       inputValue={inputValue}
       onInputChange={(value) => {
-        if (value === picked.current) picked.current = null;
-        else typed.current = true;
+        typed.current = value !== picked.current;
+        picked.current = null;
         onInputChange(value);
       }}
       onSelectionChange={(key) => {
