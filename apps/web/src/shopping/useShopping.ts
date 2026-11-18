@@ -8,15 +8,14 @@ export const shoppingKeys = {
 };
 
 /**
- * The household's shopping list, in the order items were added. Refetched when people come back
- * to the tab, so other people's items show up (live updates arrive with real time).
+ * The household's shopping list, in the order items were added, kept current by the live
+ * connection (`LiveHousehold` re-reads it on `shopping:changed`).
  */
 export function useShoppingList() {
   const client = useApiClient();
   return useQuery({
     queryKey: shoppingKeys.list,
     queryFn: () => client.getShoppingList(),
-    refetchOnWindowFocus: true,
   });
 }
 

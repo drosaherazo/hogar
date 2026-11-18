@@ -46,6 +46,7 @@ export function socketHouseholdEvents(client: ApiClient): HouseholdEventsSource 
       catchUp();
     });
     socket.on("household:changed", () => handlers.received("household:changed"));
+    socket.on("shopping:changed", () => handlers.received("shopping:changed"));
     socket.on("connect_error", (error) => {
       // Lost on the way rather than refused: Socket.io tries again on its own.
       const refusal = socket.active ? undefined : errorCodeSchema.safeParse(error.message).data;
