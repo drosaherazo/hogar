@@ -76,3 +76,30 @@ Cypress.Commands.add("findHeading", (text: string) => cy.contains("h1", new RegE
 export function browserLanguages(win: Window, ...languages: string[]) {
   Object.defineProperty(win.navigator, "languages", { get: () => languages });
 }
+
+function setVisibility(doc: Document, state: DocumentVisibilityState) {
+  Object.defineProperty(doc, "visibilityState", { value: state, configurable: true });
+  doc.dispatchEvent(new Event("visibilitychange"));
+}
+
+/**
+ * What the browser says when the person switches tab, locks the phone or comes back. Hogar is live
+ * only while on screen: hidden, it closes its live connection; shown again, it reconnects and
+ * re-reads what it missed.
+ */
+export function setPageVisibility(state: DocumentVisibilityState) {
+  cy.document().then((doc) => setVisibility(doc, state));
+  // Nobody comes back within milliseconds: a page shown again before it has even closed its
+  // connection never notices it was away.
+  if (state === "hidden") cy.task("socket:disconnection");
+}
+
+/**
+ * For `cy.visit`'s `onBeforeLoad`: the page opens in a background tab, so it connects only once the
+ * test shows it, after its first reads are in. Connecting then re-reads each query exactly once,
+ * which a test can count; connecting while the page loads may re-read nothing, because a query still
+ * on its first read isn't read again.
+ */
+export function openInBackground(win: Window) {
+  setVisibility(win.document, "hidden");
+}

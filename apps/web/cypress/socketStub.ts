@@ -13,6 +13,7 @@ import { E2E_SOCKET_PATH, E2E_SOCKET_PORT } from "./socketStubAddress";
 export function startSocketStub() {
   let refusals: ErrorCode[] = [];
   let waiting: ((auth: unknown) => void)[] = [];
+  let waitingForNone: (() => void)[] = [];
 
   const io = new Server<ClientToServerEvents, ServerToClientEvents>({
     path: E2E_SOCKET_PATH,
@@ -26,6 +27,11 @@ export function startSocketStub() {
   io.on("connection", (socket) => {
     for (const resolve of waiting) resolve(socket.handshake.auth);
     waiting = [];
+    socket.on("disconnect", () => {
+      if (io.sockets.sockets.size > 0) return;
+      for (const resolve of waitingForNone) resolve();
+      waitingForNone = [];
+    });
   });
   const http = createServer();
   io.attach(http);
@@ -44,6 +50,7 @@ export function startSocketStub() {
       io.disconnectSockets();
       refusals = [];
       waiting = [];
+      waitingForNone = [];
       return null;
     },
     /** The next handshakes are refused with these codes, one each; later ones get in. */
@@ -58,6 +65,14 @@ export function startSocketStub() {
       return new Promise((resolve, reject) => {
         waiting.push(resolve);
         setTimeout(() => reject(new Error("The web never opened its live connection")), 10_000);
+      });
+    },
+    /** Waits until no screen is connected, as when the web closes its live connection. */
+    "socket:disconnection"(): Promise<null> {
+      if (io.sockets.sockets.size === 0) return Promise.resolve(null);
+      return new Promise((resolve, reject) => {
+        waitingForNone.push(() => resolve(null));
+        setTimeout(() => reject(new Error("The web never closed its live connection")), 10_000);
       });
     },
     /** The household announces `event` to every connected screen. */

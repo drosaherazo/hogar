@@ -1,5 +1,5 @@
 import type { HouseholdView, MemberView, PersonRef, ShoppingItemView } from "@hogar/shared";
-import { ana, session } from "../support/e2e";
+import { ana, openInBackground, session, setPageVisibility } from "../support/e2e";
 
 // --- Stub data -----------------------------------------------------------------
 
@@ -107,9 +107,10 @@ describe("Shopping list", () => {
       req.reply({ items });
     });
 
-    cy.visit("/shopping");
+    // Opened in a background tab: the list goes live once Ana looks at it, after its first read.
+    cy.visit("/shopping", { onBeforeLoad: openInBackground });
     cy.contains("li", "Bread");
-    cy.task("socket:connection");
+    setPageVisibility("visible");
     // The first read, then the one connecting makes to catch up: anything newer comes from the event.
     cy.wrap(null).should(() => expect(reads).to.equal(2));
 
