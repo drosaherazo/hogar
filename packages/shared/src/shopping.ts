@@ -14,6 +14,12 @@ export const SHOPPING_ITEM_NAME_MAX = 50;
 export const SHOPPING_ITEM_NOTE_MAX = 100;
 
 /**
+ * How long whoever deleted an item can bring it back. The web's "Undo" toast lasts much less;
+ * the extra time covers a toast paused while someone reads it and a slow connection in a shop.
+ */
+export const SHOPPING_UNDO_WINDOW_MS = 60_000;
+
+/**
  * The one normalisation behind "never two items with the same name at once" (ADR 0009): the API's
  * uniqueness check stores it, and the web uses it to find the item behind a duplicate notice.
  * Case is folded the way people read it (upper- then lower-casing, so "ß" matches "SS"), every
@@ -47,6 +53,28 @@ export const addShoppingItemInputSchema = z.object({
   note: shoppingItemNoteSchema,
 });
 export type AddShoppingItemInput = z.input<typeof addShoppingItemInputSchema>;
+
+const versionSchema = z.number(code("request.invalid")).int(code("request.invalid")).min(1, code("request.invalid"));
+
+/**
+ * An edit changes the name, the note or both, and carries the version it started from, so it can't
+ * overwrite a change it hasn't seen (ADR 0009). A missing field stays as it is; an empty or null
+ * note removes it.
+ */
+export const updateShoppingItemInputSchema = z
+  .object({
+    name: shoppingItemNameSchema.optional(),
+    note: z
+      .string(code("request.invalid"))
+      .trim()
+      .max(SHOPPING_ITEM_NOTE_MAX, code("shopping.item.note.too_long"))
+      .nullable()
+      .optional()
+      .transform((value) => (value === undefined ? undefined : value || null)),
+    version: versionSchema,
+  })
+  .refine((input) => input.name !== undefined || input.note !== undefined, { message: code("request.invalid") });
+export type UpdateShoppingItemInput = z.input<typeof updateShoppingItemInputSchema>;
 
 // ---------------------------------------------------------------------------
 // Responses

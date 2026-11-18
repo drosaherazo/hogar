@@ -103,7 +103,12 @@
       "note": {
         "too_long": "La nota admite hasta 100 caracteres."
       },
-      "duplicate": "Eso ya está en la lista."
+      "duplicate": "Eso ya está en la lista.",
+      "not_found": "Eso ya no está en la lista.",
+      "changed": "Alguien lo cambió mientras tanto. Aquí tienes la versión más reciente."
+    },
+    "undo": {
+      "expired": "Ya no se puede deshacer."
     }
   },
   "invitation": {
