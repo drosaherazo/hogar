@@ -2,6 +2,7 @@ import type { HouseholdEvent } from "@hogar/shared";
 import { useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useSyncExternalStore, type ReactNode } from "react";
 import { householdKeys, useHousehold } from "../household/useHousehold";
+import { shoppingKeys } from "../shopping/useShopping";
 
 /** What the live connection reports to the app. */
 export interface HouseholdEventsHandlers {
@@ -38,6 +39,8 @@ function usePageVisible(): boolean {
 const staleAfter: Record<HouseholdEvent, QueryKey> = {
   // Names, roles and the split show on every page, so every household query is re-read.
   "household:changed": householdKeys.current,
+  // Only the list, which Home counts too: people shopping together don't reload the rest on every change.
+  "shopping:changed": shoppingKeys.list,
 };
 
 /**

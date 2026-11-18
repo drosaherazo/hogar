@@ -4,10 +4,13 @@ import { currentMembers, personRefs, refOf, type Client } from "../expenses/peop
 import type { Membership, ShoppingItem } from "../generated/prisma/client";
 import { isUniqueViolation } from "../household/householdService";
 import { conflict } from "../httpError";
+import { noHouseholdEvents, type HouseholdEvents } from "../realtime/householdEvents";
 
 export interface ShoppingServiceDeps {
   db: Database;
   now?: (() => Date) | undefined;
+  /** Where every list and cart change is announced, once it is saved. */
+  events?: HouseholdEvents;
 }
 
 export interface NewShoppingItem {
@@ -19,8 +22,9 @@ export interface NewShoppingItem {
  * The household's shopping list. Everyone in the household reads it; admins and members add to it
  * (the router checks the role). The server decides every conflict (ADR 0009): the database's
  * unique index on the name key is what refuses a duplicate, however close two adds arrive.
+ * Every change that is saved is announced to the household as `shopping:changed`.
  */
-export function createShoppingService({ db, now = () => new Date() }: ShoppingServiceDeps) {
+export function createShoppingService({ db, now = () => new Date(), events = noHouseholdEvents }: ShoppingServiceDeps) {
   async function viewsOf(client: Client, householdId: string, rows: ShoppingItem[]): Promise<ShoppingItemView[]> {
     const members = await currentMembers(client, householdId);
     const refs = await personRefs(
@@ -61,6 +65,7 @@ export function createShoppingService({ db, now = () => new Date() }: ShoppingSe
             addedAt: now(),
           },
         });
+        events.publish(actor.householdId, "shopping:changed");
         const [view] = await viewsOf(db, actor.householdId, [row]);
         if (!view) throw new Error("A created item has a view");
         return view;

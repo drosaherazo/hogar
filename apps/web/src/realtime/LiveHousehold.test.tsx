@@ -1,8 +1,9 @@
-import { act, screen } from "@testing-library/react";
+import { act, screen, within } from "@testing-library/react";
+import { http, HttpResponse } from "msw";
 import { afterEach, describe, expect, it } from "vitest";
 import { fakeHouseholdEvents } from "../test/fakeHouseholdEvents";
 import { renderApp } from "../test/renderApp";
-import { handlers, householdView, server } from "../test/server";
+import { handlers, householdView, server, shoppingItem } from "../test/server";
 
 /** What the browser says when the person switches tab, locks the phone or comes back. */
 function setPageVisibility(state: DocumentVisibilityState) {
@@ -35,6 +36,28 @@ describe("the live household", () => {
     act(() => events.emit("household:changed"));
 
     expect(await screen.findByRole("heading", { name: "Nuestra casa" })).toBeInTheDocument();
+  });
+
+  it("re-reads only the shopping list when it changes, not the rest of the household", async () => {
+    const events = fakeHouseholdEvents();
+    let householdReads = 0;
+    server.use(
+      handlers.signedIn(),
+      http.get("*/api/household", () => {
+        householdReads += 1;
+        return HttpResponse.json({ household: householdView() });
+      }),
+    );
+    renderApp({ path: "/", householdEvents: events });
+    const card = await screen.findByRole("region", { name: "Shopping" });
+    expect(await within(card).findByText("Nothing to buy right now")).toBeInTheDocument();
+    const readsOnOpening = householdReads;
+
+    server.use(handlers.shopping([shoppingItem()]));
+    act(() => events.emit("shopping:changed"));
+
+    expect(await within(card).findByText("1 thing to buy")).toBeInTheDocument();
+    expect(householdReads).toBe(readsOnOpening);
   });
 
   it("disconnects while the page is hidden and catches up once it is back", async () => {

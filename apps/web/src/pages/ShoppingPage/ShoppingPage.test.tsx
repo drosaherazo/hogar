@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { expectNoA11yViolations } from "../../test/axe";
+import { fakeHouseholdEvents } from "../../test/fakeHouseholdEvents";
 import { MemoryStorage } from "../../test/memoryStorage";
 import { renderApp } from "../../test/renderApp";
 import { anaRef, apiError, handlers, homeView, personRef, server, shoppingItem } from "../../test/server";
@@ -63,6 +64,24 @@ describe("ShoppingPage", () => {
     expect(name).toHaveValue("");
     expect(screen.getByRole("textbox", { name: "Note (optional)" })).toHaveValue("");
     expect(name).toHaveFocus();
+  });
+
+  it("shows an item someone else adds as soon as the household announces it", async () => {
+    const events = fakeHouseholdEvents();
+    server.use(handlers.signedIn(), handlers.household(homeView()), handlers.shopping([shoppingItem()]));
+    renderApp({ path: "/shopping", householdEvents: events });
+    const list = await screen.findByRole("list", { name: "Shopping" });
+
+    // Bruno adds eggs on his phone: the API now lists them and says the list changed.
+    server.use(handlers.shopping([shoppingItem(), shoppingItem({ id: "item_eggs", name: "Eggs" })]));
+    act(() => events.emit("shopping:changed"));
+
+    expect(await within(list).findByText("Eggs")).toBeInTheDocument();
+    expect(
+      within(list)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Milkasked for by Bruno Díaz", "Eggsasked for by Bruno Díaz"]);
   });
 
   it("kindly says when the item is already on the list, keeping what was typed", async () => {
