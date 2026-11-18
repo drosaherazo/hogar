@@ -69,5 +69,9 @@
     "undone_one": "1 cosa vuelve a estar en tu carrito",
     "undone_other": "{{count}} cosas vuelven a estar en tu carrito",
     "cartChanged": "Tu carrito cambió mientras tanto. Revisa lo que llevas y vuelve a terminar."
+  },
+  "purchaseTitle": {
+    "more_one": "1 más",
+    "more_other": "{{count}} más"
   }
 }
