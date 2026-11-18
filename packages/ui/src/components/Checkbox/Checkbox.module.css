@@ -1,6 +1,7 @@
 .field {
   display: grid;
   row-gap: var(--space-1);
+  color: var(--color-text);
 }
 
 /* The whole row is the target: at least the touch height, box and text together. */
@@ -9,8 +10,6 @@
   align-items: center;
   gap: var(--space-3);
   min-block-size: var(--size-touch);
-  color: var(--color-text);
-  font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
 }
@@ -19,14 +18,21 @@
   transform: scale(0.92);
 }
 
-/* The native box, tinted with the accent; its check mark carries the meaning. */
+/* The native box, tinted with its tone; its check mark carries the meaning. */
 .input {
   flex: none;
   inline-size: var(--size-icon-md);
   block-size: var(--size-icon-md);
   margin: 0;
-  accent-color: var(--color-accent);
   cursor: inherit;
+}
+
+.accent {
+  accent-color: var(--color-accent);
+}
+
+.positive {
+  accent-color: var(--color-positive);
 }
 
 .input:focus-visible {
@@ -37,6 +43,14 @@
 .text {
   min-inline-size: 0;
   overflow-wrap: anywhere;
+}
+
+.md {
+  font-size: var(--font-size-md);
+}
+
+.lg {
+  font-size: var(--font-size-lg);
 }
 
 .label:has(.input:disabled) {

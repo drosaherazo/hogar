@@ -90,19 +90,6 @@
   margin-inline-start: var(--space-2);
 }
 
-/*
- * The check that puts an item in your cart, with the name as its label so the whole name is a
- * 44 px target. The name keeps the size it has without the check (guests), and the box is teal,
- * like the marker, because fuchsia is kept for "Finish shopping".
- */
-.cart > label {
-  font-size: var(--font-size-lg);
-}
-
-.cart input {
-  accent-color: var(--color-positive);
-}
-
 /* The note, who asked and whose cart: under the name, starting where the name does. */
 .details {
   display: grid;
@@ -129,6 +116,6 @@
 
 /* An item in a cart is taken: quieter, never faded below AA, and still in its place. */
 .inCart .itemName,
-.inCart .cart > label {
+.inCart .cart {
   color: var(--color-text-muted);
 }

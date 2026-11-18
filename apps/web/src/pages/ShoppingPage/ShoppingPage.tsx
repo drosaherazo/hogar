@@ -348,7 +348,11 @@ function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActio
     <li className={clsx(styles.item, marker !== null && styles.inCart)}>
       <span className={styles.itemText}>
         {actions ? (
+          // The name is the check's label, so the whole name is a 44 px target. Large, as the name is
+          // for guests, and teal like the marker, because fuchsia is kept for "Finish shopping".
           <Checkbox
+            tone="positive"
+            size="lg"
             label={item.name}
             aria-label={t(inMyCart ? "item.takeOutOfCart" : "item.putInCart", { name: item.name })}
             aria-describedby={describedBy}
