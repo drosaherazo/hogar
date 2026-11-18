@@ -1,5 +1,5 @@
 import { API_VERSION, type AuthResponse, type ErrorCode, type HouseholdView } from "@hogar/shared";
-import { ana, session } from "../support/e2e";
+import { ana, session, setPageVisibility } from "../support/e2e";
 
 function household(overrides: Partial<HouseholdView> = {}): HouseholdView {
   return {
@@ -28,14 +28,6 @@ function household(overrides: Partial<HouseholdView> = {}): HouseholdView {
 
 const showHousehold = (name: string) =>
   cy.intercept("GET", "/api/household", { body: { household: household({ name }) } }).as("household");
-
-/** What the browser says when the person switches tab, locks the phone or comes back. */
-function setPageVisibility(state: DocumentVisibilityState) {
-  cy.document().then((doc) => {
-    Object.defineProperty(doc, "visibilityState", { value: state, configurable: true });
-    doc.dispatchEvent(new Event("visibilitychange"));
-  });
-}
 
 describe("Live household", () => {
   beforeEach(() => {
