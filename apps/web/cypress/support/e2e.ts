@@ -49,6 +49,15 @@ beforeEach(() => {
   // Signed-in people start without a household unless a flow says otherwise.
   cy.intercept("GET", "/api/household", { body: { household: null, removedFrom: null } }).as("household");
   cy.intercept("GET", "/api/household/categories", { body: { categories: starterCategories() } }).as("categories");
+  // Everyone square, so pages that show a balance sentence work without setting balances up.
+  cy.intercept("GET", "/api/household/balances", { body: { balances: [], suggestions: [], myBalanceCents: 0 } });
+  // The live connection reaches a stub Socket.io server, which lets it in unless a flow says otherwise.
+  cy.task("socket:reset");
+});
+
+afterEach(() => {
+  // The page stays open after a test; closing its connection keeps it from reconnecting later.
+  cy.task("socket:reset");
 });
 
 declare global {
