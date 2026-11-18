@@ -12,7 +12,7 @@ export const SOCKET_PATH = "/api/socket.io";
  * source of truth (and of permission checks).
  */
 export interface ServerToClientEvents {
-  /** The household's name, currency, split, members or roles changed. */
+  /** The household's name, currency, settings, split, members or roles changed. */
   "household:changed": () => void;
   /** Something on the shopping list or in a cart changed. */
   "shopping:changed": () => void;

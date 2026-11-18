@@ -37,7 +37,8 @@ function usePageVisible(): boolean {
 
 /** The queries each event makes stale. */
 const staleAfter: Record<HouseholdEvent, QueryKey> = {
-  // Names, roles and the split show on every page, so every household query is re-read.
+  // Names, roles and the split show on every page, and a setting such as who asked changes the
+  // shopping list, so every household query is re-read.
   "household:changed": householdKeys.current,
   // Only the list, which Home counts too: people shopping together don't reload the rest on every change.
   "shopping:changed": shoppingKeys.list,
