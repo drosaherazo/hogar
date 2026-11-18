@@ -37,6 +37,7 @@ import { AppShell } from "../../layout/AppShell";
 import { useReadOnly } from "../../offline/useOnline";
 import {
   cartOf,
+  isInCartOf,
   useAddShoppingItem,
   useDeleteShoppingItem,
   useFinishShopping,
@@ -208,7 +209,7 @@ function ListAndForm({ household }: { household: HouseholdView }) {
   function toggleCart(item: ShoppingItemView) {
     reset();
     const me: PersonRef = { userId: user.id, name: user.name, avatarUrl: user.avatarUrl, former: false };
-    const owner = item.cartOwner?.userId === user.id ? null : me;
+    const owner = isInCartOf(item, user.id) ? null : me;
     move.mutate({ item, owner }, { onError: setFailure });
   }
 
@@ -333,7 +334,7 @@ function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActio
     item.askedBy === undefined || item.askedBy.userId === user.id
       ? null
       : t("item.askedBy", { name: personLabel(item.askedBy) });
-  const inMyCart = item.cartOwner?.userId === user.id;
+  const inMyCart = isInCartOf(item, user.id);
   const holder = item.cartOwner && !inMyCart ? personLabel(item.cartOwner) : null;
   const marker =
     item.cartOwner === null ? null : holder === null ? t("item.inMyCart") : t("item.inCartOf", { name: holder });

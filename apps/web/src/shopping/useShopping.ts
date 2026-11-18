@@ -189,9 +189,14 @@ export function useMoveInCart() {
   );
 }
 
+/** Whether `item` is in `userId`'s cart. */
+export function isInCartOf(item: ShoppingItemView, userId: string): boolean {
+  return item.cartOwner?.userId === userId;
+}
+
 /** The items in `userId`'s cart, in list order. */
 export function cartOf(items: readonly ShoppingItemView[], userId: string): ShoppingItemView[] {
-  return items.filter((item) => item.cartOwner?.userId === userId);
+  return items.filter((item) => isInCartOf(item, userId));
 }
 
 /**

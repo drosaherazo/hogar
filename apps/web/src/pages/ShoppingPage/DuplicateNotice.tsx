@@ -5,7 +5,7 @@ import { errorKey } from "../../api/client";
 import { useCurrentUser } from "../../auth/guards";
 import { describedByOffline } from "../../offline/OfflineBanner";
 import { useReadOnly } from "../../offline/useOnline";
-import { useEditShoppingItem } from "../../shopping/useShopping";
+import { isInCartOf, useEditShoppingItem } from "../../shopping/useShopping";
 
 export interface DuplicateNoticeProps {
   /** The item already on the list with that name, when the list on screen has it. */
@@ -27,7 +27,7 @@ export function DuplicateNotice({ existing, note, onNoteUsed }: DuplicateNoticeP
   const edit = useEditShoppingItem();
   const user = useCurrentUser();
   const readOnly = useReadOnly();
-  const free = existing !== undefined && (existing.cartOwner === null || existing.cartOwner.userId === user.id);
+  const free = existing !== undefined && (existing.cartOwner === null || isInCartOf(existing, user.id));
   const useMyNote =
     existing !== undefined && free && note !== null && note !== existing.note
       ? () => edit.mutate({ id: existing.id, input: { note, version: existing.version } }, { onSuccess: onNoteUsed })

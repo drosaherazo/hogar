@@ -2,6 +2,7 @@ import { canEditContent, type ShoppingItemView } from "@hogar/shared";
 import { useState } from "react";
 import { useCurrentUser } from "../../auth/guards";
 import { useHousehold } from "../../household/useHousehold";
+import { cartOf } from "../../shopping/useShopping";
 
 interface Seen {
   /** Whether the viewer could shop (an admin or member) last time. */
@@ -28,7 +29,7 @@ export function useCartReturned(items: readonly ShoppingItemView[]): boolean {
   const user = useCurrentUser();
   const role = household.data?.household?.myRole;
   const editor = role !== undefined && canEditContent(role);
-  const inMyCart = items.filter((item) => item.cartOwner?.userId === user.id).length;
+  const inMyCart = cartOf(items, user.id).length;
   const [seen, setSeen] = useState<Seen>({ editor, cart: inMyCart, returned: false });
 
   // Compared with what the last render saw, as React suggests for state that follows other state.
