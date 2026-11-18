@@ -134,3 +134,33 @@ export type ShoppingItemsResponse = z.infer<typeof shoppingItemsResponseSchema>;
 /** What finishing recorded: the expense it created, or null when the person finished without one. */
 export const finishShoppingResponseSchema = z.object({ expense: expenseViewSchema.nullable() });
 export type FinishShoppingResponse = z.infer<typeof finishShoppingResponseSchema>;
+
+// ---------------------------------------------------------------------------
+// Suggestions
+// ---------------------------------------------------------------------------
+
+/** At most this many suggestions, so the likeliest choices fit above a phone's keyboard. */
+export const SHOPPING_SUGGESTIONS_MAX = 5;
+
+/**
+ * What the person has typed so far. Missing or blank matches every bought item, so the most
+ * bought come first. Longer than a name can be, nothing could match: the request is refused.
+ */
+export const shoppingSuggestionsQuerySchema = z.object({
+  q: z.string(code("request.invalid")).max(SHOPPING_ITEM_NAME_MAX, code("request.invalid")).default(""),
+});
+export type ShoppingSuggestionsQuery = z.infer<typeof shoppingSuggestionsQuerySchema>;
+
+/** Something the household bought before, with the name and note of its latest purchase. */
+export const shoppingSuggestionSchema = z.object({
+  name: z.string().min(1),
+  note: z.string().nullable(),
+  timesBought: z.number().int().min(1),
+});
+export type ShoppingSuggestion = z.infer<typeof shoppingSuggestionSchema>;
+
+/** The most bought first, then the most recent; never what is already on the list. */
+export const shoppingSuggestionsSchema = z.object({
+  suggestions: z.array(shoppingSuggestionSchema).max(SHOPPING_SUGGESTIONS_MAX),
+});
+export type ShoppingSuggestions = z.infer<typeof shoppingSuggestionsSchema>;

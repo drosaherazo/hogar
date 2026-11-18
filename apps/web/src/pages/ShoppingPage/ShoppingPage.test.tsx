@@ -85,7 +85,7 @@ describe("ShoppingPage", () => {
     );
     renderApp({ path: "/shopping" });
 
-    const name = await screen.findByRole("textbox", { name: "What's needed?" });
+    const name = await screen.findByRole("combobox", { name: "What's needed?" });
     await userEvent.type(name, "  Eggs ");
     await userEvent.type(screen.getByRole("textbox", { name: "Note (optional)" }), "a dozen{Enter}");
 
@@ -125,7 +125,7 @@ describe("ShoppingPage", () => {
     );
     renderApp({ path: "/shopping" });
 
-    const name = await screen.findByRole("textbox", { name: "What's needed?" });
+    const name = await screen.findByRole("combobox", { name: "What's needed?" });
     await userEvent.type(name, "LECHÉ{Enter}");
 
     expect(await screen.findByText("Leche is already on the list.")).toBeInTheDocument();
@@ -147,7 +147,7 @@ describe("ShoppingPage", () => {
     );
     renderApp({ path: "/shopping" });
 
-    const name = await screen.findByRole("textbox", { name: "What's needed?" });
+    const name = await screen.findByRole("combobox", { name: "What's needed?" });
     await userEvent.type(name, "   {Enter}");
     expect(name).toHaveAccessibleDescription("Write what's needed.");
 
@@ -171,9 +171,9 @@ describe("ShoppingPage", () => {
     );
     renderApp({ path: "/shopping" });
 
-    await userEvent.type(await screen.findByRole("textbox", { name: "What's needed?" }), "Milk{Enter}");
+    await userEvent.type(await screen.findByRole("combobox", { name: "What's needed?" }), "Milk{Enter}");
     expect(await screen.findByRole("alert")).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "What's needed?" })).toHaveValue("Milk");
+    expect(screen.getByRole("combobox", { name: "What's needed?" })).toHaveValue("Milk");
   });
 
   it("shows a friendly empty state when nothing is needed", async () => {
@@ -217,7 +217,7 @@ describe("ShoppingPage", () => {
     expect(await screen.findByText("Milk")).toBeInTheDocument();
     const add = screen.getByRole("button", { name: "Add" });
     expect(add).toBeDisabled();
-    expect(screen.getByRole("textbox", { name: "What's needed?" })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "What's needed?" })).toBeDisabled();
     await waitFor(() =>
       expect(add.closest("fieldset")).toHaveAccessibleDescription("Changes are available when you're back online."),
     );

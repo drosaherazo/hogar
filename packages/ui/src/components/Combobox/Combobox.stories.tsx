@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { storyLocale, storyText } from "../../docs/blocks/storyLocale";
+import { TextField } from "../TextField/TextField";
 import { Combobox, type ComboboxItem } from "./Combobox";
 
 /**
@@ -77,22 +78,68 @@ function CurrencyPicker({ locale, error }: { locale: "en" | "es"; error?: string
   );
 }
 
-const meta = {
+/** Things a household bought before, how many times, and the note of the latest purchase. */
+const BOUGHT = [
+  { id: "milk", en: "Milk", es: "Leche", times: 9, note: { en: "Lactose-free", es: "Sin lactosa" } },
+  { id: "bread", en: "Bread", es: "Pan", times: 7, note: null },
+  { id: "eggs", en: "Eggs", es: "Huevos", times: 5, note: { en: "A dozen", es: "Una docena" } },
+  { id: "lettuce", en: "Lettuce", es: "Lechuga", times: 4, note: null },
+  { id: "oat-milk", en: "Oat milk", es: "Bebida de avena", times: 2, note: null },
+] as const;
+
+/**
+ * Free text with suggestions, like a shopping item's name. They arrive a moment after the typing,
+ * as a server's would; picking one fills the name and its last note, and both stay editable.
+ */
+function ItemName({ locale }: { locale: "en" | "es" }) {
+  const copy = (text: { en: string; es: string }) => storyText({ locale }, text);
+  const [name, setName] = useState("");
+  const [note, setNote] = useState("");
+  const [items, setItems] = useState<ComboboxItem[]>([]);
+  useEffect(() => {
+    const wanted = fold(name.trim());
+    const timer = setTimeout(() => {
+      const found = BOUGHT.filter((item) => wanted !== "" && fold(item[locale]).includes(wanted));
+      setItems(
+        found.map((item) => ({
+          id: item.id,
+          label: item[locale],
+          detail: storyText({ locale }, { en: `Bought ${item.times} times`, es: `Comprado ${item.times} veces` }),
+        })),
+      );
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [name, locale]);
+  return (
+    <div style={{ display: "grid", gap: "var(--space-4)" }}>
+      <Combobox
+        allowsCustomValue
+        label={copy({ en: "What's needed?", es: "¿Qué hace falta?" })}
+        inputValue={name}
+        onInputChange={setName}
+        items={items}
+        onSelectionChange={(id) => setNote(BOUGHT.find((item) => item.id === id)?.note?.[locale] ?? "")}
+        enterKeyHint="done"
+      />
+      <TextField
+        label={copy({ en: "Note (optional)", es: "Nota (opcional)" })}
+        value={note}
+        onChange={(event) => setNote(event.target.value)}
+      />
+    </div>
+  );
+}
+
+// Every story renders its own example with state, so there are no args to control. The two kinds
+// of props (one option from a list, or free text with suggestions) are a union Storybook can't infer.
+const meta: Meta<typeof Combobox> = {
   title: "Components/Combobox",
   component: Combobox,
-  args: {
-    label: "",
-    search: () => [],
-    selectedId: "EUR",
-    onSelectionChange: () => {},
-    noResults: () => "",
-    triggerLabel: "",
-  },
   parameters: { controls: { disable: true } },
-} satisfies Meta<typeof Combobox>;
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj;
 
 /** Type "yen", "kwd" or a country such as "Japan" / "Japón": the list narrows as you type. */
 export const Default: Story = {
@@ -106,4 +153,9 @@ export const WithError: Story = {
       error={storyText(globals, { en: "Choose a currency from the list.", es: "Elige una moneda de la lista." })}
     />
   ),
+};
+
+/** Type "mil" or "lec": suggestions from what the household bought, most bought first. Anything else is fine too. */
+export const FreeText: Story = {
+  render: (_, { globals }) => <ItemName locale={storyLocale(globals)} />,
 };
