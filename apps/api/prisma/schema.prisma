@@ -38,6 +38,7 @@ model User {
   settlementsCreated  Settlement[]   @relation("SettlementCreatedBy")
   settlementsEdited   Settlement[]   @relation("SettlementEditedBy")
   settlementsDeleted  Settlement[]   @relation("SettlementDeletedBy")
+  shoppingItemsAsked  ShoppingItem[] @relation("ShoppingItemAskedBy")
 
   @@map("users")
 }
@@ -61,11 +62,12 @@ model Household {
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
 
-  memberships Membership[]
-  invitations Invitation[]
-  expenses    Expense[]
-  settlements Settlement[]
-  categories  ExpenseCategory[]
+  memberships   Membership[]
+  invitations   Invitation[]
+  expenses      Expense[]
+  settlements   Settlement[]
+  categories    ExpenseCategory[]
+  shoppingItems ShoppingItem[]
 
   @@map("households")
 }
@@ -239,6 +241,35 @@ model Settlement {
   @@index([householdId, fromUserId])
   @@index([householdId, toUserId])
   @@map("settlements")
+}
+
+/// One thing on the household's shopping list ("Milk"). The list never holds two items whose
+/// `nameKey` matches (ADR 0009); the service answers a violation of the unique index with
+/// `shopping.item.duplicate`. Every item is on the list for now: the index becomes partial (items
+/// not bought and not deleted) when bought and deleted items arrive.
+model ShoppingItem {
+  id          String   @id @default(cuid())
+  householdId String   @map("household_id")
+  /// Trimmed, 1–50 characters.
+  name        String
+  /// `shoppingNameKey(name)` from packages/shared: case, accents and spaces folded.
+  nameKey     String   @map("name_key")
+  /// Trimmed, up to 100 characters; null rather than empty.
+  note        String?
+  /// Whoever added it. A user, not a membership, so it survives people leaving (ADR 0007).
+  askedById   String   @map("asked_by_id")
+  /// The list is ordered by it, like a paper list.
+  addedAt     DateTime @map("added_at")
+  /// Starts at 1 and goes up only on name and note edits (ADR 0009).
+  version     Int      @default(1)
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  askedBy   User      @relation("ShoppingItemAskedBy", fields: [askedById], references: [id], onDelete: Restrict)
+
+  @@unique([householdId, nameKey], map: "shopping_items_household_name_key")
+  @@index([householdId, addedAt])
+  @@index([askedById])
+  @@map("shopping_items")
 }
 
 /// Refresh tokens are stored hashed (SHA-256), never in plain text.

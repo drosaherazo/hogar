@@ -94,6 +94,18 @@
     "not_found": "Ese pago ya no está. Puede que alguien lo haya borrado.",
     "changed": "Alguien cambió este pago mientras lo editabas. Aquí tienes la versión más reciente."
   },
+  "shopping": {
+    "item": {
+      "name": {
+        "required": "Escribe qué hace falta.",
+        "too_long": "Máximo 50 caracteres; los detalles van en la nota."
+      },
+      "note": {
+        "too_long": "La nota admite hasta 100 caracteres."
+      },
+      "duplicate": "Eso ya está en la lista."
+    }
+  },
   "invitation": {
     "not_found": "Este enlace de invitación no funciona. Pide uno nuevo a quien te invitó.",
     "expired": "Esta invitación ha caducado. Pide un enlace nuevo a quien te invitó.",

@@ -5,7 +5,8 @@
   "nav": {
     "label": "Main",
     "home": "Home",
-    "expenses": "Expenses"
+    "expenses": "Expenses",
+    "shopping": "Shopping"
   },
   "theme": {
     "label": "Theme",

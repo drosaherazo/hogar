@@ -23,6 +23,8 @@ import { createHouseholdRouter } from "./household/householdRouter";
 import { createHouseholdService } from "./household/householdService";
 import { createHouseholdInvitationsRouter, createInvitationsRouter } from "./household/invitationRouter";
 import { createInvitationService } from "./household/invitationService";
+import { createShoppingRouter } from "./shopping/shoppingRouter";
+import { createShoppingService } from "./shopping/shoppingService";
 import { createMeRouter } from "./me/meRouter";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { requireApiVersion } from "./middleware/requireApiVersion";
@@ -110,6 +112,8 @@ export function createApp({
   app.use("/api/household/categories", requireAuth(signer), createCategoriesRouter(db, categories));
   const settlements = createSettlementService({ db, now });
   app.use("/api/household/settlements", requireAuth(signer), createSettlementsRouter(db, settlements));
+  const shopping = createShoppingService({ db, now });
+  app.use("/api/household/shopping", requireAuth(signer), createShoppingRouter(db, shopping));
   app.use("/api/household", requireAuth(signer), createLedgerRouter(db, createLedgerService({ db })));
   app.use("/api/household", requireAuth(signer), createHouseholdRouter(db, households));
   app.use(

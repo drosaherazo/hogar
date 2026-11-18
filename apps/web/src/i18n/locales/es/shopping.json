@@ -1,0 +1,25 @@
+{
+  "title": "Compras",
+  "add": {
+    "nameLabel": "¿Qué hace falta?",
+    "noteLabel": "Nota (opcional)",
+    "noteHint": "Marca, tamaño, cuántos…",
+    "submit": "Añadir",
+    "adding": "Añadiendo…"
+  },
+  "added": "Añadiste {{name}}",
+  "item": {
+    "askedBy": "lo pidió {{name}}"
+  },
+  "empty": {
+    "title": "No falta nada",
+    "description": "Cuando algo se acabe, añádelo aquí y todo el mundo lo verá."
+  },
+  "duplicate": {
+    "message": "{{name}} ya está en la lista."
+  },
+  "guest": {
+    "readOnly": "Con acceso de invitado ves la lista, pero no puedes cambiarla."
+  },
+  "loadError": "No hemos podido cargar la lista de la compra."
+}

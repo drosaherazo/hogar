@@ -94,6 +94,18 @@
     "not_found": "That payment isn't here any more. Someone may have deleted it.",
     "changed": "Someone changed this payment while you were editing it. Here's the latest version."
   },
+  "shopping": {
+    "item": {
+      "name": {
+        "required": "Write what's needed.",
+        "too_long": "Keep it to 50 characters; details go in the note."
+      },
+      "note": {
+        "too_long": "The note fits up to 100 characters."
+      },
+      "duplicate": "That's already on the list."
+    }
+  },
   "invitation": {
     "not_found": "This invitation link doesn't work. Ask the person who invited you for a new one.",
     "expired": "This invitation has expired. Ask the person who invited you for a new link.",
