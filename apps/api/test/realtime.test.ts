@@ -326,6 +326,13 @@ describe("shopping:changed", () => {
     request(api.app)
       .delete(`${itemPath(id)}/cart`)
       .set("Authorization", who.auth);
+  const finish = (who: SignedIn, itemIds: string[]) =>
+    request(api.app)
+      .post("/api/household/shopping/finish")
+      .set("Authorization", who.auth)
+      .send({ itemIds, expense: null });
+  const undoFinish = (who: SignedIn, itemIds: string[]) =>
+    request(api.app).post("/api/household/shopping/finish/undo").set("Authorization", who.auth).send({ itemIds });
 
   it("reaches the other members when someone adds an item", async () => {
     const { ana, bruno } = await household();
@@ -432,6 +439,43 @@ describe("shopping:changed", () => {
     await putInCart(bruno, milk).expect(200);
     await putInCart(ana, milk).expect(409);
     await takeOutOfCart(ana, milk).expect(409);
+    // In order on one connection: the next add's event arriving alone means none of the above sent one.
+    const added = nextEvent(anaSocket, "shopping:changed");
+    await addItem(bruno, "Bread").expect(201);
+    await added;
+
+    expect(received).toEqual(["shopping:changed"]);
+  });
+
+  it("reaches the other members when someone finishes shopping or undoes it", async () => {
+    const { ana, bruno } = await household();
+    const milk = idOf(await addItem(ana, "Milk").expect(201));
+    await putInCart(bruno, milk).expect(200);
+    const anaSocket = await connectAs(ana);
+    const received = record(anaSocket);
+
+    let changed = nextEvent(anaSocket, "shopping:changed");
+    await finish(bruno, [milk]).expect(200);
+    await changed;
+    changed = nextEvent(anaSocket, "shopping:changed");
+    await undoFinish(bruno, [milk]).expect(200);
+    await changed;
+
+    expect(received).toEqual(["shopping:changed", "shopping:changed"]);
+  });
+
+  it("announces nothing for a finish or an undo that is refused or changes nothing", async () => {
+    const { ana, bruno } = await household();
+    const milk = idOf(await addItem(ana, "Milk").expect(201));
+    await putInCart(bruno, milk).expect(200);
+    await finish(bruno, [milk]).expect(200);
+    await undoFinish(bruno, [milk]).expect(200);
+    const anaSocket = await connectAs(ana);
+    const received = record(anaSocket);
+
+    await finish(ana, [milk]).expect(409);
+    await undoFinish(ana, [milk]).expect(410);
+    await undoFinish(bruno, [milk]).expect(200);
     // In order on one connection: the next add's event arriving alone means none of the above sent one.
     const added = nextEvent(anaSocket, "shopping:changed");
     await addItem(bruno, "Bread").expect(201);

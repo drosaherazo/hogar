@@ -41,6 +41,7 @@ model User {
   shoppingItemsAsked   ShoppingItem[] @relation("ShoppingItemAskedBy")
   shoppingItemsDeleted ShoppingItem[] @relation("ShoppingItemDeletedBy")
   shoppingItemsInCart  ShoppingItem[] @relation("ShoppingItemCartOwner")
+  shoppingItemsBought  ShoppingItem[] @relation("ShoppingItemBoughtBy")
 
   @@map("users")
 }
@@ -248,11 +249,11 @@ model Settlement {
 }
 
 /// One thing on the household's shopping list ("Milk"). An item is on the list until it is
-/// deleted. Deleting is soft (`deletedAt`), so whoever deleted it can undo for a minute and it
-/// comes back in its place. The list never holds two items whose `nameKey` matches (ADR 0009):
-/// a partial unique index on (household, `nameKey`) over items not deleted, written by hand in
-/// the migration because Prisma can't model it. The service answers a violation with
-/// `shopping.item.duplicate`.
+/// bought or deleted. Both are soft (`boughtAt`, `deletedAt`), so whoever did it can undo for a
+/// minute and it comes back in its place. The list never holds two items whose `nameKey` matches
+/// (ADR 0009): a partial unique index on (household, `nameKey`) over items neither bought nor
+/// deleted, written by hand in the migration because Prisma can't model it. The service answers
+/// a violation with `shopping.item.duplicate`.
 model ShoppingItem {
   id          String    @id @default(cuid())
   householdId String    @map("household_id")
@@ -271,6 +272,10 @@ model ShoppingItem {
   /// Whose cart it is in while they shop, or null. Moving it in or out of a cart isn't an edit, so
   /// `version` stays (ADR 0009). Cleared when its owner leaves, is removed or becomes a guest.
   cartOwnerId String?   @map("cart_owner_id")
+  /// Set when someone finishes shopping with it in their cart: it leaves the list as a bought item,
+  /// part of the household's shopping history, unless whoever bought it undoes within the window.
+  boughtAt    DateTime? @map("bought_at")
+  boughtById  String?   @map("bought_by_id")
   /// Set when someone deletes it: it leaves the list for good, unless whoever deleted it undoes
   /// within the window.
   deletedAt   DateTime? @map("deleted_at")
@@ -278,6 +283,7 @@ model ShoppingItem {
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
   askedBy   User      @relation("ShoppingItemAskedBy", fields: [askedById], references: [id], onDelete: Restrict)
+  boughtBy  User?     @relation("ShoppingItemBoughtBy", fields: [boughtById], references: [id], onDelete: Restrict)
   deletedBy User?     @relation("ShoppingItemDeletedBy", fields: [deletedById], references: [id], onDelete: Restrict)
   cartOwner User?     @relation("ShoppingItemCartOwner", fields: [cartOwnerId], references: [id], onDelete: SetNull)
 

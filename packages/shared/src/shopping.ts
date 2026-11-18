@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { ErrorCode } from "./errors";
-import { personRefSchema } from "./expenses";
+import { expenseViewSchema, personRefSchema } from "./expenses";
 
 /** Zod messages are error codes the web translates, never sentences. */
 const code = (value: ErrorCode) => value;
@@ -76,6 +76,27 @@ export const updateShoppingItemInputSchema = z
   .refine((input) => input.name !== undefined || input.note !== undefined, { message: code("request.invalid") });
 export type UpdateShoppingItemInput = z.input<typeof updateShoppingItemInputSchema>;
 
+/** Items named by id, each once. */
+const itemIdsSchema = z
+  .array(z.string(code("request.invalid")).min(1, code("request.invalid")), code("request.invalid"))
+  .min(1, code("request.invalid"))
+  .refine((ids) => new Set(ids).size === ids.length, { message: code("request.invalid") });
+
+/**
+ * Finishing shopping names every item in the caller's cart, as the person last saw it: a cart that
+ * changed meanwhile (on their other device) is refused whole, never half bought. `expense` is null
+ * to finish without an expense; it is required, so leaving it out never means "without one".
+ */
+export const finishShoppingInputSchema = z.object({
+  itemIds: itemIdsSchema,
+  expense: z.null(code("request.invalid")),
+});
+export type FinishShoppingInput = z.input<typeof finishShoppingInputSchema>;
+
+/** Undoing a finish names the items it bought, to put them back in the caller's cart. */
+export const undoFinishShoppingInputSchema = z.object({ itemIds: itemIdsSchema });
+export type UndoFinishShoppingInput = z.input<typeof undoFinishShoppingInputSchema>;
+
 // ---------------------------------------------------------------------------
 // Responses
 // ---------------------------------------------------------------------------
@@ -105,3 +126,11 @@ export type ShoppingList = z.infer<typeof shoppingListSchema>;
 
 export const shoppingItemResponseSchema = z.object({ item: shoppingItemViewSchema });
 export type ShoppingItemResponse = z.infer<typeof shoppingItemResponseSchema>;
+
+/** Several items in list order, such as those an undo put back in the cart. */
+export const shoppingItemsResponseSchema = z.object({ items: z.array(shoppingItemViewSchema) });
+export type ShoppingItemsResponse = z.infer<typeof shoppingItemsResponseSchema>;
+
+/** What finishing recorded: the expense it created, or null when the person finished without one. */
+export const finishShoppingResponseSchema = z.object({ expense: expenseViewSchema.nullable() });
+export type FinishShoppingResponse = z.infer<typeof finishShoppingResponseSchema>;
