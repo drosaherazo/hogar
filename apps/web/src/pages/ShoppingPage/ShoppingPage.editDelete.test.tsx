@@ -366,3 +366,84 @@ describe("adding something already on the list", () => {
     expect(screen.queryByRole("button", { name: "Use my note" })).not.toBeInTheDocument();
   });
 });
+
+describe("losing the connection while a menu or the edit dialog is open", () => {
+  const OFFLINE_REASON = "Changes are available when you're back online.";
+
+  function goOffline() {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    act(() => {
+      window.dispatchEvent(new Event("offline"));
+    });
+  }
+
+  it("switches the item's actions off, saying why", async () => {
+    serveList([milk]);
+    renderApp({ path: "/shopping", storage: new MemoryStorage(), installed: true });
+    await userEvent.click(await screen.findByRole("button", { name: "Options for Milk" }));
+    const edit = await screen.findByRole("menuitem", { name: "Edit" });
+
+    goOffline();
+
+    await waitFor(() => expect(edit).toHaveAttribute("aria-disabled", "true"));
+    for (const action of ["Edit", "Delete"]) {
+      expect(screen.getByRole("menuitem", { name: action })).toHaveAccessibleDescription(OFFLINE_REASON);
+    }
+  });
+
+  it("switches Save off, saying why, and sends nothing on Enter", async () => {
+    const { edits } = serveEdits([milk]);
+    renderApp({ path: "/shopping", storage: new MemoryStorage(), installed: true });
+    await choose("Milk", "Edit");
+    const dialog = await screen.findByRole("dialog");
+    const name = within(dialog).getByRole("textbox", { name: "What's needed?" });
+    await userEvent.type(name, " (oat)");
+
+    goOffline();
+
+    const save = within(dialog).getByRole("button", { name: "Save" });
+    await waitFor(() => expect(save).toBeDisabled());
+    // The banner that gives the reason fills in a moment after it appears.
+    await waitFor(() => expect(save).toHaveAccessibleDescription(OFFLINE_REASON));
+    await userEvent.type(within(dialog).getByRole("textbox", { name: "Note (optional)" }), "{Enter}");
+    expect(edits).toEqual([]);
+    expect(name).toHaveValue("Milk (oat)");
+  });
+
+  it("switches Save mine off, saying why", async () => {
+    const brunosMilk = { ...milk, note: "oat", version: 2 };
+    const list = serveEdits([milk], () => {
+      list.change(brunosMilk);
+      return apiError(409, "shopping.item.changed");
+    });
+    renderApp({ path: "/shopping", storage: new MemoryStorage(), installed: true });
+    await choose("Milk", "Edit");
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.type(within(dialog).getByRole("textbox", { name: "Note (optional)" }), "!");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    const saveMine = await within(dialog).findByRole("button", { name: "Save mine" });
+    await waitFor(() => expect(saveMine).toBeEnabled());
+
+    goOffline();
+
+    await waitFor(() => expect(saveMine).toBeDisabled());
+    await waitFor(() => expect(saveMine).toHaveAccessibleDescription(OFFLINE_REASON));
+  });
+
+  it("switches Use my note off, saying why", async () => {
+    serveEdits([milk, eggs], (id) => (id === "item_milk" ? apiError(409, "shopping.item.duplicate") : null));
+    renderApp({ path: "/shopping", storage: new MemoryStorage(), installed: true });
+    await choose("Milk", "Edit");
+    const dialog = await screen.findByRole("dialog");
+    const name = within(dialog).getByRole("textbox", { name: "What's needed?" });
+    await userEvent.clear(name);
+    await userEvent.type(name, "EGGS");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    const useMyNote = await within(dialog).findByRole("button", { name: "Use my note" });
+
+    goOffline();
+
+    await waitFor(() => expect(useMyNote).toBeDisabled());
+    await waitFor(() => expect(useMyNote).toHaveAccessibleDescription(OFFLINE_REASON));
+  });
+});

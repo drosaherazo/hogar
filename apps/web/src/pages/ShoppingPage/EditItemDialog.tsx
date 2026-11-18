@@ -11,6 +11,8 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiRequestError, errorKey } from "../../api/client";
 import { moveToNextField } from "../../forms/moveToNextField";
+import { describedByOffline } from "../../offline/OfflineBanner";
+import { useReadOnly } from "../../offline/useOnline";
 import { useEditShoppingItem } from "../../shopping/useShopping";
 import { DuplicateNotice } from "./DuplicateNotice";
 import styles from "./ShoppingPage.module.css";
@@ -30,11 +32,13 @@ export interface EditItemDialogProps {
 /**
  * Fixing an item's name or note. When someone else saved a change meanwhile, the server refuses
  * the edit and the dialog shows their version: the person keeps it or saves theirs over it, never
- * overwriting it without seeing it (ADR 0009).
+ * overwriting it without seeing it (ADR 0009). The dialog sits outside the page, so if the
+ * connection drops while it is open, saving is switched off here, with the reason (ADR 0015).
  */
 export function EditItemDialog({ item, items, onClose, onDone }: EditItemDialogProps) {
   const { t } = useTranslation(["shopping", "errors"]);
   const edit = useEditShoppingItem();
+  const readOnly = useReadOnly();
   const nameField = useRef<HTMLInputElement>(null);
   const keepNew = useRef<HTMLButtonElement>(null);
   const [name, setName] = useState(item.name);
@@ -118,7 +122,8 @@ export function EditItemDialog({ item, items, onClose, onDone }: EditItemDialogP
               loading={edit.isPending}
               loadingLabel={t("edit.saving")}
               // Until the list shows the newer version, saving would be refused again.
-              disabled={latest.version === version}
+              disabled={readOnly || latest.version === version}
+              aria-describedby={describedByOffline(readOnly)}
               onClick={() => void save(latest.version)}
             >
               {t("changed.saveMine")}
@@ -129,7 +134,14 @@ export function EditItemDialog({ item, items, onClose, onDone }: EditItemDialogP
             <Button variant="secondary" onClick={onClose}>
               {t("cancel")}
             </Button>
-            <Button type="submit" form="edit-item-form" loading={edit.isPending} loadingLabel={t("edit.saving")}>
+            <Button
+              type="submit"
+              form="edit-item-form"
+              loading={edit.isPending}
+              loadingLabel={t("edit.saving")}
+              disabled={readOnly}
+              aria-describedby={describedByOffline(readOnly)}
+            >
               {t("edit.save")}
             </Button>
           </>
@@ -141,7 +153,7 @@ export function EditItemDialog({ item, items, onClose, onDone }: EditItemDialogP
         className={styles.form}
         onSubmit={(event) => {
           event.preventDefault();
-          void save(version);
+          if (!readOnly) void save(version);
         }}
         onKeyDown={moveToNextField}
         noValidate

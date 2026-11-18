@@ -1,7 +1,7 @@
 import { ToastQueue, ToastRegion } from "@hogar/ui";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { OFFLINE_REASON_ID } from "../offline/OfflineBanner";
+import { describedByOffline } from "../offline/OfflineBanner";
 import { useReadOnly } from "../offline/useOnline";
 import styles from "./Toasts.module.css";
 
@@ -38,7 +38,7 @@ export function Toasts() {
       label={t("toasts.label")}
       closeLabel={t("toasts.close")}
       actionDisabled={readOnly}
-      actionDescribedBy={readOnly ? OFFLINE_REASON_ID : undefined}
+      actionDescribedBy={describedByOffline(readOnly)}
       className={styles.region}
     />
   );

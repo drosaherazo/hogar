@@ -9,6 +9,14 @@ import { useReadOnly } from "./useOnline";
 export const OFFLINE_REASON_ID = "offline-reason";
 
 /**
+ * What a control outside the page's offline fieldset (in a dialog, a menu or a toast) is described
+ * by: its own description, if any, plus the reason while changes are off.
+ */
+export function describedByOffline(readOnly: boolean, id?: string): string | undefined {
+  return [id, readOnly ? OFFLINE_REASON_ID : undefined].filter(Boolean).join(" ") || undefined;
+}
+
+/**
  * The offline view's banner (ADR 0015): Hogar is offline, the data on screen is what it last
  * loaded and when, and changes wait until the connection is back. Neutral, never alarming.
  */

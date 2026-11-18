@@ -3,6 +3,8 @@ import { Alert, Button } from "@hogar/ui";
 import { useTranslation } from "react-i18next";
 import { errorKey } from "../../api/client";
 import { useCurrentUser } from "../../auth/guards";
+import { describedByOffline } from "../../offline/OfflineBanner";
+import { useReadOnly } from "../../offline/useOnline";
 import { useEditShoppingItem } from "../../shopping/useShopping";
 
 export interface DuplicateNoticeProps {
@@ -17,12 +19,14 @@ export interface DuplicateNoticeProps {
 /**
  * "Milk is already on the list." When the person wrote a note the existing item doesn't have,
  * it offers to give it that note, so their detail isn't lost (ADR 0009). Not while the item is in
- * someone else's cart: only they can change it then.
+ * someone else's cart: only they can change it then. In the edit dialog it sits outside the page,
+ * so offline its button is switched off here, with the reason.
  */
 export function DuplicateNotice({ existing, note, onNoteUsed }: DuplicateNoticeProps) {
   const { t } = useTranslation(["shopping", "errors"]);
   const edit = useEditShoppingItem();
   const user = useCurrentUser();
+  const readOnly = useReadOnly();
   const free = existing !== undefined && (existing.cartOwner === null || existing.cartOwner.userId === user.id);
   const useMyNote =
     existing !== undefined && free && note !== null && note !== existing.note
@@ -35,7 +39,13 @@ export function DuplicateNotice({ existing, note, onNoteUsed }: DuplicateNoticeP
         tone="info"
         action={
           useMyNote && (
-            <Button variant="secondary" size="sm" disabled={edit.isPending} onClick={useMyNote}>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={edit.isPending || readOnly}
+              aria-describedby={describedByOffline(readOnly)}
+              onClick={useMyNote}
+            >
               {t("duplicate.useMyNote")}
             </Button>
           )

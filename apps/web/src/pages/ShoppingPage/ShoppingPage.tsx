@@ -34,6 +34,7 @@ import { usePersonLabel } from "../../expenses/people";
 import { LoadError } from "../../household/LoadError";
 import { useHousehold } from "../../household/useHousehold";
 import { AppShell } from "../../layout/AppShell";
+import { useReadOnly } from "../../offline/useOnline";
 import {
   cartOf,
   useAddShoppingItem,
@@ -319,10 +320,12 @@ interface ItemActions {
  *
  * An item in a cart stays in its place, quieter but readable, with a check and whose cart it is in,
  * so color never says it alone. While it is in someone else's cart, only they can change it: its
- * check and actions are off, and say why.
+ * check and actions are off, and say why. The menu opens outside the page, so if the connection
+ * drops while it is open, its actions are switched off here, saying why (ADR 0015).
  */
 function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActions | undefined }) {
-  const { t } = useTranslation("shopping");
+  const { t } = useTranslation(["shopping", "common"]);
+  const readOnly = useReadOnly();
   const user = useCurrentUser();
   const personLabel = usePersonLabel();
   const markerId = useId();
@@ -334,7 +337,12 @@ function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActio
   const holder = item.cartOwner && !inMyCart ? personLabel(item.cartOwner) : null;
   const marker =
     item.cartOwner === null ? null : holder === null ? t("item.inMyCart") : t("item.inCartOf", { name: holder });
-  const lockedReason = holder === null ? undefined : t("item.lockedReason", { name: holder });
+  const lockedReason =
+    holder !== null
+      ? t("item.lockedReason", { name: holder })
+      : readOnly
+        ? t("common:offline.actionDisabled")
+        : undefined;
   // What a locked control is described by: the marker next to it, which says whose cart it is in.
   const describedBy = holder === null ? undefined : markerId;
 
@@ -385,10 +393,20 @@ function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActio
             </Button>
           }
         >
-          <MenuItem icon={<Pencil />} onSelect={actions.onEdit} disabled={holder !== null} description={lockedReason}>
+          <MenuItem
+            icon={<Pencil />}
+            onSelect={actions.onEdit}
+            disabled={lockedReason !== undefined}
+            description={lockedReason}
+          >
             {t("item.edit")}
           </MenuItem>
-          <MenuItem icon={<Trash2 />} onSelect={actions.onDelete} disabled={holder !== null} description={lockedReason}>
+          <MenuItem
+            icon={<Trash2 />}
+            onSelect={actions.onDelete}
+            disabled={lockedReason !== undefined}
+            description={lockedReason}
+          >
             {t("item.delete")}
           </MenuItem>
         </Menu>
