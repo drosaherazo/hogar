@@ -14,8 +14,7 @@ import { expenseKeys } from "../expenses/useExpenses";
 import { shoppingKeys } from "../shopping/useShopping";
 
 export const householdKeys = {
-  /** The start of every query about the household, so the live connection can mark them all stale. */
-  all: ["household"] as const,
+  /** Also the start of every other household query's key: invalidating it marks them all stale. */
   current: ["household"] as const,
   invitations: ["household", "invitations"] as const,
 };

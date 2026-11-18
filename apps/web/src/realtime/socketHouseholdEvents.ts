@@ -1,4 +1,4 @@
-import { SOCKET_PATH, type ClientToServerEvents, type ServerToClientEvents } from "@hogar/shared";
+import { errorCodeSchema, SOCKET_PATH, type ClientToServerEvents, type ServerToClientEvents } from "@hogar/shared";
 import { io, type Socket } from "socket.io-client";
 import type { ApiClient } from "../api/client";
 import type { HouseholdEventsSource } from "./LiveHousehold";
@@ -16,12 +16,21 @@ import type { HouseholdEventsSource } from "./LiveHousehold";
  * - `auth.token.invalid`: the 15-minute access token expired (a phone unlocked after a while):
  *   renew it like a request would, and connect again, once.
  * - `household.not_member`: re-read the household; the app then finds none and stops connecting.
+ *
+ * Whatever happens, a page shown again re-reads what it missed once, so a connection that can't get
+ * in leaves it without live updates, never with old data.
  */
 export function socketHouseholdEvents(client: ApiClient): HouseholdEventsSource {
   return (handlers) => {
     let closed = false;
     let sentToken = "";
     let renewed = false;
+    let caughtUp = false;
+    const catchUp = () => {
+      caughtUp = true;
+      handlers.catchUp();
+    };
+
     const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io({
       path: SOCKET_PATH,
       transports: ["websocket"],
@@ -34,14 +43,17 @@ export function socketHouseholdEvents(client: ApiClient): HouseholdEventsSource 
 
     socket.on("connect", () => {
       renewed = false;
-      handlers.catchUp();
+      catchUp();
     });
     socket.on("household:changed", () => handlers.received("household:changed"));
     socket.on("connect_error", (error) => {
-      if (socket.active) return; // Lost on the way, not refused: Socket.io tries again.
-      if (error.message === "client.outdated") client.reportOutdated();
-      else if (error.message === "household.not_member") handlers.catchUp();
-      else if (error.message === "auth.token.invalid" && !renewed) {
+      // Lost on the way rather than refused: Socket.io tries again on its own.
+      const refusal = socket.active ? undefined : errorCodeSchema.safeParse(error.message).data;
+      if (refusal === "client.outdated") {
+        client.reportOutdated();
+      } else if (refusal === "household.not_member") {
+        catchUp();
+      } else if (refusal === "auth.token.invalid" && !renewed) {
         // A fresh token refused as well wouldn't fare better a second time.
         renewed = true;
         client.renewAccessToken(sentToken).then(
@@ -50,6 +62,8 @@ export function socketHouseholdEvents(client: ApiClient): HouseholdEventsSource 
           },
           () => undefined, // The session ended: the app signs out and closes this connection.
         );
+      } else if (!caughtUp) {
+        catchUp();
       }
     });
 

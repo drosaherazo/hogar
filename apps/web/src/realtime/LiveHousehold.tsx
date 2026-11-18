@@ -1,5 +1,5 @@
 import type { HouseholdEvent } from "@hogar/shared";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useSyncExternalStore, type ReactNode } from "react";
 import { householdKeys, useHousehold } from "../household/useHousehold";
 
@@ -34,6 +34,12 @@ function usePageVisible(): boolean {
   return useSyncExternalStore(subscribeToVisibility, () => document.visibilityState === "visible");
 }
 
+/** The queries each event makes stale. */
+const staleAfter: Record<HouseholdEvent, QueryKey> = {
+  // Names, roles and the split show on every page, so every household query is re-read.
+  "household:changed": householdKeys.current,
+};
+
 /**
  * Keeps one live connection to the household while a signed-in person with a household has Hogar
  * on screen, so what others change appears without reloading. Events are signals: they only mark
@@ -53,8 +59,11 @@ export function LiveHousehold() {
 
   useEffect(() => {
     if (!householdId || !visible) return;
-    const reread = () => void queryClient.invalidateQueries({ queryKey: householdKeys.all });
-    return source({ catchUp: reread, received: reread });
+    const markStale = (queryKey: QueryKey) => void queryClient.invalidateQueries({ queryKey });
+    return source({
+      catchUp: () => markStale(householdKeys.current),
+      received: (event) => markStale(staleAfter[event]),
+    });
   }, [source, queryClient, householdId, visible]);
 
   return null;

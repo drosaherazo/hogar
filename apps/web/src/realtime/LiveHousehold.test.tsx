@@ -50,7 +50,7 @@ describe("the live household", () => {
     expect(await screen.findByRole("heading", { name: "Nuestra casa" })).toBeInTheDocument();
   });
 
-  it("shows the removal note at once when someone is removed, and disconnects", async () => {
+  it("shows the removal notice at once when someone is removed, and disconnects", async () => {
     const events = await openHome();
 
     server.use(handlers.noHousehold("Casa Ana"));
