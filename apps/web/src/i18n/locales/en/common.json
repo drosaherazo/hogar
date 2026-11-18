@@ -75,5 +75,9 @@
       "title": "You're offline",
       "description": "Hogar will be back as soon as you reconnect."
     }
+  },
+  "toasts": {
+    "label": "Notifications",
+    "close": "Close"
   }
 }

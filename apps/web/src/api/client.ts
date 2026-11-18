@@ -46,6 +46,7 @@ import {
   type UpdateCategoryInput,
   type UpdateCategorySplitInput,
   type UpdateExpenseInput,
+  type UpdateShoppingItemInput,
   type UpdateSettlementInput,
   type UpdateSplitRequest,
 } from "@hogar/shared";
@@ -315,6 +316,22 @@ export class ApiClient {
         schema: shoppingItemResponseSchema,
       })
     ).item;
+  }
+
+  /** Renames an item or changes its note, from the version the person saw. */
+  async editShoppingItem(id: string, input: UpdateShoppingItemInput): Promise<ShoppingItemView> {
+    const path = `/household/shopping/items/${encodeURIComponent(id)}`;
+    return (await this.request(path, { method: "PATCH", body: input, schema: shoppingItemResponseSchema })).item;
+  }
+
+  deleteShoppingItem(id: string, version: number): Promise<void> {
+    return this.request(`/household/shopping/items/${encodeURIComponent(id)}?version=${version}`, { method: "DELETE" });
+  }
+
+  /** Undoes the person's own delete, within the server's undo window. */
+  async restoreShoppingItem(id: string): Promise<ShoppingItemView> {
+    const path = `/household/shopping/items/${encodeURIComponent(id)}/restore`;
+    return (await this.request(path, { method: "POST", schema: shoppingItemResponseSchema })).item;
   }
 
   // --- Invitations ---------------------------------------------------------

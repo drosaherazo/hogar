@@ -1,0 +1,4 @@
+/* Above the tab bar and a floating action, which the page reserves at the bottom on phones. */
+.region {
+  margin-block-end: calc(var(--tab-bar-size, 0rem) + var(--floating-action-room, 0rem));
+}

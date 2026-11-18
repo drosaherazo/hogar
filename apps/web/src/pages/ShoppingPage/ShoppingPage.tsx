@@ -8,9 +8,9 @@ import {
   type HouseholdView,
   type ShoppingItemView,
 } from "@hogar/shared";
-import { Alert, Button, Card, EmptyState, Spinner, TextField } from "@hogar/ui";
-import { Check, Plus, ShoppingBasket } from "lucide-react";
-import { useRef, useState, type FormEvent } from "react";
+import { Alert, Button, Card, EmptyState, Menu, MenuItem, Spinner, TextField } from "@hogar/ui";
+import { Check, MoreHorizontal, Pencil, Plus, ShoppingBasket, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { ApiRequestError, errorKey } from "../../api/client";
@@ -19,10 +19,19 @@ import { usePersonLabel } from "../../expenses/people";
 import { LoadError } from "../../household/LoadError";
 import { useHousehold } from "../../household/useHousehold";
 import { AppShell } from "../../layout/AppShell";
-import { useAddShoppingItem, useShoppingList } from "../../shopping/useShopping";
+import {
+  useAddShoppingItem,
+  useDeleteShoppingItem,
+  useRestoreShoppingItem,
+  useShoppingList,
+} from "../../shopping/useShopping";
+import { useToasts } from "../../toast/Toasts";
+import { DuplicateNotice } from "./DuplicateNotice";
+import { EditItemDialog } from "./EditItemDialog";
 import styles from "./ShoppingPage.module.css";
 
 const TITLE_ID = "shopping-title";
+const NO_ITEMS: ShoppingItemView[] = [];
 
 /** The household's one shopping list: what's needed, in the order it was asked for, and the way to add to it. */
 export function ShoppingPage() {
@@ -48,18 +57,75 @@ export function ShoppingPage() {
   );
 }
 
+/** Where focus goes once a deleted item's row is gone: the row now in its place, else the one before. */
+interface FocusAfterDelete {
+  removed: string;
+  next: string | null;
+}
+
 function ListAndForm({ household }: { household: HouseholdView }) {
-  const { t } = useTranslation(["shopping", "common"]);
+  const { t } = useTranslation(["shopping", "common", "errors"]);
   const list = useShoppingList();
-  const items = list.data ?? [];
+  const items = list.data ?? NO_ITEMS;
+  const canEdit = canEditContent(household.myRole);
+  const toasts = useToasts();
+  const remove = useDeleteShoppingItem();
+  const restore = useRestoreShoppingItem();
+  const nameField = useRef<HTMLInputElement>(null);
+  const listElement = useRef<HTMLUListElement>(null);
+  const focusAfterDelete = useRef<FocusAfterDelete | null>(null);
+  const [editing, setEditing] = useState<ShoppingItemView | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  const [failure, setFailure] = useState<unknown>(null);
+
+  // A deleted row takes its focused button with it: keep the keyboard on the list (or on adding,
+  // when the list is now empty) instead of dropping it at the top of the page.
+  useEffect(() => {
+    const target = focusAfterDelete.current;
+    if (!target || items.some((item) => item.id === target.removed)) return;
+    focusAfterDelete.current = null;
+    const buttons = listElement.current?.querySelectorAll<HTMLElement>("[data-options-for]") ?? [];
+    const next = Array.from(buttons).find((button) => button.dataset["optionsFor"] === target.next);
+    (next ?? nameField.current)?.focus();
+  }, [items]);
+
+  function reset() {
+    setDone(null);
+    setFailure(null);
+  }
+
+  /** Off the list at once; "Undo" in the toast brings it back while the server still allows it. */
+  function deleteItem(item: ShoppingItemView) {
+    reset();
+    const index = items.findIndex((other) => other.id === item.id);
+    focusAfterDelete.current = { removed: item.id, next: (items[index + 1] ?? items[index - 1])?.id ?? null };
+    remove.mutate(item, {
+      onSuccess: () =>
+        toasts.show({
+          message: t("deleted", { name: item.name }),
+          action: { label: t("undo"), onAction: () => undo(item) },
+        }),
+      onError: setFailure,
+    });
+  }
+
+  function undo(item: ShoppingItemView) {
+    reset();
+    restore.mutate(item.id, {
+      onSuccess: (back) => setDone(t("restored", { name: back.name })),
+      onError: setFailure,
+    });
+  }
 
   return (
     <>
-      {canEditContent(household.myRole) ? (
-        <AddItemForm items={items} />
+      {canEdit ? (
+        <AddItemForm items={items} nameField={nameField} />
       ) : (
         <p className={styles.muted}>{t("guest.readOnly")}</p>
       )}
+      {failure !== null && <Alert tone="danger">{t(errorKey(failure))}</Alert>}
+      {done !== null && <Confirmation>{done}</Confirmation>}
       {list.isPending ? (
         <Spinner label={t("common:loading")} />
       ) : list.isError ? (
@@ -70,22 +136,63 @@ function ListAndForm({ household }: { household: HouseholdView }) {
         </Card>
       ) : (
         <Card padding="md">
-          <ul className={styles.list} aria-labelledby={TITLE_ID}>
+          <ul ref={listElement} className={styles.list} aria-labelledby={TITLE_ID}>
             {items.map((item) => (
-              <ItemRow key={item.id} item={item} />
+              <ItemRow
+                key={item.id}
+                item={item}
+                actions={
+                  canEdit
+                    ? {
+                        onEdit: () => {
+                          reset();
+                          setEditing(item);
+                        },
+                        onDelete: () => deleteItem(item),
+                      }
+                    : undefined
+                }
+              />
             ))}
           </ul>
         </Card>
+      )}
+      {editing && (
+        <EditItemDialog
+          item={editing}
+          items={items}
+          onClose={() => setEditing(null)}
+          onDone={(message) => {
+            setEditing(null);
+            setDone(message);
+          }}
+        />
       )}
     </>
   );
 }
 
+/** A short confirmation after a change, read out without interrupting. */
+function Confirmation({ children }: { children: string }) {
+  return (
+    <p role="status" className={styles.confirmation}>
+      <Check aria-hidden="true" className={styles.confirmationIcon} />
+      {children}
+    </p>
+  );
+}
+
+interface ItemActions {
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
 /**
  * A name and, in smaller text, the note and who asked for it: never the viewer (they know), and
- * nobody while the household hides it (the server then leaves `askedBy` out).
+ * nobody while the household hides it (the server then leaves `askedBy` out). Admins and members
+ * get its actions in a menu, so the row stays quick to scan in a shop.
  */
-function ItemRow({ item }: { item: ShoppingItemView }) {
+function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActions | undefined }) {
   const { t } = useTranslation("shopping");
   const user = useCurrentUser();
   const personLabel = usePersonLabel();
@@ -96,12 +203,35 @@ function ItemRow({ item }: { item: ShoppingItemView }) {
 
   return (
     <li className={styles.item}>
-      <span className={styles.itemName}>{item.name}</span>
-      {(item.note !== null || askedBy !== null) && (
-        <span className={styles.itemMeta}>
-          {item.note !== null && <span className={styles.note}>{item.note}</span>}
-          {askedBy !== null && <span>{askedBy}</span>}
-        </span>
+      <span className={styles.itemText}>
+        <span className={styles.itemName}>{item.name}</span>
+        {(item.note !== null || askedBy !== null) && (
+          <span className={styles.itemMeta}>
+            {item.note !== null && <span className={styles.note}>{item.note}</span>}
+            {askedBy !== null && <span>{askedBy}</span>}
+          </span>
+        )}
+      </span>
+      {actions && (
+        <Menu
+          trigger={
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={t("item.actions", { name: item.name })}
+              data-options-for={item.id}
+            >
+              <MoreHorizontal aria-hidden="true" />
+            </Button>
+          }
+        >
+          <MenuItem icon={<Pencil />} onSelect={actions.onEdit}>
+            {t("item.edit")}
+          </MenuItem>
+          <MenuItem icon={<Trash2 />} onSelect={actions.onDelete}>
+            {t("item.delete")}
+          </MenuItem>
+        </Menu>
       )}
     </li>
   );
@@ -113,26 +243,41 @@ type Field = "name" | "note";
  * Adding an item: a name and an optional note. Enter adds from either field, because most items
  * have no note and people add them one after another, often with one hand in a shop.
  */
-function AddItemForm({ items }: { items: readonly ShoppingItemView[] }) {
+function AddItemForm({
+  items,
+  nameField,
+}: {
+  items: readonly ShoppingItemView[];
+  nameField: RefObject<HTMLInputElement | null>;
+}) {
   const { t } = useTranslation(["shopping", "errors"]);
   const add = useAddShoppingItem();
-  const nameField = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
   const [errors, setErrors] = useState<Partial<Record<Field, ErrorCode>>>({});
   const [failure, setFailure] = useState<unknown>(null);
   const [duplicateKey, setDuplicateKey] = useState<string | null>(null);
-  const [added, setAdded] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
 
   // The item behind a duplicate notice, found in the list the person already sees.
   const existing =
     duplicateKey === null ? undefined : items.find((item) => shoppingNameKey(item.name) === duplicateKey);
+  const typedNote = shoppingItemNoteSchema.safeParse(note);
+
+  /** Empties the form for the next item, saying what just happened. */
+  function startOver(message: string) {
+    setName("");
+    setNote("");
+    setDuplicateKey(null);
+    setDone(message);
+    nameField.current?.focus();
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     setFailure(null);
     setDuplicateKey(null);
-    setAdded(null);
+    setDone(null);
     const parsedName = shoppingItemNameSchema.safeParse(name);
     const parsedNote = shoppingItemNoteSchema.safeParse(note);
     const fieldErrors: Partial<Record<Field, ErrorCode>> = {};
@@ -143,10 +288,7 @@ function AddItemForm({ items }: { items: readonly ShoppingItemView[] }) {
 
     try {
       const item = await add.mutateAsync({ name: parsedName.data, note: parsedNote.data });
-      setName("");
-      setNote("");
-      setAdded(item.name);
-      nameField.current?.focus();
+      startOver(t("added", { name: item.name }));
     } catch (error) {
       if (error instanceof ApiRequestError && error.code === "shopping.item.duplicate") {
         setDuplicateKey(shoppingNameKey(parsedName.data));
@@ -187,9 +329,11 @@ function AddItemForm({ items }: { items: readonly ShoppingItemView[] }) {
           error={fieldError("note")}
         />
         {duplicateKey !== null && (
-          <Alert tone="info">
-            {existing ? t("duplicate.message", { name: existing.name }) : t("errors:shopping.item.duplicate")}
-          </Alert>
+          <DuplicateNotice
+            existing={existing}
+            note={typedNote.success ? typedNote.data : null}
+            onNoteUsed={(item) => startOver(t("duplicate.noteUsed", { name: item.name }))}
+          />
         )}
         <Button
           type="submit"
@@ -200,12 +344,7 @@ function AddItemForm({ items }: { items: readonly ShoppingItemView[] }) {
         >
           {t("add.submit")}
         </Button>
-        {added !== null && (
-          <p role="status" className={styles.added}>
-            <Check aria-hidden="true" className={styles.addedIcon} />
-            {t("added", { name: added })}
-          </p>
-        )}
+        {done !== null && <Confirmation>{done}</Confirmation>}
       </form>
     </Card>
   );

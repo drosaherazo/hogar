@@ -1,0 +1,95 @@
+import { ArgTypes, Canvas, Meta } from "@storybook/addon-docs/blocks";
+import { Lang } from "../../docs/blocks/locale";
+import * as ToastStories from "./Toast.stories";
+
+<Meta of={ToastStories} />
+
+<Lang locale="en">
+
+# Toast
+
+Delete something in the example: the toast appears at the bottom of the screen with "Undo".
+
+<Canvas of={ToastStories.WithUndo} />
+
+<ArgTypes of={ToastStories} />
+
+## What it is and when to use it
+A short message at the bottom of the screen about something the person just did, with at most one action that reverses it: "You deleted Milk · Undo". Use it for quick changes that are easy to take back, such as deleting an item from the shopping list or finishing shopping. Don't use it for errors that need the person's attention (use `Alert` in the page), for anything they must read to continue, or to confirm something that can't be undone (use `Dialog`).
+
+The app creates one `ToastQueue`, renders one `ToastRegion` and calls `queue.show({ message, action })`.
+
+## Why it's designed this way
+- **Undo instead of asking first.** In a shop people delete with one hand, between aisles, often several things in a row. A confirmation dialog for every item would interrupt each time and train people to tap "Delete" without reading. Doing the change at once and offering "Undo" keeps the common case to one tap and still makes a slip cost nothing. This is design intent, following the guide's rule that deleting gets a confirmation *or* an undo option.
+- **One toast at a time.** A new toast replaces the one showing, so "Undo" is always about the last thing done and toasts never pile up over the list on a small screen.
+- **Eight seconds, and it waits while you read.** Long enough to read a short sentence and reach the button with a thumb; the timer pauses while the pointer or keyboard focus is on the toast. The server keeps the undo open for longer (a minute for the shopping list), so a toast that is still showing never offers an undo that has already expired.
+- **A calm card, not an alarm.** The surface color, a soft shadow and large corners, with a neutral secondary button: the toast reports something the person chose to do, so it uses no state color and no fuchsia (that stays for the screen's main action).
+- **Above the tab bar, clear of the home indicator.** Fixed at the bottom where the thumb already is; the app passes the room its tab bar takes with `className`. On a narrow screen with a long message the buttons wrap under it instead of squeezing it.
+- **A gentle entrance** with `--duration-base`, which disappears with reduced motion.
+
+## How it helps the person
+- **Fewer interruptions:** the change happens at once, so shopping with one hand stays one tap per item. This is design intent.
+- **A slip costs nothing:** the action that reverses it is right there, at the bottom where the thumb already is.
+- **Evidence-backed:** toasts are announced by screen readers when they appear, the timer pauses on hover and focus, and they can be closed by hand. This follows the WAI-ARIA alert pattern and WCAG 2.2.1 (Timing Adjustable). The friendliness of the styling is design intent.
+
+## Accessibility
+- Built on react-aria. The region is a landmark named by `label` ("Notifications"); F6 moves focus to it and back. Each toast is an `alertdialog` named by its message, which is announced when it appears without moving focus.
+- The action is a real button with a visible label; pressing it also closes the toast. The close (×) button is named by `closeLabel`.
+- The region is rendered at the end of the page, outside the app's content. When the action can't work (offline), pass `actionDisabled` and the id of the element that explains why in `actionDescribedBy`: a disabled fieldset around the page doesn't reach the toast.
+- Every string (`message`, the action's `label`, `label`, `closeLabel`) comes in already translated.
+
+## Variants
+With an action that can't work right now, it is off and read together with the reason:
+
+<Canvas of={ToastStories.ActionUnavailable} />
+
+A message on its own, for news with nothing to reverse:
+
+<Canvas of={ToastStories.MessageOnly} />
+
+</Lang>
+
+<Lang locale="es">
+
+# Aviso emergente (Toast)
+
+Borra algo en el ejemplo: el aviso aparece abajo de la pantalla con "Deshacer".
+
+<Canvas of={ToastStories.WithUndo} />
+
+<ArgTypes of={ToastStories} />
+
+## Qué es y cuándo usarlo
+Un mensaje corto abajo de la pantalla sobre algo que la persona acaba de hacer, con como mucho una acción que lo revierte: "Borraste Leche · Deshacer". Úsalo para cambios rápidos y fáciles de revertir, como borrar algo de la lista de la compra o terminar la compra. No lo uses para errores que necesitan atención (usa `Alert` en la página), para algo que haya que leer para seguir, ni para confirmar algo que no se puede deshacer (usa `Dialog`).
+
+La app crea una `ToastQueue`, pinta una `ToastRegion` y llama a `queue.show({ message, action })`.
+
+## Por qué está diseñado así
+- **Deshacer en vez de preguntar antes.** En la tienda se borra con una mano, entre pasillos y a menudo varias cosas seguidas. Un diálogo de confirmación por cada cosa interrumpiría cada vez y acostumbraría a pulsar "Borrar" sin leer. Hacer el cambio al momento y ofrecer "Deshacer" deja el caso habitual en un toque y aun así un despiste no cuesta nada. Es intención de diseño, según la regla de la guía: borrar lleva una confirmación *o* una opción de deshacer.
+- **Un aviso cada vez.** Uno nuevo sustituye al que se ve, así "Deshacer" siempre se refiere a lo último que se hizo y los avisos nunca se amontonan sobre la lista en una pantalla pequeña.
+- **Ocho segundos, y espera mientras lees.** Lo justo para leer una frase corta y llegar al botón con el pulgar; el tiempo se detiene mientras el puntero o el foco del teclado están sobre el aviso. El servidor mantiene el deshacer abierto más tiempo (un minuto en la lista de la compra), así un aviso que todavía se ve nunca ofrece un deshacer que ya caducó.
+- **Una tarjeta tranquila, no una alarma.** Color de superficie, sombra suave y esquinas amplias, con un botón secundario neutro: el aviso cuenta algo que la persona eligió hacer, así que no usa colores de estado ni fucsia (que queda para la acción principal de la pantalla).
+- **Encima de la barra de pestañas, lejos del indicador de inicio.** Fijo abajo, donde ya está el pulgar; la app pasa con `className` el espacio que ocupa su barra de pestañas. En una pantalla estrecha con un mensaje largo, los botones bajan debajo del texto en vez de apretarlo.
+- **Una entrada suave** con `--duration-base`, que desaparece con movimiento reducido.
+
+## Cómo ayuda a la persona
+- **Menos interrupciones:** el cambio ocurre al momento, así comprar con una mano sigue siendo un toque por cosa. Es intención de diseño.
+- **Un despiste no cuesta nada:** la acción que lo revierte está ahí, abajo, donde ya está el pulgar.
+- **Respaldado:** los lectores de pantalla anuncian el aviso al aparecer, el tiempo se detiene con el puntero y el foco, y se puede cerrar a mano. Sigue el patrón de alerta de WAI-ARIA y la pauta WCAG 2.2.1 (tiempo ajustable). La amabilidad del estilo es intención de diseño.
+
+## Accesibilidad
+- Basado en react-aria. La región es un punto de referencia nombrado por `label` ("Notificaciones"); F6 lleva el foco a ella y de vuelta. Cada aviso es un `alertdialog` nombrado por su mensaje, que se anuncia al aparecer sin mover el foco.
+- La acción es un botón de verdad con etiqueta visible; al pulsarlo también se cierra el aviso. El botón de cierre (×) se nombra con `closeLabel`.
+- La región se pinta al final de la página, fuera del contenido de la app. Cuando la acción no puede funcionar (sin conexión), pasa `actionDisabled` y el id del elemento que explica el motivo en `actionDescribedBy`: un fieldset desactivado alrededor de la página no llega al aviso.
+- Todos los textos (`message`, la `label` de la acción, `label`, `closeLabel`) llegan ya traducidos.
+
+## Variantes
+Con una acción que ahora no puede funcionar, está desactivada y se lee junto con el motivo:
+
+<Canvas of={ToastStories.ActionUnavailable} />
+
+Un mensaje solo, para noticias sin nada que revertir:
+
+<Canvas of={ToastStories.MessageOnly} />
+
+</Lang>

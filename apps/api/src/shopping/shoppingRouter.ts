@@ -1,6 +1,12 @@
-import { addShoppingItemInputSchema, type ShoppingItemResponse, type ShoppingList } from "@hogar/shared";
+import {
+  addShoppingItemInputSchema,
+  updateShoppingItemInputSchema,
+  type ShoppingItemResponse,
+  type ShoppingList,
+} from "@hogar/shared";
 import { Router } from "express";
 import type { Database } from "../db";
+import { versionOf } from "../expenses/expensesRouter";
 import { parseBody } from "../household/householdRouter";
 import { loadMembership, membershipOf, requireEditor } from "../household/loadMembership";
 import type { ShoppingService } from "./shoppingService";
@@ -19,6 +25,24 @@ export function createShoppingRouter(db: Database, shopping: ShoppingService) {
     const input = parseBody(addShoppingItemInputSchema, req.body);
     const body: ShoppingItemResponse = { item: await shopping.add(membershipOf(req), input) };
     res.status(201).json(body);
+  });
+
+  router.patch("/items/:id", requireEditor, async (req, res) => {
+    const input = parseBody(updateShoppingItemInputSchema, req.body);
+    const body: ShoppingItemResponse = {
+      item: await shopping.edit(membershipOf(req), String(req.params["id"]), input),
+    };
+    res.json(body);
+  });
+
+  router.post("/items/:id/restore", requireEditor, async (req, res) => {
+    const body: ShoppingItemResponse = { item: await shopping.restore(membershipOf(req), String(req.params["id"])) };
+    res.json(body);
+  });
+
+  router.delete("/items/:id", requireEditor, async (req, res) => {
+    await shopping.remove(membershipOf(req), String(req.params["id"]), versionOf(req));
+    res.status(204).end();
   });
 
   return router;

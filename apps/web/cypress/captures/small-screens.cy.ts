@@ -3,7 +3,16 @@ import i18next from "i18next";
 import { NAMESPACES, resources } from "../../src/i18n/resources";
 import { ana, session } from "../support/e2e";
 import type { Theme } from "../../src/theme/theme";
-import { BRUNO, CARLA, invitation, invitationPreview, signedInPages, stubSignedIn, visitIn } from "../support/screens";
+import {
+  BRUNO,
+  CARLA,
+  invitation,
+  invitationPreview,
+  shoppingItems,
+  signedInPages,
+  stubSignedIn,
+  visitIn,
+} from "../support/screens";
 
 /**
  * Screenshots of every screen and dialog on small phones, for the "Small screens" audit in
@@ -101,6 +110,14 @@ const dialogs: DialogCapture[] = [
     open: (t) => cy.contains("button", t("household:settings.members.leave")).click(),
   },
   {
+    name: "edit-item",
+    path: "/shopping",
+    open: (t) => {
+      cy.get(`button[aria-label="${t("shopping:item.actions", { name: shoppingItems[0]?.name ?? "" })}"]`).click();
+      cy.contains("[role=menuitem]", t("shopping:item.edit")).click();
+    },
+  },
+  {
     name: "invite-leave-first",
     path: "/invite#tok_join",
     stub: () =>
@@ -140,6 +157,17 @@ describe("Small-screen captures", { retries: 2 }, () => {
               cy.screenshot(`${folder}/page${path.replace(/[/#]+/g, "-")}`, pageShot);
             });
           }
+
+          it("captures the toast after deleting an item", () => {
+            stubSignedIn(locale);
+            cy.intercept("DELETE", "/api/household/shopping/items/*", { statusCode: 204 });
+            visitIn("/shopping", { locale, theme });
+            const item = shoppingItems[0]?.name ?? "";
+            cy.get(`button[aria-label="${t("shopping:item.actions", { name: item })}"]`).click();
+            cy.contains("[role=menuitem]", t("shopping:item.delete")).click();
+            cy.get("[role=alertdialog]").should("be.visible");
+            cy.screenshot(`${folder}/toast-deleted`, viewportShot);
+          });
 
           for (const dialog of dialogs) {
             it(`captures the ${dialog.name} dialog`, () => {

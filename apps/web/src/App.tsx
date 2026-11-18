@@ -25,6 +25,7 @@ import { ShoppingPage } from "./pages/ShoppingPage/ShoppingPage";
 import { InstallPromptProvider, type InstallPrompt } from "./install/installPrompt";
 import { HouseholdEventsProvider, type HouseholdEventsSource } from "./realtime/LiveHousehold";
 import { socketHouseholdEvents } from "./realtime/socketHouseholdEvents";
+import { ToastProvider } from "./toast/Toasts";
 import { AppUpdateProvider, type AppUpdate } from "./update/appUpdate";
 import { RequiredUpdateGate } from "./update/RequiredUpdate";
 
@@ -100,7 +101,9 @@ export function AppProviders({ i18n, client, offline, update, install, household
   const session = (
     <ApiClientProvider client={client}>
       <AuthProvider client={client} offline={offlineCache}>
-        <HouseholdEventsProvider source={householdEvents}>{children}</HouseholdEventsProvider>
+        <HouseholdEventsProvider source={householdEvents}>
+          <ToastProvider>{children}</ToastProvider>
+        </HouseholdEventsProvider>
       </AuthProvider>
     </ApiClientProvider>
   );

@@ -25,6 +25,21 @@ async function addItem(app: App, who: SignedIn, name: string, note: string | nul
   return shoppingItemResponseSchema.parse(res.body).item;
 }
 
+const itemPath = (id: string) => `/api/household/shopping/items/${encodeURIComponent(id)}`;
+
+const patchItem = (app: App, who: SignedIn, id: string, body: object) =>
+  request(app).patch(itemPath(id)).set("Authorization", who.auth).send(body);
+
+const restoreItem = (app: App, who: SignedIn, id: string) =>
+  request(app)
+    .post(`${itemPath(id)}/restore`)
+    .set("Authorization", who.auth);
+
+const deleteItem = (app: App, who: SignedIn, item: Pick<ShoppingItemView, "id" | "version">) =>
+  request(app)
+    .delete(`${itemPath(item.id)}?version=${item.version}`)
+    .set("Authorization", who.auth);
+
 describe("POST /api/household/shopping/items", () => {
   it("lets a member add an item that everyone in the household then sees, guests included", async () => {
     const { app, clock } = createTestApp();
@@ -200,5 +215,316 @@ describe("who asked for each item", () => {
       ["Milk", "Bruno Díaz"],
       ["Eggs", "Ana García"],
     ]);
+  });
+});
+
+describe("DELETE /api/household/shopping/items/:id", () => {
+  it("takes the item off everyone's list at once", async () => {
+    const { app, clock } = createTestApp();
+    const { ana, bruno, carla } = await homeWithGuest(app);
+    const milk = await addItem(app, ana, "Milk");
+    clock.advance(1000);
+    const eggs = await addItem(app, ana, "Eggs");
+
+    const res = await deleteItem(app, bruno, milk);
+
+    expect(res.status).toBe(204);
+    for (const who of [ana, bruno, carla]) expect(await listOf(app, who)).toEqual([eggs]);
+  });
+
+  it("refuses a delete based on an older version, keeping the item", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await patchItem(app, ana, milk.id, { note: "lactose-free", version: 1 }).expect(200);
+
+    const res = await deleteItem(app, bruno, milk);
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "shopping.item.changed" } });
+    expect(await listOf(app, ana)).toEqual([{ ...milk, note: "lactose-free", version: 2 }]);
+  });
+
+  it("answers that the item is gone when it was already deleted, doesn't exist or belongs to another household", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    const dan = await signIn(app, dani);
+    await createHousehold(app, dan, "Piso Dani");
+    const eggs = await addItem(app, dan, "Eggs");
+    await deleteItem(app, ana, milk).expect(204);
+
+    for (const res of [
+      await deleteItem(app, bruno, milk),
+      await deleteItem(app, bruno, { id: "item_missing", version: 1 }),
+      await deleteItem(app, bruno, eggs),
+    ]) {
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: { code: "shopping.item.not_found" } });
+    }
+    expect(await listOf(app, dan)).toEqual([eggs]);
+  });
+
+  it("needs the version the person saw", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    const res = await request(app).delete(itemPath(milk.id)).set("Authorization", ana.auth);
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: { code: "request.invalid" } });
+  });
+
+  it("refuses guests and keeps the item", async () => {
+    const { app } = createTestApp();
+    const { ana, carla } = await homeWithGuest(app);
+    const milk = await addItem(app, ana, "Milk");
+    const res = await deleteItem(app, carla, milk);
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: { code: "household.read_only" } });
+    expect(await listOf(app, ana)).toEqual([milk]);
+  });
+
+  it("lets the same thing be added again as a new item once it was deleted", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await deleteItem(app, ana, milk).expect(204);
+
+    const again = await addItem(app, bruno, "milk", "oat");
+
+    expect(again.id).not.toBe(milk.id);
+    expect(await listOf(app, ana)).toEqual([again]);
+  });
+});
+
+describe("PATCH /api/household/shopping/items/:id", () => {
+  it("changes the name and the note from the version the person saw, for everyone", async () => {
+    const { app, clock } = createTestApp();
+    const { ana, bruno, carla } = await homeWithGuest(app);
+    const milk = await addItem(app, ana, "Milk");
+    clock.advance(1000);
+    const eggs = await addItem(app, ana, "Eggs");
+
+    const res = await patchItem(app, bruno, milk.id, { name: " Oat milk ", note: " 2 cartons ", version: 1 });
+
+    expect(res.status).toBe(200);
+    const edited = shoppingItemResponseSchema.parse(res.body).item;
+    expect(edited).toEqual({ ...milk, name: "Oat milk", note: "2 cartons", version: 2 });
+    for (const who of [ana, bruno, carla]) expect(await listOf(app, who)).toEqual([edited, eggs]);
+  });
+
+  it("changes only the note, keeping the name, and removes it when left empty", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+
+    const noted = await patchItem(app, ana, milk.id, { note: "lactose-free", version: 1 });
+    expect(noted.body).toEqual({ item: { ...milk, note: "lactose-free", version: 2 } });
+
+    const blank = await patchItem(app, ana, milk.id, { note: "   ", version: 2 });
+    expect(blank.body).toEqual({ item: { ...milk, note: null, version: 3 } });
+
+    await patchItem(app, ana, milk.id, { note: "oat", version: 3 }).expect(200);
+    const cleared = await patchItem(app, ana, milk.id, { note: null, version: 4 });
+    expect(cleared.body).toEqual({ item: { ...milk, note: null, version: 5 } });
+  });
+
+  it("refuses an edit based on an older version, keeping the other person's change", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await patchItem(app, ana, milk.id, { note: "lactose-free", version: 1 }).expect(200);
+
+    const res = await patchItem(app, bruno, milk.id, { name: "Oat milk", version: 1 });
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "shopping.item.changed" } });
+    expect(await listOf(app, ana)).toEqual([{ ...milk, note: "lactose-free", version: 2 }]);
+  });
+
+  it.each(["eggs", "  EGGS ", "Éggs"])("refuses renaming to %j while Eggs is on the list", async (name) => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await addItem(app, ana, "Eggs");
+
+    const res = await patchItem(app, bruno, milk.id, { name, version: 1 });
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "shopping.item.duplicate" } });
+    expect((await listOf(app, ana)).map((item) => item.name)).toEqual(["Milk", "Eggs"]);
+  });
+
+  it("lets an item be renamed to its own name written differently", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const milk = await addItem(app, ana, "milk");
+    expect((await patchItem(app, ana, milk.id, { name: "Milk", version: 1 })).body).toEqual({
+      item: { ...milk, name: "Milk", version: 2 },
+    });
+  });
+
+  it("changes nothing, not even the version, when saving what is already there", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk", "lactose-free");
+
+    const res = await patchItem(app, bruno, milk.id, { name: " Milk", note: "lactose-free ", version: 1 });
+
+    expect(res.body).toEqual({ item: milk });
+    expect(await listOf(app, ana)).toEqual([milk]);
+  });
+
+  it("answers that the item is gone when it was deleted, doesn't exist or belongs to another household", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    const dan = await signIn(app, dani);
+    await createHousehold(app, dan, "Piso Dani");
+    const eggs = await addItem(app, dan, "Eggs");
+    await deleteItem(app, ana, milk).expect(204);
+
+    for (const id of [milk.id, "item_missing", eggs.id]) {
+      const res = await patchItem(app, bruno, id, { name: "Bread", version: 1 });
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: { code: "shopping.item.not_found" } });
+    }
+    expect(await listOf(app, dan)).toEqual([eggs]);
+  });
+
+  it("refuses guests and changes nothing", async () => {
+    const { app } = createTestApp();
+    const { ana, carla } = await homeWithGuest(app);
+    const milk = await addItem(app, ana, "Milk");
+    const res = await patchItem(app, carla, milk.id, { name: "Oat milk", version: 1 });
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: { code: "household.read_only" } });
+    expect(await listOf(app, ana)).toEqual([milk]);
+  });
+
+  it.each([
+    ["an empty name", { name: " ", version: 1 }, "shopping.item.name.required"],
+    ["a name longer than 50 characters", { name: "a".repeat(51), version: 1 }, "shopping.item.name.too_long"],
+    ["a note longer than 100 characters", { note: "b".repeat(101), version: 1 }, "shopping.item.note.too_long"],
+    ["neither a name nor a note", { version: 1 }, "request.invalid"],
+    ["no version", { name: "Oat milk" }, "request.invalid"],
+  ])("refuses %s with its error code", async (_, body, code) => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    const res = await patchItem(app, ana, milk.id, body);
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: { code } });
+    expect(await listOf(app, ana)).toEqual([milk]);
+  });
+});
+
+describe("POST /api/household/shopping/items/:id/restore", () => {
+  it("brings the item back in its place, as it was, for whoever deleted it", async () => {
+    const { app, clock } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk", "lactose-free");
+    clock.advance(1000);
+    const eggs = await addItem(app, ana, "Eggs");
+    await deleteItem(app, bruno, milk).expect(204);
+    clock.advance(30_000);
+
+    const res = await restoreItem(app, bruno, milk.id);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ item: milk });
+    expect(await listOf(app, ana)).toEqual([milk, eggs]);
+  });
+
+  it("allows it for a minute and then says it is too late", async () => {
+    const { app, clock } = createTestApp();
+    const { ana } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    const eggs = await addItem(app, ana, "Eggs");
+    await deleteItem(app, ana, milk).expect(204);
+    await deleteItem(app, ana, eggs).expect(204);
+
+    clock.advance(60_000);
+    await restoreItem(app, ana, milk.id).expect(200);
+    clock.advance(1);
+    const late = await restoreItem(app, ana, eggs.id);
+
+    expect(late.status).toBe(410);
+    expect(late.body).toEqual({ error: { code: "shopping.undo.expired" } });
+    expect(await listOf(app, ana)).toEqual([milk]);
+  });
+
+  it("is only for whoever deleted it: for anyone else the item is gone", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await deleteItem(app, ana, milk).expect(204);
+
+    const res = await restoreItem(app, bruno, milk.id);
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: { code: "shopping.item.not_found" } });
+    expect(await listOf(app, ana)).toEqual([]);
+  });
+
+  it("refuses when the same thing was added again meanwhile, keeping the new one", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await deleteItem(app, ana, milk).expect(204);
+    const again = await addItem(app, bruno, "MILK", "oat");
+
+    const res = await restoreItem(app, ana, milk.id);
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "shopping.item.duplicate" } });
+    expect(await listOf(app, ana)).toEqual([again]);
+  });
+
+  it("changes nothing when the item is already back, as after a second tap", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await deleteItem(app, ana, milk).expect(204);
+    await restoreItem(app, ana, milk.id).expect(200);
+
+    const again = await restoreItem(app, ana, milk.id);
+
+    expect(again.status).toBe(200);
+    expect(again.body).toEqual({ item: milk });
+    expect(await listOf(app, ana)).toEqual([milk]);
+  });
+
+  it("answers that the item is gone when it doesn't exist or belongs to another household", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const dan = await signIn(app, dani);
+    await createHousehold(app, dan, "Piso Dani");
+    const eggs = await addItem(app, dan, "Eggs");
+    await deleteItem(app, dan, eggs).expect(204);
+
+    for (const id of ["item_missing", eggs.id]) {
+      const res = await restoreItem(app, ana, id);
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: { code: "shopping.item.not_found" } });
+    }
+  });
+
+  it("refuses someone who became a guest after deleting, and keeps the item off the list", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, bruno, "Milk");
+    await deleteItem(app, bruno, milk).expect(204);
+    await request(app)
+      .patch(`/api/household/members/${bruno.membershipId}`)
+      .set("Authorization", ana.auth)
+      .send({ role: "GUEST" })
+      .expect(200);
+
+    const res = await restoreItem(app, bruno, milk.id);
+
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: { code: "household.read_only" } });
+    expect(await listOf(app, ana)).toEqual([]);
   });
 });

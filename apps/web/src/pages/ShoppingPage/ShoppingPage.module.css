@@ -19,7 +19,8 @@
   justify-self: start;
 }
 
-.added {
+/* "You added Eggs", "Milk is back on the list": a check and the words, so color is never alone. */
+.confirmation {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -29,7 +30,7 @@
   overflow-wrap: anywhere;
 }
 
-.addedIcon {
+.confirmationIcon {
   flex: none;
   inline-size: var(--size-icon-md);
   block-size: var(--size-icon-md);
@@ -43,11 +44,20 @@
   list-style: none;
 }
 
+/* The words take the row; the options button keeps its 44 px at the end, next to the name. */
 .item {
-  display: grid;
-  gap: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   padding-block: var(--space-3);
   border-block-start: var(--border-width) solid var(--color-border);
+}
+
+.itemText {
+  display: grid;
+  flex: 1;
+  gap: var(--space-1);
+  min-inline-size: 0;
   overflow-wrap: anywhere;
 }
 
