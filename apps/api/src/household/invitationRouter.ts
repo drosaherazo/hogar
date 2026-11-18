@@ -8,7 +8,8 @@ import {
 } from "@hogar/shared";
 import { Router, type RequestHandler } from "express";
 import type { Database } from "../db";
-import { parseBody, userIdOf } from "./householdRouter";
+import { parseBody } from "../requestInput";
+import { userIdOf } from "./householdRouter";
 import type { InvitationService } from "./invitationService";
 import { loadMembership, membershipOf, requireAdmin } from "./loadMembership";
 

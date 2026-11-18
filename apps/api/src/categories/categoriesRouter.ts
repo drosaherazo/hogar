@@ -7,8 +7,7 @@ import {
 } from "@hogar/shared";
 import { Router } from "express";
 import type { Database } from "../db";
-import { versionOf } from "../expenses/expensesRouter";
-import { parseBody } from "../household/householdRouter";
+import { parseBody, versionOf } from "../requestInput";
 import { loadMembership, membershipOf, requireAdmin } from "../household/loadMembership";
 import type { CategoryService } from "./categoryService";
 

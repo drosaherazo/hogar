@@ -1,9 +1,8 @@
 import { settlementInputSchema, updateSettlementInputSchema, type SettlementResponse } from "@hogar/shared";
 import { Router } from "express";
 import type { Database } from "../db";
-import { parseBody } from "../household/householdRouter";
+import { parseBody, versionOf } from "../requestInput";
 import { loadMembership, membershipOf, requireEditor } from "../household/loadMembership";
-import { versionOf } from "./expensesRouter";
 import type { SettlementService } from "./settlementService";
 
 /** `/api/household/settlements` (payments): everyone in the household reads; admins and members write. */
