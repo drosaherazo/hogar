@@ -1,44 +1,23 @@
-import { shoppingItemResponseSchema, shoppingListSchema, type ShoppingItemView } from "@hogar/shared";
+import { shoppingItemResponseSchema } from "@hogar/shared";
 import { describe, expect, it } from "vitest";
 import { homeWith, homeWithGuest } from "./expenseHelpers";
 import { request } from "./request";
 import { createHousehold } from "./householdHelpers";
+import {
+  addItem,
+  deleteItem,
+  getList,
+  itemPath,
+  listOf,
+  patchItem,
+  postItem,
+  putInCart,
+  refOf,
+  restoreItem,
+  takeOutOfCart,
+  type App,
+} from "./shoppingHelpers";
 import { createTestApp, dani, db, signIn, type SignedIn } from "./testApp";
-
-type App = ReturnType<typeof createTestApp>["app"];
-
-const getList = (app: App, who: SignedIn) => request(app).get("/api/household/shopping").set("Authorization", who.auth);
-
-const postItem = (app: App, who: SignedIn, body: object) =>
-  request(app).post("/api/household/shopping/items").set("Authorization", who.auth).send(body);
-
-/** The caller's list, in order. */
-async function listOf(app: App, who: SignedIn): Promise<ShoppingItemView[]> {
-  const res = await getList(app, who);
-  if (res.status !== 200) throw new Error(`listOf failed: ${res.status} ${JSON.stringify(res.body)}`);
-  return shoppingListSchema.parse(res.body).items;
-}
-
-async function addItem(app: App, who: SignedIn, name: string, note: string | null = null) {
-  const res = await postItem(app, who, { name, note });
-  if (res.status !== 201) throw new Error(`addItem failed: ${res.status} ${JSON.stringify(res.body)}`);
-  return shoppingItemResponseSchema.parse(res.body).item;
-}
-
-const itemPath = (id: string) => `/api/household/shopping/items/${encodeURIComponent(id)}`;
-
-const patchItem = (app: App, who: SignedIn, id: string, body: object) =>
-  request(app).patch(itemPath(id)).set("Authorization", who.auth).send(body);
-
-const restoreItem = (app: App, who: SignedIn, id: string) =>
-  request(app)
-    .post(`${itemPath(id)}/restore`)
-    .set("Authorization", who.auth);
-
-const deleteItem = (app: App, who: SignedIn, item: Pick<ShoppingItemView, "id" | "version">) =>
-  request(app)
-    .delete(`${itemPath(item.id)}?version=${item.version}`)
-    .set("Authorization", who.auth);
 
 describe("POST /api/household/shopping/items", () => {
   it("lets a member add an item that everyone in the household then sees, guests included", async () => {
@@ -529,18 +508,6 @@ describe("POST /api/household/shopping/items/:id/restore", () => {
     expect(await listOf(app, ana)).toEqual([]);
   });
 });
-
-const putInCart = (app: App, who: SignedIn, id: string) =>
-  request(app)
-    .put(`${itemPath(id)}/cart`)
-    .set("Authorization", who.auth);
-
-const takeOutOfCart = (app: App, who: SignedIn, id: string) =>
-  request(app)
-    .delete(`${itemPath(id)}/cart`)
-    .set("Authorization", who.auth);
-
-const refOf = (who: SignedIn, name: string) => ({ userId: who.user.id, name, avatarUrl: null, former: false });
 
 describe("PUT /api/household/shopping/items/:id/cart", () => {
   it("puts the item in the caller's cart, for everyone to see, without counting it as an edit", async () => {
