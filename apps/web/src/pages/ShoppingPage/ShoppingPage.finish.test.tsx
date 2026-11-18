@@ -30,17 +30,26 @@ function namesOnTheList() {
 }
 
 /**
- * Serves `items` as the API would: finishing takes Ana's cart off the list, and undoing puts it
- * back. Records the bodies of every finish and undo.
+ * Serves `items` as the API would: a tap puts an item in Ana's cart, finishing takes her cart off
+ * the list, and undoing puts it back, so the list read after each change shows it. Records the
+ * bodies of every finish and undo, and counts the list's reads.
  */
 function serveFinish(items: ShoppingItemView[]) {
   const finishes: unknown[] = [];
   const undos: unknown[] = [];
+  const reads = { count: 0 };
   let current = items;
   server.use(
     handlers.signedIn(),
     handlers.household(homeView()),
-    http.get("*/api/household/shopping", () => HttpResponse.json({ items: current, lastCategoryId: null })),
+    http.get("*/api/household/shopping", () => {
+      reads.count += 1;
+      return HttpResponse.json({ items: current, lastCategoryId: null });
+    }),
+    http.put("*/api/household/shopping/items/:id/cart", ({ params }) => {
+      current = current.map((item) => (item.id === params["id"] ? { ...item, cartOwner: anaRef } : item));
+      return HttpResponse.json({ item: current.find((item) => item.id === params["id"]) });
+    }),
     http.post("*/api/household/shopping/finish", async ({ request }) => {
       finishes.push(await request.json());
       current = current.filter((item) => item.cartOwner?.userId !== anaRef.userId);
@@ -54,7 +63,7 @@ function serveFinish(items: ShoppingItemView[]) {
       return HttpResponse.json({ items: back });
     }),
   );
-  return { finishes, undos };
+  return { finishes, undos, reads };
 }
 
 async function finishWithoutAnExpense() {
@@ -86,17 +95,15 @@ describe("the cart bar", () => {
   });
 
   it("follows the cart: one more tap, one more in the count", async () => {
-    serveFinish([milk, bread]);
-    server.use(
-      http.put("*/api/household/shopping/items/:id/cart", () =>
-        HttpResponse.json({ item: { ...bread, cartOwner: anaRef } }),
-      ),
-    );
+    const { reads } = serveFinish([milk, bread]);
     renderApp({ path: "/shopping" });
     expect(await screen.findByRole("button", THE_BAR)).toHaveAccessibleDescription("1 in your cart");
 
     await userEvent.click(screen.getByRole("checkbox", { name: "Put Bread in your cart" }));
 
+    expect(screen.getByRole("button", THE_BAR)).toHaveAccessibleDescription("2 in your cart");
+    // And still once the list is read again after the tap.
+    await waitFor(() => expect(reads.count).toBeGreaterThan(1));
     expect(screen.getByRole("button", THE_BAR)).toHaveAccessibleDescription("2 in your cart");
   });
 });
@@ -237,16 +244,13 @@ describe("a forgotten cart", () => {
   });
 
   it("isn't a reminder for a cart filled during this visit", async () => {
-    serveFinish([bread]);
-    server.use(
-      http.put("*/api/household/shopping/items/:id/cart", () =>
-        HttpResponse.json({ item: { ...bread, cartOwner: anaRef } }),
-      ),
-    );
+    const { reads } = serveFinish([bread]);
     renderApp({ path: "/shopping" });
 
     await userEvent.click(await screen.findByRole("checkbox", { name: "Put Bread in your cart" }));
 
+    // Checked once the list is read again after the tap, as it stays.
+    await waitFor(() => expect(reads.count).toBeGreaterThan(1));
     expect(await screen.findByRole("button", THE_BAR)).toBeInTheDocument();
     expect(screen.queryByText(/You still have/)).not.toBeInTheDocument();
   });
