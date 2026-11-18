@@ -1,10 +1,6 @@
 import {
   canEditContent,
-  errorCodeFrom,
-  shoppingItemNameSchema,
-  shoppingItemNoteSchema,
   shoppingNameKey,
-  type ErrorCode,
   type HouseholdView,
   type PersonRef,
   type ShoppingItemView,
@@ -54,6 +50,7 @@ import { CartBar, FinishDialog } from "./FinishShopping";
 import styles from "./ShoppingPage.module.css";
 import { useCartReturned } from "./useCartReturned";
 import { useForgottenCart } from "./useForgottenCart";
+import { useItemFields } from "./useItemFields";
 
 const TITLE_ID = "shopping-title";
 const NO_ITEMS: ShoppingItemView[] = [];
@@ -416,8 +413,6 @@ function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActio
   );
 }
 
-type Field = "name" | "note";
-
 /**
  * Adding an item: a name and an optional note. Enter adds from either field, because most items
  * have no note and people add them one after another, often with one hand in a shop. While the
@@ -434,9 +429,8 @@ function AddItemForm({
 }) {
   const { t } = useTranslation(["shopping", "errors"]);
   const add = useAddShoppingItem();
-  const [name, setName] = useState("");
-  const [note, setNote] = useState("");
-  const suggestions = useShoppingSuggestions(name, items);
+  const fields = useItemFields();
+  const suggestions = useShoppingSuggestions(fields.name, items);
   const options = useMemo(
     () =>
       suggestions.map((suggestion): ComboboxItem => ({
@@ -448,21 +442,17 @@ function AddItemForm({
       })),
     [suggestions, t],
   );
-  const [errors, setErrors] = useState<Partial<Record<Field, ErrorCode>>>({});
   const [failure, setFailure] = useState<unknown>(null);
-  const [duplicateKey, setDuplicateKey] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
   // The item behind a duplicate notice, found in the list the person already sees.
+  const { duplicateKey } = fields;
   const existing =
     duplicateKey === null ? undefined : items.find((item) => shoppingNameKey(item.name) === duplicateKey);
-  const typedNote = shoppingItemNoteSchema.safeParse(note);
 
   /** Empties the form for the next item, saying what just happened. */
   function startOver(message: string) {
-    setName("");
-    setNote("");
-    setDuplicateKey(null);
+    fields.fill({ name: "", note: null });
     setDone(message);
     nameField.current?.focus();
   }
@@ -470,41 +460,23 @@ function AddItemForm({
   async function submit(event: FormEvent) {
     event.preventDefault();
     setFailure(null);
-    setDuplicateKey(null);
     setDone(null);
-    const parsedName = shoppingItemNameSchema.safeParse(name);
-    const parsedNote = shoppingItemNoteSchema.safeParse(note);
-    const fieldErrors: Partial<Record<Field, ErrorCode>> = {};
-    if (!parsedName.success) fieldErrors.name = errorCodeFrom(parsedName.error);
-    if (!parsedNote.success) fieldErrors.note = errorCodeFrom(parsedNote.error);
-    setErrors(fieldErrors);
-    if (!parsedName.success || !parsedNote.success) return;
+    const input = fields.parse();
+    if (!input) return;
 
     try {
-      const item = await add.mutateAsync({ name: parsedName.data, note: parsedNote.data });
+      const item = await add.mutateAsync(input);
       startOver(t("added", { name: item.name }));
     } catch (error) {
-      if (error instanceof ApiRequestError && error.code === "shopping.item.duplicate") {
-        setDuplicateKey(shoppingNameKey(parsedName.data));
-      } else {
-        setFailure(error);
-      }
+      if (!fields.refusedAsDuplicate(error, input.name)) setFailure(error);
     }
   }
 
   /** A suggestion brings its name and last note; both stay editable before adding. */
   function pick(id: string) {
     const suggestion = suggestions.find((other) => shoppingNameKey(other.name) === id);
-    if (!suggestion) return;
-    setName(suggestion.name);
-    setNote(suggestion.note ?? "");
-    setDuplicateKey(null);
+    if (suggestion) fields.fill(suggestion);
   }
-
-  const fieldError = (field: Field) => {
-    const code = errors[field];
-    return code ? t(`errors:${code}`) : undefined;
-  };
 
   return (
     <Card padding="lg">
@@ -514,29 +486,26 @@ function AddItemForm({
           allowsCustomValue
           inputRef={nameField}
           label={t("add.nameLabel")}
-          inputValue={name}
+          inputValue={fields.name}
           enterKeyHint="done"
-          onInputChange={(value) => {
-            setName(value);
-            setDuplicateKey(null);
-          }}
+          onInputChange={fields.changeName}
           items={options}
           onSelectionChange={pick}
-          error={fieldError("name")}
+          error={fields.fieldError("name")}
         />
         <TextField
           label={t("add.noteLabel")}
           hint={t("add.noteHint")}
-          value={note}
+          value={fields.note}
           autoComplete="off"
           enterKeyHint="done"
-          onChange={(event) => setNote(event.target.value)}
-          error={fieldError("note")}
+          onChange={(event) => fields.changeNote(event.target.value)}
+          error={fields.fieldError("note")}
         />
         {duplicateKey !== null && (
           <DuplicateNotice
             existing={existing}
-            note={typedNote.success ? typedNote.data : null}
+            note={fields.noteForDuplicate}
             onNoteUsed={(item) => startOver(t("duplicate.noteUsed", { name: item.name }))}
           />
         )}

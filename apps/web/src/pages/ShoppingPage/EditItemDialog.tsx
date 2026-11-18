@@ -1,11 +1,4 @@
-import {
-  errorCodeFrom,
-  shoppingItemNameSchema,
-  shoppingItemNoteSchema,
-  shoppingNameKey,
-  type ErrorCode,
-  type ShoppingItemView,
-} from "@hogar/shared";
+import { shoppingNameKey, type ShoppingItemView } from "@hogar/shared";
 import { Alert, Button, Dialog, TextField } from "@hogar/ui";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -16,8 +9,7 @@ import { useReadOnly } from "../../offline/useOnline";
 import { useEditShoppingItem } from "../../shopping/useShopping";
 import { DuplicateNotice } from "./DuplicateNotice";
 import styles from "./ShoppingPage.module.css";
-
-type Field = "name" | "note";
+import { useItemFields } from "./useItemFields";
 
 export interface EditItemDialogProps {
   /** The item as it was when the person opened the dialog: the edit is based on its version. */
@@ -41,22 +33,19 @@ export function EditItemDialog({ item, items, onClose, onDone }: EditItemDialogP
   const readOnly = useReadOnly();
   const nameField = useRef<HTMLInputElement>(null);
   const keepNew = useRef<HTMLButtonElement>(null);
-  const [name, setName] = useState(item.name);
-  const [note, setNote] = useState(item.note ?? "");
+  const fields = useItemFields(item);
   // The version this edit is based on; after a refusal it stays until the person chooses.
   const [version, setVersion] = useState(item.version);
   const [changed, setChanged] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<Field, ErrorCode>>>({});
   const [failure, setFailure] = useState<unknown>(null);
-  const [duplicateKey, setDuplicateKey] = useState<string | null>(null);
 
   const latest = items.find((other) => other.id === item.id);
   const conflict = changed && latest !== undefined;
+  const { duplicateKey } = fields;
   const existing =
     duplicateKey === null
       ? undefined
       : items.find((other) => other.id !== item.id && shoppingNameKey(other.name) === duplicateKey);
-  const typedNote = shoppingItemNoteSchema.safeParse(note);
 
   // The choice replaces Save and Cancel; focus moves to its safe option, as when a dialog opens.
   useEffect(() => {
@@ -65,16 +54,10 @@ export function EditItemDialog({ item, items, onClose, onDone }: EditItemDialogP
 
   async function save(baseVersion: number) {
     setFailure(null);
-    setDuplicateKey(null);
-    const parsedName = shoppingItemNameSchema.safeParse(name);
-    const parsedNote = shoppingItemNoteSchema.safeParse(note);
-    const fieldErrors: Partial<Record<Field, ErrorCode>> = {};
-    if (!parsedName.success) fieldErrors.name = errorCodeFrom(parsedName.error);
-    if (!parsedNote.success) fieldErrors.note = errorCodeFrom(parsedNote.error);
-    setErrors(fieldErrors);
-    if (!parsedName.success || !parsedNote.success) return;
+    const input = fields.parse();
+    if (!input) return;
     // Nothing to save: closing changes nothing, for anyone.
-    if (!changed && parsedName.data === item.name && parsedNote.data === item.note) {
+    if (!changed && input.name === item.name && input.note === item.note) {
       onClose();
       return;
     }
@@ -82,26 +65,18 @@ export function EditItemDialog({ item, items, onClose, onDone }: EditItemDialogP
     try {
       const saved = await edit.mutateAsync({
         id: item.id,
-        input: { name: parsedName.data, note: parsedNote.data, version: baseVersion },
+        input: { ...input, version: baseVersion },
       });
       onDone(t("edit.saved", { name: saved.name }));
     } catch (error) {
-      const code = error instanceof ApiRequestError ? error.code : null;
-      if (code === "shopping.item.changed") {
+      if (error instanceof ApiRequestError && error.code === "shopping.item.changed") {
         setVersion(baseVersion);
         setChanged(true);
-      } else if (code === "shopping.item.duplicate") {
-        setDuplicateKey(shoppingNameKey(parsedName.data));
-      } else {
+      } else if (!fields.refusedAsDuplicate(error, input.name)) {
         setFailure(error);
       }
     }
   }
-
-  const fieldError = (field: Field) => {
-    const code = errors[field];
-    return code ? t(`errors:${code}`) : undefined;
-  };
 
   return (
     <Dialog
@@ -171,28 +146,25 @@ export function EditItemDialog({ item, items, onClose, onDone }: EditItemDialogP
         <TextField
           ref={nameField}
           label={t("add.nameLabel")}
-          value={name}
+          value={fields.name}
           autoComplete="off"
           enterKeyHint="next"
-          onChange={(event) => {
-            setName(event.target.value);
-            setDuplicateKey(null);
-          }}
-          error={fieldError("name")}
+          onChange={(event) => fields.changeName(event.target.value)}
+          error={fields.fieldError("name")}
         />
         <TextField
           label={t("add.noteLabel")}
           hint={t("add.noteHint")}
-          value={note}
+          value={fields.note}
           autoComplete="off"
           enterKeyHint="done"
-          onChange={(event) => setNote(event.target.value)}
-          error={fieldError("note")}
+          onChange={(event) => fields.changeNote(event.target.value)}
+          error={fields.fieldError("note")}
         />
         {duplicateKey !== null && (
           <DuplicateNotice
             existing={existing}
-            note={typedNote.success ? typedNote.data : null}
+            note={fields.noteForDuplicate}
             onNoteUsed={(other) => onDone(t("duplicate.noteUsed", { name: other.name }))}
           />
         )}
