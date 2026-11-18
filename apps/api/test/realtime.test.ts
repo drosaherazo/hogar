@@ -279,3 +279,49 @@ describe("household:changed", () => {
     await changed;
   });
 });
+
+describe("shopping:changed", () => {
+  const addItem = (who: SignedIn, name: string) =>
+    request(api.app).post("/api/household/shopping/items").set("Authorization", who.auth).send({ name });
+
+  it("reaches the other members when someone adds an item", async () => {
+    const { ana, bruno } = await household();
+    const anaSocket = await connectAs(ana);
+    const changed = nextEvent(anaSocket, "shopping:changed");
+
+    await addItem(bruno, "Milk").expect(201);
+
+    await changed;
+  });
+
+  it("never reaches another household", async () => {
+    const { bruno } = await household();
+    const carla = await signIn(api.app, carlaIdentity);
+    await createHousehold(api.app, carla, "Piso Carla");
+    const carlaSocket = await connectAs(carla);
+    const received = record(carlaSocket);
+
+    await addItem(bruno, "Milk").expect(201);
+    // One connection delivers in order: had Bruno's item reached Carla, it would arrive before her own.
+    const own = nextEvent(carlaSocket, "shopping:changed");
+    await addItem(carla, "Bread").expect(201);
+    await own;
+
+    expect(received).toEqual(["shopping:changed"]);
+  });
+
+  it("announces nothing when an item is refused as already on the list", async () => {
+    const { ana, bruno } = await household();
+    await addItem(ana, "Milk").expect(201);
+    const anaSocket = await connectAs(ana);
+    const received = record(anaSocket);
+
+    await addItem(bruno, "milk").expect(409);
+    // In order on one connection: the next add's event arriving alone means the refusal sent none.
+    const added = nextEvent(anaSocket, "shopping:changed");
+    await addItem(bruno, "Bread").expect(201);
+    await added;
+
+    expect(received).toEqual(["shopping:changed"]);
+  });
+});

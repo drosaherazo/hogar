@@ -14,6 +14,8 @@ export const SOCKET_PATH = "/api/socket.io";
 export interface ServerToClientEvents {
   /** The household's name, currency, split, members or roles changed. */
   "household:changed": () => void;
+  /** Something on the shopping list or in a cart changed. */
+  "shopping:changed": () => void;
 }
 
 export type HouseholdEvent = keyof ServerToClientEvents;
