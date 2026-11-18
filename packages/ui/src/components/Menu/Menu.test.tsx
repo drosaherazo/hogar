@@ -69,6 +69,22 @@ describe("Menu", () => {
     expect(onArchive).not.toHaveBeenCalled();
   });
 
+  it("says why a disabled item can't be used, keeping its name short", async () => {
+    render(
+      <Menu trigger={<button type="button">Options for Milk</button>}>
+        <MenuItem disabled description="Only Bruno can change it while it's in their cart.">
+          Edit
+        </MenuItem>
+      </Menu>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Options for Milk" }));
+    const item = await screen.findByRole("menuitem", { name: "Edit" });
+    expect(item).toHaveAttribute("aria-disabled", "true");
+    expect(item).toHaveAccessibleDescription("Only Bruno can change it while it's in their cart.");
+    expect(screen.getByText("Only Bruno can change it while it's in their cart.")).toBeVisible();
+    await expectNoA11yViolations(document.body);
+  });
+
   it("has no accessibility violations when open", async () => {
     render(<AccountMenu />);
     await userEvent.click(screen.getByRole("button", { name: "Account" }));
