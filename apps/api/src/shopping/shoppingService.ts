@@ -24,11 +24,7 @@ export interface NewShoppingItem {
  * unique index on the name key is what refuses a duplicate, however close two adds arrive.
  * Every change that is saved is announced to the household as `shopping:changed`.
  */
-export function createShoppingService({
-  db,
-  now = () => new Date(),
-  events = noHouseholdEvents,
-}: ShoppingServiceDeps) {
+export function createShoppingService({ db, now = () => new Date(), events = noHouseholdEvents }: ShoppingServiceDeps) {
   async function viewsOf(client: Client, householdId: string, rows: ShoppingItem[]): Promise<ShoppingItemView[]> {
     const members = await currentMembers(client, householdId);
     const refs = await personRefs(
