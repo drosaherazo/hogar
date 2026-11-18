@@ -1,5 +1,7 @@
 {
   "title": "Compras",
+  "close": "Cerrar",
+  "cancel": "Cancelar",
   "add": {
     "nameLabel": "¿Qué hace falta?",
     "noteLabel": "Nota (opcional)",
@@ -9,17 +11,36 @@
   },
   "added": "Añadiste {{name}}",
   "item": {
-    "askedBy": "lo pidió {{name}}"
+    "askedBy": "lo pidió {{name}}",
+    "actions": "Opciones de {{name}}",
+    "edit": "Editar",
+    "delete": "Borrar"
   },
   "empty": {
     "title": "No falta nada",
     "description": "Cuando algo se acabe, añádelo aquí y todo el mundo lo verá."
   },
   "duplicate": {
-    "message": "{{name}} ya está en la lista."
+    "message": "{{name}} ya está en la lista.",
+    "useMyNote": "Usar mi nota",
+    "noteUsed": "{{name}} ya tiene tu nota"
   },
   "guest": {
     "readOnly": "Con acceso de invitado ves la lista, pero no puedes cambiarla."
   },
-  "loadError": "No hemos podido cargar la lista de la compra."
+  "loadError": "No hemos podido cargar la lista de la compra.",
+  "edit": {
+    "title": "Editar «{{name}}»",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saved": "Guardamos los cambios en {{name}}"
+  },
+  "deleted": "Borraste {{name}}",
+  "undo": "Deshacer",
+  "restored": "{{name}} vuelve a estar en la lista",
+  "changed": {
+    "title": "Alguien cambió esto mientras tanto",
+    "keepNew": "Dejar la versión nueva",
+    "saveMine": "Guardar la mía"
+  }
 }

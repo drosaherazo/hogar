@@ -1,5 +1,7 @@
 {
   "title": "Shopping",
+  "close": "Close",
+  "cancel": "Cancel",
   "add": {
     "nameLabel": "What's needed?",
     "noteLabel": "Note (optional)",
@@ -9,17 +11,36 @@
   },
   "added": "You added {{name}}",
   "item": {
-    "askedBy": "asked for by {{name}}"
+    "askedBy": "asked for by {{name}}",
+    "actions": "Options for {{name}}",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "empty": {
     "title": "Nothing to buy",
     "description": "When something runs out, add it here and everyone will see it."
   },
   "duplicate": {
-    "message": "{{name}} is already on the list."
+    "message": "{{name}} is already on the list.",
+    "useMyNote": "Use my note",
+    "noteUsed": "{{name}} now has your note"
   },
   "guest": {
     "readOnly": "As a guest you can see the list but not change it."
   },
-  "loadError": "We couldn't load the shopping list."
+  "loadError": "We couldn't load the shopping list.",
+  "edit": {
+    "title": "Edit “{{name}}”",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Changes to {{name}} saved"
+  },
+  "deleted": "You deleted {{name}}",
+  "undo": "Undo",
+  "restored": "{{name}} is back on the list",
+  "changed": {
+    "title": "Someone changed this meanwhile",
+    "keepNew": "Keep the new version",
+    "saveMine": "Save mine"
+  }
 }
