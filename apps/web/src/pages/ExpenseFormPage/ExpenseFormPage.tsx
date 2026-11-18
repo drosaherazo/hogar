@@ -99,34 +99,46 @@ export function ExpenseFormPage({ fromCart = false }: { fromCart?: boolean }) {
   const { t } = useTranslation(["expenses", "common"]);
   const { id } = useParams();
   const household = useHousehold();
-  const editing = id !== undefined;
-  const leaveTo = fromCart ? "/shopping" : editing ? `/expenses/${id}` : "/expenses";
+  // What this form is for, resolved once: where it goes back to, what it is called and what it shows.
+  const mode = fromCart
+    ? {
+        leaveTo: "/shopping",
+        back: t("form.backToShopping"),
+        title: t("form.newTitle"),
+        form: (current: HouseholdView) => <CartExpense household={current} />,
+      }
+    : id !== undefined
+      ? {
+          leaveTo: `/expenses/${id}`,
+          back: t("form.backToExpense"),
+          title: t("form.editTitle"),
+          form: (current: HouseholdView) => <EditExpense id={id} household={current} />,
+        }
+      : {
+          leaveTo: "/expenses",
+          back: t("form.back"),
+          title: t("form.newTitle"),
+          form: (current: HouseholdView) => <ExpenseForm household={current} />,
+        };
 
   if (household.isSuccess && !household.data.household) return <Navigate to="/" replace />;
   const current = household.data?.household;
-  if (current && !canEditContent(current.myRole)) return <Navigate to={leaveTo} replace />;
+  if (current && !canEditContent(current.myRole)) return <Navigate to={mode.leaveTo} replace />;
 
   return (
     <AppShell>
       <div className={styles.heading}>
-        <ActionLink to={leaveTo} variant="ghost" icon={<ArrowLeft />} className={styles.back}>
-          {fromCart ? t("form.backToShopping") : editing ? t("form.backToExpense") : t("form.back")}
+        <ActionLink to={mode.leaveTo} variant="ghost" icon={<ArrowLeft />} className={styles.back}>
+          {mode.back}
         </ActionLink>
-        <h1 className={styles.title}>{editing ? t("form.editTitle") : t("form.newTitle")}</h1>
+        <h1 className={styles.title}>{mode.title}</h1>
       </div>
       {household.isPending ? (
         <Spinner label={t("common:loading")} />
       ) : household.isError ? (
         <LoadError error={household.error} onRetry={() => void household.refetch()} />
       ) : (
-        current &&
-        (fromCart ? (
-          <CartExpense household={current} />
-        ) : editing ? (
-          <EditExpense id={id} household={current} />
-        ) : (
-          <ExpenseForm household={current} />
-        ))
+        current && mode.form(current)
       )}
     </AppShell>
   );
@@ -203,6 +215,12 @@ interface ExpenseFormProps {
   fromCart?: CartPurchase | undefined;
 }
 
+/** What happens once a save is answered. */
+interface SaveCallbacks {
+  onSuccess: (saved: ExpenseView) => void;
+  onError: (failure: Error) => void;
+}
+
 /** Same items, in any order. */
 const sameIds = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && a.every((id) => b.includes(id));
@@ -221,7 +239,6 @@ function ExpenseForm({ household, existing, onConflict, fromCart }: ExpenseFormP
   const create = useCreateExpense();
   const update = useUpdateExpense();
   const finishWithExpense = useFinishShoppingWithExpense();
-  const save = fromCart ? finishWithExpense : existing ? update : create;
   const reloadOnCurrencyMismatch = useReloadOnCurrencyMismatch();
   const previewId = useId();
   const boughtId = useId();
@@ -269,6 +286,27 @@ function ExpenseForm({ household, existing, onConflict, fromCart }: ExpenseFormP
   const [typedDescription, setTypedDescription] = useState<string | null>(existing?.description ?? null);
   const cartItems = fromCart?.items;
   const cartIds = cartItems?.map((item) => item.id) ?? [];
+  // How this form saves and where it goes back to, resolved once from what it is for.
+  const target = fromCart
+    ? {
+        save: finishWithExpense,
+        leaveTo: "/shopping",
+        send: (input: ExpenseInput, callbacks: SaveCallbacks) =>
+          finishWithExpense.mutate({ itemIds: cartIds, expense: input }, callbacks),
+      }
+    : existing
+      ? {
+          save: update,
+          leaveTo: `/expenses/${existing.id}`,
+          send: (input: ExpenseInput, callbacks: SaveCallbacks) =>
+            update.mutate({ id: existing.id, input: { ...input, version: existing.version } }, callbacks),
+        }
+      : {
+          save: create,
+          leaveTo: "/expenses",
+          send: (input: ExpenseInput, callbacks: SaveCallbacks) => create.mutate(input, callbacks),
+        };
+  const { save } = target;
   const description =
     typedDescription ??
     (cartItems
@@ -442,13 +480,7 @@ function ExpenseForm({ household, existing, onConflict, fromCart }: ExpenseFormP
         void queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       }
     };
-    if (fromCart) {
-      finishWithExpense.mutate({ itemIds: cartIds, expense: input }, { onSuccess: done, onError });
-    } else if (existing) {
-      update.mutate({ id: existing.id, input: { ...input, version: existing.version } }, { onSuccess: done, onError });
-    } else {
-      create.mutate(input, { onSuccess: done, onError });
-    }
+    target.send(input, { onSuccess: done, onError });
   }
 
   function submit(event: FormEvent) {
@@ -670,7 +702,7 @@ function ExpenseForm({ household, existing, onConflict, fromCart }: ExpenseFormP
       )}
 
       <div className={styles.actions}>
-        <ActionLink to={fromCart ? "/shopping" : existing ? `/expenses/${existing.id}` : "/expenses"} variant="ghost">
+        <ActionLink to={target.leaveTo} variant="ghost">
           {t("form.cancel")}
         </ActionLink>
         <Button
