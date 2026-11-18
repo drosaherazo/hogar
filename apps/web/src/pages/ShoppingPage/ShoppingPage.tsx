@@ -9,10 +9,23 @@ import {
   type PersonRef,
   type ShoppingItemView,
 } from "@hogar/shared";
-import { Alert, Badge, Button, Card, Checkbox, EmptyState, Menu, MenuItem, Spinner, TextField } from "@hogar/ui";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  Combobox,
+  EmptyState,
+  Menu,
+  MenuItem,
+  Spinner,
+  TextField,
+  type ComboboxItem,
+} from "@hogar/ui";
 import clsx from "clsx";
 import { Check, MoreHorizontal, Pencil, Plus, ShoppingBasket, Trash2 } from "lucide-react";
-import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate } from "react-router";
 import { ApiRequestError, errorKey } from "../../api/client";
@@ -29,6 +42,7 @@ import {
   useMoveInCart,
   useRestoreShoppingItem,
   useShoppingList,
+  useShoppingSuggestions,
   useUndoFinishShopping,
 } from "../../shopping/useShopping";
 import { useToasts } from "../../toast/Toasts";
@@ -387,7 +401,10 @@ type Field = "name" | "note";
 
 /**
  * Adding an item: a name and an optional note. Enter adds from either field, because most items
- * have no note and people add them one after another, often with one hand in a shop.
+ * have no note and people add them one after another, often with one hand in a shop. While the
+ * person types the name, what the household bought before is suggested, the most bought first, so
+ * the usual things take one tap; each suggestion says how often it was bought and brings its last
+ * note.
  */
 function AddItemForm({
   items,
@@ -400,6 +417,18 @@ function AddItemForm({
   const add = useAddShoppingItem();
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
+  const suggestions = useShoppingSuggestions(name, items);
+  const options = useMemo(
+    () =>
+      suggestions.map((suggestion): ComboboxItem => ({
+        id: shoppingNameKey(suggestion.name),
+        label: suggestion.name,
+        detail: [suggestion.note, t("suggestion.timesBought", { count: suggestion.timesBought })]
+          .filter(Boolean)
+          .join(" · "),
+      })),
+    [suggestions, t],
+  );
   const [errors, setErrors] = useState<Partial<Record<Field, ErrorCode>>>({});
   const [failure, setFailure] = useState<unknown>(null);
   const [duplicateKey, setDuplicateKey] = useState<string | null>(null);
@@ -444,6 +473,15 @@ function AddItemForm({
     }
   }
 
+  /** A suggestion brings its name and last note; both stay editable before adding. */
+  function pick(id: string) {
+    const suggestion = suggestions.find((other) => shoppingNameKey(other.name) === id);
+    if (!suggestion) return;
+    setName(suggestion.name);
+    setNote(suggestion.note ?? "");
+    setDuplicateKey(null);
+  }
+
   const fieldError = (field: Field) => {
     const code = errors[field];
     return code ? t(`errors:${code}`) : undefined;
@@ -453,16 +491,18 @@ function AddItemForm({
     <Card padding="lg">
       <form className={styles.form} onSubmit={(event) => void submit(event)} noValidate>
         {failure !== null && <Alert tone="danger">{t(errorKey(failure))}</Alert>}
-        <TextField
-          ref={nameField}
+        <Combobox
+          allowsCustomValue
+          inputRef={nameField}
           label={t("add.nameLabel")}
-          value={name}
-          autoComplete="off"
+          inputValue={name}
           enterKeyHint="done"
-          onChange={(event) => {
-            setName(event.target.value);
+          onInputChange={(value) => {
+            setName(value);
             setDuplicateKey(null);
           }}
+          items={options}
+          onSelectionChange={pick}
           error={fieldError("name")}
         />
         <TextField

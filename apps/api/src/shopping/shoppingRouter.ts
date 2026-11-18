@@ -1,15 +1,18 @@
 import {
   addShoppingItemInputSchema,
   finishShoppingInputSchema,
+  shoppingSuggestionsQuerySchema,
   undoFinishShoppingInputSchema,
   updateShoppingItemInputSchema,
   type FinishShoppingResponse,
   type ShoppingItemResponse,
   type ShoppingItemsResponse,
   type ShoppingList,
+  type ShoppingSuggestions,
 } from "@hogar/shared";
 import { Router } from "express";
 import type { Database } from "../db";
+import { badRequest } from "../httpError";
 import { versionOf } from "../expenses/expensesRouter";
 import { parseBody } from "../household/householdRouter";
 import { loadMembership, membershipOf, requireEditor } from "../household/loadMembership";
@@ -22,6 +25,15 @@ export function createShoppingRouter(db: Database, shopping: ShoppingService) {
 
   router.get("/", async (req, res) => {
     const body: ShoppingList = await shopping.list(membershipOf(req).householdId);
+    res.json(body);
+  });
+
+  router.get("/suggestions", async (req, res) => {
+    const query = shoppingSuggestionsQuerySchema.safeParse(req.query);
+    if (!query.success) throw badRequest("request.invalid");
+    const body: ShoppingSuggestions = {
+      suggestions: await shopping.suggestions(membershipOf(req).householdId, query.data.q),
+    };
     res.json(body);
   });
 

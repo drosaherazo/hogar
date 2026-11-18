@@ -182,7 +182,7 @@ describe("carts", () => {
     server.use(http.post("*/api/household/shopping/items", () => apiError(409, "shopping.item.duplicate")));
     renderApp({ path: "/shopping" });
 
-    await userEvent.type(await screen.findByRole("textbox", { name: "What's needed?" }), "milk");
+    await userEvent.type(await screen.findByRole("combobox", { name: "What's needed?" }), "milk");
     await userEvent.type(screen.getByRole("textbox", { name: "Note (optional)" }), "oat{Enter}");
 
     expect(await screen.findByText("Milk is already on the list.")).toBeInTheDocument();
@@ -194,7 +194,7 @@ describe("carts", () => {
     server.use(http.post("*/api/household/shopping/items", () => apiError(409, "shopping.item.duplicate")));
     renderApp({ path: "/shopping" });
 
-    await userEvent.type(await screen.findByRole("textbox", { name: "What's needed?" }), "milk");
+    await userEvent.type(await screen.findByRole("combobox", { name: "What's needed?" }), "milk");
     await userEvent.type(screen.getByRole("textbox", { name: "Note (optional)" }), "oat{Enter}");
 
     expect(await screen.findByRole("button", { name: "Use my note" })).toBeInTheDocument();

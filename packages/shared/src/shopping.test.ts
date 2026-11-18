@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { errorCodeFrom } from "./errors";
-import { addShoppingItemInputSchema, shoppingNameKey } from "./shopping";
+import { addShoppingItemInputSchema, shoppingNameKey, shoppingSuggestionsQuerySchema } from "./shopping";
 
 const codeOf = (result: { error?: { issues: readonly { message: string }[] } }) => errorCodeFrom(result.error);
 
@@ -66,5 +66,16 @@ describe("shoppingNameKey", () => {
   it("keeps different names apart", () => {
     expect(shoppingNameKey("Milk")).not.toBe(shoppingNameKey("Milks"));
     expect(shoppingNameKey("Oat milk")).not.toBe(shoppingNameKey("Oatmilk"));
+  });
+});
+
+describe("shoppingSuggestionsQuerySchema", () => {
+  it("matches everything when nothing is typed", () => {
+    expect(shoppingSuggestionsQuerySchema.parse({})).toEqual({ q: "" });
+  });
+
+  it("takes up to a name's length and refuses more", () => {
+    expect(shoppingSuggestionsQuerySchema.parse({ q: "a".repeat(50) })).toEqual({ q: "a".repeat(50) });
+    expect(codeOf(shoppingSuggestionsQuerySchema.safeParse({ q: "a".repeat(51) }))).toBe("request.invalid");
   });
 });

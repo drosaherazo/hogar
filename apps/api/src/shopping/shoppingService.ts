@@ -1,9 +1,11 @@
 import {
+  SHOPPING_SUGGESTIONS_MAX,
   SHOPPING_UNDO_WINDOW_MS,
   shoppingNameKey,
   type ExpenseView,
   type ParsedExpenseInput,
   type ShoppingItemView,
+  type ShoppingSuggestion,
 } from "@hogar/shared";
 import type { Database } from "../db";
 import type { ExpenseService } from "../expenses/expenseService";
@@ -364,6 +366,47 @@ export function createShoppingService({
       );
       if (undone) events.publish(actor.householdId, "shopping:changed");
       return viewsOf(db, actor.householdId, rows);
+    },
+
+    /**
+     * What the household bought before whose name contains `query`, folded like names are, so
+     * "lec" finds "Leche" and "Lechuga". Purchases of the same name count together and bring the
+     * name and note of the latest one; the most bought come first, then the most recent, and what
+     * is already on the list is left out. Deleted items were never bought, so they never count.
+     */
+    async suggestions(householdId: string, query: string): Promise<ShoppingSuggestion[]> {
+      const key = shoppingNameKey(query);
+      return db.$queryRaw<ShoppingSuggestion[]>`
+        WITH bought AS (
+          SELECT id, name, name_key, note, bought_at
+          FROM shopping_items
+          WHERE household_id = ${householdId}
+            AND bought_at IS NOT NULL
+            AND deleted_at IS NULL
+            AND strpos(name_key, ${key}) > 0
+        ),
+        latest AS (
+          SELECT DISTINCT ON (name_key) name_key, name, note
+          FROM bought
+          ORDER BY name_key, bought_at DESC, id DESC
+        ),
+        counted AS (
+          SELECT name_key, count(*)::int AS times_bought, max(bought_at) AS last_bought_at
+          FROM bought
+          GROUP BY name_key
+        )
+        SELECT latest.name, latest.note, counted.times_bought AS "timesBought"
+        FROM counted
+        JOIN latest USING (name_key)
+        WHERE NOT EXISTS (
+          SELECT 1 FROM shopping_items listed
+          WHERE listed.household_id = ${householdId}
+            AND listed.name_key = counted.name_key
+            AND listed.bought_at IS NULL
+            AND listed.deleted_at IS NULL
+        )
+        ORDER BY counted.times_bought DESC, counted.last_bought_at DESC, counted.name_key
+        LIMIT ${SHOPPING_SUGGESTIONS_MAX}`;
     },
   };
 }

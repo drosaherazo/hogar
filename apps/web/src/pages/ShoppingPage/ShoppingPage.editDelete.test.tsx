@@ -121,7 +121,7 @@ describe("deleting an item", () => {
 
     await waitFor(() => expect(screen.getByRole("button", { name: "Options for Eggs" })).toHaveFocus());
     await choose("Eggs", "Delete");
-    await waitFor(() => expect(screen.getByRole("textbox", { name: "What's needed?" })).toHaveFocus());
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "What's needed?" })).toHaveFocus());
   });
 
   it("switches Undo off while offline, with the reason", async () => {
@@ -337,7 +337,7 @@ describe("adding something already on the list", () => {
     server.use(http.post("*/api/household/shopping/items", () => apiError(409, "shopping.item.duplicate")));
     renderApp({ path: "/shopping" });
 
-    const name = await screen.findByRole("textbox", { name: "What's needed?" });
+    const name = await screen.findByRole("combobox", { name: "What's needed?" });
     await userEvent.type(name, "milk");
     await userEvent.type(screen.getByRole("textbox", { name: "Note (optional)" }), "oat{Enter}");
     expect(await screen.findByText("Milk is already on the list.")).toBeInTheDocument();
@@ -358,7 +358,7 @@ describe("adding something already on the list", () => {
     server.use(http.post("*/api/household/shopping/items", () => apiError(409, "shopping.item.duplicate")));
     renderApp({ path: "/shopping" });
 
-    await userEvent.type(await screen.findByRole("textbox", { name: "What's needed?" }), "Milk");
+    await userEvent.type(await screen.findByRole("combobox", { name: "What's needed?" }), "Milk");
     if (typed) await userEvent.type(screen.getByRole("textbox", { name: "Note (optional)" }), typed);
     await userEvent.click(screen.getByRole("button", { name: "Add" }));
 

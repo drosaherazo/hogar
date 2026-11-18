@@ -51,6 +51,8 @@ beforeEach(() => {
   cy.intercept("GET", "/api/household/categories", { body: { categories: starterCategories() } }).as("categories");
   // Everyone square, so pages that show a balance sentence work without setting balances up.
   cy.intercept("GET", "/api/household/balances", { body: { balances: [], suggestions: [], myBalanceCents: 0 } });
+  // Nothing bought yet, so typing a shopping item suggests nothing.
+  cy.intercept("GET", "/api/household/shopping/suggestions*", { body: { suggestions: [] } });
   // The live connection reaches a stub Socket.io server, which lets it in unless a flow says otherwise.
   cy.task("socket:reset");
 });

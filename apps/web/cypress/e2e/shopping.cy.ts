@@ -81,10 +81,45 @@ describe("Shopping list", () => {
     cy.contains("[role=status]", "You added Milk");
     cy.get("main li").should("have.length", 2).last().should("contain", "Milk").and("contain", "lactose-free");
     cy.contains("li", "Milk").should("not.contain", "asked for by");
-    cy.contains("label", "What's needed?").next("input").should("have.value", "").and("have.focus");
+    cy.get("main [role=combobox]").should("have.value", "").and("have.focus");
 
     cy.get('nav[aria-label="Main"]').contains("a", "Home").click();
     cy.contains("section", "Shopping").should("contain", "2 things to buy");
+  });
+
+  it("suggests what the household bought, and one tap fills the name and its last note", () => {
+    cy.intercept("GET", "/api/household/shopping", { body: { items: [bread], lastCategoryId: null } });
+    cy.intercept("GET", "/api/household/shopping/suggestions*", (req) => {
+      req.reply({
+        body: {
+          suggestions: [
+            { name: "Milk", note: "lactose-free", timesBought: 6 },
+            { name: "Mint", note: null, timesBought: 1 },
+          ],
+        },
+        delay: 200,
+      });
+    });
+    cy.intercept("POST", "/api/household/shopping/items", (req) => {
+      expect(req.body).to.deep.equal({ name: "Milk", note: "lactose-free" });
+      req.reply({ statusCode: 201, body: { item: milk } });
+    }).as("add");
+
+    cy.visit("/shopping");
+    cy.contains("label", "What's needed?").click();
+    cy.focused().type("mi");
+    cy.contains("[role=option]", "Milk").should("contain", "lactose-free · Bought 6 times");
+    cy.contains("[role=option]", "Mint").should("contain", "Bought once").click();
+    cy.get("main [role=combobox]").should("have.value", "Mint");
+
+    cy.get("main [role=combobox]").clear().type("mi");
+    cy.contains("[role=option]", "Milk").click();
+    cy.get("main [role=combobox]").should("have.value", "Milk");
+    cy.contains("label", "Note (optional)").next("input").should("have.value", "lactose-free");
+    cy.contains("button", "Add").click();
+
+    cy.wait("@add");
+    cy.contains("[role=status]", "You added Milk");
   });
 
   it("kindly says when something is already on the list", () => {

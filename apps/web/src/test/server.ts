@@ -1,17 +1,19 @@
-import type {
-  ActivityItem,
-  ActivityPage,
-  AuthResponse,
-  AuthUser,
-  BalancesView,
-  CategoryView,
-  ErrorCode,
-  ExpenseView,
-  HouseholdView,
-  MemberView,
-  PersonRef,
-  SettlementView,
-  ShoppingItemView,
+import {
+  shoppingNameKey,
+  type ActivityItem,
+  type ActivityPage,
+  type AuthResponse,
+  type AuthUser,
+  type BalancesView,
+  type CategoryView,
+  type ErrorCode,
+  type ExpenseView,
+  type HouseholdView,
+  type MemberView,
+  type PersonRef,
+  type SettlementView,
+  type ShoppingItemView,
+  type ShoppingSuggestion,
 } from "@hogar/shared";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -42,6 +44,7 @@ export const server = setupServer(
   http.get("*/api/household/categories", () => HttpResponse.json({ categories: starterCategories() })),
   http.get("*/api/household/invitations", () => HttpResponse.json({ invitations: [] })),
   http.get("*/api/household/shopping", () => HttpResponse.json({ items: [], lastCategoryId: null })),
+  http.get("*/api/household/shopping/suggestions", () => HttpResponse.json({ suggestions: [] })),
   // Anything a test didn't set up answers like a broken server, not a lost connection: a network
   // failure would switch the app to its offline view and leave unrelated pages read-only.
   http.all("*/api/*", ({ request }) => {
@@ -243,6 +246,13 @@ export const handlers = {
   /** The list, and the category of the household's last purchase expense (none by default). */
   shopping: (items: ShoppingItemView[], lastCategoryId: string | null = null) =>
     http.get("*/api/household/shopping", () => HttpResponse.json({ items, lastCategoryId })),
+  /** What the household bought before, matched like the server does: anywhere in the folded name. */
+  suggestions: (bought: ShoppingSuggestion[]) =>
+    http.get("*/api/household/shopping/suggestions", ({ request }) => {
+      const wanted = shoppingNameKey(new URL(request.url).searchParams.get("q") ?? "");
+      const suggestions = bought.filter((suggestion) => shoppingNameKey(suggestion.name).includes(wanted));
+      return HttpResponse.json({ suggestions: suggestions.slice(0, 5) });
+    }),
   balances: (view: BalancesView = anaIsOwed()) => http.get("*/api/household/balances", () => HttpResponse.json(view)),
   settlement: (settlement: SettlementView = settlementView()) =>
     http.get("*/api/household/settlements/:id", () => HttpResponse.json({ settlement })),

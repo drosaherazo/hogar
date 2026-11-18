@@ -19,6 +19,7 @@ import {
   shoppingItemResponseSchema,
   shoppingItemsResponseSchema,
   shoppingListSchema,
+  shoppingSuggestionsSchema,
   type ActivityPage,
   type AddShoppingItemInput,
   type AuthResponse,
@@ -45,6 +46,7 @@ import {
   type SettlementView,
   type ShoppingItemView,
   type ShoppingList,
+  type ShoppingSuggestion,
   type SocketAuth,
   type UpdateCategoryInput,
   type UpdateCategorySplitInput,
@@ -309,6 +311,12 @@ export class ApiClient {
   /** The items on the list, in the order they were added, and the last purchase expense's category. */
   getShoppingList(): Promise<ShoppingList> {
     return this.request("/household/shopping", { schema: shoppingListSchema });
+  }
+
+  /** What the household bought before whose name contains `query`, the most bought first. */
+  async getShoppingSuggestions(query: string): Promise<ShoppingSuggestion[]> {
+    const path = `/household/shopping/suggestions?q=${encodeURIComponent(query)}`;
+    return (await this.request(path, { schema: shoppingSuggestionsSchema })).suggestions;
   }
 
   async addShoppingItem(input: AddShoppingItemInput): Promise<ShoppingItemView> {

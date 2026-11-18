@@ -133,7 +133,7 @@ describe("finishing without an expense", () => {
     expect(namesOnTheList()).toEqual(["Bread", "Rice"]);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", THE_BAR)).not.toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole("textbox", { name: "What's needed?" })).toHaveFocus());
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "What's needed?" })).toHaveFocus());
   });
 
   it("says one thing for a cart of one", async () => {
