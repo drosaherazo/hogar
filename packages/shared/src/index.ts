@@ -8,5 +8,6 @@ export * from "./expenses";
 export * from "./household";
 export * from "./locale";
 export * from "./permissions";
+export * from "./realtime";
 export * from "./split";
 export * from "./starterNames";
