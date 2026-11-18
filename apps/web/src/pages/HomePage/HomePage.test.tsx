@@ -7,8 +7,10 @@ import { installFakeGoogle, renderApp } from "../../test/renderApp";
 import {
   ana,
   anaIsOwed,
+  anaRef,
   apiError,
   balancesView,
+  brunoRef,
   handlers,
   householdView,
   member,
@@ -341,6 +343,40 @@ describe("HomePage", () => {
         const card = await screen.findByRole("region", { name: "Compras" });
         expect(await within(card).findByText("Ahora no falta nada")).toBeInTheDocument();
         expect(within(card).getByRole("link", { name: "Ver la lista" })).toHaveAttribute("href", "/shopping");
+      });
+
+      it("reminds the person of their cart, still counting it as to buy, and finishes it on the list", async () => {
+        server.use(
+          handlers.signedIn(),
+          handlers.household(shared),
+          handlers.shopping([
+            shoppingItem({ cartOwner: anaRef }),
+            shoppingItem({ id: "item_eggs", name: "Eggs", cartOwner: anaRef }),
+            shoppingItem({ id: "item_bread", name: "Bread" }),
+          ]),
+        );
+        renderApp({ path: "/" });
+        const card = await screen.findByRole("region", { name: "Shopping" });
+        expect(await within(card).findByText("3 things to buy")).toBeInTheDocument();
+        expect(within(card).getByText("You still have 2 in your cart")).toBeInTheDocument();
+
+        await userEvent.click(within(card).getByRole("link", { name: "Finish shopping" }));
+
+        expect(await screen.findByRole("dialog", { name: "Done shopping?" })).toHaveAccessibleDescription(
+          "The 2 things in your cart leave the list. What you didn't find stays on it.",
+        );
+      });
+
+      it("has no reminder for someone else's cart", async () => {
+        server.use(
+          handlers.signedIn(),
+          handlers.household(shared),
+          handlers.shopping([shoppingItem({ cartOwner: brunoRef })]),
+        );
+        renderApp({ path: "/" });
+        const card = await screen.findByRole("region", { name: "Shopping" });
+        expect(await within(card).findByText("1 thing to buy")).toBeInTheDocument();
+        expect(within(card).queryByText(/You still have/)).not.toBeInTheDocument();
       });
     });
 

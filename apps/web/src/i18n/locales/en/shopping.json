@@ -49,6 +49,27 @@
     "keepNew": "Keep the new version",
     "saveMine": "Save mine"
   },
+  "cartBar": {
+    "count_one": "{{count}} in your cart",
+    "count_other": "{{count}} in your cart",
+    "finish": "Finish shopping"
+  },
+  "reminder": {
+    "title_one": "You still have {{count}} in your cart",
+    "title_other": "You still have {{count}} in your cart"
+  },
+  "finish": {
+    "title": "Done shopping?",
+    "description_one": "The 1 thing in your cart leaves the list. What you didn't find stays on it.",
+    "description_other": "The {{count}} things in your cart leave the list. What you didn't find stays on it.",
+    "withoutExpense": "Finish without an expense",
+    "withoutExpenseHint": "For when someone else paid or it isn't shared.",
+    "done_one": "Done: 1 thing off the list",
+    "done_other": "Done: {{count}} things off the list",
+    "undone_one": "1 thing is back in your cart",
+    "undone_other": "{{count}} things are back in your cart",
+    "cartChanged": "Your cart changed meanwhile. Check what's in it and finish again."
+  },
   "purchaseTitle": {
     "more_one": "1 more",
     "more_other": "{{count}} more"

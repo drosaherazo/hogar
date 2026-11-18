@@ -108,6 +108,9 @@
       "changed": "Alguien lo cambió mientras tanto. Aquí tienes la versión más reciente.",
       "in_cart": "Ahora está en el carrito de otra persona y solo ella puede cambiarlo."
     },
+    "cart": {
+      "changed": "Tu carrito cambió. Revisa lo que compraste y guarda otra vez."
+    },
     "undo": {
       "expired": "Ya no se puede deshacer."
     }

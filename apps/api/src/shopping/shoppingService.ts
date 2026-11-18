@@ -18,6 +18,29 @@ export interface NewShoppingItem {
   note: string | null;
 }
 
+/** Finishing shopping: exactly the items in the caller's cart, and no expense. */
+export interface FinishShopping {
+  itemIds: readonly string[];
+  expense: null;
+}
+
+/** What finishing recorded: no expense yet when finishing without one. */
+export interface FinishedShopping {
+  expense: null;
+}
+
+/** Items on the list: neither bought nor deleted. */
+const ON_LIST = { boughtAt: null, deletedAt: null } satisfies Prisma.ShoppingItemWhereInput;
+
+/** The list's order: when each item was added, like on paper. */
+const LIST_ORDER = [{ addedAt: "asc" }, { id: "asc" }] satisfies Prisma.ShoppingItemOrderByWithRelationInput[];
+
+/** Whether `ids` name exactly the items of `rows`, in any order. */
+function sameItems(rows: readonly ShoppingItem[], ids: readonly string[]): boolean {
+  const wanted = new Set(ids);
+  return rows.length === wanted.size && rows.every((row) => wanted.has(row.id));
+}
+
 /** What an edit changes: a missing field stays as it is. */
 export interface ShoppingItemChanges {
   name?: string | undefined;
@@ -64,11 +87,23 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
     return tx.shoppingItem.findFirst({ where: { id, householdId } });
   }
 
-  /** The same, for an item on the list: a deleted item is gone for everyone. */
+  /** The same, for an item on the list: a bought or deleted item is gone for everyone. */
   async function lockedItemOnList(tx: Prisma.TransactionClient, householdId: string, id: string) {
     const row = await lockedItem(tx, householdId, id);
-    if (!row || row.deletedAt !== null) throw notFound("shopping.item.not_found");
+    if (!row || row.boughtAt !== null || row.deletedAt !== null) throw notFound("shopping.item.not_found");
     return row;
+  }
+
+  /**
+   * What is in the caller's cart, locked until the transaction ends, so an edit or a delete of one
+   * of its items (which lock only that item) takes turns with finishing. Items they deleted from
+   * their cart stay there for undo, but they aren't in it: they were never bought.
+   */
+  async function lockedCart(tx: Prisma.TransactionClient, actor: Membership) {
+    await tx.$queryRaw`SELECT id FROM shopping_items WHERE household_id = ${actor.householdId} AND cart_owner_id = ${actor.userId} FOR UPDATE`;
+    return tx.shoppingItem.findMany({
+      where: { householdId: actor.householdId, cartOwnerId: actor.userId, ...ON_LIST },
+    });
   }
 
   /** While an item is in someone's cart, only they can change it, delete it or bring it back. */
@@ -121,10 +156,7 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
   return {
     /** The items on the list in the order they were added, like a paper list. */
     async list(householdId: string): Promise<ShoppingItemView[]> {
-      const rows = await db.shoppingItem.findMany({
-        where: { householdId, deletedAt: null },
-        orderBy: [{ addedAt: "asc" }, { id: "asc" }],
-      });
+      const rows = await db.shoppingItem.findMany({ where: { householdId, ...ON_LIST }, orderBy: LIST_ORDER });
       return viewsOf(db, householdId, rows);
     },
 
@@ -188,14 +220,16 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
 
     /**
      * Undoes the caller's own delete within the window: the item comes back in its place, as it
-     * was. For anyone else a deleted item leaves no trace, so they get `not_found`. A second tap
-     * finds the item already back and changes nothing.
+     * was. For anyone else a deleted item leaves no trace, so they get `not_found`, as everyone
+     * does for a bought item. A second tap finds the item already back and changes nothing.
      */
     async restore(actor: Membership, id: string): Promise<ShoppingItemView> {
       const { row, restored } = await refusingDuplicates(() =>
         db.$transaction(async (tx) => {
           const current = await lockedItem(tx, actor.householdId, id);
-          if (current?.deletedAt === null) return { row: current, restored: false };
+          if (current && current.deletedAt === null && current.boughtAt === null) {
+            return { row: current, restored: false };
+          }
           if (!current?.deletedAt || current.deletedById !== actor.userId) throw notFound("shopping.item.not_found");
           assertNotInOthersCart(current, actor);
           if (now().getTime() - current.deletedAt.getTime() > SHOPPING_UNDO_WINDOW_MS) {
@@ -231,6 +265,70 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
         if (item.cartOwnerId !== actor.userId) throw conflict("shopping.item.in_cart");
         return { cartOwnerId: null };
       });
+    },
+
+    /**
+     * Finishes the caller's shopping: everything in their cart leaves the list at once, as bought
+     * items, and what they didn't find stays on it. `itemIds` must be exactly their cart, as they
+     * last saw it; a cart that changed meanwhile (on their other device) is refused whole with
+     * `shopping.cart.changed`, so nothing is ever half bought. Like a cart move, it takes turns with
+     * leaving, removals and role changes under the household lock, and checks the role again there.
+     */
+    async finish(actor: Membership, { itemIds }: FinishShopping): Promise<FinishedShopping> {
+      await db.$transaction(async (tx) => {
+        await lockHousehold(tx, actor.householdId);
+        assertStillEditor(await currentMembers(tx, actor.householdId), actor);
+        if (!sameItems(await lockedCart(tx, actor), itemIds)) throw conflict("shopping.cart.changed");
+        await tx.shoppingItem.updateMany({
+          where: { id: { in: [...itemIds] } },
+          data: { boughtAt: now(), boughtById: actor.userId, cartOwnerId: null },
+        });
+      });
+      events.publish(actor.householdId, "shopping:changed");
+      return { expense: null };
+    },
+
+    /**
+     * Undoes the caller's finish within the window: the items come back into their cart, each in
+     * its place on the list. Only for items they bought, and all of them or none: for anything
+     * else it is too late. A name added again meanwhile meets the unique index and refuses the
+     * whole undo with `shopping.item.duplicate`. A second tap finds the items already back in their
+     * cart and changes nothing.
+     */
+    async undoFinish(actor: Membership, itemIds: readonly string[]): Promise<ShoppingItemView[]> {
+      const { rows, undone } = await refusingDuplicates(() =>
+        db.$transaction(async (tx) => {
+          await lockHousehold(tx, actor.householdId);
+          assertStillEditor(await currentMembers(tx, actor.householdId), actor);
+          const ids = [...itemIds];
+          await tx.$queryRaw`SELECT id FROM shopping_items WHERE household_id = ${actor.householdId} AND id = ANY(${ids}) FOR UPDATE`;
+          const items = await tx.shoppingItem.findMany({
+            where: { householdId: actor.householdId, id: { in: ids } },
+            orderBy: LIST_ORDER,
+          });
+          const back = (row: ShoppingItem) =>
+            row.boughtAt === null && row.deletedAt === null && row.cartOwnerId === actor.userId;
+          const undoable = (row: ShoppingItem) =>
+            row.boughtById === actor.userId &&
+            row.boughtAt !== null &&
+            now().getTime() - row.boughtAt.getTime() <= SHOPPING_UNDO_WINDOW_MS;
+          if (!sameItems(items, ids) || !items.every((row) => back(row) || undoable(row))) {
+            throw gone("shopping.undo.expired");
+          }
+          const bought = items.filter(undoable).map((row) => row.id);
+          if (bought.length === 0) return { rows: items, undone: false };
+          await tx.shoppingItem.updateMany({
+            where: { id: { in: bought } },
+            data: { boughtAt: null, boughtById: null, cartOwnerId: actor.userId },
+          });
+          return {
+            rows: await tx.shoppingItem.findMany({ where: { id: { in: ids } }, orderBy: LIST_ORDER }),
+            undone: true,
+          };
+        }),
+      );
+      if (undone) events.publish(actor.householdId, "shopping:changed");
+      return viewsOf(db, actor.householdId, rows);
     },
   };
 }

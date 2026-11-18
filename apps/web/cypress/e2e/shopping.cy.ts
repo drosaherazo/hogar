@@ -262,4 +262,58 @@ describe("Shopping list", () => {
     cy.get("main li").should("have.length", 2).first().should("contain", "Bread");
     cy.get("[role=alertdialog]").should("not.exist");
   });
+
+  it("finishes shopping without an expense, keeping what wasn't found, and undoes it from the toast", () => {
+    const inCart = (item: ShoppingItemView) => ({ ...item, cartOwner: anaRef });
+    let items: ShoppingItemView[] = [inCart(bread), milk];
+    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items }));
+    cy.intercept("POST", "/api/household/shopping/finish", (req) => {
+      expect(req.body).to.deep.equal({ itemIds: ["item_bread"], expense: null });
+      items = [milk];
+      req.reply({ expense: null });
+    }).as("finish");
+    cy.intercept("POST", "/api/household/shopping/finish/undo", (req) => {
+      expect(req.body).to.deep.equal({ itemIds: ["item_bread"] });
+      items = [inCart(bread), milk];
+      req.reply({ items: [inCart(bread)] });
+    }).as("undo");
+
+    cy.visit("/");
+    cy.contains("section", "Shopping").within(() => {
+      cy.contains("2 things to buy");
+      cy.contains("You still have 1 in your cart");
+    });
+    cy.get('nav[aria-label="Main"]').contains("a", "Shopping").click();
+    cy.findHeading("Shopping");
+
+    // The bar sits above the tab bar, clear of it.
+    cy.contains("p", "1 in your cart")
+      .parent()
+      .then(($bar) => {
+        cy.get('nav[aria-label="Main"]').should(($nav) => {
+          expect($bar[0]?.getBoundingClientRect().bottom).to.be.at.most(
+            ($nav[0]?.getBoundingClientRect().top ?? Number.NaN) - 8,
+          );
+        });
+      });
+    cy.contains("p", "1 in your cart").parent().contains("button", "Finish shopping").click();
+    cy.contains("[role=dialog]", "Done shopping?").within(() => {
+      cy.contains("The 1 thing in your cart leaves the list. What you didn't find stays on it.");
+      cy.contains("button", "Cancel").should("have.focus");
+      cy.contains("button", "Finish without an expense").click();
+    });
+
+    cy.wait("@finish");
+    cy.get("main li").should("have.length", 1).first().should("contain", "Milk");
+    cy.contains("button", "Finish shopping").should("not.exist");
+    cy.get('[role=region][aria-label="Notifications"]')
+      .contains("[role=alertdialog]", "Done: 1 thing off the list")
+      .contains("button", "Undo")
+      .click();
+
+    cy.wait("@undo");
+    cy.contains("[role=status]", "1 thing is back in your cart");
+    cy.get("main li").should("have.length", 2).first().should("contain", "Bread").and("contain", "In your cart");
+    cy.contains("p", "1 in your cart").parent().contains("button", "Finish shopping");
+  });
 });

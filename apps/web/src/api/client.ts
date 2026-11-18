@@ -11,11 +11,13 @@ import {
   createdInvitationSchema,
   currentHouseholdSchema,
   expenseResponseSchema,
+  finishShoppingResponseSchema,
   householdResponseSchema,
   invitationListSchema,
   invitationPreviewSchema,
   settlementResponseSchema,
   shoppingItemResponseSchema,
+  shoppingItemsResponseSchema,
   shoppingListSchema,
   type ActivityPage,
   type AddShoppingItemInput,
@@ -344,6 +346,29 @@ export class ApiClient {
   async takeOutOfCart(id: string): Promise<ShoppingItemView> {
     const path = `/household/shopping/items/${encodeURIComponent(id)}/cart`;
     return (await this.request(path, { method: "DELETE", schema: shoppingItemResponseSchema })).item;
+  }
+
+  /**
+   * Finishes shopping without an expense: `itemIds` are everything in the person's cart, as they see
+   * it. Refused with `shopping.cart.changed` when the cart changed meanwhile.
+   */
+  async finishShopping(itemIds: readonly string[]): Promise<void> {
+    await this.request("/household/shopping/finish", {
+      method: "POST",
+      body: { itemIds, expense: null },
+      schema: finishShoppingResponseSchema,
+    });
+  }
+
+  /** Puts what a finish bought back in the person's cart, within the server's undo window. */
+  async undoFinishShopping(itemIds: readonly string[]): Promise<ShoppingItemView[]> {
+    return (
+      await this.request("/household/shopping/finish/undo", {
+        method: "POST",
+        body: { itemIds },
+        schema: shoppingItemsResponseSchema,
+      })
+    ).items;
   }
 
   // --- Invitations ---------------------------------------------------------
