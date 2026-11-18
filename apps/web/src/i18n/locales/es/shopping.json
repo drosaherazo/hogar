@@ -12,10 +12,16 @@
   "added": "Añadiste {{name}}",
   "item": {
     "askedBy": "lo pidió {{name}}",
+    "inMyCart": "En tu carrito",
+    "inCartOf": "En el carrito de {{name}}",
+    "putInCart": "Poner {{name}} en tu carrito",
+    "takeOutOfCart": "Sacar {{name}} de tu carrito",
     "actions": "Opciones de {{name}}",
     "edit": "Editar",
-    "delete": "Borrar"
+    "delete": "Borrar",
+    "lockedReason": "Solo {{name}} puede cambiarlo mientras esté en su carrito."
   },
+  "cartReturned": "Ahora tienes acceso de invitado, así que tu carrito volvió a la lista.",
   "empty": {
     "title": "No falta nada",
     "description": "Cuando algo se acabe, añádelo aquí y todo el mundo lo verá."

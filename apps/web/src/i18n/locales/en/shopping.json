@@ -12,10 +12,16 @@
   "added": "You added {{name}}",
   "item": {
     "askedBy": "asked for by {{name}}",
+    "inMyCart": "In your cart",
+    "inCartOf": "In {{name}}'s cart",
+    "putInCart": "Put {{name}} in your cart",
+    "takeOutOfCart": "Take {{name}} out of your cart",
     "actions": "Options for {{name}}",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "lockedReason": "Only {{name}} can change it while it's in their cart."
   },
+  "cartReturned": "You have guest access now, so your cart went back to the list.",
   "empty": {
     "title": "Nothing to buy",
     "description": "When something runs out, add it here and everyone will see it."

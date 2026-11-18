@@ -334,6 +334,18 @@ export class ApiClient {
     return (await this.request(path, { method: "POST", schema: shoppingItemResponseSchema })).item;
   }
 
+  /** Puts the item in the person's cart; refused with `shopping.item.in_cart` when it is in someone else's. */
+  async putInCart(id: string): Promise<ShoppingItemView> {
+    const path = `/household/shopping/items/${encodeURIComponent(id)}/cart`;
+    return (await this.request(path, { method: "PUT", schema: shoppingItemResponseSchema })).item;
+  }
+
+  /** Takes the item out of the person's cart, back on the list. */
+  async takeOutOfCart(id: string): Promise<ShoppingItemView> {
+    const path = `/household/shopping/items/${encodeURIComponent(id)}/cart`;
+    return (await this.request(path, { method: "DELETE", schema: shoppingItemResponseSchema })).item;
+  }
+
   // --- Invitations ---------------------------------------------------------
 
   async listInvitations(): Promise<InvitationView[]> {

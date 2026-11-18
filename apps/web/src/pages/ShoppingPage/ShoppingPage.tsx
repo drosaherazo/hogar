@@ -6,11 +6,13 @@ import {
   shoppingNameKey,
   type ErrorCode,
   type HouseholdView,
+  type PersonRef,
   type ShoppingItemView,
 } from "@hogar/shared";
-import { Alert, Button, Card, EmptyState, Menu, MenuItem, Spinner, TextField } from "@hogar/ui";
+import { Alert, Badge, Button, Card, Checkbox, EmptyState, Menu, MenuItem, Spinner, TextField } from "@hogar/ui";
+import clsx from "clsx";
 import { Check, MoreHorizontal, Pencil, Plus, ShoppingBasket, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { ApiRequestError, errorKey } from "../../api/client";
@@ -22,6 +24,7 @@ import { AppShell } from "../../layout/AppShell";
 import {
   useAddShoppingItem,
   useDeleteShoppingItem,
+  useMoveInCart,
   useRestoreShoppingItem,
   useShoppingList,
 } from "../../shopping/useShopping";
@@ -29,6 +32,7 @@ import { useToasts } from "../../toast/Toasts";
 import { DuplicateNotice } from "./DuplicateNotice";
 import { EditItemDialog } from "./EditItemDialog";
 import styles from "./ShoppingPage.module.css";
+import { useCartReturned } from "./useCartReturned";
 
 const TITLE_ID = "shopping-title";
 const NO_ITEMS: ShoppingItemView[] = [];
@@ -71,6 +75,9 @@ function ListAndForm({ household }: { household: HouseholdView }) {
   const toasts = useToasts();
   const remove = useDeleteShoppingItem();
   const restore = useRestoreShoppingItem();
+  const move = useMoveInCart();
+  const user = useCurrentUser();
+  const cartReturned = useCartReturned(items);
   const nameField = useRef<HTMLInputElement>(null);
   const listElement = useRef<HTMLUListElement>(null);
   const focusAfterDelete = useRef<FocusAfterDelete | null>(null);
@@ -117,8 +124,20 @@ function ListAndForm({ household }: { household: HouseholdView }) {
     });
   }
 
+  /**
+   * Into the viewer's cart or out of it, at once. When someone else got there first, the item
+   * moves back, the list shows whose cart it is in, and the alert says why.
+   */
+  function toggleCart(item: ShoppingItemView) {
+    reset();
+    const me: PersonRef = { userId: user.id, name: user.name, avatarUrl: user.avatarUrl, former: false };
+    const owner = item.cartOwner?.userId === user.id ? null : me;
+    move.mutate({ item, owner }, { onError: setFailure });
+  }
+
   return (
     <>
+      {cartReturned && <Alert tone="info">{t("cartReturned")}</Alert>}
       {canEdit ? (
         <AddItemForm items={items} nameField={nameField} />
       ) : (
@@ -144,6 +163,7 @@ function ListAndForm({ household }: { household: HouseholdView }) {
                 actions={
                   canEdit
                     ? {
+                        onToggleCart: () => toggleCart(item),
                         onEdit: () => {
                           reset();
                           setEditing(item);
@@ -183,6 +203,7 @@ function Confirmation({ children }: { children: string }) {
 }
 
 interface ItemActions {
+  onToggleCart: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -190,25 +211,60 @@ interface ItemActions {
 /**
  * A name and, in smaller text, the note and who asked for it: never the viewer (they know), and
  * nobody while the household hides it (the server then leaves `askedBy` out). Admins and members
- * get its actions in a menu, so the row stays quick to scan in a shop.
+ * get its actions: the check that puts it in their cart, and a menu, so the row stays quick to scan
+ * in a shop.
+ *
+ * An item in a cart stays in its place, quieter but readable, with a check and whose cart it is in,
+ * so color never says it alone. While it is in someone else's cart, only they can change it: its
+ * check and actions are off, and say why.
  */
 function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActions | undefined }) {
   const { t } = useTranslation("shopping");
   const user = useCurrentUser();
   const personLabel = usePersonLabel();
+  const markerId = useId();
   const askedBy =
     item.askedBy === undefined || item.askedBy.userId === user.id
       ? null
       : t("item.askedBy", { name: personLabel(item.askedBy) });
+  const inMyCart = item.cartOwner?.userId === user.id;
+  const holder = item.cartOwner && !inMyCart ? personLabel(item.cartOwner) : null;
+  const marker =
+    item.cartOwner === null ? null : holder === null ? t("item.inMyCart") : t("item.inCartOf", { name: holder });
+  const lockedReason = holder === null ? undefined : t("item.lockedReason", { name: holder });
+  // What a locked control is described by: the marker next to it, which says whose cart it is in.
+  const describedBy = holder === null ? undefined : markerId;
 
   return (
-    <li className={styles.item}>
+    <li className={clsx(styles.item, marker !== null && styles.inCart)}>
       <span className={styles.itemText}>
-        <span className={styles.itemName}>{item.name}</span>
-        {(item.note !== null || askedBy !== null) && (
-          <span className={styles.itemMeta}>
-            {item.note !== null && <span className={styles.note}>{item.note}</span>}
-            {askedBy !== null && <span>{askedBy}</span>}
+        {actions ? (
+          <Checkbox
+            label={item.name}
+            aria-label={t(inMyCart ? "item.takeOutOfCart" : "item.putInCart", { name: item.name })}
+            aria-describedby={describedBy}
+            checked={inMyCart}
+            disabled={holder !== null}
+            onChange={actions.onToggleCart}
+            className={styles.cart}
+          />
+        ) : (
+          <span className={styles.itemName}>{item.name}</span>
+        )}
+        {(item.note !== null || askedBy !== null || marker !== null) && (
+          <span className={clsx(styles.details, actions && styles.pastCheck)}>
+            {(item.note !== null || askedBy !== null) && (
+              <span className={styles.itemMeta}>
+                {item.note !== null && <span className={styles.note}>{item.note}</span>}
+                {askedBy !== null && <span>{askedBy}</span>}
+              </span>
+            )}
+            {marker !== null && (
+              <Badge id={markerId} tone="positive" className={styles.marker}>
+                <Check aria-hidden="true" className={styles.markerIcon} />
+                {marker}
+              </Badge>
+            )}
           </span>
         )}
       </span>
@@ -219,16 +275,17 @@ function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActio
               variant="ghost"
               size="sm"
               aria-label={t("item.actions", { name: item.name })}
+              aria-describedby={describedBy}
               data-options-for={item.id}
             >
               <MoreHorizontal aria-hidden="true" />
             </Button>
           }
         >
-          <MenuItem icon={<Pencil />} onSelect={actions.onEdit}>
+          <MenuItem icon={<Pencil />} onSelect={actions.onEdit} disabled={holder !== null} description={lockedReason}>
             {t("item.edit")}
           </MenuItem>
-          <MenuItem icon={<Trash2 />} onSelect={actions.onDelete}>
+          <MenuItem icon={<Trash2 />} onSelect={actions.onDelete} disabled={holder !== null} description={lockedReason}>
             {t("item.delete")}
           </MenuItem>
         </Menu>
