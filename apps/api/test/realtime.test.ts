@@ -1,6 +1,7 @@
 import {
   API_VERSION,
   createdInvitationSchema,
+  shoppingItemResponseSchema,
   SOCKET_PATH,
   type HouseholdEvent,
   type ServerToClientEvents,
@@ -305,6 +306,18 @@ describe("household:changed", () => {
 describe("shopping:changed", () => {
   const addItem = (who: SignedIn, name: string) =>
     request(api.app).post("/api/household/shopping/items").set("Authorization", who.auth).send({ name });
+  const itemPath = (id: string) => `/api/household/shopping/items/${id}`;
+  const editItem = (who: SignedIn, id: string, body: object) =>
+    request(api.app).patch(itemPath(id)).set("Authorization", who.auth).send(body);
+  const deleteItem = (who: SignedIn, id: string, version: number) =>
+    request(api.app)
+      .delete(`${itemPath(id)}?version=${version}`)
+      .set("Authorization", who.auth);
+  const restoreItem = (who: SignedIn, id: string) =>
+    request(api.app)
+      .post(`${itemPath(id)}/restore`)
+      .set("Authorization", who.auth);
+  const idOf = (res: { body: unknown }) => shoppingItemResponseSchema.parse(res.body).item.id;
 
   it("reaches the other members when someone adds an item", async () => {
     const { ana, bruno } = await household();
@@ -340,6 +353,44 @@ describe("shopping:changed", () => {
 
     await addItem(bruno, "milk").expect(409);
     // In order on one connection: the next add's event arriving alone means the refusal sent none.
+    const added = nextEvent(anaSocket, "shopping:changed");
+    await addItem(bruno, "Bread").expect(201);
+    await added;
+
+    expect(received).toEqual(["shopping:changed"]);
+  });
+
+  it("reaches the other members when someone edits, deletes or brings back an item", async () => {
+    const { ana, bruno } = await household();
+    const milk = idOf(await addItem(bruno, "Milk").expect(201));
+    const anaSocket = await connectAs(ana);
+    const received = record(anaSocket);
+
+    let changed = nextEvent(anaSocket, "shopping:changed");
+    await editItem(bruno, milk, { note: "lactose-free", version: 1 }).expect(200);
+    await changed;
+    changed = nextEvent(anaSocket, "shopping:changed");
+    await deleteItem(bruno, milk, 2).expect(204);
+    await changed;
+    changed = nextEvent(anaSocket, "shopping:changed");
+    await restoreItem(bruno, milk).expect(200);
+    await changed;
+
+    expect(received).toEqual(["shopping:changed", "shopping:changed", "shopping:changed"]);
+  });
+
+  it("announces nothing for an edit that is refused or changes nothing, or a delete that is refused", async () => {
+    const { ana, bruno } = await household();
+    const milk = idOf(await addItem(ana, "Milk").expect(201));
+    await addItem(ana, "Eggs").expect(201);
+    const anaSocket = await connectAs(ana);
+    const received = record(anaSocket);
+
+    await editItem(bruno, milk, { name: "eggs", version: 1 }).expect(409);
+    await editItem(bruno, milk, { name: "Milk", version: 1 }).expect(200);
+    await deleteItem(bruno, milk, 2).expect(409);
+    await restoreItem(bruno, milk).expect(200);
+    // In order on one connection: the next add's event arriving alone means none of the above sent one.
     const added = nextEvent(anaSocket, "shopping:changed");
     await addItem(bruno, "Bread").expect(201);
     await added;

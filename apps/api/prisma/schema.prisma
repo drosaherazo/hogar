@@ -28,17 +28,18 @@ model User {
   invitationsCreated Invitation[]   @relation("InvitationCreatedBy")
   invitationsUsed    Invitation[]   @relation("InvitationUsedBy")
 
-  expensesPaid        Expense[]      @relation("ExpensePaidBy")
-  expensesCreated     Expense[]      @relation("ExpenseCreatedBy")
-  expensesEdited      Expense[]      @relation("ExpenseEditedBy")
-  expensesDeleted     Expense[]      @relation("ExpenseDeletedBy")
-  expenseShares       ExpenseShare[]
-  settlementsSent     Settlement[]   @relation("SettlementFrom")
-  settlementsReceived Settlement[]   @relation("SettlementTo")
-  settlementsCreated  Settlement[]   @relation("SettlementCreatedBy")
-  settlementsEdited   Settlement[]   @relation("SettlementEditedBy")
-  settlementsDeleted  Settlement[]   @relation("SettlementDeletedBy")
-  shoppingItemsAsked  ShoppingItem[] @relation("ShoppingItemAskedBy")
+  expensesPaid         Expense[]      @relation("ExpensePaidBy")
+  expensesCreated      Expense[]      @relation("ExpenseCreatedBy")
+  expensesEdited       Expense[]      @relation("ExpenseEditedBy")
+  expensesDeleted      Expense[]      @relation("ExpenseDeletedBy")
+  expenseShares        ExpenseShare[]
+  settlementsSent      Settlement[]   @relation("SettlementFrom")
+  settlementsReceived  Settlement[]   @relation("SettlementTo")
+  settlementsCreated   Settlement[]   @relation("SettlementCreatedBy")
+  settlementsEdited    Settlement[]   @relation("SettlementEditedBy")
+  settlementsDeleted   Settlement[]   @relation("SettlementDeletedBy")
+  shoppingItemsAsked   ShoppingItem[] @relation("ShoppingItemAskedBy")
+  shoppingItemsDeleted ShoppingItem[] @relation("ShoppingItemDeletedBy")
 
   @@map("users")
 }
@@ -245,30 +246,36 @@ model Settlement {
   @@map("settlements")
 }
 
-/// One thing on the household's shopping list ("Milk"). The list never holds two items whose
-/// `nameKey` matches (ADR 0009); the service answers a violation of the unique index with
-/// `shopping.item.duplicate`. Every item is on the list for now: the index becomes partial (items
-/// not bought and not deleted) when bought and deleted items arrive.
+/// One thing on the household's shopping list ("Milk"). An item is on the list until it is
+/// deleted. Deleting is soft (`deletedAt`), so whoever deleted it can undo for a minute and it
+/// comes back in its place. The list never holds two items whose `nameKey` matches (ADR 0009):
+/// a partial unique index on (household, `nameKey`) over items not deleted, written by hand in
+/// the migration because Prisma can't model it. The service answers a violation with
+/// `shopping.item.duplicate`.
 model ShoppingItem {
-  id          String   @id @default(cuid())
-  householdId String   @map("household_id")
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
   /// Trimmed, 1–50 characters.
   name        String
   /// `shoppingNameKey(name)` from packages/shared: case, accents and spaces folded.
-  nameKey     String   @map("name_key")
+  nameKey     String    @map("name_key")
   /// Trimmed, up to 100 characters; null rather than empty.
   note        String?
   /// Whoever added it. A user, not a membership, so it survives people leaving (ADR 0007).
-  askedById   String   @map("asked_by_id")
+  askedById   String    @map("asked_by_id")
   /// The list is ordered by it, like a paper list.
-  addedAt     DateTime @map("added_at")
+  addedAt     DateTime  @map("added_at")
   /// Starts at 1 and goes up only on name and note edits (ADR 0009).
-  version     Int      @default(1)
+  version     Int       @default(1)
+  /// Set when someone deletes it: it leaves the list for good, unless whoever deleted it undoes
+  /// within the window.
+  deletedAt   DateTime? @map("deleted_at")
+  deletedById String?   @map("deleted_by_id")
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
   askedBy   User      @relation("ShoppingItemAskedBy", fields: [askedById], references: [id], onDelete: Restrict)
+  deletedBy User?     @relation("ShoppingItemDeletedBy", fields: [deletedById], references: [id], onDelete: Restrict)
 
-  @@unique([householdId, nameKey], map: "shopping_items_household_name_key")
   @@index([householdId, addedAt])
   @@index([askedById])
   @@map("shopping_items")
