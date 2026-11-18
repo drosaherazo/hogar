@@ -15,7 +15,7 @@ const bought: ShoppingSuggestion[] = [
   { name: "Pan", note: null, timesBought: 4 },
 ];
 
-/** Ana on the list; `added` captures what the form posts. */
+/** Ana on the list; `added` captures what the form posts, and the list read after it shows it. */
 function shoppingWithSuggestions(added: { body?: unknown } = {}) {
   server.use(
     handlers.signedIn(),
@@ -25,10 +25,9 @@ function shoppingWithSuggestions(added: { body?: unknown } = {}) {
     http.post("*/api/household/shopping/items", async ({ request }) => {
       added.body = await request.json();
       const { name, note } = added.body as { name: string; note: string | null };
-      return HttpResponse.json(
-        { item: shoppingItem({ id: "item_new", name, note, askedBy: anaRef }) },
-        { status: 201 },
-      );
+      const item = shoppingItem({ id: "item_new", name, note, askedBy: anaRef });
+      server.use(handlers.shopping([item]));
+      return HttpResponse.json({ item }, { status: 201 });
     }),
   );
 }
