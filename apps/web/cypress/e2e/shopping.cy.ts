@@ -36,6 +36,7 @@ const bread: ShoppingItemView = {
   askedBy: brunoRef,
   addedAt: "2026-11-18T09:00:00.000Z",
   version: 1,
+  cartOwner: null,
 };
 
 const milk: ShoppingItemView = {
@@ -45,6 +46,7 @@ const milk: ShoppingItemView = {
   askedBy: anaRef,
   addedAt: "2026-11-18T10:00:00.000Z",
   version: 1,
+  cartOwner: null,
 };
 
 // --- Flows ---------------------------------------------------------------------

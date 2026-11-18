@@ -40,6 +40,18 @@ export function createShoppingRouter(db: Database, shopping: ShoppingService) {
     res.json(body);
   });
 
+  router.put("/items/:id/cart", requireEditor, async (req, res) => {
+    const body: ShoppingItemResponse = { item: await shopping.putInCart(membershipOf(req), String(req.params["id"])) };
+    res.json(body);
+  });
+
+  router.delete("/items/:id/cart", requireEditor, async (req, res) => {
+    const body: ShoppingItemResponse = {
+      item: await shopping.takeOutOfCart(membershipOf(req), String(req.params["id"])),
+    };
+    res.json(body);
+  });
+
   router.delete("/items/:id", requireEditor, async (req, res) => {
     await shopping.remove(membershipOf(req), String(req.params["id"]), versionOf(req));
     res.status(204).end();

@@ -1,8 +1,8 @@
 import { SHOPPING_UNDO_WINDOW_MS, shoppingNameKey, type ShoppingItemView } from "@hogar/shared";
 import type { Database } from "../db";
-import { currentMembers, personRefs, refOf, type Client } from "../expenses/people";
+import { assertStillEditor, currentMembers, personRefs, refOf, type Client } from "../expenses/people";
 import type { Membership, Prisma, ShoppingItem } from "../generated/prisma/client";
-import { isUniqueViolation } from "../household/householdService";
+import { isUniqueViolation, lockHousehold } from "../household/householdService";
 import { conflict, gone, notFound } from "../httpError";
 import { noHouseholdEvents, type HouseholdEvents } from "../realtime/householdEvents";
 
@@ -42,7 +42,7 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
     const refs = await personRefs(
       client,
       members,
-      rows.map((row) => row.askedById),
+      rows.flatMap((row) => (row.cartOwnerId === null ? [row.askedById] : [row.askedById, row.cartOwnerId])),
     );
     return rows.map((row) => ({
       id: row.id,
@@ -51,6 +51,7 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
       ...(showWhoAsked && { askedBy: refOf(refs, row.askedById) }),
       addedAt: row.addedAt.toISOString(),
       version: row.version,
+      cartOwner: row.cartOwnerId === null ? null : refOf(refs, row.cartOwnerId),
     }));
   }
 
@@ -70,6 +71,11 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
     return row;
   }
 
+  /** While an item is in someone's cart, only they can change it, delete it or bring it back. */
+  function assertNotInOthersCart(row: ShoppingItem, actor: Membership) {
+    if (row.cartOwnerId !== null && row.cartOwnerId !== actor.userId) throw conflict("shopping.item.in_cart");
+  }
+
   async function viewOf(householdId: string, row: ShoppingItem): Promise<ShoppingItemView> {
     const [view] = await viewsOf(db, householdId, [row]);
     if (!view) throw new Error("Every item has a view");
@@ -87,6 +93,29 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
       if (isUniqueViolation(error)) throw conflict("shopping.item.duplicate");
       throw error;
     }
+  }
+
+  /**
+   * Moves an item in or out of the caller's cart, as `decide` says: the new owner, or the row
+   * unchanged when there is nothing to do. The household lock makes moves take turns with
+   * leaving, removals and role changes, so nobody fills a cart that is being emptied, and the role
+   * is checked again under it. Moving isn't an edit: the version stays (ADR 0009).
+   */
+  async function moveInCart(
+    actor: Membership,
+    id: string,
+    decide: (item: ShoppingItem) => { cartOwnerId: string | null } | "unchanged",
+  ): Promise<ShoppingItemView> {
+    const { row, moved } = await db.$transaction(async (tx) => {
+      await lockHousehold(tx, actor.householdId);
+      assertStillEditor(await currentMembers(tx, actor.householdId), actor);
+      const current = await lockedItemOnList(tx, actor.householdId, id);
+      const decision = decide(current);
+      if (decision === "unchanged") return { row: current, moved: false };
+      return { row: await tx.shoppingItem.update({ where: { id }, data: decision }), moved: true };
+    });
+    if (moved) events.publish(actor.householdId, "shopping:changed");
+    return viewOf(actor.householdId, row);
   }
 
   return {
@@ -120,12 +149,14 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
     /**
      * Renames the item or changes its note. The edit names the version it started from, and one
      * based on an older version is refused, so nobody overwrites a change they haven't seen
-     * (ADR 0009). Saving what is already there changes nothing, not even the version.
+     * (ADR 0009). Saving what is already there changes nothing, not even the version. While the
+     * item is in someone's cart, only they can edit it.
      */
     async edit(actor: Membership, id: string, changes: ShoppingItemChanges): Promise<ShoppingItemView> {
       const { row, changed } = await refusingDuplicates(() =>
         db.$transaction(async (tx) => {
           const current = await lockedItemOnList(tx, actor.householdId, id);
+          assertNotInOthersCart(current, actor);
           if (current.version !== changes.version) throw conflict("shopping.item.changed");
           const name = changes.name ?? current.name;
           const note = changes.note === undefined ? current.note : changes.note;
@@ -141,10 +172,14 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
       return viewOf(actor.householdId, row);
     },
 
-    /** Takes the item off the list at once; whoever deleted it can undo for a while. */
+    /**
+     * Takes the item off the list at once; whoever deleted it can undo for a while. An item in
+     * someone's cart stays there, so undoing brings it back as it was; only they can delete it.
+     */
     async remove(actor: Membership, id: string, version: number): Promise<void> {
       await db.$transaction(async (tx) => {
         const row = await lockedItemOnList(tx, actor.householdId, id);
+        assertNotInOthersCart(row, actor);
         if (row.version !== version) throw conflict("shopping.item.changed");
         await tx.shoppingItem.update({ where: { id }, data: { deletedAt: now(), deletedById: actor.userId } });
       });
@@ -162,6 +197,7 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
           const current = await lockedItem(tx, actor.householdId, id);
           if (current?.deletedAt === null) return { row: current, restored: false };
           if (!current?.deletedAt || current.deletedById !== actor.userId) throw notFound("shopping.item.not_found");
+          assertNotInOthersCart(current, actor);
           if (now().getTime() - current.deletedAt.getTime() > SHOPPING_UNDO_WINDOW_MS) {
             throw gone("shopping.undo.expired");
           }
@@ -171,6 +207,30 @@ export function createShoppingService({ db, now = () => new Date(), events = noH
       );
       if (restored) events.publish(actor.householdId, "shopping:changed");
       return viewOf(actor.householdId, row);
+    },
+
+    /**
+     * Puts the item in the caller's cart. Two people tapping the same item take turns, so the first
+     * one wins and the other is told it is in someone else's cart. A second tap changes nothing.
+     */
+    putInCart(actor: Membership, id: string): Promise<ShoppingItemView> {
+      return moveInCart(actor, id, (item) => {
+        if (item.cartOwnerId === actor.userId) return "unchanged";
+        if (item.cartOwnerId !== null) throw conflict("shopping.item.in_cart");
+        return { cartOwnerId: actor.userId };
+      });
+    },
+
+    /**
+     * Takes the item out of the caller's cart: back on the list, still to buy. Only the cart's owner
+     * can; an item in nobody's cart stays as it is.
+     */
+    takeOutOfCart(actor: Membership, id: string): Promise<ShoppingItemView> {
+      return moveInCart(actor, id, (item) => {
+        if (item.cartOwnerId === null) return "unchanged";
+        if (item.cartOwnerId !== actor.userId) throw conflict("shopping.item.in_cart");
+        return { cartOwnerId: null };
+      });
     },
   };
 }

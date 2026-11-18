@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { homeWith, homeWithGuest } from "./expenseHelpers";
 import { request } from "./request";
 import { createHousehold } from "./householdHelpers";
-import { createTestApp, dani, signIn, type SignedIn } from "./testApp";
+import { createTestApp, dani, db, signIn, type SignedIn } from "./testApp";
 
 type App = ReturnType<typeof createTestApp>["app"];
 
@@ -56,6 +56,7 @@ describe("POST /api/household/shopping/items", () => {
       askedBy: { userId: bruno.user.id, name: "Bruno Díaz", avatarUrl: null, former: false },
       addedAt: clock.current.toISOString(),
       version: 1,
+      cartOwner: null,
     });
     for (const who of [ana, bruno, carla]) expect(await listOf(app, who)).toEqual([item]);
   });
@@ -526,5 +527,357 @@ describe("POST /api/household/shopping/items/:id/restore", () => {
     expect(res.status).toBe(403);
     expect(res.body).toEqual({ error: { code: "household.read_only" } });
     expect(await listOf(app, ana)).toEqual([]);
+  });
+});
+
+const putInCart = (app: App, who: SignedIn, id: string) =>
+  request(app)
+    .put(`${itemPath(id)}/cart`)
+    .set("Authorization", who.auth);
+
+const takeOutOfCart = (app: App, who: SignedIn, id: string) =>
+  request(app)
+    .delete(`${itemPath(id)}/cart`)
+    .set("Authorization", who.auth);
+
+const refOf = (who: SignedIn, name: string) => ({ userId: who.user.id, name, avatarUrl: null, former: false });
+
+describe("PUT /api/household/shopping/items/:id/cart", () => {
+  it("puts the item in the caller's cart, for everyone to see, without counting it as an edit", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, carla } = await homeWithGuest(app);
+    const milk = await addItem(app, ana, "Milk");
+    expect(milk.cartOwner).toBeNull();
+
+    const res = await putInCart(app, bruno, milk.id);
+
+    expect(res.status).toBe(200);
+    const inCart = { ...milk, cartOwner: refOf(bruno, "Bruno Díaz") };
+    expect(res.body).toEqual({ item: inCart });
+    for (const who of [ana, bruno, carla]) expect(await listOf(app, who)).toEqual([inCart]);
+  });
+});
+
+describe("carts: who gets an item", () => {
+  it("gives the item to whoever tapped first when two people tap it at once, and tells the other whose it is", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+
+    const results = await Promise.all([putInCart(app, ana, milk.id), putInCart(app, bruno, milk.id)]);
+
+    const statuses = results.map((res) => res.status).sort();
+    expect(statuses).toEqual([200, 409]);
+    const refused = results.find((res) => res.status === 409);
+    expect(refused?.body).toEqual({ error: { code: "shopping.item.in_cart" } });
+    const winner = results.find((res) => res.status === 200);
+    const owner = shoppingItemResponseSchema.parse(winner?.body).item.cartOwner;
+    expect((await listOf(app, ana))[0]?.cartOwner).toEqual(owner);
+  });
+
+  it("changes nothing on a second tap by the same person", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    const first = await putInCart(app, ana, milk.id).expect(200);
+
+    const again = await putInCart(app, ana, milk.id);
+
+    expect(again.status).toBe(200);
+    expect(again.body).toEqual(first.body);
+  });
+
+  it("refuses an item already in someone else's cart, which stays theirs", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await putInCart(app, bruno, milk.id).expect(200);
+
+    const res = await putInCart(app, ana, milk.id);
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "shopping.item.in_cart" } });
+    expect((await listOf(app, ana))[0]?.cartOwner).toEqual(refOf(bruno, "Bruno Díaz"));
+  });
+
+  it("refuses guests, whose cart stays empty", async () => {
+    const { app } = createTestApp();
+    const { ana, carla } = await homeWithGuest(app);
+    const milk = await addItem(app, ana, "Milk");
+
+    const res = await putInCart(app, carla, milk.id);
+
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: { code: "household.read_only" } });
+    expect(await listOf(app, ana)).toEqual([milk]);
+  });
+
+  it("answers that the item is gone when it was deleted, doesn't exist or belongs to another household", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    const dan = await signIn(app, dani);
+    await createHousehold(app, dan, "Piso Dani");
+    const eggs = await addItem(app, dan, "Eggs");
+    await deleteItem(app, ana, milk).expect(204);
+
+    for (const id of [milk.id, "item_missing", eggs.id]) {
+      for (const res of [await putInCart(app, bruno, id), await takeOutOfCart(app, bruno, id)]) {
+        expect(res.status).toBe(404);
+        expect(res.body).toEqual({ error: { code: "shopping.item.not_found" } });
+      }
+    }
+    expect(await listOf(app, dan)).toEqual([eggs]);
+  });
+
+  it("answers 404 to someone without a household", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    const outsider = await signIn(app, dani);
+    for (const res of [await putInCart(app, outsider, milk.id), await takeOutOfCart(app, outsider, milk.id)]) {
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: { code: "household.not_member" } });
+    }
+  });
+});
+
+describe("DELETE /api/household/shopping/items/:id/cart", () => {
+  it("puts the item back on the list, still to buy, when its owner takes it out", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await putInCart(app, bruno, milk.id).expect(200);
+
+    const res = await takeOutOfCart(app, bruno, milk.id);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ item: milk });
+    expect(await listOf(app, ana)).toEqual([milk]);
+  });
+});
+
+describe("carts: only the owner takes an item out", () => {
+  it("refuses anyone else, admins included, and the item stays in its owner's cart", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await putInCart(app, bruno, milk.id).expect(200);
+
+    const res = await takeOutOfCart(app, ana, milk.id);
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "shopping.item.in_cart" } });
+    expect((await listOf(app, ana))[0]?.cartOwner).toEqual(refOf(bruno, "Bruno Díaz"));
+  });
+
+  it("changes nothing for an item in nobody's cart, as after a second tap", async () => {
+    const { app } = createTestApp();
+    const { ana } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    const res = await takeOutOfCart(app, ana, milk.id);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ item: milk });
+  });
+
+  it("refuses guests", async () => {
+    const { app } = createTestApp();
+    const { ana, carla } = await homeWithGuest(app);
+    const milk = await addItem(app, ana, "Milk");
+    const res = await takeOutOfCart(app, carla, milk.id);
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: { code: "household.read_only" } });
+  });
+
+  it("never counts moving in or out of a cart as an edit, so an edit from before still saves", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await putInCart(app, ana, milk.id).expect(200);
+    await takeOutOfCart(app, ana, milk.id).expect(200);
+    await putInCart(app, ana, milk.id).expect(200);
+    await takeOutOfCart(app, ana, milk.id).expect(200);
+
+    const res = await patchItem(app, bruno, milk.id, { note: "oat", version: 1 });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ item: { ...milk, note: "oat", version: 2 } });
+  });
+});
+
+describe("carts: only the owner changes or deletes an item meanwhile", () => {
+  it("refuses an edit by anyone else, keeping the item as it was", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    const inCart = shoppingItemResponseSchema.parse((await putInCart(app, bruno, milk.id)).body).item;
+
+    const res = await patchItem(app, ana, milk.id, { note: "oat", version: 1 });
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "shopping.item.in_cart" } });
+    expect(await listOf(app, ana)).toEqual([inCart]);
+  });
+
+  it("refuses a delete by anyone else, keeping the item", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    const inCart = shoppingItemResponseSchema.parse((await putInCart(app, bruno, milk.id)).body).item;
+
+    const res = await deleteItem(app, ana, milk);
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "shopping.item.in_cart" } });
+    expect(await listOf(app, ana)).toEqual([inCart]);
+  });
+
+  it("lets the owner edit it, still in their cart", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await putInCart(app, bruno, milk.id).expect(200);
+
+    const res = await patchItem(app, bruno, milk.id, { note: "oat", version: 1 });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ item: { ...milk, note: "oat", version: 2, cartOwner: refOf(bruno, "Bruno Díaz") } });
+  });
+
+  it("lets the owner delete it, and undo brings it back into their cart", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    const inCart = shoppingItemResponseSchema.parse((await putInCart(app, bruno, milk.id)).body).item;
+
+    await deleteItem(app, bruno, milk).expect(204);
+    expect(await listOf(app, ana)).toEqual([]);
+    const res = await restoreItem(app, bruno, milk.id);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ item: inCart });
+    expect(await listOf(app, ana)).toEqual([inCart]);
+  });
+
+  it("refuses to bring back an item someone else holds in their cart", async () => {
+    // The API never lets this happen (a deleted item can't go into a cart); the rule still holds.
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    const milk = await addItem(app, ana, "Milk");
+    await deleteItem(app, ana, milk).expect(204);
+    await db.shoppingItem.update({ where: { id: milk.id }, data: { cartOwnerId: bruno.user.id } });
+
+    const res = await restoreItem(app, ana, milk.id);
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: "shopping.item.in_cart" } });
+    expect(await listOf(app, ana)).toEqual([]);
+  });
+});
+
+describe("carts go back to the list", () => {
+  const changeRole = (app: App, admin: SignedIn, membershipId: string, role: string) =>
+    request(app).patch(`/api/household/members/${membershipId}`).set("Authorization", admin.auth).send({ role });
+
+  /** Milk and Eggs in Bruno's cart, Bread in Ana's. */
+  async function shopping(app: App) {
+    const home = await homeWith(app);
+    const { ana, bruno } = home;
+    const milk = await addItem(app, ana, "Milk");
+    const eggs = await addItem(app, ana, "Eggs");
+    const bread = await addItem(app, bruno, "Bread");
+    await putInCart(app, bruno, milk.id).expect(200);
+    await putInCart(app, bruno, eggs.id).expect(200);
+    await putInCart(app, ana, bread.id).expect(200);
+    return { ...home, milk, eggs, bread };
+  }
+
+  const cartsOf = async (app: App, who: SignedIn) =>
+    (await listOf(app, who)).map((item) => [item.name, item.cartOwner?.name ?? null]);
+
+  it("when someone becomes a guest: their cart only, still to buy and unedited", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await shopping(app);
+
+    await changeRole(app, ana, bruno.membershipId, "GUEST").expect(200);
+
+    expect(await cartsOf(app, ana)).toEqual([
+      ["Milk", null],
+      ["Eggs", null],
+      ["Bread", "Ana García"],
+    ]);
+    expect((await listOf(app, ana)).map((item) => item.version)).toEqual([1, 1, 1]);
+  });
+
+  it("never leaves an item in the cart of someone who becomes a guest at the same moment", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await homeWith(app);
+    for (const name of ["Milk", "Eggs", "Bread", "Rice", "Salt"]) {
+      const item = await addItem(app, ana, name);
+      await changeRole(app, ana, bruno.membershipId, "MEMBER").expect(200);
+
+      const [cart] = await Promise.all([
+        putInCart(app, bruno, item.id),
+        changeRole(app, ana, bruno.membershipId, "GUEST").expect(200),
+      ]);
+
+      expect([200, 403]).toContain(cart.status);
+      expect((await listOf(app, ana)).every((other) => other.cartOwner === null)).toBe(true);
+    }
+  });
+
+  it("keeps the cart of someone who becomes an admin or stays a member", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await shopping(app);
+
+    await changeRole(app, ana, bruno.membershipId, "ADMIN").expect(200);
+    await changeRole(app, ana, bruno.membershipId, "MEMBER").expect(200);
+
+    expect(await cartsOf(app, ana)).toEqual([
+      ["Milk", "Bruno Díaz"],
+      ["Eggs", "Bruno Díaz"],
+      ["Bread", "Ana García"],
+    ]);
+  });
+
+  it("when someone leaves", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await shopping(app);
+
+    await request(app).post("/api/household/leave").set("Authorization", bruno.auth).expect(204);
+
+    expect(await cartsOf(app, ana)).toEqual([
+      ["Milk", null],
+      ["Eggs", null],
+      ["Bread", "Ana García"],
+    ]);
+  });
+
+  it("when an admin removes someone", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno } = await shopping(app);
+
+    await request(app)
+      .delete(`/api/household/members/${bruno.membershipId}`)
+      .set("Authorization", ana.auth)
+      .expect(200);
+
+    expect(await cartsOf(app, ana)).toEqual([
+      ["Milk", null],
+      ["Eggs", null],
+      ["Bread", "Ana García"],
+    ]);
+  });
+
+  it("also for an item they deleted from their cart, so undo can't put it back in a cart they no longer have", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, milk } = await shopping(app);
+    await deleteItem(app, bruno, milk).expect(204);
+
+    await changeRole(app, ana, bruno.membershipId, "GUEST").expect(200);
+    await changeRole(app, ana, bruno.membershipId, "MEMBER").expect(200);
+    await restoreItem(app, bruno, milk.id).expect(200);
+
+    expect((await listOf(app, ana)).find((item) => item.id === milk.id)?.cartOwner).toBeNull();
   });
 });

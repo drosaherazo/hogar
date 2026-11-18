@@ -146,7 +146,7 @@ export function starterCategories(): CategoryView[] {
   ];
 }
 
-/** Milk, asked for by Bruno; override the name, note or who asked. */
+/** Milk, asked for by Bruno and in nobody's cart; override the name, note, who asked or whose cart. */
 export function shoppingItem(overrides: Partial<ShoppingItemView> = {}): ShoppingItemView {
   return {
     id: "item_milk",
@@ -155,6 +155,7 @@ export function shoppingItem(overrides: Partial<ShoppingItemView> = {}): Shoppin
     askedBy: brunoRef,
     addedAt: "2026-11-18T10:00:00.000Z",
     version: 1,
+    cartOwner: null,
     ...overrides,
   };
 }

@@ -105,7 +105,8 @@
       },
       "duplicate": "That's already on the list.",
       "not_found": "That's no longer on the list.",
-      "changed": "Someone changed it meanwhile. Here's the latest version."
+      "changed": "Someone changed it meanwhile. Here's the latest version.",
+      "in_cart": "It's in someone else's cart now, so only they can change it."
     },
     "undo": {
       "expired": "It's too late to undo that."

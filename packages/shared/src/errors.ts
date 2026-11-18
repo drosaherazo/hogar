@@ -68,6 +68,7 @@ export const ERROR_CODES = [
   "shopping.item.duplicate",
   "shopping.item.not_found",
   "shopping.item.changed",
+  "shopping.item.in_cart",
   "shopping.undo.expired",
   "client.outdated",
   "request.invalid",

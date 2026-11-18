@@ -40,6 +40,7 @@ model User {
   settlementsDeleted   Settlement[]   @relation("SettlementDeletedBy")
   shoppingItemsAsked   ShoppingItem[] @relation("ShoppingItemAskedBy")
   shoppingItemsDeleted ShoppingItem[] @relation("ShoppingItemDeletedBy")
+  shoppingItemsInCart  ShoppingItem[] @relation("ShoppingItemCartOwner")
 
   @@map("users")
 }
@@ -267,6 +268,9 @@ model ShoppingItem {
   addedAt     DateTime  @map("added_at")
   /// Starts at 1 and goes up only on name and note edits (ADR 0009).
   version     Int       @default(1)
+  /// Whose cart it is in while they shop, or null. Moving it in or out of a cart isn't an edit, so
+  /// `version` stays (ADR 0009). Cleared when its owner leaves, is removed or becomes a guest.
+  cartOwnerId String?   @map("cart_owner_id")
   /// Set when someone deletes it: it leaves the list for good, unless whoever deleted it undoes
   /// within the window.
   deletedAt   DateTime? @map("deleted_at")
@@ -275,9 +279,11 @@ model ShoppingItem {
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
   askedBy   User      @relation("ShoppingItemAskedBy", fields: [askedById], references: [id], onDelete: Restrict)
   deletedBy User?     @relation("ShoppingItemDeletedBy", fields: [deletedById], references: [id], onDelete: Restrict)
+  cartOwner User?     @relation("ShoppingItemCartOwner", fields: [cartOwnerId], references: [id], onDelete: SetNull)
 
   @@index([householdId, addedAt])
   @@index([askedById])
+  @@index([householdId, cartOwnerId])
   @@map("shopping_items")
 }
 

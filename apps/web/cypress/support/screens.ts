@@ -144,6 +144,7 @@ export const shoppingItems: ShoppingItemView[] = [
     askedBy: brunoRef,
     addedAt: "2026-11-18T10:00:00.000Z",
     version: 1,
+    cartOwner: null,
   },
   {
     id: "item_2",
@@ -152,8 +153,17 @@ export const shoppingItems: ShoppingItemView[] = [
     askedBy: carlaRef,
     addedAt: "2026-11-18T10:01:00.000Z",
     version: 1,
+    cartOwner: null,
   },
-  { id: "item_3", name: "Pan", note: null, askedBy: anaRef, addedAt: "2026-11-18T10:02:00.000Z", version: 1 },
+  {
+    id: "item_3",
+    name: "Pan",
+    note: null,
+    askedBy: anaRef,
+    addedAt: "2026-11-18T10:02:00.000Z",
+    version: 1,
+    cartOwner: null,
+  },
 ];
 
 export const invitationPreview: InvitationPreview = {
