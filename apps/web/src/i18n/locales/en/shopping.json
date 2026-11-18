@@ -48,5 +48,9 @@
     "title": "Someone changed this meanwhile",
     "keepNew": "Keep the new version",
     "saveMine": "Save mine"
+  },
+  "purchaseTitle": {
+    "more_one": "1 more",
+    "more_other": "{{count}} more"
   }
 }

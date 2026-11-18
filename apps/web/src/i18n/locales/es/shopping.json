@@ -48,5 +48,9 @@
     "title": "Alguien cambió esto mientras tanto",
     "keepNew": "Dejar la versión nueva",
     "saveMine": "Guardar la mía"
+  },
+  "purchaseTitle": {
+    "more_one": "1 más",
+    "more_other": "{{count}} más"
   }
 }
