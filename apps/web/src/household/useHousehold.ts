@@ -13,20 +13,18 @@ import { ApiRequestError } from "../api/client";
 import { expenseKeys } from "../expenses/useExpenses";
 
 export const householdKeys = {
+  /** The start of every query about the household, so the live connection can mark them all stale. */
+  all: ["household"] as const,
   current: ["household"] as const,
   invitations: ["household", "invitations"] as const,
 };
 
-/**
- * The signed-in person's household. Refetched when they come back to the tab, so changes
- * made by others show up without real time (that's a later feature).
- */
+/** The signed-in person's household, kept current by the live connection (`LiveHousehold`). */
 export function useHousehold() {
   const client = useApiClient();
   return useQuery({
     queryKey: householdKeys.current,
     queryFn: () => client.getHousehold(),
-    refetchOnWindowFocus: true,
   });
 }
 
@@ -131,7 +129,6 @@ export function useInvitations(enabled: boolean) {
     queryKey: householdKeys.invitations,
     queryFn: () => client.listInvitations(),
     enabled,
-    refetchOnWindowFocus: true,
   });
 }
 

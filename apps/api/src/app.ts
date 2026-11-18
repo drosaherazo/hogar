@@ -28,6 +28,7 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { requireApiVersion } from "./middleware/requireApiVersion";
 import { requireSameOrigin } from "./middleware/requireSameOrigin";
 import { createOriginMatcher } from "./auth/originMatcher";
+import { noHouseholdEvents, type HouseholdEvents } from "./realtime/householdEvents";
 
 export interface AppDeps {
   config: Config;
@@ -39,6 +40,8 @@ export interface AppDeps {
   /** Requests allowed per IP on /api/invitations (lookup and accept) every 15 minutes. */
   invitationRateLimit?: number;
   now?: (() => Date) | undefined;
+  /** Where services announce household changes to live screens; nowhere by default. */
+  events?: HouseholdEvents;
 }
 
 /** Limits requests per IP over 15 minutes, answering with the usual error shape. */
@@ -55,7 +58,16 @@ function limitPerIp(limit: number) {
   });
 }
 
-export function createApp({ config, db, google, mailer, authRateLimit = 100, invitationRateLimit = 30, now }: AppDeps) {
+export function createApp({
+  config,
+  db,
+  google,
+  mailer,
+  authRateLimit = 100,
+  invitationRateLimit = 30,
+  now,
+  events = noHouseholdEvents,
+}: AppDeps) {
   const signer = createAccessTokenSigner(config.jwtAccessSecret, config.accessTokenTtlSeconds);
   const auth = createAuthService({
     db,
@@ -88,9 +100,9 @@ export function createApp({ config, db, google, mailer, authRateLimit = 100, inv
     createAuthRouter(auth, { cookieSecure: config.cookieSecure }),
   );
 
-  const households = createHouseholdService({ db, now });
+  const households = createHouseholdService({ db, now, events });
   app.use("/api/me", requireAuth(signer), createMeRouter(auth, households));
-  const invitations = createInvitationService({ db, households, now });
+  const invitations = createInvitationService({ db, households, now, events });
   app.use("/api/household/invitations", requireAuth(signer), createHouseholdInvitationsRouter(db, invitations));
   const expenses = createExpenseService({ db, now });
   app.use("/api/household/expenses", requireAuth(signer), createExpensesRouter(db, expenses));

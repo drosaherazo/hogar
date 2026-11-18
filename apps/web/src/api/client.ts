@@ -38,6 +38,7 @@ import {
   type Role,
   type SettlementInput,
   type SettlementView,
+  type SocketAuth,
   type UpdateCategoryInput,
   type UpdateCategorySplitInput,
   type UpdateExpenseInput,
@@ -195,6 +196,23 @@ export class ApiClient {
 
   me(): Promise<AuthUser> {
     return this.request("/me", { schema: authUserSchema });
+  }
+
+  // --- Live connection ---------------------------------------------------------
+
+  /** What the live connection's handshake sends: the access token and this build's API version. */
+  realtimeAuth(): SocketAuth {
+    return { token: this.accessToken ?? "", apiVersion: API_VERSION };
+  }
+
+  /**
+   * Gets a new access token after the live connection's handshake refused `rejected`, the way a
+   * request does after a 401. A token some request already renewed meanwhile is kept, since every
+   * refresh rotates the session; when there can't be a new one, the session ends.
+   */
+  async renewAccessToken(rejected: string): Promise<void> {
+    if (this.accessToken !== null && this.accessToken !== rejected) return;
+    await this.refreshOrExpire();
   }
 
   // --- Household -----------------------------------------------------------
@@ -388,12 +406,7 @@ export class ApiClient {
     this.setReachable(true);
 
     if (response.status === 401 && authenticated && !isRetry) {
-      try {
-        await this.refresh();
-      } catch (error) {
-        this.sessionExpiredListeners.forEach((listener) => listener());
-        throw error;
-      }
+      await this.refreshOrExpire();
       return this.request(path, options, true);
     }
 
@@ -414,7 +427,18 @@ export class ApiClient {
     this.reachabilityListeners.forEach((listener) => listener());
   }
 
-  private reportOutdated() {
+  /** A new access token, or the end of the session when there can't be one. */
+  private async refreshOrExpire(): Promise<void> {
+    try {
+      await this.refresh();
+    } catch (error) {
+      this.sessionExpiredListeners.forEach((listener) => listener());
+      throw error;
+    }
+  }
+
+  /** The API says this build is too old for it, in a response or on the live connection. */
+  reportOutdated() {
     if (this.outdated) return;
     this.outdated = true;
     this.outdatedListeners.forEach((listener) => listener());

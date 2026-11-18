@@ -1,24 +1,24 @@
-import { createApp } from "./app";
 import { createGoogleVerifier } from "./auth/googleVerifier";
 import { loadConfig } from "./config";
+import { createApiServer } from "./createApiServer";
 import { createMailer } from "./email/mailer";
 import { createDatabase } from "./db";
 
 const config = loadConfig();
 const db = createDatabase(config.databaseUrl);
-const app = createApp({
+const api = createApiServer({
   config,
   db,
   google: createGoogleVerifier(config.googleClientId),
   mailer: createMailer(config.email.provider),
 });
 
-const server = app.listen(config.port, () => {
+api.server.listen(config.port, () => {
   console.log(`Hogar API listening on http://localhost:${config.port}`);
 });
 
 async function shutdown() {
-  server.close();
+  await api.close();
   await db.$disconnect();
 }
 process.on("SIGINT", shutdown);

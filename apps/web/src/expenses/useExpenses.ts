@@ -16,8 +16,7 @@ const retryUnlessMissing = (failureCount: number, error: unknown) =>
 
 /**
  * The household's history, page by page, optionally only one category (an id, or `none`). Each
- * filter is cached on its own. Refetched when people come back to the tab, so other people's
- * expenses show up without real time (that's a later feature).
+ * filter is cached on its own.
  */
 export function useActivity(category?: string) {
   const client = useApiClient();
@@ -26,17 +25,15 @@ export function useActivity(category?: string) {
     queryFn: ({ pageParam }) => client.getActivity(pageParam, category),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
-    refetchOnWindowFocus: true,
   });
 }
 
-/** Everyone's balance, refetched when people come back to the tab. */
+/** Everyone's balance. */
 export function useBalances() {
   const client = useApiClient();
   return useQuery({
     queryKey: expenseKeys.balances,
     queryFn: () => client.getBalances(),
-    refetchOnWindowFocus: true,
   });
 }
 
@@ -45,7 +42,6 @@ export function useExpense(id: string) {
   return useQuery({
     queryKey: expenseKeys.expense(id),
     queryFn: () => client.getExpense(id),
-    refetchOnWindowFocus: true,
     retry: retryUnlessMissing,
   });
 }

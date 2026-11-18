@@ -5,6 +5,7 @@ import { Navigate, Outlet, useLocation } from "react-router";
 import { householdKeys } from "../household/useHousehold";
 import { WakeUpLoading } from "../layout/WakeUpLoading";
 import { OfflineEmpty } from "../offline/OfflineEmpty";
+import { LiveHousehold } from "../realtime/LiveHousehold";
 import { useAuth } from "./AuthProvider";
 
 /** Who "you" is on a signed-in page: the session's person, or offline the person the kept data belongs to. */
@@ -47,6 +48,8 @@ export function RequireAuth() {
   }
   return (
     <CurrentUserContext.Provider value={state.user}>
+      {/* Offline there is nothing to connect to: the kept data stays as it is (ADR 0015). */}
+      {state.status === "authenticated" && <LiveHousehold />}
       <Outlet />
     </CurrentUserContext.Provider>
   );

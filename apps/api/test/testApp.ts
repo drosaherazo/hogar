@@ -1,6 +1,8 @@
+import type { AddressInfo } from "node:net";
 import { authResponseSchema, type AuthUser } from "@hogar/shared";
 import { afterAll, beforeEach } from "vitest";
-import { createApp } from "../src/app";
+import { createApp, type AppDeps } from "../src/app";
+import { createApiServer } from "../src/createApiServer";
 import type { GoogleIdentity, GoogleVerifier } from "../src/auth/googleVerifier";
 import type { EmailMessage, Mailer } from "../src/email/mailer";
 import type { Config } from "../src/config";
@@ -78,16 +80,14 @@ export class TestClock {
   }
 }
 
-export function createTestApp({
-  authRateLimit = 1000,
-  invitationRateLimit = 1000,
-  ...overrides
-}: { authRateLimit?: number; invitationRateLimit?: number } & Partial<Config> = {}) {
+type TestAppOptions = { authRateLimit?: number; invitationRateLimit?: number } & Partial<Config>;
+
+function testDeps({ authRateLimit = 1000, invitationRateLimit = 1000, ...overrides }: TestAppOptions) {
   const google = new FakeGoogleVerifier();
   for (const identity of PEOPLE) google.identities.set(credentialFor(identity), identity);
   const clock = new TestClock();
   const mailer = new RecordingMailer();
-  const app = createApp({
+  const deps: AppDeps = {
     config: { ...config, ...overrides },
     db,
     google,
@@ -95,8 +95,25 @@ export function createTestApp({
     authRateLimit,
     invitationRateLimit,
     now: clock.now,
-  });
-  return { app, google, mailer, clock };
+  };
+  return { deps, google, mailer, clock };
+}
+
+export function createTestApp(options: TestAppOptions = {}) {
+  const { deps, ...fakes } = testDeps(options);
+  return { app: createApp(deps), ...fakes };
+}
+
+/**
+ * The whole API listening on a free port, real time included, for tests that connect a real
+ * Socket.io client to `url`. `app` takes HTTP requests as in `createTestApp`. Close it after each test.
+ */
+export async function startTestApi(options: TestAppOptions = {}) {
+  const { deps, ...fakes } = testDeps(options);
+  const api = createApiServer(deps);
+  await new Promise<void>((resolve) => api.server.listen(0, "127.0.0.1", resolve));
+  const { port } = api.server.address() as AddressInfo;
+  return { app: api.app, url: `http://127.0.0.1:${port}`, close: api.close, ...fakes };
 }
 
 const person = (key: string, name: string): GoogleIdentity => ({
