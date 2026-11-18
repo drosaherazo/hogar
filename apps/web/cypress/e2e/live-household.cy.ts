@@ -1,4 +1,4 @@
-import { API_VERSION, type AuthResponse, type HouseholdView } from "@hogar/shared";
+import { API_VERSION, type AuthResponse, type ErrorCode, type HouseholdView } from "@hogar/shared";
 import { ana, session } from "../support/e2e";
 
 function household(overrides: Partial<HouseholdView> = {}): HouseholdView {
@@ -29,6 +29,14 @@ function household(overrides: Partial<HouseholdView> = {}): HouseholdView {
 
 const showHousehold = (name: string) =>
   cy.intercept("GET", "/api/household", { body: { household: household({ name }) } }).as("household");
+
+/** What the browser says when the person switches tab, locks the phone or comes back. */
+function setPageVisibility(state: DocumentVisibilityState) {
+  cy.document().then((doc) => {
+    Object.defineProperty(doc, "visibilityState", { value: state, configurable: true });
+    doc.dispatchEvent(new Event("visibilitychange"));
+  });
+}
 
 describe("Live household", () => {
   beforeEach(() => {
@@ -61,6 +69,21 @@ describe("Live household", () => {
     cy.visit("/");
 
     cy.task("socket:connection").should("deep.equal", { token: "e2e-access-token-2", apiVersion: API_VERSION });
+  });
+
+  it("still shows what changed while the page was away when the live connection can't get back in", () => {
+    showHousehold("Casa Ana");
+    cy.visit("/");
+    cy.contains("h2", "Casa Ana");
+    cy.task("socket:connection");
+
+    setPageVisibility("hidden");
+    // Meanwhile Bruno renames the household, and the server can't let Ana's screen back in.
+    showHousehold("Nuestra casa");
+    cy.task("socket:refuse", Array<ErrorCode>(10).fill("server.unexpected"));
+    setPageVisibility("visible");
+
+    cy.contains("h2", "Nuestra casa");
   });
 
   it("shows the required update when the live connection says this version is too old", () => {
