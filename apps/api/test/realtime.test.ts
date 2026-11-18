@@ -153,6 +153,17 @@ describe("household:changed", () => {
     await changed;
   });
 
+  it("reaches guests too: they can't change anything, but they see every change", async () => {
+    const { ana, home } = await household();
+    const guest = await addMember(api.app, home.id, carlaIdentity, "GUEST");
+    const guestSocket = await connectAs(guest);
+    const changed = nextEvent(guestSocket, "household:changed");
+
+    await request(api.app).patch("/api/household").set("Authorization", ana.auth).send({ name: "Nuestra casa" });
+
+    await changed;
+  });
+
   it("never reaches another household", async () => {
     const { ana } = await household();
     const carla = await signIn(api.app, carlaIdentity);
