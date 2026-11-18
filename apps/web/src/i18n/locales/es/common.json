@@ -75,5 +75,9 @@
       "title": "Estás sin conexión",
       "description": "Hogar vuelve en cuanto recuperes la conexión."
     }
+  },
+  "toasts": {
+    "label": "Notificaciones",
+    "close": "Cerrar"
   }
 }

@@ -1,0 +1,97 @@
+/*
+ * Fixed to the bottom of the screen, centered, clear of the home indicator and of a landscape
+ * notch. The app adds the room its own fixed bars take (a tab bar) through `className`. Only the
+ * toast takes taps, never the strip around it. Above the tab bar and menus (10), below dialogs (20).
+ */
+.region {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 15;
+  display: flex;
+  justify-content: center;
+  padding: 0 max(var(--space-4), env(safe-area-inset-right)) calc(var(--space-4) + env(safe-area-inset-bottom))
+    max(var(--space-4), env(safe-area-inset-left));
+  pointer-events: none;
+}
+
+/* A small card lifted from the page: the message first, then "Undo" and the close button. */
+.toast {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  inline-size: min(100%, var(--size-content-sm));
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4) var(--space-2);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-family-base);
+  pointer-events: auto;
+  animation: rise var(--duration-base) var(--easing-gentle);
+}
+
+.toast:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-width);
+}
+
+/* Takes the rest of the line; on a narrow screen with a long message, the buttons wrap below it. */
+.content {
+  flex: 1 1 10rem;
+  min-inline-size: 0;
+  padding-block: var(--space-2);
+}
+
+.message {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-base);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--size-touch);
+  block-size: var(--size-touch);
+  padding: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+.close svg {
+  inline-size: var(--size-icon-md);
+  block-size: var(--size-icon-md);
+}
+
+.close:hover,
+.close:active {
+  background-color: var(--color-surface-sunken);
+}
+
+.close:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-4));
+  }
+}

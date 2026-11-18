@@ -103,7 +103,12 @@
       "note": {
         "too_long": "The note fits up to 100 characters."
       },
-      "duplicate": "That's already on the list."
+      "duplicate": "That's already on the list.",
+      "not_found": "That's no longer on the list.",
+      "changed": "Someone changed it meanwhile. Here's the latest version."
+    },
+    "undo": {
+      "expired": "It's too late to undo that."
     }
   },
   "invitation": {

@@ -10,6 +10,7 @@ import { IosInstallSheet } from "../install/IosInstallSheet";
 import { useInstallPrompt } from "../install/installPrompt";
 import { OFFLINE_REASON_ID, OfflineBanner } from "../offline/OfflineBanner";
 import { useReadOnly } from "../offline/useOnline";
+import { Toasts } from "../toast/Toasts";
 import { UpdateNotice } from "../update/UpdateNotice";
 import { AppHeader } from "./AppHeader";
 import styles from "./AppShell.module.css";
@@ -102,6 +103,7 @@ export function AppShell({ width = "reading", children }: AppShellProps) {
           {children}
         </fieldset>
       </main>
+      <Toasts />
     </div>
   );
 }

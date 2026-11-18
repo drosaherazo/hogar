@@ -117,7 +117,7 @@ One thing on the shopping list that someone needs bought ("Milk"), with an optio
 _Avoid_: product, entry, article
 
 **Deleted item**:
-An item taken off the list because nobody needs it any more. It was never bought, so it leaves no trace and is never suggested.
+An item taken off the list because nobody needs it any more. Whoever deleted it can undo for a minute and it comes back in its place; otherwise it was never bought, so it leaves no trace and is never suggested.
 _Avoid_: removed item
 
 **Bought item**:
