@@ -107,6 +107,10 @@ export const expense: ExpenseView = {
   editedAt: "2026-11-11T09:30:00.000Z",
   version: 2,
   category: { id: leisure.id, name: leisure.name, emoji: leisure.emoji },
+  boughtItems: [
+    { name: "Leche semidesnatada sin lactosa", note: "La de cartón grande, de la marca de siempre si la hay" },
+    { name: "Paracetamol de un gramo", note: null },
+  ],
 };
 
 export const activity: ActivityPage = {
@@ -184,7 +188,7 @@ export function stubSignedIn(locale: Locale) {
   cy.intercept("GET", "/api/household/balances", balances);
   cy.intercept("GET", "/api/household/activity*", activity);
   cy.intercept("GET", "/api/household/categories", { body: { categories } });
-  cy.intercept("GET", "/api/household/shopping", { body: { items: shoppingItems } });
+  cy.intercept("GET", "/api/household/shopping", { body: { items: shoppingItems, lastCategoryId: null } });
   cy.intercept("GET", "/api/household/expenses/expense_1", { body: { expense } });
   cy.intercept("GET", "/api/household/invitations", { body: { invitations: [invitation("inv_1")] } });
   cy.intercept("POST", "/api/invitations/lookup", invitationPreview);
@@ -204,6 +208,7 @@ export const signedInPages = [
   "/expenses/expense_1/edit",
   "/balances",
   "/shopping",
+  "/shopping/finish",
   "/household/settings",
   "/invite#tok_join",
 ] as const;

@@ -91,6 +91,7 @@ function expense(overrides: Partial<ExpenseView> = {}): ExpenseView {
     editedAt: null,
     version: 1,
     category: null,
+    boughtItems: [],
     ...overrides,
   };
 }
