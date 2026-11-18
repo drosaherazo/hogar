@@ -73,6 +73,7 @@ export function householdView(overrides: Partial<HouseholdView> = {}): Household
     myRole: "ADMIN",
     members: [member({ id: "m_ana", userId: ana.id, name: ana.name, role: "ADMIN", weight: 1, shareBps: 10000 })],
     splitNeedsReview: false,
+    showWhoAsked: true,
     ...overrides,
   };
 }

@@ -41,6 +41,7 @@ const household: HouseholdView = {
   myRole: "ADMIN",
   members: [anaMember, brunoMember],
   splitNeedsReview: false,
+  showWhoAsked: true,
 };
 
 const anaRef: PersonRef = { userId: ana.id, name: ana.name, avatarUrl: null, former: false };

@@ -56,8 +56,11 @@ export const shoppingItemViewSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   note: z.string().nullable(),
-  /** Whoever added it. People are users, so a former member keeps their name (ADR 0007). */
-  askedBy: personRefSchema,
+  /**
+   * Whoever added it. People are users, so a former member keeps their name (ADR 0007). Left out
+   * while the household hides who asked (`showWhoAsked`), though it is still stored.
+   */
+  askedBy: personRefSchema.optional(),
   addedAt: z.iso.datetime(),
   version: z.number().int().min(1),
 });

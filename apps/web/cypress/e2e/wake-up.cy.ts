@@ -21,6 +21,7 @@ const household: HouseholdView = {
     },
   ],
   splitNeedsReview: false,
+  showWhoAsked: true,
 };
 
 const square: BalancesView = {

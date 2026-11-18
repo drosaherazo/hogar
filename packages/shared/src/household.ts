@@ -54,15 +54,20 @@ export const createHouseholdRequestSchema = z.object({
 export type CreateHouseholdRequest = z.infer<typeof createHouseholdRequestSchema>;
 
 /**
- * What an admin changes in a household: its name, its currency, or both. The currency can only
- * change while the household has no expense or payment (`household.currency.locked`, ADR 0011), and
- * never to a retired one (ADR 0014).
+ * What an admin changes in a household: its name, its currency, whether the shopping list shows who
+ * asked for each item, or several at once. The currency can only change while the household has no
+ * expense or payment (`household.currency.locked`, ADR 0011), and never to a retired one (ADR 0014).
  */
 export const updateHouseholdRequestSchema = z
-  .object({ name: householdNameSchema.optional(), currency: offeredCurrencyCodeSchema.optional() })
-  .refine((request) => request.name !== undefined || request.currency !== undefined, {
-    message: code("request.invalid"),
-  });
+  .object({
+    name: householdNameSchema.optional(),
+    currency: offeredCurrencyCodeSchema.optional(),
+    showWhoAsked: z.boolean(code("request.invalid")).optional(),
+  })
+  .refine(
+    (request) => request.name !== undefined || request.currency !== undefined || request.showWhoAsked !== undefined,
+    { message: code("request.invalid") },
+  );
 export type UpdateHouseholdRequest = z.infer<typeof updateHouseholdRequestSchema>;
 
 export const createInvitationRequestSchema = z.object({ role: invitableRoleSchema });
@@ -116,6 +121,8 @@ export const householdViewSchema = z.object({
   /** Ordered by when people joined; this order also decides who gets leftover cents. */
   members: z.array(memberViewSchema),
   splitNeedsReview: z.boolean(),
+  /** Whether shopping items say who asked for them; while it's off, item views leave `askedBy` out. */
+  showWhoAsked: z.boolean(),
 });
 export type HouseholdView = z.infer<typeof householdViewSchema>;
 

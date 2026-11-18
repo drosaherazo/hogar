@@ -43,6 +43,7 @@ const household = (overrides: Partial<HouseholdView> = {}): HouseholdView => ({
   myRole: "ADMIN",
   members: [anaMember, brunoMember],
   splitNeedsReview: false,
+  showWhoAsked: true,
   ...overrides,
 });
 

@@ -21,7 +21,12 @@ export interface NewShoppingItem {
  * unique index on the name key is what refuses a duplicate, however close two adds arrive.
  */
 export function createShoppingService({ db, now = () => new Date() }: ShoppingServiceDeps) {
+  /** What everyone sees of `rows`: who asked only while the household shows it (it stays stored either way). */
   async function viewsOf(client: Client, householdId: string, rows: ShoppingItem[]): Promise<ShoppingItemView[]> {
+    const { showWhoAsked } = await client.household.findUniqueOrThrow({
+      where: { id: householdId },
+      select: { showWhoAsked: true },
+    });
     const members = await currentMembers(client, householdId);
     const refs = await personRefs(
       client,
@@ -32,7 +37,7 @@ export function createShoppingService({ db, now = () => new Date() }: ShoppingSe
       id: row.id,
       name: row.name,
       note: row.note,
-      askedBy: refOf(refs, row.askedById),
+      ...(showWhoAsked && { askedBy: refOf(refs, row.askedById) }),
       addedAt: row.addedAt.toISOString(),
       version: row.version,
     }));

@@ -176,3 +176,29 @@ describe("names and notes", () => {
     });
   });
 });
+
+describe("who asked for each item", () => {
+  const setShowWhoAsked = (app: App, who: SignedIn, showWhoAsked: boolean) =>
+    request(app).patch("/api/household").set("Authorization", who.auth).send({ showWhoAsked });
+
+  it("leaves who asked out of every item view while an admin hides it, and shows it again, never deleted", async () => {
+    const { app } = createTestApp();
+    const { ana, bruno, carla } = await homeWithGuest(app);
+    await addItem(app, bruno, "Milk");
+    expect((await setShowWhoAsked(app, ana, false)).status).toBe(200);
+
+    const eggs = await addItem(app, ana, "Eggs");
+    expect(eggs).not.toHaveProperty("askedBy");
+    for (const who of [ana, bruno, carla]) {
+      const { items } = (await getList(app, who)).body as { items: object[] };
+      expect(items).toHaveLength(2);
+      for (const item of items) expect(item).not.toHaveProperty("askedBy");
+    }
+
+    expect((await setShowWhoAsked(app, ana, true)).status).toBe(200);
+    expect((await listOf(app, carla)).map((item) => [item.name, item.askedBy?.name])).toEqual([
+      ["Milk", "Bruno Díaz"],
+      ["Eggs", "Ana García"],
+    ]);
+  });
+});

@@ -22,6 +22,7 @@ function household(overrides: Partial<HouseholdView> = {}): HouseholdView {
       },
     ],
     splitNeedsReview: false,
+    showWhoAsked: true,
     ...overrides,
   };
 }

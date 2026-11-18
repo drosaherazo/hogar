@@ -204,6 +204,17 @@ describe("household:changed", () => {
     await changed;
   });
 
+  it("follows an admin hiding or showing who asked for each shopping item", async () => {
+    const { ana, bruno } = await household();
+    const brunoSocket = await connectAs(bruno);
+
+    for (const showWhoAsked of [false, true]) {
+      const changed = nextEvent(brunoSocket, "household:changed");
+      await request(api.app).patch("/api/household").set("Authorization", ana.auth).send({ showWhoAsked }).expect(200);
+      await changed;
+    }
+  });
+
   it("follows a role change, to everyone including that person", async () => {
     const { ana, bruno } = await household();
     const anaSocket = await connectAs(ana);

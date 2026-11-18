@@ -30,6 +30,7 @@ function household(overrides: Partial<HouseholdView> = {}): HouseholdView {
     myRole: "ADMIN",
     members: [anaMember],
     splitNeedsReview: false,
+    showWhoAsked: true,
     ...overrides,
   };
 }
