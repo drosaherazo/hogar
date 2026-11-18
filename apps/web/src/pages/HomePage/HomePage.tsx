@@ -1,6 +1,6 @@
 import { canEditContent, isStarterName, type HouseholdView } from "@hogar/shared";
 import { Alert, Avatar, Button, Card, EmptyState, Spinner } from "@hogar/ui";
-import { ArrowDownLeft, ArrowUpRight, House, Plus, Settings, ShoppingBasket } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, House, Plus, Settings, ShoppingBasket, ShoppingCart } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "../../auth/guards";
@@ -207,21 +207,23 @@ function ShoppingCard({ canEdit }: { canEdit: boolean }) {
           {list.data.length > 0 ? t("shopping.toBuy", { count: list.data.length }) : t("shopping.empty")}
         </p>
       )}
+      {/* Not an Alert: a box inside the card would leave too little room for its words at 200 % text. */}
       {inMyCart > 0 && (
-        <Alert
-          tone="warning"
-          action={
-            <ActionLink to="/shopping" state={finish} changesData>
-              {t("shopping:cartBar.finish")}
-            </ActionLink>
-          }
-        >
+        <p className={styles.reminder}>
+          <ShoppingCart aria-hidden="true" className={styles.reminderIcon} />
           {t("shopping:reminder.title", { count: inMyCart })}
-        </Alert>
+        </p>
       )}
-      <ActionLink to="/shopping" icon={<ShoppingBasket />} className={styles.shoppingLink}>
-        {t("shopping.see")}
-      </ActionLink>
+      <div className={styles.shoppingActions}>
+        {inMyCart > 0 && (
+          <ActionLink to="/shopping" state={finish} changesData>
+            {t("shopping:cartBar.finish")}
+          </ActionLink>
+        )}
+        <ActionLink to="/shopping" icon={<ShoppingBasket />}>
+          {t("shopping.see")}
+        </ActionLink>
+      </div>
     </Card>
   );
 }
