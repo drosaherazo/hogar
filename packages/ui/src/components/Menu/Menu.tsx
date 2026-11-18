@@ -91,14 +91,15 @@ export function MenuItem({ children, onSelect, icon, disabled, description, clas
           {icon}
         </span>
       )}
-      {/* The label slot names the item; the description slot describes it, without joining the name. */}
+      {/* The label slot names the item; the description slot describes it, without joining the name.
+          The slot is always there, empty and hidden without a description: react-aria links it only
+          when the item mounts, so a reason that appears while the menu is open (an item switched off
+          as the connection drops) is still read. */}
       <span className={styles.itemText}>
         <Text slot="label">{children}</Text>
-        {description && (
-          <Text slot="description" className={clsx(styles.itemDescription)}>
-            {description}
-          </Text>
-        )}
+        <Text slot="description" className={clsx(styles.itemDescription)}>
+          {description}
+        </Text>
       </span>
     </AriaMenuItem>
   );

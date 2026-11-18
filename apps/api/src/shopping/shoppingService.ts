@@ -66,8 +66,8 @@ export interface ShoppingItemChanges {
 }
 
 /**
- * The household's shopping list. Everyone in the household reads it; admins and members add to it
- * (the router checks the role). The server decides every conflict (ADR 0009): the database's
+ * The household's shopping list. Everyone in the household reads it; admins and members change it
+ * (the router checks the role, and every change checks it again as it saves). The server decides every conflict (ADR 0009): the database's
  * unique index on the name key is what refuses a duplicate, however close two adds arrive.
  * Every change that is saved is announced to the household as `shopping:changed`.
  */
@@ -101,31 +101,44 @@ export function createShoppingService({
   }
 
   /**
-   * An item of the caller's household, deleted or not, locked until the transaction ends, so
-   * changes to the same item take turns and each one sees the last.
+   * Runs `work` as one change to the list by `actor`. The household lock makes every change to the
+   * list take turns with the others and with leaving, removals and role changes, so each one sees
+   * the last and nobody fills a cart that is being emptied. The role may have changed since the
+   * router checked it, so it is checked again under the lock.
    */
-  async function lockedItem(tx: Prisma.TransactionClient, householdId: string, id: string) {
-    await tx.$queryRaw`SELECT id FROM shopping_items WHERE id = ${id} FOR UPDATE`;
-    return tx.shoppingItem.findFirst({ where: { id, householdId } });
+  function asEditor<T>(actor: Membership, work: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    return db.$transaction(async (tx) => {
+      await lockHousehold(tx, actor.householdId);
+      assertStillEditor(await currentMembers(tx, actor.householdId), actor);
+      return work(tx);
+    });
+  }
+
+  /** An item of the caller's household, deleted or not. */
+  function itemOf(tx: Prisma.TransactionClient, actor: Membership, id: string) {
+    return tx.shoppingItem.findFirst({ where: { id, householdId: actor.householdId } });
   }
 
   /** The same, for an item on the list: a bought or deleted item is gone for everyone. */
-  async function lockedItemOnList(tx: Prisma.TransactionClient, householdId: string, id: string) {
-    const row = await lockedItem(tx, householdId, id);
+  async function itemOnList(tx: Prisma.TransactionClient, actor: Membership, id: string) {
+    const row = await itemOf(tx, actor, id);
     if (!row || row.boughtAt !== null || row.deletedAt !== null) throw notFound("shopping.item.not_found");
     return row;
   }
 
   /**
-   * What is in the caller's cart, locked until the transaction ends, so an edit or a delete of one
-   * of its items (which lock only that item) takes turns with finishing. Items they deleted from
-   * their cart stay there for undo, but they aren't in it: they were never bought.
+   * What is in the caller's cart. Items they deleted from their cart stay there for undo, but they
+   * aren't in it: they were never bought.
    */
-  async function lockedCart(tx: Prisma.TransactionClient, actor: Membership) {
-    await tx.$queryRaw`SELECT id FROM shopping_items WHERE household_id = ${actor.householdId} AND cart_owner_id = ${actor.userId} FOR UPDATE`;
+  function cartOf(tx: Prisma.TransactionClient, actor: Membership) {
     return tx.shoppingItem.findMany({
       where: { householdId: actor.householdId, cartOwnerId: actor.userId, ...ON_LIST },
     });
+  }
+
+  /** Whether a delete or a finish at `since` can still be undone. */
+  function withinUndoWindow(since: Date): boolean {
+    return now().getTime() - since.getTime() <= SHOPPING_UNDO_WINDOW_MS;
   }
 
   /** While an item is in someone's cart, only they can change it, delete it or bring it back. */
@@ -154,19 +167,15 @@ export function createShoppingService({
 
   /**
    * Moves an item in or out of the caller's cart, as `decide` says: the new owner, or the row
-   * unchanged when there is nothing to do. The household lock makes moves take turns with
-   * leaving, removals and role changes, so nobody fills a cart that is being emptied, and the role
-   * is checked again under it. Moving isn't an edit: the version stays (ADR 0009).
+   * unchanged when there is nothing to do. Moving isn't an edit: the version stays (ADR 0009).
    */
   async function moveInCart(
     actor: Membership,
     id: string,
     decide: (item: ShoppingItem) => { cartOwnerId: string | null } | "unchanged",
   ): Promise<ShoppingItemView> {
-    const { row, moved } = await db.$transaction(async (tx) => {
-      await lockHousehold(tx, actor.householdId);
-      assertStillEditor(await currentMembers(tx, actor.householdId), actor);
-      const current = await lockedItemOnList(tx, actor.householdId, id);
+    const { row, moved } = await asEditor(actor, async (tx) => {
+      const current = await itemOnList(tx, actor, id);
       const decision = decide(current);
       if (decision === "unchanged") return { row: current, moved: false };
       return { row: await tx.shoppingItem.update({ where: { id }, data: decision }), moved: true };
@@ -193,16 +202,18 @@ export function createShoppingService({
     /** A new item goes last, asked for by whoever adds it. */
     async add(actor: Membership, input: NewShoppingItem): Promise<ShoppingItemView> {
       const row = await refusingDuplicates(() =>
-        db.shoppingItem.create({
-          data: {
-            householdId: actor.householdId,
-            name: input.name,
-            nameKey: shoppingNameKey(input.name),
-            note: input.note,
-            askedById: actor.userId,
-            addedAt: now(),
-          },
-        }),
+        asEditor(actor, (tx) =>
+          tx.shoppingItem.create({
+            data: {
+              householdId: actor.householdId,
+              name: input.name,
+              nameKey: shoppingNameKey(input.name),
+              note: input.note,
+              askedById: actor.userId,
+              addedAt: now(),
+            },
+          }),
+        ),
       );
       events.publish(actor.householdId, "shopping:changed");
       return viewOf(actor.householdId, row);
@@ -216,8 +227,8 @@ export function createShoppingService({
      */
     async edit(actor: Membership, id: string, changes: ShoppingItemChanges): Promise<ShoppingItemView> {
       const { row, changed } = await refusingDuplicates(() =>
-        db.$transaction(async (tx) => {
-          const current = await lockedItemOnList(tx, actor.householdId, id);
+        asEditor(actor, async (tx) => {
+          const current = await itemOnList(tx, actor, id);
           assertNotInOthersCart(current, actor);
           if (current.version !== changes.version) throw conflict("shopping.item.changed");
           const name = changes.name ?? current.name;
@@ -239,8 +250,8 @@ export function createShoppingService({
      * someone's cart stays there, so undoing brings it back as it was; only they can delete it.
      */
     async remove(actor: Membership, id: string, version: number): Promise<void> {
-      await db.$transaction(async (tx) => {
-        const row = await lockedItemOnList(tx, actor.householdId, id);
+      await asEditor(actor, async (tx) => {
+        const row = await itemOnList(tx, actor, id);
         assertNotInOthersCart(row, actor);
         if (row.version !== version) throw conflict("shopping.item.changed");
         await tx.shoppingItem.update({ where: { id }, data: { deletedAt: now(), deletedById: actor.userId } });
@@ -255,16 +266,14 @@ export function createShoppingService({
      */
     async restore(actor: Membership, id: string): Promise<ShoppingItemView> {
       const { row, restored } = await refusingDuplicates(() =>
-        db.$transaction(async (tx) => {
-          const current = await lockedItem(tx, actor.householdId, id);
+        asEditor(actor, async (tx) => {
+          const current = await itemOf(tx, actor, id);
           if (current && current.deletedAt === null && current.boughtAt === null) {
             return { row: current, restored: false };
           }
           if (!current?.deletedAt || current.deletedById !== actor.userId) throw notFound("shopping.item.not_found");
           assertNotInOthersCart(current, actor);
-          if (now().getTime() - current.deletedAt.getTime() > SHOPPING_UNDO_WINDOW_MS) {
-            throw gone("shopping.undo.expired");
-          }
+          if (!withinUndoWindow(current.deletedAt)) throw gone("shopping.undo.expired");
           const back = await tx.shoppingItem.update({ where: { id }, data: { deletedAt: null, deletedById: null } });
           return { row: back, restored: true };
         }),
@@ -301,16 +310,12 @@ export function createShoppingService({
      * Finishes the caller's shopping: everything in their cart leaves the list at once, as bought
      * items, and what they didn't find stays on it. `itemIds` must be exactly their cart, as they
      * last saw it; a cart that changed meanwhile (on their other device) is refused whole with
-     * `shopping.cart.changed`, so nothing is ever half bought. Like a cart move, it takes turns with
-     * leaving, removals and role changes under the household lock, and checks the role again there.
-     * With what they paid, the expense is recorded in the same transaction with every expense rule,
+     * `shopping.cart.changed`, so nothing is ever half bought. With what they paid, the expense is recorded in the same transaction with every expense rule,
      * and the items are linked to it: any refusal rolls everything back and the cart stays as it was.
      */
     async finish(actor: Membership, { itemIds, expense }: FinishShopping): Promise<FinishedShopping> {
-      const expenseId = await db.$transaction(async (tx) => {
-        await lockHousehold(tx, actor.householdId);
-        assertStillEditor(await currentMembers(tx, actor.householdId), actor);
-        if (!sameItems(await lockedCart(tx, actor), itemIds)) throw conflict("shopping.cart.changed");
+      const expenseId = await asEditor(actor, async (tx) => {
+        if (!sameItems(await cartOf(tx, actor), itemIds)) throw conflict("shopping.cart.changed");
         const created = expense === null ? null : await expenses.createWithin(tx, actor, expense);
         await tx.shoppingItem.updateMany({
           where: { id: { in: [...itemIds] } },
@@ -333,11 +338,8 @@ export function createShoppingService({
      */
     async undoFinish(actor: Membership, itemIds: readonly string[]): Promise<ShoppingItemView[]> {
       const { rows, undone } = await refusingDuplicates(() =>
-        db.$transaction(async (tx) => {
-          await lockHousehold(tx, actor.householdId);
-          assertStillEditor(await currentMembers(tx, actor.householdId), actor);
+        asEditor(actor, async (tx) => {
           const ids = [...itemIds];
-          await tx.$queryRaw`SELECT id FROM shopping_items WHERE household_id = ${actor.householdId} AND id = ANY(${ids}) FOR UPDATE`;
           const items = await tx.shoppingItem.findMany({
             where: { householdId: actor.householdId, id: { in: ids } },
             orderBy: LIST_ORDER,
@@ -348,7 +350,7 @@ export function createShoppingService({
             row.boughtById === actor.userId &&
             row.boughtAt !== null &&
             row.expenseId === null &&
-            now().getTime() - row.boughtAt.getTime() <= SHOPPING_UNDO_WINDOW_MS;
+            withinUndoWindow(row.boughtAt);
           if (!sameItems(items, ids) || !items.every((row) => back(row) || undoable(row))) {
             throw gone("shopping.undo.expired");
           }

@@ -1,25 +1,17 @@
 import {
   changeRoleRequestSchema,
   createHouseholdRequestSchema,
-  errorCodeFrom,
   updateHouseholdRequestSchema,
   updateSplitRequestSchema,
   type CurrentHousehold,
   type HouseholdResponse,
 } from "@hogar/shared";
 import { Router, type Request } from "express";
-import type { z } from "zod";
 import type { Database } from "../db";
-import { badRequest, unauthorized } from "../httpError";
+import { unauthorized } from "../httpError";
+import { parseBody } from "../requestInput";
 import type { HouseholdService } from "./householdService";
 import { loadMembership, membershipOf, requireAdmin } from "./loadMembership";
-
-/** Validates a body with a shared schema; the first failed check becomes the error code. */
-export function parseBody<T extends z.ZodType>(schema: T, body: unknown): z.infer<T> {
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) throw badRequest(errorCodeFrom(parsed.error));
-  return parsed.data;
-}
 
 export function userIdOf(req: Request): string {
   if (!req.auth) throw unauthorized("auth.token.invalid");

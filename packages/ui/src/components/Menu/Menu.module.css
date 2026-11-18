@@ -74,6 +74,10 @@
   font-size: var(--font-size-sm);
 }
 
+.itemDescription:empty {
+  display: none;
+}
+
 .itemIcon {
   display: inline-flex;
   inline-size: var(--size-icon-md);

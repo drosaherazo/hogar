@@ -55,6 +55,31 @@ function updateItems(queryClient: QueryClient, update: (items: ShoppingItemView[
   queryClient.setQueryData<ShoppingList>(shoppingKeys.list, (list) => list && { ...list, items: update(list.items) });
 }
 
+/**
+ * A change the list shows at once, before the server answers, the way a tap in a shop should feel:
+ * `change` applied to the items. The list as it was comes back if the server refuses or never
+ * hears of it, and it is re-read either way, so it then shows what is there now (ADR 0009).
+ */
+function useChangeListAtOnce<TVariables, TData>(
+  send: (variables: TVariables) => Promise<TData>,
+  change: (items: ShoppingItemView[], variables: TVariables) => ShoppingItemView[],
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: send,
+    onMutate: async (variables: TVariables) => {
+      await queryClient.cancelQueries({ queryKey: shoppingKeys.list });
+      const before = queryClient.getQueryData<ShoppingList>(shoppingKeys.list);
+      updateItems(queryClient, (items) => change(items, variables));
+      return { before };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.before) queryClient.setQueryData(shoppingKeys.list, context.before);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
+  });
+}
+
 const NO_SUGGESTIONS: ShoppingSuggestion[] = [];
 
 /**
@@ -124,26 +149,13 @@ export function useEditShoppingItem() {
   });
 }
 
-/**
- * Deletes at once: the item leaves the list before the server answers, and comes back if the
- * server refuses or never hears of it (ADR 0009).
- */
+/** Deletes at once: the item leaves the list before the server answers. */
 export function useDeleteShoppingItem() {
   const client = useApiClient();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (item: ShoppingItemView) => client.deleteShoppingItem(item.id, item.version),
-    onMutate: async (item) => {
-      await queryClient.cancelQueries({ queryKey: shoppingKeys.list });
-      const before = queryClient.getQueryData<ShoppingList>(shoppingKeys.list);
-      updateItems(queryClient, (items) => items.filter((other) => other.id !== item.id));
-      return { before };
-    },
-    onError: (_error, _item, context) => {
-      if (context?.before) queryClient.setQueryData(shoppingKeys.list, context.before);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
-  });
+  return useChangeListAtOnce(
+    (item: ShoppingItemView) => client.deleteShoppingItem(item.id, item.version),
+    (items, item) => items.filter((other) => other.id !== item.id),
+  );
 }
 
 /** Undoes the person's own delete: the item comes back in its place. */
@@ -166,56 +178,37 @@ export interface CartMove {
 }
 
 /**
- * Moves an item in or out of the person's cart at once, before the server answers, the way a tap in
- * a shop should feel. It moves back if the server refuses (someone else got there first) or never
- * hears of it, and the list is re-read either way, so it then shows whose cart the item is in
- * (ADR 0009).
+ * Moves an item in or out of the person's cart at once. When someone else got there first, it
+ * moves back and the re-read list shows whose cart the item is in.
  */
 export function useMoveInCart() {
   const client = useApiClient();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ item, owner }: CartMove) => (owner ? client.putInCart(item.id) : client.takeOutOfCart(item.id)),
-    onMutate: async ({ item, owner }) => {
-      await queryClient.cancelQueries({ queryKey: shoppingKeys.list });
-      const before = queryClient.getQueryData<ShoppingList>(shoppingKeys.list);
-      updateItems(queryClient, (items) =>
-        items.map((other) => (other.id === item.id ? { ...other, cartOwner: owner } : other)),
-      );
-      return { before };
-    },
-    onError: (_error, _move, context) => {
-      if (context?.before) queryClient.setQueryData(shoppingKeys.list, context.before);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
-  });
+  return useChangeListAtOnce(
+    ({ item, owner }: CartMove) => (owner ? client.putInCart(item.id) : client.takeOutOfCart(item.id)),
+    (items, { item, owner }) => items.map((other) => (other.id === item.id ? { ...other, cartOwner: owner } : other)),
+  );
+}
+
+/** Whether `item` is in `userId`'s cart. */
+export function isInCartOf(item: ShoppingItemView, userId: string): boolean {
+  return item.cartOwner?.userId === userId;
 }
 
 /** The items in `userId`'s cart, in list order. */
 export function cartOf(items: readonly ShoppingItemView[], userId: string): ShoppingItemView[] {
-  return items.filter((item) => item.cartOwner?.userId === userId);
+  return items.filter((item) => isInCartOf(item, userId));
 }
 
 /**
- * Finishes shopping without an expense: the items leave the list at once, before the server
- * answers, and come back if it refuses (the cart changed meanwhile) or never hears of it.
+ * Finishes shopping without an expense: the items leave the list at once, and come back if the
+ * cart changed meanwhile.
  */
 export function useFinishShopping() {
   const client = useApiClient();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (itemIds: readonly string[]) => client.finishShopping(itemIds),
-    onMutate: async (itemIds) => {
-      await queryClient.cancelQueries({ queryKey: shoppingKeys.list });
-      const before = queryClient.getQueryData<ShoppingList>(shoppingKeys.list);
-      updateItems(queryClient, (items) => items.filter((item) => !itemIds.includes(item.id)));
-      return { before };
-    },
-    onError: (_error, _itemIds, context) => {
-      if (context?.before) queryClient.setQueryData(shoppingKeys.list, context.before);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
-  });
+  return useChangeListAtOnce(
+    (itemIds: readonly string[]) => client.finishShopping(itemIds),
+    (items, itemIds) => items.filter((item) => !itemIds.includes(item.id)),
+  );
 }
 
 /** Finishing shopping noting what the person paid: everything in their cart, and the expense. */

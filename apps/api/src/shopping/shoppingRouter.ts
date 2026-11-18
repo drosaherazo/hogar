@@ -13,8 +13,7 @@ import {
 import { Router } from "express";
 import type { Database } from "../db";
 import { badRequest } from "../httpError";
-import { versionOf } from "../expenses/expensesRouter";
-import { parseBody } from "../household/householdRouter";
+import { parseBody, versionOf } from "../requestInput";
 import { loadMembership, membershipOf, requireEditor } from "../household/loadMembership";
 import type { ShoppingService } from "./shoppingService";
 

@@ -1,7 +1,7 @@
 import { Button, Dialog } from "@hogar/ui";
 import { useId, useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { OFFLINE_REASON_ID } from "../../offline/OfflineBanner";
+import { describedByOffline } from "../../offline/OfflineBanner";
 import { useReadOnly } from "../../offline/useOnline";
 import styles from "./FinishShopping.module.css";
 
@@ -64,7 +64,6 @@ export function FinishDialog({ open, onOpenChange, count, onRecord, onFinishWith
   const readOnly = useReadOnly();
   const recordHintId = useId();
   const hintId = useId();
-  const describedBy = (id: string) => (readOnly ? `${id} ${OFFLINE_REASON_ID}` : id);
 
   return (
     <Dialog
@@ -80,7 +79,12 @@ export function FinishDialog({ open, onOpenChange, count, onRecord, onFinishWith
       }
     >
       <div className={styles.choice}>
-        <Button fullWidth disabled={readOnly} aria-describedby={describedBy(recordHintId)} onClick={onRecord}>
+        <Button
+          fullWidth
+          disabled={readOnly}
+          aria-describedby={describedByOffline(readOnly, recordHintId)}
+          onClick={onRecord}
+        >
           {t("finish.record")}
         </Button>
         <p id={recordHintId} className={styles.hint}>
@@ -92,7 +96,7 @@ export function FinishDialog({ open, onOpenChange, count, onRecord, onFinishWith
           fullWidth
           variant="secondary"
           disabled={readOnly}
-          aria-describedby={describedBy(hintId)}
+          aria-describedby={describedByOffline(readOnly, hintId)}
           onClick={onFinishWithoutExpense}
         >
           {t("finish.withoutExpense")}

@@ -11,7 +11,8 @@
   },
   "suggestion": {
     "timesBought_one": "Comprado una vez",
-    "timesBought_other": "Comprado {{count}} veces"
+    "timesBought_other": "Comprado {{count}} veces",
+    "detail": "{{note}} · {{timesBought}}"
   },
   "added": "Añadiste {{name}}",
   "item": {

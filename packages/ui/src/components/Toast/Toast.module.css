@@ -39,9 +39,9 @@
   outline-offset: var(--focus-ring-width);
 }
 
-/* Takes the rest of the line; on a narrow screen with a long message, the buttons wrap below it. */
+/* Takes the rest of the line, from 10rem; on a narrow screen with a long message, the buttons wrap below it. */
 .content {
-  flex: 1 1 10rem;
+  flex: 1 1 calc(var(--space-10) * 4);
   min-inline-size: 0;
   padding-block: var(--space-2);
 }

@@ -17,6 +17,8 @@ import {
   takeOutOfCart,
   type App,
 } from "./shoppingHelpers";
+import { createExpenseService } from "../src/expenses/expenseService";
+import { createShoppingService } from "../src/shopping/shoppingService";
 import { createTestApp, dani, db, signIn, type SignedIn } from "./testApp";
 
 describe("POST /api/household/shopping/items", () => {
@@ -846,5 +848,49 @@ describe("carts go back to the list", () => {
     await restoreItem(app, bruno, milk.id).expect(200);
 
     expect((await listOf(app, ana)).find((item) => item.id === milk.id)?.cartOwner).toBeNull();
+  });
+});
+
+describe("a role change while a request is on its way", () => {
+  /**
+   * Bruno's request passed the router's role check as a member, and Ana made him a guest before
+   * the service saved anything: the service checks the role again under the household lock.
+   */
+  async function demotedMidFlight() {
+    const { app, clock } = createTestApp();
+    const home = await homeWith(app);
+    const { ana, bruno } = home;
+    const milk = await addItem(app, bruno, "Milk");
+    const eggs = await addItem(app, bruno, "Eggs");
+    await deleteItem(app, bruno, eggs).expect(204);
+    const asMember = await db.membership.findUniqueOrThrow({ where: { id: bruno.membershipId } });
+    await request(app)
+      .patch(`/api/household/members/${bruno.membershipId}`)
+      .set("Authorization", ana.auth)
+      .send({ role: "GUEST" })
+      .expect(200);
+    const shopping = createShoppingService({
+      db,
+      now: clock.now,
+      expenses: createExpenseService({ db, now: clock.now }),
+    });
+    return { app, ana, milk, eggs, asMember, shopping };
+  }
+
+  type Demoted = Awaited<ReturnType<typeof demotedMidFlight>>;
+  it.each<[string, (home: Demoted) => Promise<unknown>]>([
+    ["an edit", ({ shopping, asMember, milk }) => shopping.edit(asMember, milk.id, { name: "Oat milk", version: 1 })],
+    ["a delete", ({ shopping, asMember, milk }) => shopping.remove(asMember, milk.id, 1)],
+    ["an undo of a delete", ({ shopping, asMember, eggs }) => shopping.restore(asMember, eggs.id)],
+    ["a cart move", ({ shopping, asMember, milk }) => shopping.putInCart(asMember, milk.id)],
+    ["an add", ({ shopping, asMember }) => shopping.add(asMember, { name: "Bread", note: null })],
+    ["finishing", ({ shopping, asMember }) => shopping.finish(asMember, { itemIds: [], expense: null })],
+  ])("refuses %s by someone made a guest meanwhile, and changes nothing", async (_, act) => {
+    const home = await demotedMidFlight();
+    const before = await listOf(home.app, home.ana);
+
+    await expect(act(home)).rejects.toMatchObject({ status: 403, code: "household.read_only" });
+
+    expect(await listOf(home.app, home.ana)).toEqual(before);
   });
 });

@@ -1,10 +1,6 @@
 import {
   canEditContent,
-  errorCodeFrom,
-  shoppingItemNameSchema,
-  shoppingItemNoteSchema,
   shoppingNameKey,
-  type ErrorCode,
   type HouseholdView,
   type PersonRef,
   type ShoppingItemView,
@@ -34,8 +30,10 @@ import { usePersonLabel } from "../../expenses/people";
 import { LoadError } from "../../household/LoadError";
 import { useHousehold } from "../../household/useHousehold";
 import { AppShell } from "../../layout/AppShell";
+import { useReadOnly } from "../../offline/useOnline";
 import {
   cartOf,
+  isInCartOf,
   useAddShoppingItem,
   useDeleteShoppingItem,
   useFinishShopping,
@@ -52,6 +50,7 @@ import { CartBar, FinishDialog } from "./FinishShopping";
 import styles from "./ShoppingPage.module.css";
 import { useCartReturned } from "./useCartReturned";
 import { useForgottenCart } from "./useForgottenCart";
+import { useItemFields } from "./useItemFields";
 
 const TITLE_ID = "shopping-title";
 const NO_ITEMS: ShoppingItemView[] = [];
@@ -207,7 +206,7 @@ function ListAndForm({ household }: { household: HouseholdView }) {
   function toggleCart(item: ShoppingItemView) {
     reset();
     const me: PersonRef = { userId: user.id, name: user.name, avatarUrl: user.avatarUrl, former: false };
-    const owner = item.cartOwner?.userId === user.id ? null : me;
+    const owner = isInCartOf(item, user.id) ? null : me;
     move.mutate({ item, owner }, { onError: setFailure });
   }
 
@@ -319,10 +318,12 @@ interface ItemActions {
  *
  * An item in a cart stays in its place, quieter but readable, with a check and whose cart it is in,
  * so color never says it alone. While it is in someone else's cart, only they can change it: its
- * check and actions are off, and say why.
+ * check and actions are off, and say why. The menu opens outside the page, so if the connection
+ * drops while it is open, its actions are switched off here, saying why (ADR 0015).
  */
 function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActions | undefined }) {
-  const { t } = useTranslation("shopping");
+  const { t } = useTranslation(["shopping", "common"]);
+  const readOnly = useReadOnly();
   const user = useCurrentUser();
   const personLabel = usePersonLabel();
   const markerId = useId();
@@ -330,11 +331,16 @@ function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActio
     item.askedBy === undefined || item.askedBy.userId === user.id
       ? null
       : t("item.askedBy", { name: personLabel(item.askedBy) });
-  const inMyCart = item.cartOwner?.userId === user.id;
+  const inMyCart = isInCartOf(item, user.id);
   const holder = item.cartOwner && !inMyCart ? personLabel(item.cartOwner) : null;
   const marker =
     item.cartOwner === null ? null : holder === null ? t("item.inMyCart") : t("item.inCartOf", { name: holder });
-  const lockedReason = holder === null ? undefined : t("item.lockedReason", { name: holder });
+  const lockedReason =
+    holder !== null
+      ? t("item.lockedReason", { name: holder })
+      : readOnly
+        ? t("common:offline.actionDisabled")
+        : undefined;
   // What a locked control is described by: the marker next to it, which says whose cart it is in.
   const describedBy = holder === null ? undefined : markerId;
 
@@ -342,7 +348,11 @@ function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActio
     <li className={clsx(styles.item, marker !== null && styles.inCart)}>
       <span className={styles.itemText}>
         {actions ? (
+          // The name is the check's label, so the whole name is a 44 px target. Large, as the name is
+          // for guests, and teal like the marker, because fuchsia is kept for "Finish shopping".
           <Checkbox
+            tone="positive"
+            size="lg"
             label={item.name}
             aria-label={t(inMyCart ? "item.takeOutOfCart" : "item.putInCart", { name: item.name })}
             aria-describedby={describedBy}
@@ -385,10 +395,20 @@ function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActio
             </Button>
           }
         >
-          <MenuItem icon={<Pencil />} onSelect={actions.onEdit} disabled={holder !== null} description={lockedReason}>
+          <MenuItem
+            icon={<Pencil />}
+            onSelect={actions.onEdit}
+            disabled={lockedReason !== undefined}
+            description={lockedReason}
+          >
             {t("item.edit")}
           </MenuItem>
-          <MenuItem icon={<Trash2 />} onSelect={actions.onDelete} disabled={holder !== null} description={lockedReason}>
+          <MenuItem
+            icon={<Trash2 />}
+            onSelect={actions.onDelete}
+            disabled={lockedReason !== undefined}
+            description={lockedReason}
+          >
             {t("item.delete")}
           </MenuItem>
         </Menu>
@@ -396,8 +416,6 @@ function ItemRow({ item, actions }: { item: ShoppingItemView; actions: ItemActio
     </li>
   );
 }
-
-type Field = "name" | "note";
 
 /**
  * Adding an item: a name and an optional note. Enter adds from either field, because most items
@@ -415,35 +433,31 @@ function AddItemForm({
 }) {
   const { t } = useTranslation(["shopping", "errors"]);
   const add = useAddShoppingItem();
-  const [name, setName] = useState("");
-  const [note, setNote] = useState("");
-  const suggestions = useShoppingSuggestions(name, items);
+  const fields = useItemFields();
+  const suggestions = useShoppingSuggestions(fields.name, items);
   const options = useMemo(
     () =>
-      suggestions.map((suggestion): ComboboxItem => ({
-        id: shoppingNameKey(suggestion.name),
-        label: suggestion.name,
-        detail: [suggestion.note, t("suggestion.timesBought", { count: suggestion.timesBought })]
-          .filter(Boolean)
-          .join(" · "),
-      })),
+      suggestions.map((suggestion): ComboboxItem => {
+        const timesBought = t("suggestion.timesBought", { count: suggestion.timesBought });
+        return {
+          id: shoppingNameKey(suggestion.name),
+          label: suggestion.name,
+          detail: suggestion.note ? t("suggestion.detail", { note: suggestion.note, timesBought }) : timesBought,
+        };
+      }),
     [suggestions, t],
   );
-  const [errors, setErrors] = useState<Partial<Record<Field, ErrorCode>>>({});
   const [failure, setFailure] = useState<unknown>(null);
-  const [duplicateKey, setDuplicateKey] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
 
   // The item behind a duplicate notice, found in the list the person already sees.
+  const { duplicateKey } = fields;
   const existing =
     duplicateKey === null ? undefined : items.find((item) => shoppingNameKey(item.name) === duplicateKey);
-  const typedNote = shoppingItemNoteSchema.safeParse(note);
 
   /** Empties the form for the next item, saying what just happened. */
   function startOver(message: string) {
-    setName("");
-    setNote("");
-    setDuplicateKey(null);
+    fields.fill({ name: "", note: null });
     setDone(message);
     nameField.current?.focus();
   }
@@ -451,41 +465,23 @@ function AddItemForm({
   async function submit(event: FormEvent) {
     event.preventDefault();
     setFailure(null);
-    setDuplicateKey(null);
     setDone(null);
-    const parsedName = shoppingItemNameSchema.safeParse(name);
-    const parsedNote = shoppingItemNoteSchema.safeParse(note);
-    const fieldErrors: Partial<Record<Field, ErrorCode>> = {};
-    if (!parsedName.success) fieldErrors.name = errorCodeFrom(parsedName.error);
-    if (!parsedNote.success) fieldErrors.note = errorCodeFrom(parsedNote.error);
-    setErrors(fieldErrors);
-    if (!parsedName.success || !parsedNote.success) return;
+    const input = fields.parse();
+    if (!input) return;
 
     try {
-      const item = await add.mutateAsync({ name: parsedName.data, note: parsedNote.data });
+      const item = await add.mutateAsync(input);
       startOver(t("added", { name: item.name }));
     } catch (error) {
-      if (error instanceof ApiRequestError && error.code === "shopping.item.duplicate") {
-        setDuplicateKey(shoppingNameKey(parsedName.data));
-      } else {
-        setFailure(error);
-      }
+      if (!fields.refusedAsDuplicate(error, input.name)) setFailure(error);
     }
   }
 
   /** A suggestion brings its name and last note; both stay editable before adding. */
   function pick(id: string) {
     const suggestion = suggestions.find((other) => shoppingNameKey(other.name) === id);
-    if (!suggestion) return;
-    setName(suggestion.name);
-    setNote(suggestion.note ?? "");
-    setDuplicateKey(null);
+    if (suggestion) fields.fill(suggestion);
   }
-
-  const fieldError = (field: Field) => {
-    const code = errors[field];
-    return code ? t(`errors:${code}`) : undefined;
-  };
 
   return (
     <Card padding="lg">
@@ -495,29 +491,26 @@ function AddItemForm({
           allowsCustomValue
           inputRef={nameField}
           label={t("add.nameLabel")}
-          inputValue={name}
+          inputValue={fields.name}
           enterKeyHint="done"
-          onInputChange={(value) => {
-            setName(value);
-            setDuplicateKey(null);
-          }}
+          onInputChange={fields.changeName}
           items={options}
           onSelectionChange={pick}
-          error={fieldError("name")}
+          error={fields.fieldError("name")}
         />
         <TextField
           label={t("add.noteLabel")}
           hint={t("add.noteHint")}
-          value={note}
+          value={fields.note}
           autoComplete="off"
           enterKeyHint="done"
-          onChange={(event) => setNote(event.target.value)}
-          error={fieldError("note")}
+          onChange={(event) => fields.changeNote(event.target.value)}
+          error={fields.fieldError("note")}
         />
         {duplicateKey !== null && (
           <DuplicateNotice
             existing={existing}
-            note={typedNote.success ? typedNote.data : null}
+            note={fields.noteForDuplicate}
             onNoteUsed={(item) => startOver(t("duplicate.noteUsed", { name: item.name }))}
           />
         )}

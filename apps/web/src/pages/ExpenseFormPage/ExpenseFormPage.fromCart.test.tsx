@@ -191,6 +191,28 @@ describe("the expense form, from the cart", () => {
     await waitFor(() => expect(finishes).toEqual([expect.objectContaining({ itemIds: ["item_milk"] })]));
   });
 
+  it("says the cart is empty when it is finished on another device while the form is open, with the way back to the list", async () => {
+    const events = fakeHouseholdEvents();
+    const { finishes, setItems } = serveCart([milk, eggs, bread]);
+    renderApp({ path: PATH, householdEvents: events });
+    await userEvent.type(await screen.findByRole("textbox", { name: "Amount (€)" }), "24");
+    act(() => events.connect());
+
+    setItems([bread]);
+    act(() => events.emit("shopping:changed"));
+
+    const notice = await screen.findByText(
+      "Your cart is empty now, so there's nothing to note. It may have been finished on another device.",
+    );
+    expect(screen.queryByText("Your cart changed. Check what you bought before saving.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save expense" })).toBeDisabled();
+    expect(finishes).toEqual([]);
+    await userEvent.click(
+      within(notice.closest("[role=status]") as HTMLElement).getByRole("link", { name: "Back to the list" }),
+    );
+    expect(await screen.findByRole("heading", { level: 1, name: "Shopping" })).toBeInTheDocument();
+  });
+
   it("leaves the cart as it was when cancelled", async () => {
     const { finishes } = serveCart([milk, eggs, bread]);
     renderApp({ path: PATH });
