@@ -62,6 +62,8 @@
     "title": "¿Terminaste la compra?",
     "description_one": "La cosa que llevas en tu carrito sale de la lista. Lo que no encontraste se queda.",
     "description_other": "Las {{count}} cosas de tu carrito salen de la lista. Lo que no encontraste se queda.",
+    "record": "Anotar lo que pagué",
+    "recordHint": "Abre el gasto con lo que compraste, para repartirlo como cualquier otro.",
     "withoutExpense": "Terminar sin gasto",
     "withoutExpenseHint": "Para cuando pagó otra persona o no se reparte.",
     "done_one": "Listo: 1 cosa fuera de la lista",

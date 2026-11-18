@@ -25,6 +25,27 @@ describe("ExpenseDetailPage", () => {
     expect(screen.getByText(/Added by Ana García on/)).toBeInTheDocument();
   });
 
+  it("shows what was bought, in full, for an expense noted when finishing shopping", async () => {
+    const boughtItems = [
+      { name: "Milk", note: "lactose-free, the big carton" },
+      { name: "Eggs", note: null },
+    ];
+    server.use(handlers.signedIn(), handlers.household(homeView()), handlers.expense(expenseView({ boughtItems })));
+    const { container } = renderApp({ path: PATH, locale: "es" });
+
+    const bought = await screen.findByRole("list", { name: "Lo que se compró" });
+    const rows = within(bought).getAllByRole("listitem");
+    expect(rows.map((row) => row.textContent)).toEqual(["Milklactose-free, the big carton", "Eggs"]);
+    await expectNoA11yViolations(container);
+  });
+
+  it("says nothing about purchases for any other expense", async () => {
+    server.use(handlers.signedIn(), handlers.household(homeView()), handlers.expense());
+    renderApp({ path: PATH });
+    await screen.findByRole("heading", { name: "Groceries" });
+    expect(screen.queryByRole("heading", { name: "What was bought" })).not.toBeInTheDocument();
+  });
+
   it.each([
     ["EQUAL", "Equally between 2 people"],
     ["EXACT", "Exact amounts"],

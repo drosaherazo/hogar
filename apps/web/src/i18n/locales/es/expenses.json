@@ -111,10 +111,13 @@
     "cancel": "Cancelar",
     "editTitle": "Editar gasto",
     "backToExpense": "Volver al gasto",
+    "backToShopping": "Volver a la lista",
     "category": {
       "label": "Categoría",
       "none": "Sin categoría"
-    }
+    },
+    "bought": "Lo que compraste",
+    "boughtChanged": "Tu carrito cambió. Revisa lo que compraste antes de guardar."
   },
   "details": {
     "back": "Volver a gastos",
@@ -122,6 +125,7 @@
     "date": "Fecha",
     "split": "Cómo se reparte",
     "shares": "La parte de cada persona",
+    "bought": "Lo que se compró",
     "recordedBy": "Lo añadió {{name}} el {{date}}",
     "saved": "Gasto guardado.",
     "method": {

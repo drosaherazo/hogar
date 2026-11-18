@@ -47,18 +47,24 @@ export interface FinishDialogProps {
   onOpenChange: (open: boolean) => void;
   /** How many things are in the viewer's cart now; the dialog follows it live. */
   count: number;
+  /** Opens the expense form for the cart; saving it finishes shopping. */
+  onRecord: () => void;
   onFinishWithoutExpense: () => void;
 }
 
 /**
  * Says what finishing does before anything changes: what is in the cart leaves the list, what
- * wasn't found stays. Cancel comes first and has focus, so a reflex Enter changes nothing. The
- * dialog sits outside the page, so offline its choice is switched off here, with the reason.
+ * wasn't found stays. Noting what was paid is the main choice, since most shopping is shared;
+ * finishing without an expense is there for the rest. Each choice says when to pick it. Cancel
+ * comes first and has focus, so a reflex Enter changes nothing. The dialog sits outside the page,
+ * so offline its choices are switched off here, with the reason.
  */
-export function FinishDialog({ open, onOpenChange, count, onFinishWithoutExpense }: FinishDialogProps) {
+export function FinishDialog({ open, onOpenChange, count, onRecord, onFinishWithoutExpense }: FinishDialogProps) {
   const { t } = useTranslation("shopping");
   const readOnly = useReadOnly();
+  const recordHintId = useId();
   const hintId = useId();
+  const describedBy = (id: string) => (readOnly ? `${id} ${OFFLINE_REASON_ID}` : id);
 
   return (
     <Dialog
@@ -74,10 +80,19 @@ export function FinishDialog({ open, onOpenChange, count, onFinishWithoutExpense
       }
     >
       <div className={styles.choice}>
+        <Button fullWidth disabled={readOnly} aria-describedby={describedBy(recordHintId)} onClick={onRecord}>
+          {t("finish.record")}
+        </Button>
+        <p id={recordHintId} className={styles.hint}>
+          {t("finish.recordHint")}
+        </p>
+      </div>
+      <div className={styles.choice}>
         <Button
           fullWidth
+          variant="secondary"
           disabled={readOnly}
-          aria-describedby={readOnly ? `${hintId} ${OFFLINE_REASON_ID}` : hintId}
+          aria-describedby={describedBy(hintId)}
           onClick={onFinishWithoutExpense}
         >
           {t("finish.withoutExpense")}

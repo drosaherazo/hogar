@@ -40,7 +40,7 @@ function serveFinish(items: ShoppingItemView[]) {
   server.use(
     handlers.signedIn(),
     handlers.household(homeView()),
-    http.get("*/api/household/shopping", () => HttpResponse.json({ items: current })),
+    http.get("*/api/household/shopping", () => HttpResponse.json({ items: current, lastCategoryId: null })),
     http.post("*/api/household/shopping/finish", async ({ request }) => {
       finishes.push(await request.json());
       current = current.filter((item) => item.cartOwner?.userId !== anaRef.userId);

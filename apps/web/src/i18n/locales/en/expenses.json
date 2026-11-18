@@ -111,10 +111,13 @@
     "cancel": "Cancel",
     "editTitle": "Edit expense",
     "backToExpense": "Back to the expense",
+    "backToShopping": "Back to the list",
     "category": {
       "label": "Category",
       "none": "No category"
-    }
+    },
+    "bought": "What you bought",
+    "boughtChanged": "Your cart changed. Check what you bought before saving."
   },
   "details": {
     "back": "Back to expenses",
@@ -122,6 +125,7 @@
     "date": "Date",
     "split": "How it's split",
     "shares": "Each person's share",
+    "bought": "What was bought",
     "recordedBy": "Added by {{name}} on {{date}}",
     "saved": "Expense saved.",
     "method": {

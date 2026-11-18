@@ -35,7 +35,7 @@ function serveCarts(items: ShoppingItemView[]) {
   server.use(
     handlers.signedIn(),
     handlers.household(homeView()),
-    http.get("*/api/household/shopping", () => HttpResponse.json({ items: current })),
+    http.get("*/api/household/shopping", () => HttpResponse.json({ items: current, lastCategoryId: null })),
     http.put("*/api/household/shopping/items/:id/cart", ({ params }) => {
       moves.push(`PUT ${String(params["id"])}`);
       return move(String(params["id"]), anaRef);

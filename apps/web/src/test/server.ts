@@ -41,7 +41,7 @@ export const server = setupServer(
   http.get("*/api/household/balances", () => HttpResponse.json(balancesView())),
   http.get("*/api/household/categories", () => HttpResponse.json({ categories: starterCategories() })),
   http.get("*/api/household/invitations", () => HttpResponse.json({ invitations: [] })),
-  http.get("*/api/household/shopping", () => HttpResponse.json({ items: [] })),
+  http.get("*/api/household/shopping", () => HttpResponse.json({ items: [], lastCategoryId: null })),
   // Anything a test didn't set up answers like a broken server, not a lost connection: a network
   // failure would switch the app to its offline view and leave unrelated pages read-only.
   http.all("*/api/*", ({ request }) => {
@@ -117,6 +117,7 @@ export function expenseView(overrides: Partial<ExpenseView> = {}): ExpenseView {
     editedAt: null,
     version: 1,
     category: null,
+    boughtItems: [],
     ...overrides,
   };
 }
@@ -239,7 +240,9 @@ export const handlers = {
     http.get("*/api/household/expenses/:id", () => HttpResponse.json({ expense })),
   categories: (categories: CategoryView[] = starterCategories()) =>
     http.get("*/api/household/categories", () => HttpResponse.json({ categories })),
-  shopping: (items: ShoppingItemView[]) => http.get("*/api/household/shopping", () => HttpResponse.json({ items })),
+  /** The list, and the category of the household's last purchase expense (none by default). */
+  shopping: (items: ShoppingItemView[], lastCategoryId: string | null = null) =>
+    http.get("*/api/household/shopping", () => HttpResponse.json({ items, lastCategoryId })),
   balances: (view: BalancesView = anaIsOwed()) => http.get("*/api/household/balances", () => HttpResponse.json(view)),
   settlement: (settlement: SettlementView = settlementView()) =>
     http.get("*/api/household/settlements/:id", () => HttpResponse.json({ settlement })),

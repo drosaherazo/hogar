@@ -62,6 +62,8 @@
     "title": "Done shopping?",
     "description_one": "The 1 thing in your cart leaves the list. What you didn't find stays on it.",
     "description_other": "The {{count}} things in your cart leave the list. What you didn't find stays on it.",
+    "record": "Note what I paid",
+    "recordHint": "Opens the expense with what you bought, to split it like any other.",
     "withoutExpense": "Finish without an expense",
     "withoutExpenseHint": "For when someone else paid or it isn't shared.",
     "done_one": "Done: 1 thing off the list",
