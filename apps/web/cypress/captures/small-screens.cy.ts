@@ -169,6 +169,15 @@ describe("Small-screen captures", { retries: 2 }, () => {
             cy.screenshot(`${folder}/toast-deleted`, viewportShot);
           });
 
+          it("captures the menu of an item in someone else's cart", () => {
+            stubSignedIn(locale);
+            visitIn("/shopping", { locale, theme });
+            const item = shoppingItems[1]?.name ?? "";
+            cy.get(`button[aria-label="${t("shopping:item.actions", { name: item })}"]`).click();
+            cy.get("[role=menu]").should("be.visible");
+            cy.screenshot(`${folder}/menu-item-locked`, viewportShot);
+          });
+
           for (const dialog of dialogs) {
             it(`captures the ${dialog.name} dialog`, () => {
               stubSignedIn(locale);

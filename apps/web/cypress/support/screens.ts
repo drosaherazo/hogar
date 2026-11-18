@@ -135,7 +135,10 @@ export const activity: ActivityPage = {
   nextCursor: null,
 };
 
-/** Names and notes at their longest (50 and 100 characters), asked for by the longest names. */
+/**
+ * Names and notes at their longest (50 and 100 characters), asked for by the longest names, and
+ * the other two in the longest name's cart and in Ana's.
+ */
 export const shoppingItems: ShoppingItemView[] = [
   {
     id: "item_1",
@@ -153,7 +156,7 @@ export const shoppingItems: ShoppingItemView[] = [
     askedBy: carlaRef,
     addedAt: "2026-11-18T10:01:00.000Z",
     version: 1,
-    cartOwner: null,
+    cartOwner: brunoRef,
   },
   {
     id: "item_3",
@@ -162,7 +165,7 @@ export const shoppingItems: ShoppingItemView[] = [
     askedBy: anaRef,
     addedAt: "2026-11-18T10:02:00.000Z",
     version: 1,
-    cartOwner: null,
+    cartOwner: anaRef,
   },
 ];
 

@@ -129,6 +129,68 @@ describe("Shopping list", () => {
       .and("contain", "asked for by Bruno Díaz");
   });
 
+  it("shows a second person taking an item into their cart while the list is open, locking it for Ana", () => {
+    let items: ShoppingItemView[] = [bread, milk];
+    let reads = 0;
+    cy.intercept("GET", "/api/household/shopping", (req) => {
+      reads += 1;
+      req.reply({ items });
+    });
+
+    // Opened in a background tab: the list goes live once Ana looks at it, after its first read.
+    cy.visit("/shopping", { onBeforeLoad: openInBackground });
+    cy.contains("li", "Bread");
+    setPageVisibility("visible");
+    // The first read, then the one connecting makes to catch up: anything newer comes from the event.
+    cy.wrap(null).should(() => expect(reads).to.equal(2));
+    cy.get('input[aria-label="Put Milk in your cart"]').should("be.enabled");
+
+    // Bruno, in the shop, takes the milk: the API now lists it in his cart and announces the change.
+    cy.then(() => {
+      items = [bread, { ...milk, cartOwner: brunoRef }];
+    });
+    cy.task("socket:emit", "shopping:changed");
+
+    cy.contains("li", "Milk").should("contain", "In Bruno Díaz's cart");
+    cy.get('input[aria-label="Put Milk in your cart"]').should("be.disabled");
+    cy.contains("li", "Bread").should("not.contain", "cart");
+    cy.get('button[aria-label="Options for Milk"]').click();
+    for (const action of ["Edit", "Delete"]) {
+      cy.contains("[role=menuitem]", action)
+        .should("have.attr", "aria-disabled", "true")
+        .and("contain", "Only Bruno Díaz can change it while it's in their cart.");
+    }
+  });
+
+  it("puts an item in Ana's cart with one tap, and says so when Bruno got to another one first", () => {
+    let items: ShoppingItemView[] = [bread, milk];
+    cy.intercept("GET", "/api/household/shopping", (req) => req.reply({ items }));
+    cy.intercept("PUT", "/api/household/shopping/items/item_bread/cart", (req) => {
+      items = [{ ...bread, cartOwner: anaRef }, milk];
+      req.reply({ item: items[0] });
+    }).as("bread");
+    cy.intercept("PUT", "/api/household/shopping/items/item_milk/cart", (req) => {
+      // Bruno tapped the milk a moment earlier.
+      items = [
+        { ...bread, cartOwner: anaRef },
+        { ...milk, cartOwner: brunoRef },
+      ];
+      req.reply({ statusCode: 409, body: { error: { code: "shopping.item.in_cart" } } });
+    }).as("milk");
+
+    cy.visit("/shopping");
+    cy.contains("label", "Bread").click();
+    cy.wait("@bread");
+    cy.contains("li", "Bread").should("contain", "In your cart");
+    cy.get('input[aria-label="Take Bread out of your cart"]').should("be.checked");
+
+    cy.contains("label", "Milk").click();
+    cy.wait("@milk");
+    cy.contains("[role=alert]", "It's in someone else's cart now, so only they can change it.");
+    cy.contains("li", "Milk").should("contain", "In Bruno Díaz's cart");
+    cy.get('input[aria-label="Put Milk in your cart"]').should("not.be.checked").and("be.disabled");
+  });
+
   it("edits an item someone changed meanwhile, saving the person's version once they've seen theirs", () => {
     let items: ShoppingItemView[] = [milk];
     const edits: unknown[] = [];
