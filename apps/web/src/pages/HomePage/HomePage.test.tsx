@@ -4,7 +4,17 @@ import { http, HttpResponse } from "msw";
 import { describe, expect, it, vi } from "vitest";
 import { expectNoA11yViolations } from "../../test/axe";
 import { installFakeGoogle, renderApp } from "../../test/renderApp";
-import { ana, anaIsOwed, apiError, balancesView, handlers, householdView, member, server } from "../../test/server";
+import {
+  ana,
+  anaIsOwed,
+  apiError,
+  balancesView,
+  handlers,
+  householdView,
+  member,
+  server,
+  shoppingItem,
+} from "../../test/server";
 import { firstName } from "./HomePage";
 
 describe("firstName", () => {
@@ -299,6 +309,38 @@ describe("HomePage", () => {
         const money = await screen.findByRole("region", { name: "Expenses" });
         await within(money).findByText("You're all square");
         expect(direction(money)).toBeNull();
+      });
+    });
+
+    describe("the shopping card", () => {
+      it("sits right below the money card, with how many things are left to buy and the way to the list", async () => {
+        server.use(
+          handlers.signedIn(),
+          handlers.household(shared),
+          handlers.shopping([shoppingItem(), shoppingItem({ id: "item_eggs", name: "Eggs" })]),
+        );
+        renderApp({ path: "/" });
+        const card = await screen.findByRole("region", { name: "Shopping" });
+        expect(await within(card).findByText("2 things to buy")).toBeInTheDocument();
+        expect(within(card).getByRole("link", { name: "See the list" })).toHaveAttribute("href", "/shopping");
+        const regions = screen.getAllByRole("region");
+        const money = screen.getByRole("region", { name: "Expenses" });
+        expect(regions.indexOf(card)).toBe(regions.indexOf(money) + 1);
+      });
+
+      it("counts one thing in the singular", async () => {
+        server.use(handlers.signedIn(), handlers.household(shared), handlers.shopping([shoppingItem()]));
+        renderApp({ path: "/" });
+        const card = await screen.findByRole("region", { name: "Shopping" });
+        expect(await within(card).findByText("1 thing to buy")).toBeInTheDocument();
+      });
+
+      it("says so when nothing is needed, in Spanish too", async () => {
+        server.use(handlers.signedIn(), handlers.household(shared));
+        renderApp({ path: "/", locale: "es" });
+        const card = await screen.findByRole("region", { name: "Compras" });
+        expect(await within(card).findByText("Ahora no falta nada")).toBeInTheDocument();
+        expect(within(card).getByRole("link", { name: "Ver la lista" })).toHaveAttribute("href", "/shopping");
       });
     });
 

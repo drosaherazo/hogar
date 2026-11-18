@@ -106,3 +106,31 @@
   flex-wrap: wrap;
   gap: var(--space-3);
 }
+
+/* The money card with the shopping card below it: one column of the two on wide screens. */
+.stack {
+  display: grid;
+  gap: var(--space-6);
+  min-inline-size: 0;
+}
+
+.shopping {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+.toBuy {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+.shoppingLink {
+  justify-self: start;
+}
