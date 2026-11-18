@@ -1,4 +1,4 @@
-import type { AddShoppingItemInput, ShoppingItemView, UpdateShoppingItemInput } from "@hogar/shared";
+import type { AddShoppingItemInput, PersonRef, ShoppingItemView, UpdateShoppingItemInput } from "@hogar/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "../api/ApiClientContext";
 
@@ -95,6 +95,39 @@ export function useRestoreShoppingItem() {
         shoppingKeys.list,
         (items) => items && inListOrder([...items.filter((other) => other.id !== item.id), item]),
       );
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
+  });
+}
+
+/** Moving an item into the viewer's cart (`owner` is the viewer), or out of it (`owner` is null). */
+export interface CartMove {
+  item: ShoppingItemView;
+  owner: PersonRef | null;
+}
+
+/**
+ * Moves an item in or out of the person's cart at once, before the server answers, the way a tap in
+ * a shop should feel. It moves back if the server refuses (someone else got there first) or never
+ * hears of it, and the list is re-read either way, so it then shows whose cart the item is in
+ * (ADR 0009).
+ */
+export function useMoveInCart() {
+  const client = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ item, owner }: CartMove) => (owner ? client.putInCart(item.id) : client.takeOutOfCart(item.id)),
+    onMutate: async ({ item, owner }) => {
+      await queryClient.cancelQueries({ queryKey: shoppingKeys.list });
+      const before = queryClient.getQueryData<ShoppingItemView[]>(shoppingKeys.list);
+      queryClient.setQueryData<ShoppingItemView[]>(
+        shoppingKeys.list,
+        (items) => items && items.map((other) => (other.id === item.id ? { ...other, cartOwner: owner } : other)),
+      );
+      return { before };
+    },
+    onError: (_error, _move, context) => {
+      if (context?.before) queryClient.setQueryData(shoppingKeys.list, context.before);
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: shoppingKeys.list }),
   });

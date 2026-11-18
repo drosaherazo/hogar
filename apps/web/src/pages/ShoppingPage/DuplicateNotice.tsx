@@ -2,6 +2,7 @@ import type { ShoppingItemView } from "@hogar/shared";
 import { Alert, Button } from "@hogar/ui";
 import { useTranslation } from "react-i18next";
 import { errorKey } from "../../api/client";
+import { useCurrentUser } from "../../auth/guards";
 import { useEditShoppingItem } from "../../shopping/useShopping";
 
 export interface DuplicateNoticeProps {
@@ -15,13 +16,16 @@ export interface DuplicateNoticeProps {
 
 /**
  * "Milk is already on the list." When the person wrote a note the existing item doesn't have,
- * it offers to give it that note, so their detail isn't lost (ADR 0009).
+ * it offers to give it that note, so their detail isn't lost (ADR 0009). Not while the item is in
+ * someone else's cart: only they can change it then.
  */
 export function DuplicateNotice({ existing, note, onNoteUsed }: DuplicateNoticeProps) {
   const { t } = useTranslation(["shopping", "errors"]);
   const edit = useEditShoppingItem();
+  const user = useCurrentUser();
+  const free = existing !== undefined && (existing.cartOwner === null || existing.cartOwner.userId === user.id);
   const useMyNote =
-    existing !== undefined && note !== null && note !== existing.note
+    existing !== undefined && free && note !== null && note !== existing.note
       ? () => edit.mutate({ id: existing.id, input: { note, version: existing.version } }, { onSuccess: onNoteUsed })
       : null;
 

@@ -91,6 +91,11 @@ export const shoppingItemViewSchema = z.object({
   askedBy: personRefSchema.optional(),
   addedAt: z.iso.datetime(),
   version: z.number().int().min(1),
+  /**
+   * Whose cart it is in while someone shops, or null. Only that person can take it out, change it
+   * or delete it. Never a former member: leaving, being removed or becoming a guest empties a cart.
+   */
+  cartOwner: personRefSchema.nullable(),
 });
 export type ShoppingItemView = z.infer<typeof shoppingItemViewSchema>;
 

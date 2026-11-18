@@ -318,6 +318,14 @@ describe("shopping:changed", () => {
       .post(`${itemPath(id)}/restore`)
       .set("Authorization", who.auth);
   const idOf = (res: { body: unknown }) => shoppingItemResponseSchema.parse(res.body).item.id;
+  const putInCart = (who: SignedIn, id: string) =>
+    request(api.app)
+      .put(`${itemPath(id)}/cart`)
+      .set("Authorization", who.auth);
+  const takeOutOfCart = (who: SignedIn, id: string) =>
+    request(api.app)
+      .delete(`${itemPath(id)}/cart`)
+      .set("Authorization", who.auth);
 
   it("reaches the other members when someone adds an item", async () => {
     const { ana, bruno } = await household();
@@ -396,5 +404,101 @@ describe("shopping:changed", () => {
     await added;
 
     expect(received).toEqual(["shopping:changed"]);
+  });
+
+  it("reaches the other members when someone puts an item in their cart or takes it out", async () => {
+    const { ana, bruno } = await household();
+    const milk = idOf(await addItem(ana, "Milk").expect(201));
+    const anaSocket = await connectAs(ana);
+    const received = record(anaSocket);
+
+    let changed = nextEvent(anaSocket, "shopping:changed");
+    await putInCart(bruno, milk).expect(200);
+    await changed;
+    changed = nextEvent(anaSocket, "shopping:changed");
+    await takeOutOfCart(bruno, milk).expect(200);
+    await changed;
+
+    expect(received).toEqual(["shopping:changed", "shopping:changed"]);
+  });
+
+  it("announces nothing for a cart tap that is refused or changes nothing", async () => {
+    const { ana, bruno } = await household();
+    const milk = idOf(await addItem(ana, "Milk").expect(201));
+    await putInCart(bruno, milk).expect(200);
+    const anaSocket = await connectAs(ana);
+    const received = record(anaSocket);
+
+    await putInCart(bruno, milk).expect(200);
+    await putInCart(ana, milk).expect(409);
+    await takeOutOfCart(ana, milk).expect(409);
+    // In order on one connection: the next add's event arriving alone means none of the above sent one.
+    const added = nextEvent(anaSocket, "shopping:changed");
+    await addItem(bruno, "Bread").expect(201);
+    await added;
+
+    expect(received).toEqual(["shopping:changed"]);
+  });
+
+  it("tells the household about the role first, then the list, when a new guest's cart goes back to it", async () => {
+    const { ana, bruno } = await household();
+    const milk = idOf(await addItem(ana, "Milk").expect(201));
+    await putInCart(bruno, milk).expect(200);
+    const anaSocket = await connectAs(ana);
+    const brunoSocket = await connectAs(bruno);
+    const anaReceived = record(anaSocket);
+    const brunoReceived = record(brunoSocket);
+    const emptied = [nextEvent(anaSocket, "shopping:changed"), nextEvent(brunoSocket, "shopping:changed")];
+
+    await request(api.app)
+      .patch(`/api/household/members/${bruno.membershipId}`)
+      .set("Authorization", ana.auth)
+      .send({ role: "GUEST" })
+      .expect(200);
+    await Promise.all(emptied);
+
+    expect(anaReceived).toEqual(["household:changed", "shopping:changed"]);
+    expect(brunoReceived).toEqual(["household:changed", "shopping:changed"]);
+  });
+
+  it("tells those who stay that the list changed when someone leaves or is removed with items in their cart", async () => {
+    const { ana, home, bruno } = await household();
+    const carla = await addMember(api.app, home.id, carlaIdentity, "MEMBER");
+    for (const name of ["Milk", "Eggs"]) {
+      const id = idOf(await addItem(ana, name).expect(201));
+      await putInCart(name === "Milk" ? bruno : carla, id).expect(200);
+    }
+    const anaSocket = await connectAs(ana);
+    const received = record(anaSocket);
+
+    let emptied = nextEvent(anaSocket, "shopping:changed");
+    await request(api.app).post("/api/household/leave").set("Authorization", bruno.auth).expect(204);
+    await emptied;
+    emptied = nextEvent(anaSocket, "shopping:changed");
+    await request(api.app)
+      .delete(`/api/household/members/${carla.membershipId}`)
+      .set("Authorization", ana.auth)
+      .expect(200);
+    await emptied;
+
+    expect(received).toEqual(["household:changed", "shopping:changed", "household:changed", "shopping:changed"]);
+  });
+
+  it("leaves the list alone when the person whose role changes had nothing in their cart", async () => {
+    const { ana, bruno } = await household();
+    const anaSocket = await connectAs(ana);
+    const received = record(anaSocket);
+
+    await request(api.app)
+      .patch(`/api/household/members/${bruno.membershipId}`)
+      .set("Authorization", ana.auth)
+      .send({ role: "GUEST" })
+      .expect(200);
+    // In order on one connection: the add's event right after the role's means the change sent no other.
+    const added = nextEvent(anaSocket, "shopping:changed");
+    await addItem(ana, "Bread").expect(201);
+    await added;
+
+    expect(received).toEqual(["household:changed", "shopping:changed"]);
   });
 });

@@ -11,23 +11,32 @@ import * as MenuStories from "./Menu.stories";
 <Canvas of={MenuStories.AccountMenu} />
 
 ## What it is and when to use it
+
 A short list of actions or options that opens from a button, like the account menu (theme, language, sign out). Use it to keep secondary actions out of the way. Don't hide the main action of a screen inside a menu.
 
 ## Why it's designed this way
+
 - **Built on react-aria:** keyboard navigation, focus management and roles come from a well-tested library; we only add the Hogar look.
 - **A white panel with large corners and a soft shadow** that grows gently from its trigger (`--duration-base`).
 - **Rows at least 44 px tall**, with a sunken highlight instead of a strong color, and a small fuchsia dot for the selected option.
 - **Groups with a muted label** ("Theme", "Language") and separators, so options are scannable.
+- **A disabled item says why**, in a short muted line under its name ("Only Bruno can change it while it's in their cart."). It stays in its place instead of vanishing, and it is muted rather than faded, so the reason stays readable.
+
+<Canvas of={MenuStories.DisabledWithReason} />
 
 ## How it helps the person
+
 - **A tidy screen:** less-used settings stay one tap away without cluttering the page.
 - **Control:** options show which one is active, so the person always knows the current state.
 - **Evidence-backed:** consistent keyboard support (arrows, Enter, Escape returning focus to the trigger) follows the WAI-ARIA menu pattern.
+- **Design intent:** an action that is greyed out with no explanation feels like a bug or a rule nobody told you about. Saying who can do it, and why, turns "it doesn't work" into "Bruno has it", which lowers tension between housemates.
 
 ## Accessibility
+
 - The trigger must be a focusable control with an accessible name (for an avatar button, a translated `aria-label`).
 - `menu`, `menuitem` and `menuitemradio` roles with `aria-checked`; Escape closes and returns focus.
 - Group labels and option labels come in already translated.
+- An item's `description` comes in translated too. It is the item's accessible description (`aria-describedby`), never part of its name, so "Edit" is still announced as "Edit". react-aria skips disabled items when moving with the arrow keys, so the screen should also say why elsewhere (the shopping list's "In Bruno's cart" next to the item).
 
 </Lang>
 
@@ -38,22 +47,31 @@ A short list of actions or options that opens from a button, like the account me
 <Canvas of={MenuStories.AccountMenu} />
 
 ## Qué es y cuándo usarlo
+
 Una lista corta de acciones u opciones que se abre desde un botón, como el menú de cuenta (tema, idioma, cerrar sesión). Úsalo para apartar las acciones secundarias. No escondas en un menú la acción principal de una pantalla.
 
 ## Por qué está diseñado así
+
 - **Basado en react-aria:** la navegación con teclado, el manejo del foco y los roles vienen de una librería probada; nosotros solo ponemos el aspecto de Hogar.
 - **Un panel blanco con esquinas amplias y sombra suave** que crece con suavidad desde su botón (`--duration-base`).
 - **Filas de al menos 44 px**, con un resaltado hundido en vez de un color fuerte, y un pequeño punto fucsia en la opción elegida.
 - **Grupos con una etiqueta tenue** ("Tema", "Idioma") y separadores, para que las opciones se recorran fácilmente.
+- **Una opción desactivada dice por qué**, en una línea corta y tenue bajo su nombre ("Solo Bruno puede cambiarlo mientras esté en su carrito."). Se queda en su sitio en vez de desaparecer, y se atenúa el color en vez de la opacidad, para que el motivo se siga leyendo.
+
+<Canvas of={MenuStories.DisabledWithReason} />
 
 ## Cómo ayuda a la persona
+
 - **Una pantalla ordenada:** los ajustes menos usados quedan a un toque sin saturar la página.
 - **Control:** las opciones muestran cuál está activa, así la persona siempre conoce el estado actual.
 - **Respaldado:** el soporte de teclado coherente (flechas, Enter, Escape devolviendo el foco al botón) sigue el patrón de menú de WAI-ARIA.
+- **Intención de diseño:** una acción gris sin explicación parece un fallo o una norma que nadie te contó. Decir quién puede hacerla, y por qué, convierte "no funciona" en "lo tiene Bruno", y eso baja la tensión entre quienes conviven.
 
 ## Accesibilidad
+
 - El botón que lo abre debe ser enfocable y tener nombre accesible (en un botón con avatar, un `aria-label` traducido).
 - Roles `menu`, `menuitem` y `menuitemradio` con `aria-checked`; Escape cierra y devuelve el foco.
 - Las etiquetas de grupo y de opción llegan ya traducidas.
+- La `description` de una opción también llega traducida. Es su descripción accesible (`aria-describedby`), nunca parte del nombre, así que "Editar" se sigue anunciando como "Editar". react-aria salta las opciones desactivadas al moverse con las flechas, así que la pantalla debe decir el motivo también en otro sitio (en la lista de la compra, "En el carrito de Bruno" junto a la cosa).
 
 </Lang>
