@@ -148,7 +148,6 @@ function CartExpense({ household }: { household: HouseholdView }) {
     <CartExpenseForm
       household={household}
       items={cartOf(list.data, user.id)}
-      // A list kept by the installed app before this field existed has none.
       lastCategoryId={lastCategory.data ?? null}
     />
   );
