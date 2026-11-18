@@ -68,6 +68,11 @@ export function useChangeCurrency() {
   return useHouseholdMutation((currency: CurrencyCode) => client.changeCurrency(currency));
 }
 
+export function useSetShowWhoAsked() {
+  const client = useApiClient();
+  return useHouseholdMutation((showWhoAsked: boolean) => client.setShowWhoAsked(showWhoAsked));
+}
+
 export function useChangeRole() {
   const client = useApiClient();
   return useHouseholdMutation(({ membershipId, role }: { membershipId: string; role: Role }) =>
