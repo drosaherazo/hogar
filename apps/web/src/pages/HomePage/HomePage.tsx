@@ -157,7 +157,7 @@ function MoneyCard({ canEdit }: { canEdit: boolean }) {
 
   return (
     <Card as="section" padding="lg" tone="brand" aria-labelledby={titleId} className={styles.money}>
-      <h2 id={titleId} className={styles.moneyTitle}>
+      <h2 id={titleId} className={styles.cardTitle}>
         {t("home.title")}
       </h2>
       {balances.isPending ? (

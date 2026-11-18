@@ -42,13 +42,13 @@ export function ShoppingPage() {
       ) : household.isError ? (
         <LoadError error={household.error} onRetry={() => void household.refetch()} />
       ) : (
-        current && <ShoppingList household={current} />
+        current && <ListAndForm household={current} />
       )}
     </AppShell>
   );
 }
 
-function ShoppingList({ household }: { household: HouseholdView }) {
+function ListAndForm({ household }: { household: HouseholdView }) {
   const { t } = useTranslation(["shopping", "common"]);
   const list = useShoppingList();
   const items = list.data ?? [];

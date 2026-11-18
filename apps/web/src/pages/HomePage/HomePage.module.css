@@ -72,7 +72,7 @@
   gap: var(--space-4);
 }
 
-.moneyTitle {
+.cardTitle {
   margin: 0;
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
@@ -117,13 +117,6 @@
 .shopping {
   display: grid;
   gap: var(--space-4);
-}
-
-.cardTitle {
-  margin: 0;
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
 }
 
 .toBuy {
