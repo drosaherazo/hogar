@@ -117,7 +117,8 @@
       "none": "No category"
     },
     "bought": "What you bought",
-    "boughtChanged": "Your cart changed. Check what you bought before saving."
+    "boughtChanged": "Your cart changed. Check what you bought before saving.",
+    "cartEmpty": "Your cart is empty now, so there's nothing to note. It may have been finished on another device."
   },
   "details": {
     "back": "Back to expenses",

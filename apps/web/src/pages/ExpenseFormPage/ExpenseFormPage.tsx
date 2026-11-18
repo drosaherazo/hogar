@@ -279,10 +279,12 @@ function ExpenseForm({ household, existing, onConflict, fromCart }: ExpenseFormP
         )
       : "");
   // What the cart held when the form opened; when it changes (on the person's other device), the
-  // form asks to check what they bought before saving.
+  // form asks to check what they bought before saving. Once it is empty (finished on that device)
+  // there is nothing left to note: the form says so and offers the way back to the list.
   const [openedWith] = useState(cartIds);
   const [cartRefused, setCartRefused] = useState(false);
-  const cartChanged = fromCart !== undefined && (cartRefused || !sameIds(openedWith, cartIds));
+  const cartEmpty = fromCart !== undefined && cartIds.length === 0;
+  const cartChanged = fromCart !== undefined && !cartEmpty && (cartRefused || !sameIds(openedWith, cartIds));
   const [amountText, setAmountText] = useState(
     existing ? amountInputValue(existing.amountCents, currency, locale) : "",
   );
@@ -451,7 +453,7 @@ function ExpenseForm({ household, existing, onConflict, fromCart }: ExpenseFormP
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (fromCart && cartIds.length === 0) return;
+    if (cartEmpty) return;
     const result = expenseInputSchema.safeParse({
       description,
       amountCents: cents ?? Number.NaN,
@@ -524,6 +526,11 @@ function ExpenseForm({ household, existing, onConflict, fromCart }: ExpenseFormP
     <form className={styles.form} onSubmit={submit} onKeyDown={moveToNextField} noValidate>
       {save.isError && !shownElsewhere && <Alert tone="danger">{t(errorKey(save.error), amountField.limits)}</Alert>}
       {cartChanged && <Alert tone="warning">{t("form.boughtChanged")}</Alert>}
+      {cartEmpty && (
+        <Alert tone="warning" action={<ActionLink to="/shopping">{t("form.backToShopping")}</ActionLink>}>
+          {t("form.cartEmpty")}
+        </Alert>
+      )}
       <TextField
         label={t("form.description")}
         hint={t("form.descriptionHint")}
@@ -653,7 +660,7 @@ function ExpenseForm({ household, existing, onConflict, fromCart }: ExpenseFormP
         </fieldset>
       )}
 
-      {cartItems && (
+      {cartItems && !cartEmpty && (
         <section className={styles.preview} aria-labelledby={boughtId}>
           <h2 id={boughtId} className={styles.previewTitle}>
             {t("form.bought")}
@@ -670,7 +677,7 @@ function ExpenseForm({ household, existing, onConflict, fromCart }: ExpenseFormP
           type="submit"
           loading={save.isPending}
           loadingLabel={t("form.saving")}
-          disabled={method === "EXACT" && remaining !== 0}
+          disabled={cartEmpty || (method === "EXACT" && remaining !== 0)}
         >
           {t("form.save")}
         </Button>

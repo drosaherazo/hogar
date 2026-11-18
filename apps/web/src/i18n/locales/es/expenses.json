@@ -117,7 +117,8 @@
       "none": "Sin categoría"
     },
     "bought": "Lo que compraste",
-    "boughtChanged": "Tu carrito cambió. Revisa lo que compraste antes de guardar."
+    "boughtChanged": "Tu carrito cambió. Revisa lo que compraste antes de guardar.",
+    "cartEmpty": "Tu carrito ya está vacío, así que no hay nada que anotar. Quizá se terminó la compra en otro dispositivo."
   },
   "details": {
     "back": "Volver a gastos",
