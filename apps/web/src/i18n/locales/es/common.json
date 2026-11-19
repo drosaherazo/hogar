@@ -5,7 +5,8 @@
   "nav": {
     "label": "Principal",
     "home": "Inicio",
-    "expenses": "Gastos"
+    "expenses": "Gastos",
+    "shopping": "Compras"
   },
   "theme": {
     "label": "Tema",
@@ -74,5 +75,9 @@
       "title": "Estás sin conexión",
       "description": "Hogar vuelve en cuanto recuperes la conexión."
     }
+  },
+  "toasts": {
+    "label": "Notificaciones",
+    "close": "Cerrar"
   }
 }

@@ -13,6 +13,8 @@ import type { Database } from "../db";
 import { Prisma, type Membership } from "../generated/prisma/client";
 import { seedStarterCategories } from "../categories/starterCategories";
 import { badRequest, conflict, forbidden, notFound } from "../httpError";
+import { noHouseholdEvents, type HouseholdEvents } from "../realtime/householdEvents";
+import { emptyCart } from "../shopping/carts";
 import { CURRENCY_LOCK_COUNTS, HOUSEHOLD_VIEW_INCLUDE, isCurrencyLocked, toHouseholdView } from "./householdView";
 
 /**
@@ -68,6 +70,7 @@ export function clearRemovalNotice(client: Prisma.TransactionClient | Database, 
 export interface HouseholdServiceDeps {
   db: Database;
   now?: (() => Date) | undefined;
+  events?: HouseholdEvents;
 }
 
 /** True when Postgres rejected a row because it would break a unique constraint. */
@@ -75,13 +78,27 @@ export function isUniqueViolation(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
 }
 
-export function createHouseholdService({ db, now = () => new Date() }: HouseholdServiceDeps) {
+export function createHouseholdService({
+  db,
+  now = () => new Date(),
+  events = noHouseholdEvents,
+}: HouseholdServiceDeps) {
   async function view(householdId: string, viewerUserId: string): Promise<HouseholdView> {
     const household = await db.household.findUniqueOrThrow({
       where: { id: householdId },
       include: HOUSEHOLD_VIEW_INCLUDE,
     });
     return toHouseholdView(household, viewerUserId);
+  }
+
+  /**
+   * Tells the household its members or roles changed and, when that emptied someone's cart, that the
+   * shopping list changed too. The household goes first, so a screen re-reading both learns about
+   * the role before, or along with, the cart that went back to the list.
+   */
+  function announceMembershipChange(householdId: string, cartEmptied: boolean) {
+    events.publish(householdId, "household:changed");
+    if (cartEmptied) events.publish(householdId, "shopping:changed");
   }
 
   return {
@@ -122,10 +139,11 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
     },
 
     /**
-     * An admin renames the household or changes its currency. The currency only changes while the
-     * household has never recorded an expense or payment (ADR 0011): the row is locked first, so a
-     * money record saved at the same time either lands before (and the change is refused) or reads
-     * the new currency (and is refused itself, `money.currency.mismatch`).
+     * An admin renames the household, changes its currency or shows or hides who asked for each
+     * shopping item. The currency only changes while the household has never recorded an expense or
+     * payment (ADR 0011): the row is locked first, so a money record saved at the same time either
+     * lands before (and the change is refused) or reads the new currency (and is refused itself,
+     * `money.currency.mismatch`).
      */
     async update(householdId: string, viewerUserId: string, changes: UpdateHouseholdRequest): Promise<HouseholdView> {
       await db.$transaction(async (tx) => {
@@ -141,26 +159,36 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
           data: {
             ...(changes.name !== undefined && { name: changes.name }),
             ...(changes.currency !== undefined && { currency: changes.currency }),
+            ...(changes.showWhoAsked !== undefined && { showWhoAsked: changes.showWhoAsked }),
           },
         });
       });
+      events.publish(householdId, "household:changed");
       return view(householdId, viewerUserId);
     },
 
-    /** Any role change, as long as an admin remains. Weights never change with roles. */
+    /**
+     * Any role change, as long as an admin remains. Weights never change with roles. A guest can't
+     * shop, so becoming one puts that person's cart back on the list.
+     */
     async changeRole(actor: Membership, membershipId: string, role: Role): Promise<HouseholdView> {
-      await db.$transaction(async (tx) => {
+      const cartEmptied = await db.$transaction(async (tx) => {
         await guardAdmins(tx, actor.householdId, { type: "role", membershipId, role }, actor.id);
-        await tx.membership.update({ where: { id: membershipId }, data: { role } });
+        const changed = await tx.membership.update({ where: { id: membershipId }, data: { role } });
+        return role === "GUEST" && (await emptyCart(tx, actor.householdId, changed.userId)) > 0;
       });
+      announceMembershipChange(actor.householdId, cartEmptied);
       return view(actor.householdId, actor.userId);
     },
 
-    /** An admin removes someone else; that person sees a one-time note on their next visit. */
+    /**
+     * An admin removes someone else; that person sees a one-time note on their next visit, and their
+     * cart goes back to the list.
+     */
     async removeMember(actor: Membership, membershipId: string): Promise<HouseholdView> {
       // Removing yourself is leaving, which has its own rules (and leaves no note).
       if (membershipId === actor.id) throw badRequest();
-      await db.$transaction(async (tx) => {
+      const { removedUserId, cartEmptied } = await db.$transaction(async (tx) => {
         await guardAdmins(tx, actor.householdId, { type: "remove", membershipId }, actor.id);
         const removed = await tx.membership.delete({
           where: { id: membershipId },
@@ -171,21 +199,31 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
           data: { removedFromHousehold: removed.household.name },
         });
         await tx.household.update({ where: { id: actor.householdId }, data: { membersChangedAt: now() } });
+        const emptied = await emptyCart(tx, actor.householdId, removed.userId);
+        return { removedUserId: removed.userId, cartEmptied: emptied > 0 };
       });
+      events.membershipEnded(actor.householdId, removedUserId);
+      announceMembershipChange(actor.householdId, cartEmptied);
       return view(actor.householdId, actor.userId);
     },
 
-    /** Anyone can leave unless they're the last admin; the last member takes the household with them. */
+    /**
+     * Anyone can leave unless they're the last admin; the last member takes the household with them.
+     * Otherwise whatever was in their cart goes back to the list for the others.
+     */
     async leave(membership: Membership): Promise<void> {
-      await db.$transaction(async (tx) => {
+      const cartEmptied = await db.$transaction(async (tx) => {
         const result = await guardAdmins(tx, membership.householdId, { type: "leave", membershipId: membership.id });
         if (result === "deletes_household") {
           await tx.household.delete({ where: { id: membership.householdId } });
-          return;
+          return false;
         }
         await tx.membership.delete({ where: { id: membership.id } });
         await tx.household.update({ where: { id: membership.householdId }, data: { membersChangedAt: now() } });
+        return (await emptyCart(tx, membership.householdId, membership.userId)) > 0;
       });
+      events.membershipEnded(membership.householdId, membership.userId);
+      announceMembershipChange(membership.householdId, cartEmptied);
     },
 
     /**
@@ -212,6 +250,7 @@ export function createHouseholdService({ db, now = () => new Date() }: Household
         }
         await tx.household.update({ where: { id: actor.householdId }, data: { splitSavedAt: now() } });
       });
+      events.publish(actor.householdId, "household:changed");
       return view(actor.householdId, actor.userId);
     },
 

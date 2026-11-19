@@ -1,16 +1,19 @@
-import type {
-  ActivityItem,
-  ActivityPage,
-  AuthResponse,
-  AuthUser,
-  BalancesView,
-  CategoryView,
-  ErrorCode,
-  ExpenseView,
-  HouseholdView,
-  MemberView,
-  PersonRef,
-  SettlementView,
+import {
+  shoppingNameKey,
+  type ActivityItem,
+  type ActivityPage,
+  type AuthResponse,
+  type AuthUser,
+  type BalancesView,
+  type CategoryView,
+  type ErrorCode,
+  type ExpenseView,
+  type HouseholdView,
+  type MemberView,
+  type PersonRef,
+  type SettlementView,
+  type ShoppingItemView,
+  type ShoppingSuggestion,
 } from "@hogar/shared";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -31,7 +34,7 @@ export const apiError = (status: number, code: ErrorCode) => HttpResponse.json({
 
 /**
  * By default the server is awake (health answers 200) and nobody is signed in: refresh answers 401 and logout succeeds. Balances default to
- * "all square", so pages that show a balance sentence work without setting them up.
+ * "all square" and the shopping list to empty, so pages that show them work without setting them up.
  */
 export const server = setupServer(
   http.get("*/api/health", () => HttpResponse.json({ status: "ok" })),
@@ -40,6 +43,8 @@ export const server = setupServer(
   http.get("*/api/household/balances", () => HttpResponse.json(balancesView())),
   http.get("*/api/household/categories", () => HttpResponse.json({ categories: starterCategories() })),
   http.get("*/api/household/invitations", () => HttpResponse.json({ invitations: [] })),
+  http.get("*/api/household/shopping", () => HttpResponse.json({ items: [], lastCategoryId: null })),
+  http.get("*/api/household/shopping/suggestions", () => HttpResponse.json({ suggestions: [] })),
   // Anything a test didn't set up answers like a broken server, not a lost connection: a network
   // failure would switch the app to its offline view and leave unrelated pages read-only.
   http.all("*/api/*", ({ request }) => {
@@ -71,6 +76,7 @@ export function householdView(overrides: Partial<HouseholdView> = {}): Household
     myRole: "ADMIN",
     members: [member({ id: "m_ana", userId: ana.id, name: ana.name, role: "ADMIN", weight: 1, shareBps: 10000 })],
     splitNeedsReview: false,
+    showWhoAsked: true,
     ...overrides,
   };
 }
@@ -114,6 +120,7 @@ export function expenseView(overrides: Partial<ExpenseView> = {}): ExpenseView {
     editedAt: null,
     version: 1,
     category: null,
+    boughtItems: [],
     ...overrides,
   };
 }
@@ -141,6 +148,20 @@ export function starterCategories(): CategoryView[] {
     categoryView({ id: "cat_leisure", name: "Leisure", emoji: "🎉", position: 4 }),
     categoryView({ id: "cat_other", name: "Other", emoji: "📦", position: 5 }),
   ];
+}
+
+/** Milk, asked for by Bruno and in nobody's cart; override the name, note, who asked or whose cart. */
+export function shoppingItem(overrides: Partial<ShoppingItemView> = {}): ShoppingItemView {
+  return {
+    id: "item_milk",
+    name: "Milk",
+    note: null,
+    askedBy: brunoRef,
+    addedAt: "2026-11-18T10:00:00.000Z",
+    version: 1,
+    cartOwner: null,
+    ...overrides,
+  };
 }
 
 /** Everyone square unless overridden. */
@@ -222,6 +243,16 @@ export const handlers = {
     http.get("*/api/household/expenses/:id", () => HttpResponse.json({ expense })),
   categories: (categories: CategoryView[] = starterCategories()) =>
     http.get("*/api/household/categories", () => HttpResponse.json({ categories })),
+  /** The list, and the category of the household's last purchase expense (none by default). */
+  shopping: (items: ShoppingItemView[], lastCategoryId: string | null = null) =>
+    http.get("*/api/household/shopping", () => HttpResponse.json({ items, lastCategoryId })),
+  /** What the household bought before, matched like the server does: anywhere in the folded name. */
+  suggestions: (bought: ShoppingSuggestion[]) =>
+    http.get("*/api/household/shopping/suggestions", ({ request }) => {
+      const wanted = shoppingNameKey(new URL(request.url).searchParams.get("q") ?? "");
+      const suggestions = bought.filter((suggestion) => shoppingNameKey(suggestion.name).includes(wanted));
+      return HttpResponse.json({ suggestions: suggestions.slice(0, 5) });
+    }),
   balances: (view: BalancesView = anaIsOwed()) => http.get("*/api/household/balances", () => HttpResponse.json(view)),
   settlement: (settlement: SettlementView = settlementView()) =>
     http.get("*/api/household/settlements/:id", () => HttpResponse.json({ settlement })),

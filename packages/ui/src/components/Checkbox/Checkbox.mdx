@@ -14,11 +14,15 @@ import * as CheckboxStories from "./Checkbox.stories";
 ## What it is and when to use it
 A single yes-or-no choice inside a form, such as "Use its own split" for an expense category. Use it when the choice only takes effect once the person saves. For picking one of several options, use radio buttons (`ChoiceGroup`) instead.
 
+It is also the check on a list item, like ticking a line off a paper list: on the shopping list, ticking an item puts it in your cart. There it takes the `positive` tone and the `lg` size, so the label reads as the item's name.
+
 ## Why it's designed this way
 - **A native checkbox, not a switch.** A switch suggests that something happens the moment you flip it; here nothing changes until Save, which is what a checkbox says.
 - **The label is visible and clickable.** The whole line toggles the box and is at least 44 px tall, so it's easy to hit on a phone.
 - **An optional hint under the label** explains what ticking it means ("If unticked, it follows the household's split."), so the choice is never a guess.
 - **The accent color (`--color-accent`) tints the box**, but the check mark is what carries the meaning, in light and dark themes.
+- **On a list, the `positive` tone (teal)** matches the "In your cart" marker, so ticking reads as done, and the accent stays for the screen's main action ("Finish shopping"). The `lg` size keeps the item's name as large as it is for someone who sees it without the check.
+- **Its text takes the color around it,** so a list can make a taken item quieter without reaching inside the component.
 
 ## How it helps the person
 - **No surprises:** ticking the box only changes the form; the person sees what will happen (for example, the weights to edit) before saving anything.
@@ -33,6 +37,7 @@ A single yes-or-no choice inside a form, such as "Use its own split" for an expe
 ## Variants
 <Canvas of={CheckboxStories.Default} />
 <Canvas of={CheckboxStories.Checked} />
+<Canvas of={CheckboxStories.ListItem} />
 <Canvas of={CheckboxStories.Disabled} />
 
 </Lang>
@@ -47,11 +52,15 @@ A single yes-or-no choice inside a form, such as "Use its own split" for an expe
 ## Qué es y cuándo usarla
 Una única opción de sí o no dentro de un formulario, como "Usar un reparto propio" en una categoría de gastos. Úsala cuando la opción solo tiene efecto al guardar. Para elegir una entre varias opciones, usa botones de opción (`ChoiceGroup`).
 
+También es la marca de un elemento de una lista, como tachar una línea de una lista en papel: en la lista de la compra, marcar un artículo lo pone en tu carrito. Ahí usa el tono `positive` y el tamaño `lg`, para que la etiqueta se lea como el nombre del artículo.
+
 ## Por qué está diseñada así
 - **Una casilla nativa, no un interruptor.** Un interruptor da a entender que algo pasa en cuanto lo mueves; aquí nada cambia hasta Guardar, que es justo lo que dice una casilla.
 - **La etiqueta es visible y se puede pulsar.** Toda la línea marca la casilla y mide al menos 44 px de alto, así es fácil acertar en el móvil.
 - **Una ayuda opcional bajo la etiqueta** explica qué significa marcarla ("Si no la marcas, sigue el reparto de la casa."), para que la opción nunca sea una adivinanza.
 - **El color de acento (`--color-accent`) tiñe la casilla**, pero lo que lleva el significado es la marca de verificación, en tema claro y oscuro.
+- **En una lista, el tono `positive` (verde azulado)** coincide con la marca "En tu carrito", así marcar se lee como hecho, y el acento queda para la acción principal de la pantalla ("Terminar compra"). El tamaño `lg` mantiene el nombre del artículo tan grande como lo ve quien no tiene la casilla.
+- **Su texto toma el color de lo que la rodea,** así una lista puede atenuar un artículo ya tomado sin tocar el interior del componente.
 
 ## Cómo ayuda a la persona
 - **Sin sorpresas:** marcar la casilla solo cambia el formulario; la persona ve qué va a pasar (por ejemplo, los pesos a editar) antes de guardar nada.
@@ -66,6 +75,7 @@ Una única opción de sí o no dentro de un formulario, como "Usar un reparto pr
 ## Variantes
 <Canvas of={CheckboxStories.Default} />
 <Canvas of={CheckboxStories.Checked} />
+<Canvas of={CheckboxStories.ListItem} />
 <Canvas of={CheckboxStories.Disabled} />
 
 </Lang>

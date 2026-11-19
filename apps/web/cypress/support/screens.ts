@@ -9,6 +9,7 @@ import type {
   Locale,
   MemberView,
   PersonRef,
+  ShoppingItemView,
 } from "@hogar/shared";
 import { LANGUAGE_STORAGE_KEY } from "../../src/i18n";
 import { THEME_STORAGE_KEY, type Theme } from "../../src/theme/theme";
@@ -47,6 +48,7 @@ export const household: HouseholdView = {
     { ...member("m_carla", "user_carla", CARLA, "GUEST", 1), shareBps: 2500 },
   ],
   splitNeedsReview: false,
+  showWhoAsked: true,
 };
 
 const ref = (userId: string, name: string): PersonRef => ({ userId, name, avatarUrl: null, former: false });
@@ -105,6 +107,10 @@ export const expense: ExpenseView = {
   editedAt: "2026-11-11T09:30:00.000Z",
   version: 2,
   category: { id: leisure.id, name: leisure.name, emoji: leisure.emoji },
+  boughtItems: [
+    { name: "Leche semidesnatada sin lactosa", note: "La de cartón grande, de la marca de siempre si la hay" },
+    { name: "Paracetamol de un gramo", note: null },
+  ],
 };
 
 export const activity: ActivityPage = {
@@ -133,6 +139,40 @@ export const activity: ActivityPage = {
   nextCursor: null,
 };
 
+/**
+ * Names and notes at their longest (50 and 100 characters), asked for by the longest names, and
+ * the other two in the longest name's cart and in Ana's.
+ */
+export const shoppingItems: ShoppingItemView[] = [
+  {
+    id: "item_1",
+    name: "Detergente líquido para ropa delicada, sin perfume",
+    note: "El de la botella azul grande, que no sea el concentrado porque mancha la ropa oscura, ni el de marca",
+    askedBy: brunoRef,
+    addedAt: "2026-11-18T10:00:00.000Z",
+    version: 1,
+    cartOwner: null,
+  },
+  {
+    id: "item_2",
+    name: "Leche",
+    note: "sin lactosa",
+    askedBy: carlaRef,
+    addedAt: "2026-11-18T10:01:00.000Z",
+    version: 1,
+    cartOwner: brunoRef,
+  },
+  {
+    id: "item_3",
+    name: "Pan",
+    note: null,
+    askedBy: anaRef,
+    addedAt: "2026-11-18T10:02:00.000Z",
+    version: 1,
+    cartOwner: anaRef,
+  },
+];
+
 export const invitationPreview: InvitationPreview = {
   householdName: household.name,
   inviterName: ana.name,
@@ -148,6 +188,7 @@ export function stubSignedIn(locale: Locale) {
   cy.intercept("GET", "/api/household/balances", balances);
   cy.intercept("GET", "/api/household/activity*", activity);
   cy.intercept("GET", "/api/household/categories", { body: { categories } });
+  cy.intercept("GET", "/api/household/shopping", { body: { items: shoppingItems, lastCategoryId: null } });
   cy.intercept("GET", "/api/household/expenses/expense_1", { body: { expense } });
   cy.intercept("GET", "/api/household/invitations", { body: { invitations: [invitation("inv_1")] } });
   cy.intercept("POST", "/api/invitations/lookup", invitationPreview);
@@ -166,6 +207,8 @@ export const signedInPages = [
   "/expenses/expense_1",
   "/expenses/expense_1/edit",
   "/balances",
+  "/shopping",
+  "/shopping/finish",
   "/household/settings",
   "/invite#tok_join",
 ] as const;

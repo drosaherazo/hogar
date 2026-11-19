@@ -11,11 +11,17 @@ import {
   createdInvitationSchema,
   currentHouseholdSchema,
   expenseResponseSchema,
+  finishShoppingResponseSchema,
   householdResponseSchema,
   invitationListSchema,
   invitationPreviewSchema,
   settlementResponseSchema,
+  shoppingItemResponseSchema,
+  shoppingItemsResponseSchema,
+  shoppingListSchema,
+  shoppingSuggestionsSchema,
   type ActivityPage,
+  type AddShoppingItemInput,
   type AuthResponse,
   type AuthUser,
   type BalancesView,
@@ -38,9 +44,14 @@ import {
   type Role,
   type SettlementInput,
   type SettlementView,
+  type ShoppingItemView,
+  type ShoppingList,
+  type ShoppingSuggestion,
+  type SocketAuth,
   type UpdateCategoryInput,
   type UpdateCategorySplitInput,
   type UpdateExpenseInput,
+  type UpdateShoppingItemInput,
   type UpdateSettlementInput,
   type UpdateSplitRequest,
 } from "@hogar/shared";
@@ -197,6 +208,23 @@ export class ApiClient {
     return this.request("/me", { schema: authUserSchema });
   }
 
+  // --- Live connection ---------------------------------------------------------
+
+  /** What the live connection's handshake sends: the access token and this build's API version. */
+  realtimeAuth(): SocketAuth {
+    return { token: this.accessToken ?? "", apiVersion: API_VERSION };
+  }
+
+  /**
+   * Gets a new access token after the live connection's handshake refused `rejected`, the way a
+   * request does after a 401. A token some request already renewed meanwhile is kept, since every
+   * refresh rotates the session; when there can't be a new one, the session ends.
+   */
+  async renewAccessToken(rejected: string): Promise<void> {
+    if (this.accessToken !== null && this.accessToken !== rejected) return;
+    await this.refreshOrExpire();
+  }
+
   // --- Household -----------------------------------------------------------
 
   getHousehold(): Promise<CurrentHousehold> {
@@ -217,6 +245,13 @@ export class ApiClient {
   async changeCurrency(currency: CurrencyCode): Promise<HouseholdView> {
     return (await this.request("/household", { method: "PATCH", body: { currency }, schema: householdResponseSchema }))
       .household;
+  }
+
+  /** Whether the shopping list says who asked for each item; admins only. */
+  async setShowWhoAsked(showWhoAsked: boolean): Promise<HouseholdView> {
+    return (
+      await this.request("/household", { method: "PATCH", body: { showWhoAsked }, schema: householdResponseSchema })
+    ).household;
   }
 
   leaveHousehold(): Promise<void> {
@@ -269,6 +304,91 @@ export class ApiClient {
 
   deleteCategory(id: string, version: number): Promise<void> {
     return this.request(`/household/categories/${encodeURIComponent(id)}?version=${version}`, { method: "DELETE" });
+  }
+
+  // --- Shopping list -------------------------------------------------------
+
+  /** The items on the list, in the order they were added, and the last purchase expense's category. */
+  getShoppingList(): Promise<ShoppingList> {
+    return this.request("/household/shopping", { schema: shoppingListSchema });
+  }
+
+  /** What the household bought before whose name contains `query`, the most bought first. */
+  async getShoppingSuggestions(query: string): Promise<ShoppingSuggestion[]> {
+    const path = `/household/shopping/suggestions?q=${encodeURIComponent(query)}`;
+    return (await this.request(path, { schema: shoppingSuggestionsSchema })).suggestions;
+  }
+
+  async addShoppingItem(input: AddShoppingItemInput): Promise<ShoppingItemView> {
+    return (
+      await this.request("/household/shopping/items", {
+        method: "POST",
+        body: input,
+        schema: shoppingItemResponseSchema,
+      })
+    ).item;
+  }
+
+  /** Renames an item or changes its note, from the version the person saw. */
+  async editShoppingItem(id: string, input: UpdateShoppingItemInput): Promise<ShoppingItemView> {
+    const path = `/household/shopping/items/${encodeURIComponent(id)}`;
+    return (await this.request(path, { method: "PATCH", body: input, schema: shoppingItemResponseSchema })).item;
+  }
+
+  deleteShoppingItem(id: string, version: number): Promise<void> {
+    return this.request(`/household/shopping/items/${encodeURIComponent(id)}?version=${version}`, { method: "DELETE" });
+  }
+
+  /** Undoes the person's own delete, within the server's undo window. */
+  async restoreShoppingItem(id: string): Promise<ShoppingItemView> {
+    const path = `/household/shopping/items/${encodeURIComponent(id)}/restore`;
+    return (await this.request(path, { method: "POST", schema: shoppingItemResponseSchema })).item;
+  }
+
+  /** Puts the item in the person's cart; refused with `shopping.item.in_cart` when it is in someone else's. */
+  async putInCart(id: string): Promise<ShoppingItemView> {
+    const path = `/household/shopping/items/${encodeURIComponent(id)}/cart`;
+    return (await this.request(path, { method: "PUT", schema: shoppingItemResponseSchema })).item;
+  }
+
+  /** Takes the item out of the person's cart, back on the list. */
+  async takeOutOfCart(id: string): Promise<ShoppingItemView> {
+    const path = `/household/shopping/items/${encodeURIComponent(id)}/cart`;
+    return (await this.request(path, { method: "DELETE", schema: shoppingItemResponseSchema })).item;
+  }
+
+  /**
+   * Finishes shopping without an expense: `itemIds` are everything in the person's cart, as they see
+   * it. Refused with `shopping.cart.changed` when the cart changed meanwhile.
+   */
+  async finishShopping(itemIds: readonly string[]): Promise<void> {
+    await this.request("/household/shopping/finish", {
+      method: "POST",
+      body: { itemIds, expense: null },
+      schema: finishShoppingResponseSchema,
+    });
+  }
+
+  /**
+   * Finishes shopping noting what the person paid: the expense is recorded with every expense rule
+   * and comes back with what was bought. Refused with `shopping.cart.changed` like a finish without
+   * one, and with any refusal an expense can get; either way nothing is recorded.
+   */
+  async finishShoppingWithExpense(itemIds: readonly string[], expense: ExpenseInput): Promise<ExpenseView> {
+    const path = "/household/shopping/finish";
+    return (await this.request(path, { method: "POST", body: { itemIds, expense }, schema: expenseResponseSchema }))
+      .expense;
+  }
+
+  /** Puts what a finish bought back in the person's cart, within the server's undo window. */
+  async undoFinishShopping(itemIds: readonly string[]): Promise<ShoppingItemView[]> {
+    return (
+      await this.request("/household/shopping/finish/undo", {
+        method: "POST",
+        body: { itemIds },
+        schema: shoppingItemsResponseSchema,
+      })
+    ).items;
   }
 
   // --- Invitations ---------------------------------------------------------
@@ -388,12 +508,7 @@ export class ApiClient {
     this.setReachable(true);
 
     if (response.status === 401 && authenticated && !isRetry) {
-      try {
-        await this.refresh();
-      } catch (error) {
-        this.sessionExpiredListeners.forEach((listener) => listener());
-        throw error;
-      }
+      await this.refreshOrExpire();
       return this.request(path, options, true);
     }
 
@@ -414,7 +529,18 @@ export class ApiClient {
     this.reachabilityListeners.forEach((listener) => listener());
   }
 
-  private reportOutdated() {
+  /** A new access token, or the end of the session when there can't be one. */
+  private async refreshOrExpire(): Promise<void> {
+    try {
+      await this.refresh();
+    } catch (error) {
+      this.sessionExpiredListeners.forEach((listener) => listener());
+      throw error;
+    }
+  }
+
+  /** The API says this build is too old for it, in a response or on the live connection. */
+  reportOutdated() {
     if (this.outdated) return;
     this.outdated = true;
     this.outdatedListeners.forEach((listener) => listener());

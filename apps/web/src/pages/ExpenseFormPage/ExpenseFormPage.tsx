@@ -15,9 +15,20 @@ import {
   type ExpenseView,
   type HouseholdView,
   type PersonRef,
+  type ShoppingItemView,
   type SplitMethod,
 } from "@hogar/shared";
-import { Alert, Avatar, Button, ChoiceGroup, Select, Spinner, TextField, useLocale } from "@hogar/ui";
+import {
+  Alert,
+  Avatar,
+  Button,
+  ChoiceGroup,
+  Select,
+  Spinner,
+  TextField,
+  useFormattingLocale,
+  useLocale,
+} from "@hogar/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CircleAlert } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
@@ -37,6 +48,15 @@ import { householdKeys, useHousehold, useReloadOnCurrencyMismatch } from "../../
 import { localToday, useAmountField, useCurrency, useList, useMoney, usePercent } from "../../i18n/format";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell } from "../../layout/AppShell";
+import { BoughtItems } from "../../shopping/BoughtItems";
+import { purchaseTitle } from "../../shopping/purchaseTitle";
+import {
+  cartOf,
+  shoppingKeys,
+  useFinishShoppingWithExpense,
+  useLastPurchaseCategory,
+  useShoppingList,
+} from "../../shopping/useShopping";
 import styles from "./ExpenseFormPage.module.css";
 
 type Field = "description" | "amount" | "date" | "split" | "category";
@@ -71,41 +91,84 @@ function fieldErrors(issues: readonly { path: readonly PropertyKey[]; message: s
 const isValidAmount = (cents: number | null): cents is number =>
   cents !== null && cents >= MIN_AMOUNT_UNITS && cents <= MAX_AMOUNT_UNITS;
 
-/** Adding an expense (`/expenses/new`) or editing one (`/expenses/:id/edit`). */
-export function ExpenseFormPage() {
+/**
+ * Adding an expense (`/expenses/new`), editing one (`/expenses/:id/edit`), or noting what the
+ * person paid for what is in their cart as they finish shopping (`/shopping/finish`, `fromCart`).
+ */
+export function ExpenseFormPage({ fromCart = false }: { fromCart?: boolean }) {
   const { t } = useTranslation(["expenses", "common"]);
   const { id } = useParams();
   const household = useHousehold();
-  const editing = id !== undefined;
+  // What this form is for, resolved once: where it goes back to, what it is called and what it shows.
+  const mode = fromCart
+    ? {
+        leaveTo: "/shopping",
+        back: t("form.backToShopping"),
+        title: t("form.newTitle"),
+        form: (current: HouseholdView) => <CartExpense household={current} />,
+      }
+    : id !== undefined
+      ? {
+          leaveTo: `/expenses/${id}`,
+          back: t("form.backToExpense"),
+          title: t("form.editTitle"),
+          form: (current: HouseholdView) => <EditExpense id={id} household={current} />,
+        }
+      : {
+          leaveTo: "/expenses",
+          back: t("form.back"),
+          title: t("form.newTitle"),
+          form: (current: HouseholdView) => <ExpenseForm household={current} />,
+        };
 
   if (household.isSuccess && !household.data.household) return <Navigate to="/" replace />;
   const current = household.data?.household;
-  if (current && !canEditContent(current.myRole)) {
-    return <Navigate to={editing ? `/expenses/${id}` : "/expenses"} replace />;
-  }
+  if (current && !canEditContent(current.myRole)) return <Navigate to={mode.leaveTo} replace />;
 
   return (
     <AppShell>
       <div className={styles.heading}>
-        <ActionLink
-          to={editing ? `/expenses/${id}` : "/expenses"}
-          variant="ghost"
-          icon={<ArrowLeft />}
-          className={styles.back}
-        >
-          {editing ? t("form.backToExpense") : t("form.back")}
+        <ActionLink to={mode.leaveTo} variant="ghost" icon={<ArrowLeft />} className={styles.back}>
+          {mode.back}
         </ActionLink>
-        <h1 className={styles.title}>{editing ? t("form.editTitle") : t("form.newTitle")}</h1>
+        <h1 className={styles.title}>{mode.title}</h1>
       </div>
       {household.isPending ? (
         <Spinner label={t("common:loading")} />
       ) : household.isError ? (
         <LoadError error={household.error} onRetry={() => void household.refetch()} />
       ) : (
-        current && (editing ? <EditExpense id={id} household={current} /> : <ExpenseForm household={current} />)
+        current && mode.form(current)
       )}
     </AppShell>
   );
+}
+
+/**
+ * Loads the person's cart and opens the form for it. With nothing in the cart (finished on another
+ * device, or a page reloaded after saving) there is nothing to note, so it goes back to the list.
+ */
+function CartExpense({ household }: { household: HouseholdView }) {
+  const { t } = useTranslation("common");
+  const user = useCurrentUser();
+  const list = useShoppingList();
+  const lastCategory = useLastPurchaseCategory();
+
+  if (list.isPending) return <Spinner label={t("loading")} />;
+  if (list.isError) return <LoadError error={list.error} onRetry={() => void list.refetch()} />;
+  return (
+    <CartExpenseForm
+      household={household}
+      items={cartOf(list.data, user.id)}
+      lastCategoryId={lastCategory.data ?? null}
+    />
+  );
+}
+
+function CartExpenseForm({ household, items, lastCategoryId }: { household: HouseholdView } & CartPurchase) {
+  const [emptyAtStart] = useState(items.length === 0);
+  if (emptyAtStart) return <Navigate to="/shopping" replace />;
+  return <ExpenseForm household={household} fromCart={{ items, lastCategoryId }} />;
 }
 
 /**
@@ -135,17 +198,38 @@ function EditExpense({ id, household }: { id: string; household: HouseholdView }
   );
 }
 
+/** What the person is paying for as they finish shopping. */
+interface CartPurchase {
+  /** What is in their cart now, in list order; it follows the cart live. */
+  items: readonly ShoppingItemView[];
+  /** The category of the household's last purchase expense, which this one starts with. */
+  lastCategoryId: string | null;
+}
+
 interface ExpenseFormProps {
   household: HouseholdView;
   /** The expense being edited; omitted when adding one. */
   existing?: ExpenseView | undefined;
   onConflict?: (() => void) | undefined;
+  /** Noting what the person paid for their cart: saving finishes their shopping with this expense. */
+  fromCart?: CartPurchase | undefined;
 }
 
-function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
-  const { t } = useTranslation(["expenses", "errors"]);
+/** What happens once a save is answered. */
+interface SaveCallbacks {
+  onSuccess: (saved: ExpenseView) => void;
+  onError: (failure: Error) => void;
+}
+
+/** Same items, in any order. */
+const sameIds = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && a.every((id) => b.includes(id));
+
+function ExpenseForm({ household, existing, onConflict, fromCart }: ExpenseFormProps) {
+  const { t } = useTranslation(["expenses", "errors", "shopping"]);
   const user = useCurrentUser();
   const locale = useLocale();
+  const formattingLocale = useFormattingLocale();
   const navigate = useNavigate();
   const percent = usePercent();
   const list = useList();
@@ -154,16 +238,17 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   const amountField = useAmountField();
   const create = useCreateExpense();
   const update = useUpdateExpense();
-  const save = existing ? update : create;
+  const finishWithExpense = useFinishShoppingWithExpense();
   const reloadOnCurrencyMismatch = useReloadOnCurrencyMismatch();
   const previewId = useId();
+  const boughtId = useId();
   const personLabel = usePersonLabel();
   const queryClient = useQueryClient();
 
   const { members } = household;
   const categories = useCategories();
   const categoryList = categories.data ?? [];
-  const [categoryId, setCategoryId] = useState(existing?.category?.id ?? "");
+  const [categoryId, setCategoryId] = useState(existing?.category?.id ?? fromCart?.lastCategoryId ?? "");
   const category = categoryList.find((entry) => entry.id === categoryId) ?? null;
 
   // The default split for this expense's category: its own weights, or the household's. The same
@@ -196,7 +281,48 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   // An expense saved with the household's split keeps its proportions; shown as such.
   const savedShares = existing?.split.method === "WEIGHTS" ? existing.split.shares : null;
 
-  const [description, setDescription] = useState(existing?.description ?? "");
+  // From the cart, the title is written from the items, and rewritten as the cart changes until
+  // the person types their own (null until then).
+  const [typedDescription, setTypedDescription] = useState<string | null>(existing?.description ?? null);
+  const cartItems = fromCart?.items;
+  const cartIds = cartItems?.map((item) => item.id) ?? [];
+  // How this form saves and where it goes back to, resolved once from what it is for.
+  const target = fromCart
+    ? {
+        save: finishWithExpense,
+        leaveTo: "/shopping",
+        send: (input: ExpenseInput, callbacks: SaveCallbacks) =>
+          finishWithExpense.mutate({ itemIds: cartIds, expense: input }, callbacks),
+      }
+    : existing
+      ? {
+          save: update,
+          leaveTo: `/expenses/${existing.id}`,
+          send: (input: ExpenseInput, callbacks: SaveCallbacks) =>
+            update.mutate({ id: existing.id, input: { ...input, version: existing.version } }, callbacks),
+        }
+      : {
+          save: create,
+          leaveTo: "/expenses",
+          send: (input: ExpenseInput, callbacks: SaveCallbacks) => create.mutate(input, callbacks),
+        };
+  const { save } = target;
+  const description =
+    typedDescription ??
+    (cartItems
+      ? purchaseTitle(
+          cartItems.map((item) => item.name),
+          formattingLocale,
+          (count) => t("shopping:purchaseTitle.more", { count }),
+        )
+      : "");
+  // What the cart held when the form opened; when it changes (on the person's other device), the
+  // form asks to check what they bought before saving. Once it is empty (finished on that device)
+  // there is nothing left to note: the form says so and offers the way back to the list.
+  const [openedWith] = useState(cartIds);
+  const [cartRefused, setCartRefused] = useState(false);
+  const cartEmpty = fromCart !== undefined && cartIds.length === 0;
+  const cartChanged = fromCart !== undefined && !cartEmpty && (cartRefused || !sameIds(openedWith, cartIds));
   const [amountText, setAmountText] = useState(
     existing ? amountInputValue(existing.amountCents, currency, locale) : "",
   );
@@ -304,6 +430,7 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   // These are shown where they happened (the edit conflict above the form, the category next to
   // its field, a changed split inside the dialog), so they don't repeat at the top.
   const shownElsewhere =
+    failedCode === "shopping.cart.changed" ||
     failedCode === "expense.changed" ||
     failedCode === "expense.category.not_found" ||
     (failedCode === "expense.split.changed" && pendingInput !== null);
@@ -334,6 +461,11 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
       reloadOnCurrencyMismatch(failure);
       if (!(failure instanceof ApiRequestError)) return;
       if (failure.code === "expense.changed") onConflict?.();
+      if (failure.code === "shopping.cart.changed") {
+        // The cart changed on the person's other device: show what it holds now, to check and save again.
+        setCartRefused(true);
+        void queryClient.invalidateQueries({ queryKey: shoppingKeys.list });
+      }
       if (failure.code === "expense.split.changed") {
         // The weights changed since the preview: fetch them (and the categories) again, so the
         // form or the dialog shows the new shares next to the message.
@@ -348,15 +480,12 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
         void queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       }
     };
-    if (existing) {
-      update.mutate({ id: existing.id, input: { ...input, version: existing.version } }, { onSuccess: done, onError });
-    } else {
-      create.mutate(input, { onSuccess: done, onError });
-    }
+    target.send(input, { onSuccess: done, onError });
   }
 
   function submit(event: FormEvent) {
     event.preventDefault();
+    if (cartEmpty) return;
     const result = expenseInputSchema.safeParse({
       description,
       amountCents: cents ?? Number.NaN,
@@ -428,11 +557,17 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
   return (
     <form className={styles.form} onSubmit={submit} onKeyDown={moveToNextField} noValidate>
       {save.isError && !shownElsewhere && <Alert tone="danger">{t(errorKey(save.error), amountField.limits)}</Alert>}
+      {cartChanged && <Alert tone="warning">{t("form.boughtChanged")}</Alert>}
+      {cartEmpty && (
+        <Alert tone="warning" action={<ActionLink to="/shopping">{t("form.backToShopping")}</ActionLink>}>
+          {t("form.cartEmpty")}
+        </Alert>
+      )}
       <TextField
         label={t("form.description")}
         hint={t("form.descriptionHint")}
         value={description}
-        onChange={(event) => setDescription(event.target.value)}
+        onChange={(event) => setTypedDescription(event.target.value)}
         error={error("description")}
         autoComplete="off"
         enterKeyHint="next"
@@ -557,15 +692,24 @@ function ExpenseForm({ household, existing, onConflict }: ExpenseFormProps) {
         </fieldset>
       )}
 
+      {cartItems && !cartEmpty && (
+        <section className={styles.preview} aria-labelledby={boughtId}>
+          <h2 id={boughtId} className={styles.previewTitle}>
+            {t("form.bought")}
+          </h2>
+          <BoughtItems items={cartItems} labelledBy={boughtId} />
+        </section>
+      )}
+
       <div className={styles.actions}>
-        <ActionLink to={existing ? `/expenses/${existing.id}` : "/expenses"} variant="ghost">
+        <ActionLink to={target.leaveTo} variant="ghost">
           {t("form.cancel")}
         </ActionLink>
         <Button
           type="submit"
           loading={save.isPending}
           loadingLabel={t("form.saving")}
-          disabled={method === "EXACT" && remaining !== 0}
+          disabled={cartEmpty || (method === "EXACT" && remaining !== 0)}
         >
           {t("form.save")}
         </Button>

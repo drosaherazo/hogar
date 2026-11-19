@@ -43,6 +43,7 @@ const household = (overrides: Partial<HouseholdView> = {}): HouseholdView => ({
   myRole: "ADMIN",
   members: [anaMember, brunoMember],
   splitNeedsReview: false,
+  showWhoAsked: true,
   ...overrides,
 });
 
@@ -90,6 +91,7 @@ function expense(overrides: Partial<ExpenseView> = {}): ExpenseView {
     editedAt: null,
     version: 1,
     category: null,
+    boughtItems: [],
     ...overrides,
   };
 }

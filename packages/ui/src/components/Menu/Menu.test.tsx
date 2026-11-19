@@ -69,6 +69,50 @@ describe("Menu", () => {
     expect(onArchive).not.toHaveBeenCalled();
   });
 
+  it("says why a disabled item can't be used, keeping its name short", async () => {
+    render(
+      <Menu trigger={<button type="button">Options for Milk</button>}>
+        <MenuItem disabled description="Only Bruno can change it while it's in their cart.">
+          Edit
+        </MenuItem>
+      </Menu>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Options for Milk" }));
+    const item = await screen.findByRole("menuitem", { name: "Edit" });
+    expect(item).toHaveAttribute("aria-disabled", "true");
+    expect(item).toHaveAccessibleDescription("Only Bruno can change it while it's in their cart.");
+    expect(screen.getByText("Only Bruno can change it while it's in their cart.")).toBeVisible();
+    await expectNoA11yViolations(document.body);
+  });
+
+  it("says why when an item is switched off while the menu is open", async () => {
+    function Options({ offline }: { offline: boolean }) {
+      const reason = offline ? "Changes are available when you're back online." : undefined;
+      return (
+        <Menu trigger={<button type="button">Options for Milk</button>}>
+          <MenuItem disabled={offline} description={reason}>
+            Edit
+          </MenuItem>
+          <MenuItem disabled={offline} description={reason}>
+            Delete
+          </MenuItem>
+        </Menu>
+      );
+    }
+    const { rerender } = render(<Options offline={false} />);
+    await userEvent.click(screen.getByRole("button", { name: "Options for Milk" }));
+    await screen.findByRole("menu");
+
+    rerender(<Options offline />);
+
+    for (const name of ["Edit", "Delete"]) {
+      const item = screen.getByRole("menuitem", { name });
+      expect(item).toHaveAttribute("aria-disabled", "true");
+      expect(item).toHaveAccessibleDescription("Changes are available when you're back online.");
+    }
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+  });
+
   it("has no accessibility violations when open", async () => {
     render(<AccountMenu />);
     await userEvent.click(screen.getByRole("button", { name: "Account" }));

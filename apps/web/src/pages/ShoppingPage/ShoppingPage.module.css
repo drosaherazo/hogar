@@ -1,0 +1,121 @@
+.title {
+  margin: 0;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+.muted {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.submit {
+  justify-self: start;
+}
+
+/* "You added Eggs", "Milk is back on the list": a check and the words, so color is never alone. */
+.confirmation {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-positive);
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.confirmationIcon {
+  flex: none;
+  inline-size: var(--size-icon-md);
+  block-size: var(--size-icon-md);
+}
+
+/* A paper list: one row per item, in the order it was asked for, nothing that moves. */
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The words take the row; the options button keeps its 44 px at the end, next to the name. */
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  border-block-start: var(--border-width) solid var(--color-border);
+}
+
+.itemText {
+  display: grid;
+  flex: 1;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.item:first-child {
+  padding-block-start: 0;
+  border-block-start: none;
+}
+
+.item:last-child {
+  padding-block-end: 0;
+}
+
+.itemName {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* The note and who asked, in one quieter line that wraps between them, never inside a word. */
+.itemMeta {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* A middle dot between the note and who asked; decorative, so screen readers skip it. */
+.note:not(:last-child)::after {
+  content: "·" / "";
+  margin-inline-start: var(--space-2);
+}
+
+/* The note, who asked and whose cart: under the name, starting where the name does. */
+.details {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.pastCheck {
+  padding-inline-start: calc(var(--size-icon-md) + var(--space-3));
+}
+
+/* "In your cart" / "In Ana's cart": a check and the words, in teal; long names wrap. */
+.marker {
+  justify-self: start;
+  max-inline-size: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.markerIcon {
+  flex: none;
+  inline-size: var(--size-icon-sm);
+  block-size: var(--size-icon-sm);
+}
+
+/* An item in a cart is taken: quieter, never faded below AA, and still in its place. */
+.inCart .itemName,
+.inCart .cart {
+  color: var(--color-text-muted);
+}

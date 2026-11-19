@@ -1,0 +1,416 @@
+import {
+  SHOPPING_SUGGESTIONS_MAX,
+  SHOPPING_UNDO_WINDOW_MS,
+  shoppingNameKey,
+  type ExpenseView,
+  type ParsedExpenseInput,
+  type ShoppingItemView,
+  type ShoppingSuggestion,
+} from "@hogar/shared";
+import type { Database } from "../db";
+import type { ExpenseService } from "../expenses/expenseService";
+import { assertStillEditor, currentMembers, personRefs, refOf, type Client } from "../expenses/people";
+import type { Membership, Prisma, ShoppingItem } from "../generated/prisma/client";
+import { isUniqueViolation, lockHousehold } from "../household/householdService";
+import { conflict, gone, notFound } from "../httpError";
+import { noHouseholdEvents, type HouseholdEvents } from "../realtime/householdEvents";
+
+export interface ShoppingServiceDeps {
+  db: Database;
+  now?: (() => Date) | undefined;
+  /** Records what someone paid when they finish shopping, with every expense rule. */
+  expenses: ExpenseService;
+  /** Where every list and cart change is announced, once it is saved. */
+  events?: HouseholdEvents;
+}
+
+export interface NewShoppingItem {
+  name: string;
+  note: string | null;
+}
+
+/** Finishing shopping: exactly the items in the caller's cart, and what they paid or null. */
+export interface FinishShopping {
+  itemIds: readonly string[];
+  expense: ParsedExpenseInput | null;
+}
+
+/** What finishing recorded: the expense with what was bought, or null when finishing without one. */
+export interface FinishedShopping {
+  expense: ExpenseView | null;
+}
+
+/** The list as everyone sees it, with the category the next purchase expense starts with. */
+export interface ShoppingListView {
+  items: ShoppingItemView[];
+  lastCategoryId: string | null;
+}
+
+/** Items on the list: neither bought nor deleted. */
+const ON_LIST = { boughtAt: null, deletedAt: null } satisfies Prisma.ShoppingItemWhereInput;
+
+/** The list's order: when each item was added, like on paper. */
+const LIST_ORDER = [{ addedAt: "asc" }, { id: "asc" }] satisfies Prisma.ShoppingItemOrderByWithRelationInput[];
+
+/** Whether `ids` name exactly the items of `rows`, in any order. */
+function sameItems(rows: readonly ShoppingItem[], ids: readonly string[]): boolean {
+  const wanted = new Set(ids);
+  return rows.length === wanted.size && rows.every((row) => wanted.has(row.id));
+}
+
+/** What an edit changes: a missing field stays as it is. */
+export interface ShoppingItemChanges {
+  name?: string | undefined;
+  note?: string | null | undefined;
+  version: number;
+}
+
+/**
+ * The household's shopping list. Everyone in the household reads it; admins and members change it
+ * (the router checks the role, and every change checks it again as it saves). The server decides every conflict (ADR 0009): the database's
+ * unique index on the name key is what refuses a duplicate, however close two adds arrive.
+ * Every change that is saved is announced to the household as `shopping:changed`.
+ */
+export function createShoppingService({
+  db,
+  now = () => new Date(),
+  expenses,
+  events = noHouseholdEvents,
+}: ShoppingServiceDeps) {
+  /** What everyone sees of `rows`: who asked only while the household shows it (it stays stored either way). */
+  async function viewsOf(client: Client, householdId: string, rows: ShoppingItem[]): Promise<ShoppingItemView[]> {
+    const { showWhoAsked } = await client.household.findUniqueOrThrow({
+      where: { id: householdId },
+      select: { showWhoAsked: true },
+    });
+    const members = await currentMembers(client, householdId);
+    const refs = await personRefs(
+      client,
+      members,
+      rows.flatMap((row) => (row.cartOwnerId === null ? [row.askedById] : [row.askedById, row.cartOwnerId])),
+    );
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      note: row.note,
+      ...(showWhoAsked && { askedBy: refOf(refs, row.askedById) }),
+      addedAt: row.addedAt.toISOString(),
+      version: row.version,
+      cartOwner: row.cartOwnerId === null ? null : refOf(refs, row.cartOwnerId),
+    }));
+  }
+
+  /**
+   * Runs `work` as one change to the list by `actor`. The household lock makes every change to the
+   * list take turns with the others and with leaving, removals and role changes, so each one sees
+   * the last and nobody fills a cart that is being emptied. The role may have changed since the
+   * router checked it, so it is checked again under the lock.
+   */
+  function asEditor<T>(actor: Membership, work: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    return db.$transaction(async (tx) => {
+      await lockHousehold(tx, actor.householdId);
+      assertStillEditor(await currentMembers(tx, actor.householdId), actor);
+      return work(tx);
+    });
+  }
+
+  /** An item of the caller's household, deleted or not. */
+  function itemOf(tx: Prisma.TransactionClient, actor: Membership, id: string) {
+    return tx.shoppingItem.findFirst({ where: { id, householdId: actor.householdId } });
+  }
+
+  /** The same, for an item on the list: a bought or deleted item is gone for everyone. */
+  async function itemOnList(tx: Prisma.TransactionClient, actor: Membership, id: string) {
+    const row = await itemOf(tx, actor, id);
+    if (!row || row.boughtAt !== null || row.deletedAt !== null) throw notFound("shopping.item.not_found");
+    return row;
+  }
+
+  /**
+   * What is in the caller's cart. Items they deleted from their cart stay there for undo, but they
+   * aren't in it: they were never bought.
+   */
+  function cartOf(tx: Prisma.TransactionClient, actor: Membership) {
+    return tx.shoppingItem.findMany({
+      where: { householdId: actor.householdId, cartOwnerId: actor.userId, ...ON_LIST },
+    });
+  }
+
+  /** Whether a delete or a finish at `since` can still be undone. */
+  function withinUndoWindow(since: Date): boolean {
+    return now().getTime() - since.getTime() <= SHOPPING_UNDO_WINDOW_MS;
+  }
+
+  /** While an item is in someone's cart, only they can change it, delete it or bring it back. */
+  function assertNotInOthersCart(row: ShoppingItem, actor: Membership) {
+    if (row.cartOwnerId !== null && row.cartOwnerId !== actor.userId) throw conflict("shopping.item.in_cart");
+  }
+
+  async function viewOf(householdId: string, row: ShoppingItem): Promise<ShoppingItemView> {
+    const [view] = await viewsOf(db, householdId, [row]);
+    if (!view) throw new Error("Every item has a view");
+    return view;
+  }
+
+  /**
+   * The unique index on the name key refuses a second item with the same name on the list. A
+   * violation aborts the transaction, so it is caught here, outside it.
+   */
+  async function refusingDuplicates<T>(work: () => Promise<T>): Promise<T> {
+    try {
+      return await work();
+    } catch (error) {
+      if (isUniqueViolation(error)) throw conflict("shopping.item.duplicate");
+      throw error;
+    }
+  }
+
+  /**
+   * Moves an item in or out of the caller's cart, as `decide` says: the new owner, or the row
+   * unchanged when there is nothing to do. Moving isn't an edit: the version stays (ADR 0009).
+   */
+  async function moveInCart(
+    actor: Membership,
+    id: string,
+    decide: (item: ShoppingItem) => { cartOwnerId: string | null } | "unchanged",
+  ): Promise<ShoppingItemView> {
+    const { row, moved } = await asEditor(actor, async (tx) => {
+      const current = await itemOnList(tx, actor, id);
+      const decision = decide(current);
+      if (decision === "unchanged") return { row: current, moved: false };
+      return { row: await tx.shoppingItem.update({ where: { id }, data: decision }), moved: true };
+    });
+    if (moved) events.publish(actor.householdId, "shopping:changed");
+    return viewOf(actor.householdId, row);
+  }
+
+  return {
+    /**
+     * The items on the list in the order they were added, like a paper list, and the category of
+     * the newest purchase expense still standing (a deleted category reads as none).
+     */
+    async list(householdId: string): Promise<ShoppingListView> {
+      const rows = await db.shoppingItem.findMany({ where: { householdId, ...ON_LIST }, orderBy: LIST_ORDER });
+      const lastPurchase = await db.expense.findFirst({
+        where: { householdId, deletedAt: null, boughtItems: { some: {} } },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        select: { categoryId: true },
+      });
+      return { items: await viewsOf(db, householdId, rows), lastCategoryId: lastPurchase?.categoryId ?? null };
+    },
+
+    /** A new item goes last, asked for by whoever adds it. */
+    async add(actor: Membership, input: NewShoppingItem): Promise<ShoppingItemView> {
+      const row = await refusingDuplicates(() =>
+        asEditor(actor, (tx) =>
+          tx.shoppingItem.create({
+            data: {
+              householdId: actor.householdId,
+              name: input.name,
+              nameKey: shoppingNameKey(input.name),
+              note: input.note,
+              askedById: actor.userId,
+              addedAt: now(),
+            },
+          }),
+        ),
+      );
+      events.publish(actor.householdId, "shopping:changed");
+      return viewOf(actor.householdId, row);
+    },
+
+    /**
+     * Renames the item or changes its note. The edit names the version it started from, and one
+     * based on an older version is refused, so nobody overwrites a change they haven't seen
+     * (ADR 0009). Saving what is already there changes nothing, not even the version. While the
+     * item is in someone's cart, only they can edit it.
+     */
+    async edit(actor: Membership, id: string, changes: ShoppingItemChanges): Promise<ShoppingItemView> {
+      const { row, changed } = await refusingDuplicates(() =>
+        asEditor(actor, async (tx) => {
+          const current = await itemOnList(tx, actor, id);
+          assertNotInOthersCart(current, actor);
+          if (current.version !== changes.version) throw conflict("shopping.item.changed");
+          const name = changes.name ?? current.name;
+          const note = changes.note === undefined ? current.note : changes.note;
+          if (name === current.name && note === current.note) return { row: current, changed: false };
+          const edited = await tx.shoppingItem.update({
+            where: { id },
+            data: { name, nameKey: shoppingNameKey(name), note, version: { increment: 1 } },
+          });
+          return { row: edited, changed: true };
+        }),
+      );
+      if (changed) events.publish(actor.householdId, "shopping:changed");
+      return viewOf(actor.householdId, row);
+    },
+
+    /**
+     * Takes the item off the list at once; whoever deleted it can undo for a while. An item in
+     * someone's cart stays there, so undoing brings it back as it was; only they can delete it.
+     */
+    async remove(actor: Membership, id: string, version: number): Promise<void> {
+      await asEditor(actor, async (tx) => {
+        const row = await itemOnList(tx, actor, id);
+        assertNotInOthersCart(row, actor);
+        if (row.version !== version) throw conflict("shopping.item.changed");
+        await tx.shoppingItem.update({ where: { id }, data: { deletedAt: now(), deletedById: actor.userId } });
+      });
+      events.publish(actor.householdId, "shopping:changed");
+    },
+
+    /**
+     * Undoes the caller's own delete within the window: the item comes back in its place, as it
+     * was. For anyone else a deleted item leaves no trace, so they get `not_found`, as everyone
+     * does for a bought item. A second tap finds the item already back and changes nothing.
+     */
+    async restore(actor: Membership, id: string): Promise<ShoppingItemView> {
+      const { row, restored } = await refusingDuplicates(() =>
+        asEditor(actor, async (tx) => {
+          const current = await itemOf(tx, actor, id);
+          if (current && current.deletedAt === null && current.boughtAt === null) {
+            return { row: current, restored: false };
+          }
+          if (!current?.deletedAt || current.deletedById !== actor.userId) throw notFound("shopping.item.not_found");
+          assertNotInOthersCart(current, actor);
+          if (!withinUndoWindow(current.deletedAt)) throw gone("shopping.undo.expired");
+          const back = await tx.shoppingItem.update({ where: { id }, data: { deletedAt: null, deletedById: null } });
+          return { row: back, restored: true };
+        }),
+      );
+      if (restored) events.publish(actor.householdId, "shopping:changed");
+      return viewOf(actor.householdId, row);
+    },
+
+    /**
+     * Puts the item in the caller's cart. Two people tapping the same item take turns, so the first
+     * one wins and the other is told it is in someone else's cart. A second tap changes nothing.
+     */
+    putInCart(actor: Membership, id: string): Promise<ShoppingItemView> {
+      return moveInCart(actor, id, (item) => {
+        if (item.cartOwnerId === actor.userId) return "unchanged";
+        if (item.cartOwnerId !== null) throw conflict("shopping.item.in_cart");
+        return { cartOwnerId: actor.userId };
+      });
+    },
+
+    /**
+     * Takes the item out of the caller's cart: back on the list, still to buy. Only the cart's owner
+     * can; an item in nobody's cart stays as it is.
+     */
+    takeOutOfCart(actor: Membership, id: string): Promise<ShoppingItemView> {
+      return moveInCart(actor, id, (item) => {
+        if (item.cartOwnerId === null) return "unchanged";
+        if (item.cartOwnerId !== actor.userId) throw conflict("shopping.item.in_cart");
+        return { cartOwnerId: null };
+      });
+    },
+
+    /**
+     * Finishes the caller's shopping: everything in their cart leaves the list at once, as bought
+     * items, and what they didn't find stays on it. `itemIds` must be exactly their cart, as they
+     * last saw it; a cart that changed meanwhile (on their other device) is refused whole with
+     * `shopping.cart.changed`, so nothing is ever half bought. With what they paid, the expense is recorded in the same transaction with every expense rule,
+     * and the items are linked to it: any refusal rolls everything back and the cart stays as it was.
+     */
+    async finish(actor: Membership, { itemIds, expense }: FinishShopping): Promise<FinishedShopping> {
+      const expenseId = await asEditor(actor, async (tx) => {
+        if (!sameItems(await cartOf(tx, actor), itemIds)) throw conflict("shopping.cart.changed");
+        const created = expense === null ? null : await expenses.createWithin(tx, actor, expense);
+        await tx.shoppingItem.updateMany({
+          where: { id: { in: [...itemIds] } },
+          data: { boughtAt: now(), boughtById: actor.userId, cartOwnerId: null, expenseId: created?.id ?? null },
+        });
+        return created?.id ?? null;
+      });
+      events.publish(actor.householdId, "shopping:changed");
+      // Read once the items are linked, so the expense comes with what was bought.
+      return { expense: expenseId === null ? null : await expenses.get(actor.householdId, expenseId) };
+    },
+
+    /**
+     * Undoes the caller's finish within the window: the items come back into their cart, each in
+     * its place on the list. Only for items they bought without an expense, and all of them or
+     * none: for anything else it is too late. Items paid with an expense stay bought: they are
+     * that expense's record of the shop. A name added again meanwhile meets the unique index and refuses the
+     * whole undo with `shopping.item.duplicate`. A second tap finds the items already back in their
+     * cart and changes nothing.
+     */
+    async undoFinish(actor: Membership, itemIds: readonly string[]): Promise<ShoppingItemView[]> {
+      const { rows, undone } = await refusingDuplicates(() =>
+        asEditor(actor, async (tx) => {
+          const ids = [...itemIds];
+          const items = await tx.shoppingItem.findMany({
+            where: { householdId: actor.householdId, id: { in: ids } },
+            orderBy: LIST_ORDER,
+          });
+          const back = (row: ShoppingItem) =>
+            row.boughtAt === null && row.deletedAt === null && row.cartOwnerId === actor.userId;
+          const undoable = (row: ShoppingItem) =>
+            row.boughtById === actor.userId &&
+            row.boughtAt !== null &&
+            row.expenseId === null &&
+            withinUndoWindow(row.boughtAt);
+          if (!sameItems(items, ids) || !items.every((row) => back(row) || undoable(row))) {
+            throw gone("shopping.undo.expired");
+          }
+          const bought = items.filter(undoable).map((row) => row.id);
+          if (bought.length === 0) return { rows: items, undone: false };
+          await tx.shoppingItem.updateMany({
+            where: { id: { in: bought } },
+            data: { boughtAt: null, boughtById: null, cartOwnerId: actor.userId },
+          });
+          return {
+            rows: await tx.shoppingItem.findMany({ where: { id: { in: ids } }, orderBy: LIST_ORDER }),
+            undone: true,
+          };
+        }),
+      );
+      if (undone) events.publish(actor.householdId, "shopping:changed");
+      return viewsOf(db, actor.householdId, rows);
+    },
+
+    /**
+     * What the household bought before whose name contains `query`, folded like names are, so
+     * "lec" finds "Leche" and "Lechuga". Purchases of the same name count together and bring the
+     * name and note of the latest one; the most bought come first, then the most recent, and what
+     * is already on the list is left out. Deleted items were never bought, so they never count.
+     */
+    async suggestions(householdId: string, query: string): Promise<ShoppingSuggestion[]> {
+      const key = shoppingNameKey(query);
+      return db.$queryRaw<ShoppingSuggestion[]>`
+        WITH bought AS (
+          SELECT id, name, name_key, note, bought_at
+          FROM shopping_items
+          WHERE household_id = ${householdId}
+            AND bought_at IS NOT NULL
+            AND deleted_at IS NULL
+            AND strpos(name_key, ${key}) > 0
+        ),
+        latest AS (
+          SELECT DISTINCT ON (name_key) name_key, name, note
+          FROM bought
+          ORDER BY name_key, bought_at DESC, id DESC
+        ),
+        counted AS (
+          SELECT name_key, count(*)::int AS times_bought, max(bought_at) AS last_bought_at
+          FROM bought
+          GROUP BY name_key
+        )
+        SELECT latest.name, latest.note, counted.times_bought AS "timesBought"
+        FROM counted
+        JOIN latest USING (name_key)
+        WHERE NOT EXISTS (
+          SELECT 1 FROM shopping_items listed
+          WHERE listed.household_id = ${householdId}
+            AND listed.name_key = counted.name_key
+            AND listed.bought_at IS NULL
+            AND listed.deleted_at IS NULL
+        )
+        ORDER BY counted.times_bought DESC, counted.last_bought_at DESC, counted.name_key
+        LIMIT ${SHOPPING_SUGGESTIONS_MAX}`;
+    },
+  };
+}
+
+export type ShoppingService = ReturnType<typeof createShoppingService>;

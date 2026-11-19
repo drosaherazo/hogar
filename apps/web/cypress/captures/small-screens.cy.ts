@@ -3,7 +3,16 @@ import i18next from "i18next";
 import { NAMESPACES, resources } from "../../src/i18n/resources";
 import { ana, session } from "../support/e2e";
 import type { Theme } from "../../src/theme/theme";
-import { BRUNO, CARLA, invitation, invitationPreview, signedInPages, stubSignedIn, visitIn } from "../support/screens";
+import {
+  BRUNO,
+  CARLA,
+  invitation,
+  invitationPreview,
+  shoppingItems,
+  signedInPages,
+  stubSignedIn,
+  visitIn,
+} from "../support/screens";
 
 /**
  * Screenshots of every screen and dialog on small phones, for the "Small screens" audit in
@@ -14,6 +23,13 @@ import { BRUNO, CARLA, invitation, invitationPreview, signedInPages, stubSignedI
  */
 
 const widths = [320, 375] as const;
+
+/** What the household bought before, with long names and notes, as the suggestion list shows them. */
+const suggestions = [
+  { name: "Leche de avena sin azúcares añadidos", note: "La del envase verde, la de litro y medio", timesBought: 12 },
+  { name: "Lechuga romana", note: null, timesBought: 3 },
+  { name: "Lentejas pardinas", note: "Paquete de un kilo", timesBought: 1 },
+];
 const themes: Theme[] = ["light", "dark"];
 
 /** The app's own copy, so the same steps open each dialog in either language. */
@@ -101,6 +117,24 @@ const dialogs: DialogCapture[] = [
     open: (t) => cy.contains("button", t("household:settings.members.leave")).click(),
   },
   {
+    name: "edit-item",
+    path: "/shopping",
+    open: (t) => {
+      cy.get(`button[aria-label="${t("shopping:item.actions", { name: shoppingItems[0]?.name ?? "" })}"]`).click();
+      cy.contains("[role=menuitem]", t("shopping:item.edit")).click();
+    },
+  },
+  {
+    name: "finish-shopping",
+    path: "/shopping",
+    open: (t) =>
+      cy
+        .contains("p", t("shopping:cartBar.count", { count: 1 }))
+        .parent()
+        .contains("button", t("shopping:cartBar.finish"))
+        .click(),
+  },
+  {
     name: "invite-leave-first",
     path: "/invite#tok_join",
     stub: () =>
@@ -140,6 +174,37 @@ describe("Small-screen captures", { retries: 2 }, () => {
               cy.screenshot(`${folder}/page${path.replace(/[/#]+/g, "-")}`, pageShot);
             });
           }
+
+          it("captures the toast after deleting an item", () => {
+            stubSignedIn(locale);
+            cy.intercept("DELETE", "/api/household/shopping/items/*", { statusCode: 204 });
+            visitIn("/shopping", { locale, theme });
+            const item = shoppingItems[0]?.name ?? "";
+            cy.get(`button[aria-label="${t("shopping:item.actions", { name: item })}"]`).click();
+            cy.contains("[role=menuitem]", t("shopping:item.delete")).click();
+            cy.get("[role=alertdialog]").should("be.visible");
+            cy.screenshot(`${folder}/toast-deleted`, viewportShot);
+          });
+
+          it("captures the suggestions while adding an item", () => {
+            stubSignedIn(locale);
+            cy.intercept("GET", "/api/household/shopping/suggestions*", { body: { suggestions } });
+            visitIn("/shopping", { locale, theme });
+            // Without scrolling: the field is already in view, and a scroll closes the list.
+            cy.contains("label", t("shopping:add.nameLabel")).click({ scrollBehavior: false });
+            cy.focused().type("le", { scrollBehavior: false });
+            cy.get("[role=listbox]").should("be.visible");
+            cy.screenshot(`${folder}/suggestions`, viewportShot);
+          });
+
+          it("captures the menu of an item in someone else's cart", () => {
+            stubSignedIn(locale);
+            visitIn("/shopping", { locale, theme });
+            const item = shoppingItems[1]?.name ?? "";
+            cy.get(`button[aria-label="${t("shopping:item.actions", { name: item })}"]`).click();
+            cy.get("[role=menu]").should("be.visible");
+            cy.screenshot(`${folder}/menu-item-locked`, viewportShot);
+          });
 
           for (const dialog of dialogs) {
             it(`captures the ${dialog.name} dialog`, () => {

@@ -21,7 +21,11 @@ import { HomePage } from "./pages/HomePage/HomePage";
 import { HouseholdSettingsPage } from "./pages/HouseholdSettingsPage/HouseholdSettingsPage";
 import { InvitePage } from "./pages/InvitePage/InvitePage";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
+import { ShoppingPage } from "./pages/ShoppingPage/ShoppingPage";
 import { InstallPromptProvider, type InstallPrompt } from "./install/installPrompt";
+import { HouseholdEventsProvider, type HouseholdEventsSource } from "./realtime/LiveHousehold";
+import { socketHouseholdEvents } from "./realtime/socketHouseholdEvents";
+import { ToastProvider } from "./toast/Toasts";
 import { AppUpdateProvider, type AppUpdate } from "./update/appUpdate";
 import { RequiredUpdateGate } from "./update/RequiredUpdate";
 
@@ -46,6 +50,8 @@ export function createRoutes({ googleClientId }: AppConfig): RouteObject[] {
         { path: "/expenses/:id", element: <ExpenseDetailPage /> },
         { path: "/expenses/:id/edit", element: <ExpenseFormPage /> },
         { path: "/balances", element: <BalancesPage /> },
+        { path: "/shopping", element: <ShoppingPage /> },
+        { path: "/shopping/finish", element: <ExpenseFormPage fromCart /> },
       ],
     },
     { path: "*", element: <RedirectIfAuthenticated /> },
@@ -76,10 +82,12 @@ export interface AppProvidersProps {
   update: AppUpdate;
   /** Whether and how Hogar can be installed, for the account menu. */
   install: InstallPrompt;
+  /** The household's live connection, which tells the app when others change something. */
+  householdEvents: HouseholdEventsSource;
   children: React.ReactNode;
 }
 
-export function AppProviders({ i18n, client, offline, update, install, children }: AppProvidersProps) {
+export function AppProviders({ i18n, client, offline, update, install, householdEvents, children }: AppProvidersProps) {
   const [{ queryClient, offlineCache }] = useState(() => {
     followBrowserConnection();
     const queryClient = new QueryClient({
@@ -94,7 +102,9 @@ export function AppProviders({ i18n, client, offline, update, install, children 
   const session = (
     <ApiClientProvider client={client}>
       <AuthProvider client={client} offline={offlineCache}>
-        {children}
+        <HouseholdEventsProvider source={householdEvents}>
+          <ToastProvider>{children}</ToastProvider>
+        </HouseholdEventsProvider>
       </AuthProvider>
     </ApiClientProvider>
   );
@@ -130,9 +140,17 @@ export interface AppProps {
 
 export function App({ i18n, config, update, install }: AppProps) {
   const [client] = useState(() => new ApiClient());
+  const [householdEvents] = useState(() => socketHouseholdEvents(client));
   const [router] = useState(() => createBrowserRouter(createRoutes(config)));
   return (
-    <AppProviders i18n={i18n} client={client} offline={thisDevice} update={update} install={install}>
+    <AppProviders
+      i18n={i18n}
+      client={client}
+      offline={thisDevice}
+      update={update}
+      install={install}
+      householdEvents={householdEvents}
+    >
       <RouterProvider router={router} />
     </AppProviders>
   );

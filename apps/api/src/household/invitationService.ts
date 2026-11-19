@@ -12,6 +12,7 @@ import { generateSecretToken, hashSecretToken } from "../auth/tokens";
 import type { Database } from "../db";
 import type { Invitation, Membership, Prisma } from "../generated/prisma/client";
 import { conflict, gone, notFound } from "../httpError";
+import { noHouseholdEvents, type HouseholdEvents } from "../realtime/householdEvents";
 import type { HouseholdService } from "./householdService";
 import { clearRemovalNotice, isUniqueViolation } from "./householdService";
 
@@ -21,12 +22,18 @@ export interface InvitationServiceDeps {
   db: Database;
   households: HouseholdService;
   now?: (() => Date) | undefined;
+  events?: HouseholdEvents;
 }
 
 type Transaction = Prisma.TransactionClient;
 type InvitationWithCreator = Invitation & { createdBy: { name: string } | null };
 
-export function createInvitationService({ db, households, now = () => new Date() }: InvitationServiceDeps) {
+export function createInvitationService({
+  db,
+  households,
+  now = () => new Date(),
+  events = noHouseholdEvents,
+}: InvitationServiceDeps) {
   const pendingWhere = (householdId: string): Prisma.InvitationWhereInput => ({
     householdId,
     usedAt: null,
@@ -181,6 +188,7 @@ export function createInvitationService({ db, households, now = () => new Date()
           await clearRemovalNotice(tx, userId);
           return invitation.householdId;
         });
+        events.publish(householdId, "household:changed");
         return await households.view(householdId, userId);
       } catch (error) {
         if (isUniqueViolation(error)) throw conflict("household.already_member");

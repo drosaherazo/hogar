@@ -198,3 +198,127 @@ describe("Combobox", () => {
     await expectNoA11yViolations(document.body);
   });
 });
+
+const bought = ["Leche", "Lechuga", "Pan"];
+
+/**
+ * A shopping item's name: free text, with suggestions that arrive a moment after the typing, the
+ * way a server's would, and a form that adds what the field holds.
+ */
+function ItemName({
+  onPick = vi.fn(),
+  onSubmit = vi.fn(),
+}: {
+  onPick?: (id: string) => void;
+  onSubmit?: (name: string) => void;
+}) {
+  const [name, setName] = useState("");
+  const [suggestions, setSuggestions] = useState<ComboboxItem[]>([]);
+  function type(value: string) {
+    setName(value);
+    const wanted = value.trim().toLowerCase();
+    setTimeout(() => {
+      setSuggestions(
+        wanted
+          ? bought
+              .filter((item) => item.toLowerCase().includes(wanted))
+              .map((label) => ({ id: label, label, detail: "Bought 3 times" }))
+          : [],
+      );
+    }, 20);
+  }
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit(name);
+      }}
+    >
+      <Combobox
+        allowsCustomValue
+        label="What's needed?"
+        inputValue={name}
+        onInputChange={type}
+        items={suggestions}
+        onSelectionChange={onPick}
+      />
+      <button type="button">Elsewhere</button>
+    </form>
+  );
+}
+
+describe("Combobox with free text", () => {
+  it("keeps whatever the person types, with no button to open a list", async () => {
+    render(<ItemName />);
+    const input = screen.getByRole("combobox", { name: "What's needed?" });
+    await userEvent.type(input, "Kiwis");
+    await userEvent.click(screen.getByRole("button", { name: "Elsewhere" }));
+    expect(input).toHaveValue("Kiwis");
+    expect(screen.queryByRole("button", { name: /show/i })).not.toBeInTheDocument();
+  });
+
+  it("opens the suggestions when they arrive, and fills the field with the one picked", async () => {
+    const onPick = vi.fn();
+    render(<ItemName onPick={onPick} />);
+    const input = screen.getByRole("combobox", { name: "What's needed?" });
+    await userEvent.type(input, "lec");
+    const options = await screen.findAllByRole("option");
+    expect(options.map((option) => option.textContent)).toEqual(["Leche, Bought 3 times", "Lechuga, Bought 3 times"]);
+    expect(options[0]).toHaveAccessibleName("Leche, Bought 3 times");
+
+    await userEvent.click(screen.getByRole("option", { name: /Lechuga/ }));
+
+    expect(onPick).toHaveBeenCalledWith("Lechuga");
+    expect(input).toHaveValue("Lechuga");
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("stays closed while nothing matches", async () => {
+    render(<ItemName />);
+    await userEvent.type(screen.getByRole("combobox"), "kiwi");
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("is used with the keyboard alone: arrows and Enter pick, Enter alone adds what was typed", async () => {
+    const onPick = vi.fn();
+    const onSubmit = vi.fn();
+    render(<ItemName onPick={onPick} onSubmit={onSubmit} />);
+    const input = screen.getByRole("combobox");
+    await userEvent.type(input, "lec");
+    await screen.findByRole("listbox");
+    await userEvent.keyboard("{ArrowDown}{Enter}");
+    expect(onPick).toHaveBeenCalledWith("Leche");
+    expect(input).toHaveValue("Leche");
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await userEvent.clear(input);
+    await userEvent.type(input, "Lech");
+    await screen.findByRole("listbox");
+    await userEvent.keyboard("{Enter}");
+    expect(onSubmit).toHaveBeenCalledWith("Lech");
+  });
+
+  it("closes on Escape and opens again only once the person types more", async () => {
+    render(<ItemName />);
+    const input = screen.getByRole("combobox");
+    await userEvent.type(input, "le");
+    await screen.findByRole("listbox");
+    await userEvent.keyboard("{Escape}");
+    expect(input).toHaveValue("le");
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+
+    await userEvent.type(input, "c");
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
+  });
+
+  it("has no accessibility violations, closed or open", async () => {
+    const { container } = render(<ItemName />);
+    await expectNoA11yViolations(container);
+    await userEvent.type(screen.getByRole("combobox"), "lec");
+    await screen.findByRole("listbox");
+    await expectNoA11yViolations(document.body);
+  });
+});

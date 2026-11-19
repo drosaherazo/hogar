@@ -1,0 +1,84 @@
+{
+  "title": "Compras",
+  "close": "Cerrar",
+  "cancel": "Cancelar",
+  "add": {
+    "nameLabel": "¿Qué hace falta?",
+    "noteLabel": "Nota (opcional)",
+    "noteHint": "Marca, tamaño, cuántos…",
+    "submit": "Añadir",
+    "adding": "Añadiendo…"
+  },
+  "suggestion": {
+    "timesBought_one": "Comprado una vez",
+    "timesBought_other": "Comprado {{count}} veces",
+    "detail": "{{note}} · {{timesBought}}"
+  },
+  "added": "Añadiste {{name}}",
+  "item": {
+    "askedBy": "lo pidió {{name}}",
+    "inMyCart": "En tu carrito",
+    "inCartOf": "En el carrito de {{name}}",
+    "putInCart": "Poner {{name}} en tu carrito",
+    "takeOutOfCart": "Sacar {{name}} de tu carrito",
+    "actions": "Opciones de {{name}}",
+    "edit": "Editar",
+    "delete": "Borrar",
+    "lockedReason": "Solo {{name}} puede cambiarlo mientras esté en su carrito."
+  },
+  "cartReturned": "Ahora tienes acceso de invitado, así que tu carrito volvió a la lista.",
+  "empty": {
+    "title": "No falta nada",
+    "description": "Cuando algo se acabe, añádelo aquí y todo el mundo lo verá."
+  },
+  "duplicate": {
+    "message": "{{name}} ya está en la lista.",
+    "useMyNote": "Usar mi nota",
+    "noteUsed": "{{name}} ya tiene tu nota"
+  },
+  "guest": {
+    "readOnly": "Con acceso de invitado ves la lista, pero no puedes cambiarla."
+  },
+  "loadError": "No hemos podido cargar la lista de la compra.",
+  "edit": {
+    "title": "Editar «{{name}}»",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saved": "Guardamos los cambios en {{name}}"
+  },
+  "deleted": "Borraste {{name}}",
+  "undo": "Deshacer",
+  "restored": "{{name}} vuelve a estar en la lista",
+  "changed": {
+    "title": "Alguien cambió esto mientras tanto",
+    "keepNew": "Dejar la versión nueva",
+    "saveMine": "Guardar la mía"
+  },
+  "cartBar": {
+    "count_one": "{{count}} en tu carrito",
+    "count_other": "{{count}} en tu carrito",
+    "finish": "Terminar compra"
+  },
+  "reminder": {
+    "title_one": "Aún tienes {{count}} en tu carrito",
+    "title_other": "Aún tienes {{count}} en tu carrito"
+  },
+  "finish": {
+    "title": "¿Terminaste la compra?",
+    "description_one": "La cosa que llevas en tu carrito sale de la lista. Lo que no encontraste se queda.",
+    "description_other": "Las {{count}} cosas de tu carrito salen de la lista. Lo que no encontraste se queda.",
+    "record": "Anotar lo que pagué",
+    "recordHint": "Abre el gasto con lo que compraste, para repartirlo como cualquier otro.",
+    "withoutExpense": "Terminar sin gasto",
+    "withoutExpenseHint": "Para cuando pagó otra persona o no se reparte.",
+    "done_one": "Listo: 1 cosa fuera de la lista",
+    "done_other": "Listo: {{count}} cosas fuera de la lista",
+    "undone_one": "1 cosa vuelve a estar en tu carrito",
+    "undone_other": "{{count}} cosas vuelven a estar en tu carrito",
+    "cartChanged": "Tu carrito cambió mientras tanto. Revisa lo que llevas y vuelve a terminar."
+  },
+  "purchaseTitle": {
+    "more_one": "1 más",
+    "more_other": "{{count}} más"
+  }
+}

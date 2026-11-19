@@ -6,5 +6,12 @@
     "description": "Create one for the people you live with, or join theirs with an invitation. Expenses, chores and the shopping list will live there.",
     "create": "Create a household",
     "joinHint": "Got an invitation link from someone? Open it and you'll be able to join from there."
+  },
+  "shopping": {
+    "title": "Shopping",
+    "toBuy_one": "{{count}} thing to buy",
+    "toBuy_other": "{{count}} things to buy",
+    "empty": "Nothing to buy right now",
+    "see": "See the list"
   }
 }

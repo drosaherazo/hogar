@@ -22,7 +22,7 @@
   min-block-size: var(--size-touch);
   inline-size: 100%;
   min-inline-size: 0;
-  padding-inline: var(--space-3) var(--size-touch);
+  padding-inline: var(--space-3);
   background-color: var(--color-surface-sunken);
   color: var(--color-text);
   border: var(--border-width) solid var(--color-border-strong);
@@ -30,6 +30,11 @@
   font-family: inherit;
   font-size: var(--font-size-md);
   transition: border-color var(--duration-fast) var(--easing-standard);
+}
+
+/* Room for the button over the end of the field. */
+.withTrigger {
+  padding-inline-end: var(--size-touch);
 }
 
 .input:focus-visible {
@@ -172,6 +177,8 @@
 .detail {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+  /* A note can be one long word, like a product code: it wraps instead of widening the list. */
+  overflow-wrap: anywhere;
 }
 
 .empty {

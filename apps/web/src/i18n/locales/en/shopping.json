@@ -1,0 +1,84 @@
+{
+  "title": "Shopping",
+  "close": "Close",
+  "cancel": "Cancel",
+  "add": {
+    "nameLabel": "What's needed?",
+    "noteLabel": "Note (optional)",
+    "noteHint": "Brand, size, how many…",
+    "submit": "Add",
+    "adding": "Adding…"
+  },
+  "suggestion": {
+    "timesBought_one": "Bought once",
+    "timesBought_other": "Bought {{count}} times",
+    "detail": "{{note}} · {{timesBought}}"
+  },
+  "added": "You added {{name}}",
+  "item": {
+    "askedBy": "asked for by {{name}}",
+    "inMyCart": "In your cart",
+    "inCartOf": "In {{name}}'s cart",
+    "putInCart": "Put {{name}} in your cart",
+    "takeOutOfCart": "Take {{name}} out of your cart",
+    "actions": "Options for {{name}}",
+    "edit": "Edit",
+    "delete": "Delete",
+    "lockedReason": "Only {{name}} can change it while it's in their cart."
+  },
+  "cartReturned": "You have guest access now, so your cart went back to the list.",
+  "empty": {
+    "title": "Nothing to buy",
+    "description": "When something runs out, add it here and everyone will see it."
+  },
+  "duplicate": {
+    "message": "{{name}} is already on the list.",
+    "useMyNote": "Use my note",
+    "noteUsed": "{{name}} now has your note"
+  },
+  "guest": {
+    "readOnly": "As a guest you can see the list but not change it."
+  },
+  "loadError": "We couldn't load the shopping list.",
+  "edit": {
+    "title": "Edit “{{name}}”",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Changes to {{name}} saved"
+  },
+  "deleted": "You deleted {{name}}",
+  "undo": "Undo",
+  "restored": "{{name}} is back on the list",
+  "changed": {
+    "title": "Someone changed this meanwhile",
+    "keepNew": "Keep the new version",
+    "saveMine": "Save mine"
+  },
+  "cartBar": {
+    "count_one": "{{count}} in your cart",
+    "count_other": "{{count}} in your cart",
+    "finish": "Finish shopping"
+  },
+  "reminder": {
+    "title_one": "You still have {{count}} in your cart",
+    "title_other": "You still have {{count}} in your cart"
+  },
+  "finish": {
+    "title": "Done shopping?",
+    "description_one": "The 1 thing in your cart leaves the list. What you didn't find stays on it.",
+    "description_other": "The {{count}} things in your cart leave the list. What you didn't find stays on it.",
+    "record": "Note what I paid",
+    "recordHint": "Opens the expense with what you bought, to split it like any other.",
+    "withoutExpense": "Finish without an expense",
+    "withoutExpenseHint": "For when someone else paid or it isn't shared.",
+    "done_one": "Done: 1 thing off the list",
+    "done_other": "Done: {{count}} things off the list",
+    "undone_one": "1 thing is back in your cart",
+    "undone_other": "{{count}} things are back in your cart",
+    "cartChanged": "Your cart changed meanwhile. Check what's in it and finish again."
+  },
+  "purchaseTitle": {
+    "more_one": "1 more",
+    "more_other": "{{count}} more"
+  }
+}

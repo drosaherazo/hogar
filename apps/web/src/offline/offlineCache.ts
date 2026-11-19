@@ -111,7 +111,11 @@ export function createOfflineCache(options: OfflineCacheOptions, queryClient: Qu
             buster: String(API_VERSION),
             dehydrateOptions: {
               shouldDehydrateQuery: (query) =>
-                query.state.status === "success" && isHouseholdData(query) && isFresh(query) && inHousehold(),
+                query.state.status === "success" &&
+                isHouseholdData(query) &&
+                keptOffline(query) &&
+                isFresh(query) &&
+                inHousehold(),
             },
           }
         : null,
@@ -149,6 +153,11 @@ function deviceStorage({ storage }: OfflineCacheOptions): Storage | null {
 
 function isHouseholdData(query: Query): boolean {
   return query.queryKey[0] === householdKeys.current[0];
+}
+
+/** A query can opt out with `meta: { offline: false }`, such as suggestions for every half-typed name. */
+function keptOffline(query: Query): boolean {
+  return query.meta?.["offline"] !== false;
 }
 
 function isCurrentHousehold(query: Query): boolean {

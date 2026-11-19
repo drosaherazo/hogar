@@ -24,6 +24,12 @@ The rewrites are chosen by host, in this order:
 
 `apps/web/src/deploy/vercelRewrites.test.ts` fails if a rewrite to the production API stops being restricted to the production host, or comes after the `dev` rule. Render adds a random suffix when a service name is already taken (`hogar-api.onrender.com` belongs to someone else's app), so if a service is ever recreated, update its rewrite destination (and the test) to the new URL.
 
+## Live updates
+
+The API serves Socket.io at `/api/socket.io`, on the same HTTP server as the REST API. The web connects on its own origin, so the `/api/*` rewrite carries it to Render like any request (Vite's proxy, with `ws: true`, does the same locally): no extra domain, variable or CORS. It speaks WebSocket only, because browsers always send `Origin` on a WebSocket handshake, and the API checks it against `WEB_ORIGIN` and `WEB_PREVIEW_ORIGIN` as `/api/auth` does.
+
+**The socket is open only while Hogar is on screen.** Render's free plan gives 750 instance hours a month per workspace, shared by `hogar-api` and `hogar-api-dev`, and suspends both when they run out. Socket.io's heartbeat (every 25 seconds) counts as traffic, so a socket left open in a background tab would keep a service from ever sleeping. Without push notifications (out of the MVP), a hidden page gains nothing from live updates, so the web disconnects when the page is hidden and reconnects when it is shown again, re-reading whatever it missed. Re-check this budget if a third free service is ever added.
+
 ## First deploy
 
 ### 1. Database (Neon)
@@ -160,6 +166,7 @@ The auth rate limit is per client IP. Behind proxies, Express takes the client I
 - In the browser's dev tools, the `hogar_refresh` cookie belongs to `hogar.therandomcollection.co`, with `HttpOnly`, `Secure`, `SameSite=Lax` and `Path=/api/auth`.
 - `https://hogar-virid-nine.vercel.app` redirects (308) to the production domain.
 - `curl -sI https://hogar.therandomcollection.co/sw.js` answers `200` with `max-age=0`, and `/manifest.webmanifest` names Hogar.
+- With the household open in two browsers, renaming it in one shows the new name in the other without reloading.
 
 ### `dev`
 

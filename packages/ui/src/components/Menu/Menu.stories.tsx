@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Languages, LogOut, Moon, Sun } from "lucide-react";
+import { Languages, LogOut, Moon, MoreHorizontal, Pencil, Sun, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { storyText } from "../../docs/blocks/storyLocale";
 import { Avatar } from "../Avatar/Avatar";
+import { Button } from "../Button/Button";
 import { Menu, MenuItem, MenuRadioGroup, MenuSeparator } from "./Menu";
 
 const meta = {
@@ -59,4 +60,35 @@ function AccountMenuDemo({ globals, align }: { globals: Record<string, unknown>;
 
 export const AccountMenu: Story = {
   render: (args, { globals }) => <AccountMenuDemo globals={globals} align={args.align ?? "start"} />,
+};
+
+/**
+ * Actions someone can't use right now stay in the menu, disabled, with the reason under them:
+ * here, an item another person has in their cart.
+ */
+export const DisabledWithReason: Story = {
+  render: function Render(args, { globals }) {
+    const t = <T,>(value: { en: T; es: T }) => storyText(globals, value);
+    const reason = t({
+      en: "Only Bruno can change it while it's in their cart.",
+      es: "Solo Bruno puede cambiarlo mientras esté en su carrito.",
+    });
+    return (
+      <Menu
+        align={args.align ?? "start"}
+        trigger={
+          <Button variant="ghost" size="sm" aria-label={t({ en: "Options for Milk", es: "Opciones de Leche" })}>
+            <MoreHorizontal aria-hidden="true" />
+          </Button>
+        }
+      >
+        <MenuItem icon={<Pencil />} disabled description={reason}>
+          {t({ en: "Edit", es: "Editar" })}
+        </MenuItem>
+        <MenuItem icon={<Trash2 />} disabled description={reason}>
+          {t({ en: "Delete", es: "Borrar" })}
+        </MenuItem>
+      </Menu>
+    );
+  },
 };

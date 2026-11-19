@@ -11,22 +11,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiClient } from "../api/ApiClientContext";
 import { ApiRequestError } from "../api/client";
 import { expenseKeys } from "../expenses/useExpenses";
+import { shoppingKeys } from "../shopping/useShopping";
 
 export const householdKeys = {
+  /** Also the start of every other household query's key: invalidating it marks them all stale. */
   current: ["household"] as const,
   invitations: ["household", "invitations"] as const,
 };
 
-/**
- * The signed-in person's household. Refetched when they come back to the tab, so changes
- * made by others show up without real time (that's a later feature).
- */
+/** The signed-in person's household, kept current by the live connection (`LiveHousehold`). */
 export function useHousehold() {
   const client = useApiClient();
   return useQuery({
     queryKey: householdKeys.current,
     queryFn: () => client.getHousehold(),
-    refetchOnWindowFocus: true,
   });
 }
 
@@ -70,6 +68,11 @@ export function useChangeCurrency() {
   return useHouseholdMutation((currency: CurrencyCode) => client.changeCurrency(currency));
 }
 
+export function useSetShowWhoAsked() {
+  const client = useApiClient();
+  return useHouseholdMutation((showWhoAsked: boolean) => client.setShowWhoAsked(showWhoAsked));
+}
+
 export function useChangeRole() {
   const client = useApiClient();
   return useHouseholdMutation(({ membershipId, role }: { membershipId: string; role: Role }) =>
@@ -105,9 +108,10 @@ export function useLeaveHousehold() {
     mutationFn: () => client.leaveHousehold(),
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: householdKeys.invitations });
-      // That household's money isn't theirs to see any more.
+      // That household's money and list aren't theirs to see any more.
       queryClient.removeQueries({ queryKey: expenseKeys.activity });
       queryClient.removeQueries({ queryKey: expenseKeys.balances });
+      queryClient.removeQueries({ queryKey: shoppingKeys.list });
       const noHousehold: CurrentHousehold = { household: null, removedFrom: null };
       queryClient.setQueryData(householdKeys.current, noHousehold);
     },
@@ -131,7 +135,6 @@ export function useInvitations(enabled: boolean) {
     queryKey: householdKeys.invitations,
     queryFn: () => client.listInvitations(),
     enabled,
-    refetchOnWindowFocus: true,
   });
 }
 

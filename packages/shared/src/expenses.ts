@@ -207,6 +207,10 @@ const auditFields = {
 export const expenseShareViewSchema = z.object({ person: personRefSchema, amountCents: z.number().int().min(0) });
 export type ExpenseShareView = z.infer<typeof expenseShareViewSchema>;
 
+/** One thing bought in the shopping trip an expense paid for: its name and note when it was bought. */
+export const boughtItemViewSchema = z.object({ name: z.string().min(1), note: z.string().nullable() });
+export type BoughtItemView = z.infer<typeof boughtItemViewSchema>;
+
 export const expenseViewSchema = z.object({
   id: z.string().min(1),
   description: z.string().min(1),
@@ -216,6 +220,11 @@ export const expenseViewSchema = z.object({
   /** Shares in member order (former members last); they add up to `amountCents`. */
   split: z.object({ method: splitMethodSchema, shares: z.array(expenseShareViewSchema) }),
   category: categoryRefSchema.nullable(),
+  /**
+   * What was bought, in the order the items were added to the list, when the expense notes what
+   * someone paid as they finished shopping; empty for every other expense. Edits never change it.
+   */
+  boughtItems: z.array(boughtItemViewSchema),
   ...auditFields,
 });
 export type ExpenseView = z.infer<typeof expenseViewSchema>;

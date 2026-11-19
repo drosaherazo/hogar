@@ -26,6 +26,7 @@ import {
 const EXPENSE_INCLUDE = {
   shares: true,
   category: { select: { id: true, name: true, emoji: true } },
+  boughtItems: { select: { name: true, note: true }, orderBy: [{ addedAt: "asc" }, { id: "asc" }] },
 } satisfies Prisma.ExpenseInclude;
 type ExpenseRow = Prisma.ExpenseGetPayload<{ include: typeof EXPENSE_INCLUDE }>;
 
@@ -197,6 +198,7 @@ export function createExpenseService({ db, now = () => new Date() }: ExpenseServ
       paidBy: refOf(refs, row.paidById),
       split: { method: row.splitMethod, shares },
       category: toCategoryRef(row.category),
+      boughtItems: row.boughtItems,
       createdBy: refOf(refs, row.createdById),
       createdAt: row.createdAt.toISOString(),
       editedBy: row.editedById ? refOf(refs, row.editedById) : null,
@@ -230,6 +232,43 @@ export function createExpenseService({ db, now = () => new Date() }: ExpenseServ
     return row;
   }
 
+  /**
+   * Records an expense and its shares inside the caller's transaction, with every expense rule.
+   * It takes the household lock (a no-op when the caller already holds it), so the members it
+   * checks, and whose weights it reads, can't change until the caller commits. A refusal throws,
+   * which rolls back the caller's whole transaction.
+   */
+  async function createWithin(
+    tx: Prisma.TransactionClient,
+    actor: Membership,
+    input: ParsedExpenseInput,
+  ): Promise<ExpenseView> {
+    assertNotFuture(input.date, now());
+    await lockHousehold(tx, actor.householdId);
+    const members = await currentMembers(tx, actor.householdId);
+    assertStillEditor(members, actor);
+    await assertHouseholdCurrency(tx, actor.householdId, input.currency);
+    const category = await categoryOf(tx, actor.householdId, input.categoryId);
+    const split = computeSplit(input, contextFor(members), category);
+    assertPreview(split, input);
+    const row = await tx.expense.create({
+      data: {
+        householdId: actor.householdId,
+        description: input.description,
+        amountCents: input.amountCents,
+        date: fromCalendarDate(input.date),
+        paidById: input.paidById,
+        splitMethod: split.method,
+        categoryId: category?.id ?? null,
+        createdById: actor.userId,
+        createdAt: now(),
+        shares: { create: split.shares },
+      },
+      include: EXPENSE_INCLUDE,
+    });
+    return toView(tx, row, members);
+  }
+
   return {
     /** A live expense of the caller's household; anything else is "not found". */
     async get(householdId: string, expenseId: string): Promise<ExpenseView> {
@@ -241,38 +280,12 @@ export function createExpenseService({ db, now = () => new Date() }: ExpenseServ
       return toView(db, row);
     },
 
-    /**
-     * Records an expense and its shares together. It runs under the household lock, so the
-     * members it checks (and whose weights it reads) can't change until it commits.
-     */
+    /** Records an expense and its shares together, in a transaction of its own. */
     async create(actor: Membership, input: ParsedExpenseInput): Promise<ExpenseView> {
-      assertNotFuture(input.date, now());
-      return db.$transaction(async (tx) => {
-        await lockHousehold(tx, actor.householdId);
-        const members = await currentMembers(tx, actor.householdId);
-        assertStillEditor(members, actor);
-        await assertHouseholdCurrency(tx, actor.householdId, input.currency);
-        const category = await categoryOf(tx, actor.householdId, input.categoryId);
-        const split = computeSplit(input, contextFor(members), category);
-        assertPreview(split, input);
-        const row = await tx.expense.create({
-          data: {
-            householdId: actor.householdId,
-            description: input.description,
-            amountCents: input.amountCents,
-            date: fromCalendarDate(input.date),
-            paidById: input.paidById,
-            splitMethod: split.method,
-            categoryId: category?.id ?? null,
-            createdById: actor.userId,
-            createdAt: now(),
-            shares: { create: split.shares },
-          },
-          include: EXPENSE_INCLUDE,
-        });
-        return toView(tx, row, members);
-      });
+      return db.$transaction((tx) => createWithin(tx, actor, input));
     },
+
+    createWithin,
 
     /**
      * Any editor may change any expense, but only from the version they saw: a change based on

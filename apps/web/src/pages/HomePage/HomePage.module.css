@@ -72,7 +72,7 @@
   gap: var(--space-4);
 }
 
-.moneyTitle {
+.cardTitle {
   margin: 0;
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
@@ -102,6 +102,46 @@
 }
 
 .moneyActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* The money card with the shopping card below it: one column of the two on wide screens. */
+.stack {
+  display: grid;
+  gap: var(--space-6);
+  min-inline-size: 0;
+}
+
+.shopping {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.toBuy {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+/* "You still have 2 in your cart": an amber cart and the words, so color never says it alone. */
+.reminder {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.reminderIcon {
+  flex: none;
+  inline-size: var(--size-icon-md);
+  block-size: var(--size-icon-md);
+  color: var(--color-warning);
+}
+
+.shoppingActions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);

@@ -7,7 +7,7 @@ import type {
   MemberView,
   PersonRef,
 } from "@hogar/shared";
-import { ana, browserLanguages, session } from "../support/e2e";
+import { ana, browserLanguages, openInBackground, session, setPageVisibility } from "../support/e2e";
 
 // --- Stub data -----------------------------------------------------------------
 
@@ -41,6 +41,7 @@ const household: HouseholdView = {
   myRole: "ADMIN",
   members: [anaMember, brunoMember],
   splitNeedsReview: false,
+  showWhoAsked: true,
 };
 
 const anaRef: PersonRef = { userId: ana.id, name: ana.name, avatarUrl: null, former: false };
@@ -66,6 +67,7 @@ function expense(overrides: Partial<ExpenseView> = {}): ExpenseView {
     editedAt: null,
     version: 1,
     category: null,
+    boughtItems: [],
     ...overrides,
   };
 }
@@ -105,14 +107,6 @@ const anaIsOwed = (cents: number): BalancesView => ({
   suggestions: [{ from: brunoRef, to: anaRef, amountCents: cents }],
   myBalanceCents: cents,
 });
-
-/** Brings the tab back into focus, which refetches what the page shows (no real time yet). */
-function comeBackToTheTab() {
-  cy.window().then((win) => {
-    win.dispatchEvent(new Event("visibilitychange"));
-    win.dispatchEvent(new Event("focus"));
-  });
-}
 
 // --- Flows ---------------------------------------------------------------------
 
@@ -325,9 +319,11 @@ describe("Expenses", () => {
 
   it("shows another person's expense after coming back to the tab", () => {
     let brunoAdded = false;
+    let reads = 0;
     const bread = expense({ id: "expense_2", description: "Bread", amountCents: 400, paidBy: brunoRef });
     cy.intercept("GET", "/api/household/balances", (req) => req.reply(brunoAdded ? anaIsOwed(670) : anaIsOwed(1070)));
-    cy.intercept("GET", "/api/household/activity*", (req) =>
+    cy.intercept("GET", "/api/household/activity*", (req) => {
+      reads += 1;
       req.reply(
         brunoAdded
           ? page(
@@ -335,18 +331,24 @@ describe("Expenses", () => {
               expenseItem(expense(), { kind: "lent", amountCents: 1070 }),
             )
           : page(expenseItem(expense(), { kind: "lent", amountCents: 1070 })),
-      ),
-    );
+      );
+    });
 
-    cy.visit("/expenses");
+    // Opened in a background tab: the page goes live once Ana looks at it, after its first reads.
+    cy.visit("/expenses", { onBeforeLoad: openInBackground });
     cy.contains("You're owed €10.70 in total");
     cy.contains("a", "Groceries");
+    setPageVisibility("visible");
+    // The first read, then the one connecting makes to catch up.
+    cy.wrap(null).should(() => expect(reads).to.equal(2));
 
-    // Bruno records an expense from his phone (simulated: the API now answers with it).
+    // Ana switches to another app, and Bruno records an expense from his phone meanwhile (simulated:
+    // the API now answers with it). Hidden, the page isn't live: coming back re-reads what it missed.
+    setPageVisibility("hidden");
     cy.then(() => {
       brunoAdded = true;
     });
-    comeBackToTheTab();
+    setPageVisibility("visible");
     cy.contains("a", "Bread").should("contain", "Bruno Díaz paid").and("contain", "You owe €3.00");
     cy.contains("You're owed €6.70 in total");
   });

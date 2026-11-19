@@ -43,11 +43,24 @@ describe("Checkbox", () => {
     expect(screen.getByRole("checkbox")).toHaveAccessibleDescription("If unticked, it follows the household's split.");
   });
 
+  it("is tinted with the accent and labelled at body size by default", () => {
+    render(<Checkbox label="Use its own split" />);
+    expect(screen.getByRole("checkbox")).toHaveClass("accent");
+    expect(screen.getByText("Use its own split")).toHaveClass("md");
+  });
+
+  it("takes the positive tone and a larger label, as the check that ticks an item off a list", () => {
+    render(<Checkbox label="Milk" tone="positive" size="lg" />);
+    expect(screen.getByRole("checkbox", { name: "Milk" })).toHaveClass("positive");
+    expect(screen.getByText("Milk")).toHaveClass("lg");
+  });
+
   it("has no accessibility violations, ticked or not", async () => {
     const { container } = render(
       <>
         <Checkbox label="Use its own split" hint="If unticked, it follows the household's split." />
         <Checkbox label="Another choice" defaultChecked />
+        <Checkbox label="Milk" tone="positive" size="lg" defaultChecked />
       </>,
     );
     await expectNoA11yViolations(container);

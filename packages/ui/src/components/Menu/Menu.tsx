@@ -17,6 +17,7 @@ import {
   Popover,
   Pressable,
   Separator,
+  Text,
   type Selection,
 } from "react-aria-components";
 import styles from "./Menu.module.css";
@@ -63,14 +64,21 @@ export function Menu({ trigger, children, align = "end" }: MenuProps) {
 }
 
 export interface MenuItemProps {
+  /** The action's name, already translated ("Edit"). */
   children: ReactNode;
   onSelect?: () => void;
   icon?: ReactNode;
   disabled?: boolean;
+  /**
+   * A short line under the name, already translated, read with the item by screen readers. Use it
+   * on a disabled item to say why it can't be used ("Only Bruno can change it while it's in their
+   * cart."), so the person isn't left guessing.
+   */
+  description?: string | undefined;
   className?: string;
 }
 
-export function MenuItem({ children, onSelect, icon, disabled, className }: MenuItemProps) {
+export function MenuItem({ children, onSelect, icon, disabled, description, className }: MenuItemProps) {
   return (
     <AriaMenuItem
       className={clsx(styles.item, className)}
@@ -83,7 +91,16 @@ export function MenuItem({ children, onSelect, icon, disabled, className }: Menu
           {icon}
         </span>
       )}
-      {children}
+      {/* The label slot names the item; the description slot describes it, without joining the name.
+          The slot is always there, empty and hidden without a description: react-aria links it only
+          when the item mounts, so a reason that appears while the menu is open (an item switched off
+          as the connection drops) is still read. */}
+      <span className={styles.itemText}>
+        <Text slot="label">{children}</Text>
+        <Text slot="description" className={clsx(styles.itemDescription)}>
+          {description}
+        </Text>
+      </span>
     </AriaMenuItem>
   );
 }

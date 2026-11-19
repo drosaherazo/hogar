@@ -49,6 +49,17 @@ beforeEach(() => {
   // Signed-in people start without a household unless a flow says otherwise.
   cy.intercept("GET", "/api/household", { body: { household: null, removedFrom: null } }).as("household");
   cy.intercept("GET", "/api/household/categories", { body: { categories: starterCategories() } }).as("categories");
+  // Everyone square, so pages that show a balance sentence work without setting balances up.
+  cy.intercept("GET", "/api/household/balances", { body: { balances: [], suggestions: [], myBalanceCents: 0 } });
+  // Nothing bought yet, so typing a shopping item suggests nothing.
+  cy.intercept("GET", "/api/household/shopping/suggestions*", { body: { suggestions: [] } });
+  // The live connection reaches a stub Socket.io server, which lets it in unless a flow says otherwise.
+  cy.task("socket:reset");
+});
+
+afterEach(() => {
+  // The page stays open after a test; closing its connection keeps it from reconnecting later.
+  cy.task("socket:reset");
 });
 
 declare global {
@@ -66,4 +77,31 @@ Cypress.Commands.add("findHeading", (text: string) => cy.contains("h1", new RegE
 /** What the browser says the person speaks (`navigator.languages`), which suggests a new household's currency. */
 export function browserLanguages(win: Window, ...languages: string[]) {
   Object.defineProperty(win.navigator, "languages", { get: () => languages });
+}
+
+function setVisibility(doc: Document, state: DocumentVisibilityState) {
+  Object.defineProperty(doc, "visibilityState", { value: state, configurable: true });
+  doc.dispatchEvent(new Event("visibilitychange"));
+}
+
+/**
+ * What the browser says when the person switches tab, locks the phone or comes back. Hogar is live
+ * only while on screen: hidden, it closes its live connection; shown again, it reconnects and
+ * re-reads what it missed.
+ */
+export function setPageVisibility(state: DocumentVisibilityState) {
+  cy.document().then((doc) => setVisibility(doc, state));
+  // Nobody comes back within milliseconds: a page shown again before it has even closed its
+  // connection never notices it was away.
+  if (state === "hidden") cy.task("socket:disconnection");
+}
+
+/**
+ * For `cy.visit`'s `onBeforeLoad`: the page opens in a background tab, so it connects only once the
+ * test shows it, after its first reads are in. Connecting then re-reads each query exactly once,
+ * which a test can count; connecting while the page loads may re-read nothing, because a query still
+ * on its first read isn't read again.
+ */
+export function openInBackground(win: Window) {
+  setVisibility(win.document, "hidden");
 }

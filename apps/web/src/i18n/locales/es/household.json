@@ -159,6 +159,14 @@
         "deleted": "Categoría borrada."
       },
       "editButton": "Editar"
+    },
+    "shopping": {
+      "title": "Lista de la compra",
+      "showWhoAsked": "Mostrar quién pidió cada cosa",
+      "showWhoAskedHint": "Sirve para saber a quién preguntar en la tienda. Si lo apagas, nadie lo ve.",
+      "save": "Guardar ajuste",
+      "saving": "Guardando el ajuste",
+      "saved": "Ajuste guardado."
     }
   },
   "invite": {

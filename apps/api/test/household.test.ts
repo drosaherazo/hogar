@@ -323,3 +323,53 @@ describe("PATCH /api/household with a currency", () => {
     expect((await householdRow(household.id))?.currency).toBe("EUR");
   });
 });
+
+describe("PATCH /api/household with who asked for each item", () => {
+  const setShowWhoAsked = (app: ReturnType<typeof createTestApp>["app"], auth: string, showWhoAsked: unknown) =>
+    request(app).patch("/api/household").set("Authorization", auth).send({ showWhoAsked });
+
+  it("shows who asked by default", async () => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    expect((await createHousehold(app, ana)).showWhoAsked).toBe(true);
+  });
+
+  it("lets an admin hide it and show it again, which everyone then reads", async () => {
+    const { app } = createTestApp();
+    const home = await homeWith(app);
+
+    const hidden = await setShowWhoAsked(app, home.ana.auth, false);
+    expect(hidden.status).toBe(200);
+    expect(householdResponseSchema.parse(hidden.body).household).toMatchObject({
+      showWhoAsked: false,
+      name: "Casa Ana",
+    });
+    const seen = await request(app).get("/api/household").set("Authorization", home.bruno.auth);
+    expect(householdResponseSchema.parse(seen.body).household.showWhoAsked).toBe(false);
+
+    const shown = await setShowWhoAsked(app, home.ana.auth, true);
+    expect(householdResponseSchema.parse(shown.body).household.showWhoAsked).toBe(true);
+  });
+
+  it.each(["MEMBER", "GUEST"] as const)("refuses a %s", async (role) => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    const household = await createHousehold(app, ana);
+    const other = await addMember(app, household.id, bruno, role);
+
+    const res = await setShowWhoAsked(app, other.auth, false);
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: { code: "household.forbidden" } });
+    expect((await householdRow(household.id))?.showWhoAsked).toBe(true);
+  });
+
+  it("refuses a value that isn't true or false", async () => {
+    const { app } = createTestApp();
+    const ana = await signIn(app);
+    const household = await createHousehold(app, ana);
+    const res = await setShowWhoAsked(app, ana.auth, "no");
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: { code: "request.invalid" } });
+    expect((await householdRow(household.id))?.showWhoAsked).toBe(true);
+  });
+});

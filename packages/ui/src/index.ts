@@ -31,7 +31,12 @@ export type {
   SingleChoiceGroupProps,
 } from "./components/ChoiceGroup/ChoiceGroup";
 export { Combobox } from "./components/Combobox/Combobox";
-export type { ComboboxItem, ComboboxProps } from "./components/Combobox/Combobox";
+export type {
+  ComboboxFreeTextProps,
+  ComboboxItem,
+  ComboboxProps,
+  ComboboxSelectProps,
+} from "./components/Combobox/Combobox";
 export { Dialog } from "./components/Dialog/Dialog";
 export type { DialogProps } from "./components/Dialog/Dialog";
 export { EmptyState } from "./components/EmptyState/EmptyState";
@@ -44,5 +49,7 @@ export { Spinner } from "./components/Spinner/Spinner";
 export type { SpinnerProps } from "./components/Spinner/Spinner";
 export { TextField } from "./components/TextField/TextField";
 export type { TextFieldProps } from "./components/TextField/TextField";
+export { TOAST_TIMEOUT_MS, ToastQueue, ToastRegion } from "./components/Toast/Toast";
+export type { ToastContent, ToastRegionProps } from "./components/Toast/Toast";
 export { WakeUpScreen } from "./components/WakeUpScreen/WakeUpScreen";
 export type { WakeUpScreenProps } from "./components/WakeUpScreen/WakeUpScreen";

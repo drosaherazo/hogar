@@ -1,6 +1,6 @@
 import { canEditContent, isStarterName, type HouseholdView } from "@hogar/shared";
 import { Alert, Avatar, Button, Card, EmptyState, Spinner } from "@hogar/ui";
-import { ArrowDownLeft, ArrowUpRight, House, Plus, Settings } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, House, Plus, Settings, ShoppingBasket, ShoppingCart } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "../../auth/guards";
@@ -12,6 +12,8 @@ import { memberColor } from "../../household/members";
 import { useDismissRemovalNotice, useHousehold } from "../../household/useHousehold";
 import { ActionLink } from "../../layout/ActionLink";
 import { AppShell, Columns } from "../../layout/AppShell";
+import { cartOf, useShoppingList } from "../../shopping/useShopping";
+import type { ShoppingPageState } from "../ShoppingPage/ShoppingPage";
 import styles from "./HomePage.module.css";
 
 /** What the greeting calls the person: their first name, or their whole starter name. */
@@ -118,7 +120,11 @@ function HouseholdSummary({ household }: { household: HouseholdView }) {
             {t("home.settingsLink")}
           </ActionLink>
         </Card>
-        <MoneyCard canEdit={canEditContent(household.myRole)} />
+        {/* One column with the money card and the list below it, so on wide screens the list sits under the money. */}
+        <div className={styles.stack}>
+          <MoneyCard canEdit={canEditContent(household.myRole)} />
+          <ShoppingCard canEdit={canEditContent(household.myRole)} />
+        </div>
       </Columns>
     </>
   );
@@ -152,7 +158,7 @@ function MoneyCard({ canEdit }: { canEdit: boolean }) {
 
   return (
     <Card as="section" padding="lg" tone="brand" aria-labelledby={titleId} className={styles.money}>
-      <h2 id={titleId} className={styles.moneyTitle}>
+      <h2 id={titleId} className={styles.cardTitle}>
         {t("home.title")}
       </h2>
       {balances.isPending ? (
@@ -170,6 +176,53 @@ function MoneyCard({ canEdit }: { canEdit: boolean }) {
         )}
         <ActionLink to="/expenses">{t("home.seeExpenses")}</ActionLink>
         <ActionLink to="/balances">{t("balances.link")}</ActionLink>
+      </div>
+    </Card>
+  );
+}
+
+/**
+ * How many things are left to buy (items in carts too, until they are bought), the way to the
+ * list, and a reminder when the person's own cart still has things in it.
+ */
+function ShoppingCard({ canEdit }: { canEdit: boolean }) {
+  const { t } = useTranslation(["home", "shopping", "common"]);
+  const list = useShoppingList();
+  const user = useCurrentUser();
+  const titleId = useId();
+  const inMyCart = canEdit && list.data ? cartOf(list.data, user.id).length : 0;
+  const finish: ShoppingPageState = { finish: true };
+
+  return (
+    <Card as="section" padding="lg" aria-labelledby={titleId} className={styles.shopping}>
+      <h2 id={titleId} className={styles.cardTitle}>
+        {t("shopping.title")}
+      </h2>
+      {list.isPending ? (
+        <Spinner label={t("common:loading")} />
+      ) : list.isError ? (
+        <p className={styles.people}>{t("shopping:loadError")}</p>
+      ) : (
+        <p className={styles.toBuy}>
+          {list.data.length > 0 ? t("shopping.toBuy", { count: list.data.length }) : t("shopping.empty")}
+        </p>
+      )}
+      {/* Not an Alert: a box inside the card would leave too little room for its words at 200 % text. */}
+      {inMyCart > 0 && (
+        <p className={styles.reminder}>
+          <ShoppingCart aria-hidden="true" className={styles.reminderIcon} />
+          {t("shopping:reminder.title", { count: inMyCart })}
+        </p>
+      )}
+      <div className={styles.shoppingActions}>
+        {inMyCart > 0 && (
+          <ActionLink to="/shopping" state={finish} changesData>
+            {t("shopping:cartBar.finish")}
+          </ActionLink>
+        )}
+        <ActionLink to="/shopping" icon={<ShoppingBasket />}>
+          {t("shopping.see")}
+        </ActionLink>
       </div>
     </Card>
   );

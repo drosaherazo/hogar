@@ -4,12 +4,14 @@ import enErrors from "./locales/en/errors.json";
 import enExpenses from "./locales/en/expenses.json";
 import enHome from "./locales/en/home.json";
 import enHousehold from "./locales/en/household.json";
+import enShopping from "./locales/en/shopping.json";
 import esAuth from "./locales/es/auth.json";
 import esCommon from "./locales/es/common.json";
 import esErrors from "./locales/es/errors.json";
 import esExpenses from "./locales/es/expenses.json";
 import esHome from "./locales/es/home.json";
 import esHousehold from "./locales/es/household.json";
+import esShopping from "./locales/es/shopping.json";
 
 /** `en` is the source of truth: its shape types every key (see i18next.d.ts). */
 export const en = {
@@ -18,6 +20,7 @@ export const en = {
   home: enHome,
   household: enHousehold,
   expenses: enExpenses,
+  shopping: enShopping,
   errors: enErrors,
 };
 
@@ -28,6 +31,7 @@ export const es: typeof en = {
   home: esHome,
   household: esHousehold,
   expenses: esExpenses,
+  shopping: esShopping,
   errors: esErrors,
 };
 

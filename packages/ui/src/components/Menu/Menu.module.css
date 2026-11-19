@@ -1,6 +1,13 @@
 .content {
   z-index: 10;
+  /*
+   * As wide as its longest line, up to a limit: a long reason under an item wraps instead of
+   * pushing the menu past a 320 px screen. The width never depends on where the menu is placed, so
+   * placing it can't rewrap it and make react-aria place it again.
+   */
+  inline-size: max-content;
   min-inline-size: 14rem;
+  max-inline-size: min(var(--size-content-sm), 100vw - 2 * var(--space-4));
   /* react-aria caps the height to the space left in the viewport; scroll inside it. */
   overflow-y: auto;
   padding: var(--space-2);
@@ -48,9 +55,27 @@
   outline-offset: calc(var(--focus-ring-width) * -1);
 }
 
+/* Muted rather than faded, so the reason under a disabled item stays readable (AA). */
 .item[data-disabled] {
   cursor: not-allowed;
-  opacity: 0.55;
+  color: var(--color-text-muted);
+}
+
+/* The name and, when there is one, a short line under it; the row grows with them at 200 % text. */
+.itemText {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  padding-block: var(--space-2);
+}
+
+.itemDescription {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.itemDescription:empty {
+  display: none;
 }
 
 .itemIcon {

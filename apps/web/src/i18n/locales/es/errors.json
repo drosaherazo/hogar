@@ -94,6 +94,27 @@
     "not_found": "Ese pago ya no está. Puede que alguien lo haya borrado.",
     "changed": "Alguien cambió este pago mientras lo editabas. Aquí tienes la versión más reciente."
   },
+  "shopping": {
+    "item": {
+      "name": {
+        "required": "Escribe qué hace falta.",
+        "too_long": "Máximo 50 caracteres; los detalles van en la nota."
+      },
+      "note": {
+        "too_long": "La nota admite hasta 100 caracteres."
+      },
+      "duplicate": "Eso ya está en la lista.",
+      "not_found": "Eso ya no está en la lista.",
+      "changed": "Alguien lo cambió mientras tanto. Aquí tienes la versión más reciente.",
+      "in_cart": "Ahora está en el carrito de otra persona y solo ella puede cambiarlo."
+    },
+    "cart": {
+      "changed": "Tu carrito cambió. Revisa lo que compraste y guarda otra vez."
+    },
+    "undo": {
+      "expired": "Ya no se puede deshacer."
+    }
+  },
   "invitation": {
     "not_found": "Este enlace de invitación no funciona. Pide uno nuevo a quien te invitó.",
     "expired": "Esta invitación ha caducado. Pide un enlace nuevo a quien te invitó.",

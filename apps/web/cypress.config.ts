@@ -1,4 +1,5 @@
 import { defineConfig } from "cypress";
+import { startSocketStub } from "./cypress/socketStub";
 
 export default defineConfig({
   e2e: {
@@ -8,5 +9,8 @@ export default defineConfig({
     video: false,
     viewportWidth: 390,
     viewportHeight: 844,
+    setupNodeEvents(on) {
+      on("task", startSocketStub());
+    },
   },
 });

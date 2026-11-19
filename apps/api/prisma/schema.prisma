@@ -28,16 +28,20 @@ model User {
   invitationsCreated Invitation[]   @relation("InvitationCreatedBy")
   invitationsUsed    Invitation[]   @relation("InvitationUsedBy")
 
-  expensesPaid        Expense[]      @relation("ExpensePaidBy")
-  expensesCreated     Expense[]      @relation("ExpenseCreatedBy")
-  expensesEdited      Expense[]      @relation("ExpenseEditedBy")
-  expensesDeleted     Expense[]      @relation("ExpenseDeletedBy")
-  expenseShares       ExpenseShare[]
-  settlementsSent     Settlement[]   @relation("SettlementFrom")
-  settlementsReceived Settlement[]   @relation("SettlementTo")
-  settlementsCreated  Settlement[]   @relation("SettlementCreatedBy")
-  settlementsEdited   Settlement[]   @relation("SettlementEditedBy")
-  settlementsDeleted  Settlement[]   @relation("SettlementDeletedBy")
+  expensesPaid         Expense[]      @relation("ExpensePaidBy")
+  expensesCreated      Expense[]      @relation("ExpenseCreatedBy")
+  expensesEdited       Expense[]      @relation("ExpenseEditedBy")
+  expensesDeleted      Expense[]      @relation("ExpenseDeletedBy")
+  expenseShares        ExpenseShare[]
+  settlementsSent      Settlement[]   @relation("SettlementFrom")
+  settlementsReceived  Settlement[]   @relation("SettlementTo")
+  settlementsCreated   Settlement[]   @relation("SettlementCreatedBy")
+  settlementsEdited    Settlement[]   @relation("SettlementEditedBy")
+  settlementsDeleted   Settlement[]   @relation("SettlementDeletedBy")
+  shoppingItemsAsked   ShoppingItem[] @relation("ShoppingItemAskedBy")
+  shoppingItemsDeleted ShoppingItem[] @relation("ShoppingItemDeletedBy")
+  shoppingItemsInCart  ShoppingItem[] @relation("ShoppingItemCartOwner")
+  shoppingItemsBought  ShoppingItem[] @relation("ShoppingItemBoughtBy")
 
   @@map("users")
 }
@@ -58,14 +62,17 @@ model Household {
   membersChangedAt DateTime  @map("members_changed_at")
   /// Last time an admin saved the split; null until the first save.
   splitSavedAt     DateTime? @map("split_saved_at")
+  /// Whether shopping item views say who asked for each item. Hiding it never deletes `askedBy`.
+  showWhoAsked     Boolean   @default(true) @map("show_who_asked")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
 
-  memberships Membership[]
-  invitations Invitation[]
-  expenses    Expense[]
-  settlements Settlement[]
-  categories  ExpenseCategory[]
+  memberships   Membership[]
+  invitations   Invitation[]
+  expenses      Expense[]
+  settlements   Settlement[]
+  categories    ExpenseCategory[]
+  shoppingItems ShoppingItem[]
 
   @@map("households")
 }
@@ -148,6 +155,8 @@ model Expense {
   editedBy  User?            @relation("ExpenseEditedBy", fields: [editedById], references: [id], onDelete: Restrict)
   deletedBy User?            @relation("ExpenseDeletedBy", fields: [deletedById], references: [id], onDelete: Restrict)
   shares    ExpenseShare[]
+  /// What was bought, when the expense notes what someone paid as they finished shopping.
+  boughtItems ShoppingItem[]
 
   @@index([householdId, date(sort: Desc), createdAt(sort: Desc), id(sort: Desc)])
   @@index([householdId, paidById])
@@ -239,6 +248,56 @@ model Settlement {
   @@index([householdId, fromUserId])
   @@index([householdId, toUserId])
   @@map("settlements")
+}
+
+/// One thing on the household's shopping list ("Milk"). An item is on the list until it is
+/// bought or deleted. Both are soft (`boughtAt`, `deletedAt`), so whoever did it can undo for a
+/// minute and it comes back in its place. The list never holds two items whose `nameKey` matches
+/// (ADR 0009): a partial unique index on (household, `nameKey`) over items neither bought nor
+/// deleted, written by hand in the migration because Prisma can't model it. The service answers
+/// a violation with `shopping.item.duplicate`.
+model ShoppingItem {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  /// Trimmed, 1–50 characters.
+  name        String
+  /// `shoppingNameKey(name)` from packages/shared: case, accents and spaces folded.
+  nameKey     String    @map("name_key")
+  /// Trimmed, up to 100 characters; null rather than empty.
+  note        String?
+  /// Whoever added it. A user, not a membership, so it survives people leaving (ADR 0007).
+  askedById   String    @map("asked_by_id")
+  /// The list is ordered by it, like a paper list.
+  addedAt     DateTime  @map("added_at")
+  /// Starts at 1 and goes up only on name and note edits (ADR 0009).
+  version     Int       @default(1)
+  /// Whose cart it is in while they shop, or null. Moving it in or out of a cart isn't an edit, so
+  /// `version` stays (ADR 0009). Cleared when its owner leaves, is removed or becomes a guest.
+  cartOwnerId String?   @map("cart_owner_id")
+  /// Set when someone finishes shopping with it in their cart: it leaves the list as a bought item,
+  /// part of the household's shopping history, unless whoever bought it undoes within the window.
+  boughtAt    DateTime? @map("bought_at")
+  boughtById  String?   @map("bought_by_id")
+  /// Set when someone deletes it: it leaves the list for good, unless whoever deleted it undoes
+  /// within the window.
+  deletedAt   DateTime? @map("deleted_at")
+  deletedById String?   @map("deleted_by_id")
+  /// The expense it was paid with, when whoever bought it noted what they paid. Expense edits never
+  /// change it, and deleting the expense (soft) leaves the item bought and still linked.
+  expenseId   String?   @map("expense_id")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  expense   Expense?  @relation(fields: [expenseId], references: [id], onDelete: SetNull)
+  askedBy   User      @relation("ShoppingItemAskedBy", fields: [askedById], references: [id], onDelete: Restrict)
+  boughtBy  User?     @relation("ShoppingItemBoughtBy", fields: [boughtById], references: [id], onDelete: Restrict)
+  deletedBy User?     @relation("ShoppingItemDeletedBy", fields: [deletedById], references: [id], onDelete: Restrict)
+  cartOwner User?     @relation("ShoppingItemCartOwner", fields: [cartOwnerId], references: [id], onDelete: SetNull)
+
+  @@index([householdId, addedAt])
+  @@index([askedById])
+  @@index([householdId, cartOwnerId])
+  @@index([expenseId])
+  @@map("shopping_items")
 }
 
 /// Refresh tokens are stored hashed (SHA-256), never in plain text.

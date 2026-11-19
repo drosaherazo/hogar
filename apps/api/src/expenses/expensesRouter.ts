@@ -1,17 +1,9 @@
-import { expenseInputSchema, updateExpenseInputSchema, versionQuerySchema, type ExpenseResponse } from "@hogar/shared";
-import { Router, type Request } from "express";
+import { expenseInputSchema, updateExpenseInputSchema, type ExpenseResponse } from "@hogar/shared";
+import { Router } from "express";
 import type { Database } from "../db";
-import { parseBody } from "../household/householdRouter";
 import { loadMembership, membershipOf, requireEditor } from "../household/loadMembership";
-import { badRequest } from "../httpError";
+import { parseBody, versionOf } from "../requestInput";
 import type { ExpenseService } from "./expenseService";
-
-/** The version a delete was based on, from `?version=`; required, so stale deletes can be refused. */
-export function versionOf(req: Request): number {
-  const query = versionQuerySchema.safeParse(req.query);
-  if (!query.success) throw badRequest("request.invalid");
-  return query.data.version;
-}
 
 /** `/api/household/expenses`: everyone in the household reads; admins and members write. */
 export function createExpensesRouter(db: Database, expenses: ExpenseService) {

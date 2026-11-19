@@ -6,5 +6,12 @@
     "description": "Crea uno para las personas con las que vives o únete al suyo con una invitación. Ahí vivirán los gastos, las tareas y la lista de la compra.",
     "create": "Crear un hogar",
     "joinHint": "¿Alguien te ha mandado un enlace de invitación? Ábrelo y podrás unirte desde ahí."
+  },
+  "shopping": {
+    "title": "Compras",
+    "toBuy_one": "{{count}} cosa por comprar",
+    "toBuy_other": "{{count}} cosas por comprar",
+    "empty": "Ahora no falta nada",
+    "see": "Ver la lista"
   }
 }
